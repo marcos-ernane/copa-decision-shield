@@ -18,16 +18,12 @@ export function ConcludeRetrospective({ initial, onNext, onBack }: Props) {
       <h2 className="text-title text-foreground">
         Se eu recomeçasse, o que faria diferente na primeira semana com o que sei hoje?
       </h2>
-      <div className="space-y-2">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={6}
-          className="w-full rounded-md border border-border bg-background p-2 text-small text-foreground"
-          placeholder="Escreva ou use voz…"
-        />
-        <VoiceInput onTranscript={(t) => setText((prev) => (prev ? `${prev} ${t}` : t))} />
-      </div>
+      <VoiceInput
+        value={text}
+        onChange={setText}
+        placeholder="Escreva ou use voz…"
+        rows={6}
+      />
       <div className="flex gap-2">
         <Button variant="outline" onClick={onBack}>Voltar</Button>
         <Button variant="ghost" onClick={() => onNext('')}>Pular</Button>
@@ -36,3 +32,4 @@ export function ConcludeRetrospective({ initial, onNext, onBack }: Props) {
     </div>
   );
 }
+
