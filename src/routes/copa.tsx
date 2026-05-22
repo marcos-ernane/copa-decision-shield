@@ -1,6 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { COPAShell } from '@/components/copa/COPAShell';
 
 export const Route = createFileRoute('/copa')({
-  component: () => <Placeholder title="COPA de Bolso" />,
+  validateSearch: (s: Record<string, unknown>) => ({
+    projectId: typeof s.projectId === 'string' ? s.projectId : undefined,
+  }),
+  component: COPAShell,
 });

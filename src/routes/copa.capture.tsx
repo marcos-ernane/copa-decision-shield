@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/copa/capture')({
-  component: () => <Placeholder title="COPA — Captura" />,
+  beforeLoad: () => { throw redirect({ to: '/copa' }); },
 });
