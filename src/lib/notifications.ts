@@ -1,0 +1,382 @@
+// notifications.ts — Sprint 10.
+// Sistema de notificações locais. Capacitor quando disponível, fallback Web Notifications.
+// REQ-NOTIF-01: máx 1 notificação/dia. REQ-NOTIF-02: crítica 1x por situação/projeto.
+// REQ-NOTIF-03: convite, nunca cobrança. REQ-NOTIF-04: silêncio em ≤2 toques.
+
+import { Capacitor } from '@capacitor/core';
+import { supabase } from './supabase';
+import type { Project, Entry } from '@/types/database';
+
+// ---------- Types ----------
+
+export interface PulseConfig {
+  enabled: boolean;
+  day_of_week: number; // 0=dom..6=sáb
+  time_hour: number;   // 0..23
+}
+
+export interface InviteConfig {
+  enabled: boolean;
+  frequency_days: 3 | 7 | 14;
+}
+
+export interface NotifConfig {
+  pulse: PulseConfig;
+  invite: InviteConfig;
+  silence_until: string | null;       // ISO; null = sem silêncio OU silêncio indefinido (ver flag)
+  silence_indefinite: boolean;
+  last_sent_date: string | null;      // YYYY-MM-DD da última notificação enviada
+  critical_seen: Record<string, true>;// key = `${projectId}:${type}` enviado
+}
+
+const DEFAULT_CONFIG: NotifConfig = {
+  pulse: { enabled: false, day_of_week: 0, time_hour: 20 },
+  invite: { enabled: false, frequency_days: 3 },
+  silence_until: null,
+  silence_indefinite: false,
+  last_sent_date: null,
+  critical_seen: {},
+};
+
+const LS_KEY = 'aop.notif_config';
+
+// ---------- Storage ----------
+
+function readLocal(): NotifConfig {
+  if (typeof window === 'undefined') return { ...DEFAULT_CONFIG };
+  try {
+    const raw = window.localStorage.getItem(LS_KEY);
+    return raw ? { ...DEFAULT_CONFIG, ...(JSON.parse(raw) as NotifConfig) } : { ...DEFAULT_CONFIG };
+  } catch {
+    return { ...DEFAULT_CONFIG };
+  }
+}
+
+function writeLocal(cfg: NotifConfig): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+}
+
+export function getNotifConfig(): NotifConfig {
+  return readLocal();
+}
+
+export function setNotifConfig(patch: Partial<NotifConfig>): NotifConfig {
+  const next = { ...readLocal(), ...patch };
+  writeLocal(next);
+  return next;
+}
+
+// ---------- Date helpers ----------
+
+function todayYMD(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isSilenced(cfg: NotifConfig): boolean {
+  if (cfg.silence_indefinite) return true;
+  if (!cfg.silence_until) return false;
+  return new Date() < new Date(cfg.silence_until);
+}
+
+// ---------- Gate central ----------
+
+export function canSendNotification(cfg = getNotifConfig()): boolean {
+  if (isSilenced(cfg)) return false;
+  return cfg.last_sent_date !== todayYMD();
+}
+
+function markSent(): void {
+  setNotifConfig({ last_sent_date: todayYMD() });
+}
+
+// ---------- Capacitor + Web fallback ----------
+
+type ScheduleSpec = {
+  id: number;
+  title: string;
+  body: string;
+  at?: Date;
+  on?: { weekday: number; hour: number; minute: number }; // recurring
+  extra?: Record<string, unknown>;
+};
+
+let LN: typeof import('@capacitor/local-notifications').LocalNotifications | null = null;
+async function getLN() {
+  if (LN) return LN;
+  if (!Capacitor.isNativePlatform()) return null;
+  try {
+    const mod = await import('@capacitor/local-notifications');
+    LN = mod.LocalNotifications;
+    return LN;
+  } catch {
+    return null;
+  }
+}
+
+export async function requestPermission(): Promise<boolean> {
+  const ln = await getLN();
+  if (ln) {
+    const res = await ln.requestPermissions();
+    return res.display === 'granted';
+  }
+  if (typeof window !== 'undefined' && 'Notification' in window) {
+    if (Notification.permission === 'granted') return true;
+    if (Notification.permission === 'denied') return false;
+    const r = await Notification.requestPermission();
+    return r === 'granted';
+  }
+  return false;
+}
+
+async function deliverNow(title: string, body: string): Promise<void> {
+  const ln = await getLN();
+  if (ln) {
+    await ln.schedule({
+      notifications: [{
+        id: Date.now() % 2147483647,
+        title, body,
+        schedule: { at: new Date(Date.now() + 1000) },
+      }],
+    });
+    markSent();
+    return;
+  }
+  if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, { body });
+    markSent();
+    return;
+  }
+  // Sem permissão: registramos silenciosamente (não conta como envio).
+}
+
+async function schedule(spec: ScheduleSpec): Promise<void> {
+  const ln = await getLN();
+  if (ln) {
+    await ln.schedule({
+      notifications: [{
+        id: spec.id,
+        title: spec.title,
+        body: spec.body,
+        extra: spec.extra,
+        schedule: spec.at
+          ? { at: spec.at }
+          : spec.on
+            ? { on: spec.on, repeats: true, allowWhileIdle: true }
+            : undefined,
+      }],
+    });
+    return;
+  }
+  // Web: agendamento real exige Service Worker push. Aqui só notifica se for "agora".
+  if (spec.at && spec.at.getTime() - Date.now() < 60_000) {
+    if (canSendNotification()) await deliverNow(spec.title, spec.body);
+  }
+}
+
+export async function cancelById(id: number): Promise<void> {
+  const ln = await getLN();
+  if (ln) await ln.cancel({ notifications: [{ id }] });
+}
+
+// ---------- IDs estáveis por projeto/tipo ----------
+
+function hashId(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return Math.abs(h) % 2147483647;
+}
+const id = (kind: string, projectId: string, suffix = '') => hashId(`${kind}:${projectId}:${suffix}`);
+
+// ---------- Alertas críticos ----------
+
+export type CriticalType = 'imv_deadline' | 'abandonment' | 'inactivity';
+
+function critKey(projectId: string, type: CriticalType) {
+  return `${projectId}:${type}`;
+}
+
+async function fireCritical(projectId: string, type: CriticalType, title: string, body: string) {
+  const cfg = getNotifConfig();
+  if (cfg.critical_seen[critKey(projectId, type)]) return;        // REQ-NOTIF-02
+  if (!canSendNotification(cfg)) return;                          // REQ-NOTIF-01
+  await deliverNow(title, body);
+  setNotifConfig({
+    critical_seen: { ...cfg.critical_seen, [critKey(projectId, type)]: true },
+  });
+}
+
+export async function scheduleIMVDeadlineAlert(project: Project, imvEntry: Entry): Promise<void> {
+  const deadline = (imvEntry.content as { deadline?: string })?.deadline;
+  if (!deadline) return;
+  const dlMs = new Date(deadline).getTime();
+  const hoursLeft = (dlMs - Date.now()) / 3600000;
+  if (hoursLeft <= 0 || hoursLeft > 24) return;
+  await fireCritical(
+    project.id,
+    'imv_deadline',
+    `Projeto ${project.name}`,
+    'Seu teste vence amanhã. Mesmo sem resultado perfeito, um registro agora fecha o ciclo.',
+  );
+}
+
+export async function scheduleAbandonmentAlert(project: Project): Promise<void> {
+  await fireCritical(
+    project.id,
+    'abandonment',
+    'Padrão detectado',
+    'Você chegou num ponto parecido com o que travou antes. 5 minutos para registrar o que está vendo?',
+  );
+}
+
+export async function scheduleInactivityAlert(project: Project): Promise<void> {
+  const last = project.last_entry_at ? new Date(project.last_entry_at).getTime() : new Date(project.created_at).getTime();
+  const days = (Date.now() - last) / 86400000;
+  if (days < 14) return;
+  if (['paused', 'concluded', 'archived'].includes(project.state)) return;
+  await fireCritical(
+    project.id,
+    'inactivity',
+    `Projeto ${project.name}`,
+    'Está quieto há duas semanas. Ainda faz sentido? Toque para retomar ou pausar.',
+  );
+}
+
+// ---------- Pulso Semanal ----------
+
+export async function scheduleWeeklyPulse(cfg: PulseConfig, contentBuilder?: () => Promise<{ title: string; body: string }>): Promise<void> {
+  await cancelById(hashId('weekly_pulse'));
+  if (!cfg.enabled) return;
+  const content = contentBuilder ? await contentBuilder() : {
+    title: 'Sua semana no Operador',
+    body: 'Toque para revisar projetos ativos, testes em andamento e registros.',
+  };
+  await schedule({
+    id: hashId('weekly_pulse'),
+    title: content.title,
+    body: content.body,
+    on: { weekday: cfg.day_of_week + 1, hour: cfg.time_hour, minute: 0 }, // Capacitor: 1=dom..7=sáb
+  });
+}
+
+export function buildWeeklyPulseContent(projects: Project[], entries: Entry[]): { title: string; body: string } {
+  const active = projects.filter((p) => !['concluded', 'archived', 'paused'].includes(p.state));
+  const proving = entries.filter((e) => e.entry_type === 'structured_P').length;
+  const total = entries.length;
+  const next = active.sort((a, b) =>
+    +new Date(b.last_entry_at ?? b.created_at) - +new Date(a.last_entry_at ?? a.created_at),
+  )[0];
+  const body = [
+    `${active.length} projeto${active.length === 1 ? '' : 's'} ativos`,
+    `${proving} teste${proving === 1 ? '' : 's'} em andamento`,
+    `${total} registro${total === 1 ? '' : 's'} feitos.`,
+    next ? `Mais próximo de avançar: ${next.name}. Toque para ver.` : '',
+  ].filter(Boolean).join(' · ');
+  return { title: 'Sua semana no Operador', body };
+}
+
+// ---------- Pacto de Execução — REQ-PACT-NOTIF-01/02 ----------
+
+interface PactDays {
+  capture: number;  // hora (0..23) ou 0=off
+  organize: number;
+  prove: number;
+  assess: number;
+}
+
+const WEEKDAY = { capture: 2 /* seg */, organize: 4 /* qua */, prove: 6 /* sex */, assess: 1 /* dom */ };
+
+export async function schedulePactReminders(project: Project): Promise<void> {
+  // cancela existentes
+  for (const k of ['capture', 'organize', 'prove', 'assess'] as const) {
+    await cancelById(id('pact', project.id, k));
+  }
+  if (!project.pact_enabled) return;
+  const days: PactDays = {
+    capture: project.pact_day_capture,
+    organize: project.pact_day_organize,
+    prove: project.pact_day_prove,
+    assess: project.pact_day_assess,
+  };
+  const phases: Array<[keyof PactDays, string]> = [
+    ['capture', 'dia de Captura. 5 minutos.'],
+    ['organize', 'dia de Organização.'],
+    ['prove', 'dia de Prova.'],
+    ['assess', 'dia de Aferição.'],
+  ];
+  for (const [key, label] of phases) {
+    const hour = days[key];
+    if (!hour) continue;
+    await schedule({
+      id: id('pact', project.id, key),
+      title: project.name,
+      body: `${project.name} — ${label}`,
+      on: { weekday: WEEKDAY[key], hour, minute: 0 },
+      extra: { projectId: project.id, kind: 'pact', phase: key },
+    });
+  }
+}
+
+// ---------- Convite Pessoal por projeto ----------
+
+export async function schedulePersonalInvite(project: Project, freq: 3 | 7 | 14): Promise<void> {
+  await cancelById(id('invite', project.id));
+  if (!getNotifConfig().invite.enabled) return;
+  const at = new Date(Date.now() + freq * 86400000);
+  await schedule({
+    id: id('invite', project.id),
+    title: project.name,
+    body: `${project.name} está esperando. O que você está vendo agora?`,
+    at,
+    extra: { projectId: project.id, kind: 'invite' },
+  });
+}
+
+// ---------- Cancelar projeto ----------
+
+export async function cancelProjectNotifications(projectId: string): Promise<void> {
+  for (const k of ['capture', 'organize', 'prove', 'assess'] as const) await cancelById(id('pact', projectId, k));
+  await cancelById(id('invite', projectId));
+}
+
+// ---------- Modo Silêncio ----------
+
+/** days=null → indefinido. days=number → silêncio até hoje+N. */
+export function activateSilenceMode(days: number | null): void {
+  if (days === null) {
+    setNotifConfig({ silence_until: null, silence_indefinite: true });
+    return;
+  }
+  const until = new Date(Date.now() + days * 86400000).toISOString();
+  setNotifConfig({ silence_until: until, silence_indefinite: false });
+}
+
+export function deactivateSilenceMode(): void {
+  setNotifConfig({ silence_until: null, silence_indefinite: false });
+}
+
+export function getSilenceStatus(): { active: boolean; until: Date | null; indefinite: boolean } {
+  const cfg = getNotifConfig();
+  return {
+    active: isSilenced(cfg),
+    until: cfg.silence_until ? new Date(cfg.silence_until) : null,
+    indefinite: cfg.silence_indefinite,
+  };
+}
+
+// ---------- Sync mínimo Supabase (opcional/best-effort) ----------
+
+export async function syncSilenceToSupabase(): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+  const cfg = getNotifConfig();
+  await supabase.from('notification_configs').upsert({
+    user_id: session.user.id,
+    notif_type: 'critical',
+    silence_until: cfg.silence_until,
+    is_active: true,
+    frequency_days: 0,
+    time_window_start: 0,
+    time_window_end: 24,
+  });
+}
