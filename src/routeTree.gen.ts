@@ -11,7 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProjectNewRouteImport } from './routes/project.new'
+import { Route as ProjectIdRouteImport } from './routes/project.$id'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as ProjectIdDashboardRouteImport } from './routes/project.$id.dashboard'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -23,40 +26,85 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProjectNewRoute = ProjectNewRouteImport.update({
+  id: '/project/new',
+  path: '/project/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectIdRoute = ProjectIdRouteImport.update({
+  id: '/project/$id',
+  path: '/project/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectIdDashboardRoute = ProjectIdDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => ProjectIdRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/project/$id': typeof ProjectIdRouteWithChildren
+  '/project/new': typeof ProjectNewRoute
+  '/project/$id/dashboard': typeof ProjectIdDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/project/$id': typeof ProjectIdRouteWithChildren
+  '/project/new': typeof ProjectNewRoute
+  '/project/$id/dashboard': typeof ProjectIdDashboardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/project/$id': typeof ProjectIdRouteWithChildren
+  '/project/new': typeof ProjectNewRoute
+  '/project/$id/dashboard': typeof ProjectIdDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/onboarding' | '/auth/callback'
+  fullPaths:
+    | '/'
+    | '/onboarding'
+    | '/auth/callback'
+    | '/project/$id'
+    | '/project/new'
+    | '/project/$id/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/onboarding' | '/auth/callback'
-  id: '__root__' | '/' | '/onboarding' | '/auth/callback'
+  to:
+    | '/'
+    | '/onboarding'
+    | '/auth/callback'
+    | '/project/$id'
+    | '/project/new'
+    | '/project/$id/dashboard'
+  id:
+    | '__root__'
+    | '/'
+    | '/onboarding'
+    | '/auth/callback'
+    | '/project/$id'
+    | '/project/new'
+    | '/project/$id/dashboard'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OnboardingRoute: typeof OnboardingRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  ProjectIdRoute: typeof ProjectIdRouteWithChildren
+  ProjectNewRoute: typeof ProjectNewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,6 +123,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/project/new': {
+      id: '/project/new'
+      path: '/project/new'
+      fullPath: '/project/new'
+      preLoaderRoute: typeof ProjectNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/project/$id': {
+      id: '/project/$id'
+      path: '/project/$id'
+      fullPath: '/project/$id'
+      preLoaderRoute: typeof ProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
@@ -82,14 +144,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/project/$id/dashboard': {
+      id: '/project/$id/dashboard'
+      path: '/dashboard'
+      fullPath: '/project/$id/dashboard'
+      preLoaderRoute: typeof ProjectIdDashboardRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
   }
 }
+
+interface ProjectIdRouteChildren {
+  ProjectIdDashboardRoute: typeof ProjectIdDashboardRoute
+}
+
+const ProjectIdRouteChildren: ProjectIdRouteChildren = {
+  ProjectIdDashboardRoute: ProjectIdDashboardRoute,
+}
+
+const ProjectIdRouteWithChildren = ProjectIdRoute._addFileChildren(
+  ProjectIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OnboardingRoute: OnboardingRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  ProjectIdRoute: ProjectIdRouteWithChildren,
+  ProjectNewRoute: ProjectNewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
