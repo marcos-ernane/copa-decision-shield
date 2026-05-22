@@ -1,6 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { DiagnosisFlow } from '@/components/diagnosis/DiagnosisFlow';
 
 export const Route = createFileRoute('/project/$id/diagnosis')({
-  component: () => <Placeholder title="Motor de Diagnóstico" />,
+  component: DiagnosisRoute,
 });
+
+function DiagnosisRoute() {
+  const { id } = Route.useParams();
+  return <DiagnosisFlow projectId={id} />;
+}
