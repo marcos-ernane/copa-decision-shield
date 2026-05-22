@@ -21,6 +21,9 @@ const VALID_TRIGGERS = new Set([
   'COPA_IMV_SITUATIONAL_FIT',
   'SUGGESTION_BUTTON_COPA_PROVE',
   'SUGGESTION_BUTTON_COPA_ASSESS',
+  'SUGGESTION_BUTTON_PRESSURE',
+  'PRESSURE_REALITY_CHECK',
+  'PRESSURE_ABUSE_PATTERN',
 ]);
 
 // Cache em memória 15 min (best-effort — instância pode reciclar).
