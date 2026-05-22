@@ -7,6 +7,10 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { migrateGuestToCloud } from "@/lib/migrateGuest";
+import { MigrationIndicator } from "@/components/MigrationIndicator";
 
 import appCss from "../styles.css?url";
 
@@ -111,8 +115,20 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "SIGNED_IN" && session?.user) {
+          void migrateGuestToCloud(session.user.id);
+        }
+      },
+    );
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
+      <MigrationIndicator />
       <Outlet />
     </QueryClientProvider>
   );
