@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/copa/assess')({
-  component: () => <Placeholder title="COPA — Aferição" />,
+  beforeLoad: () => { throw redirect({ to: '/copa' }); },
 });
