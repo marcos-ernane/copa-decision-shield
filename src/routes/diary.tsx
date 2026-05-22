@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { DiaryShell } from '@/components/diary/DiaryShell';
 
 export const Route = createFileRoute('/diary')({
-  component: () => <Placeholder title="Diário do Operador" />,
+  component: () => <DiaryShell active="timeline" />,
 });
