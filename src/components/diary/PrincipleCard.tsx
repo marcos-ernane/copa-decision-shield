@@ -1,0 +1,87 @@
+import { useState } from 'react';
+import type { Principle, Project } from '@/types/database';
+import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
+import { LayerChip } from '@/components/project/LayerChip';
+import { GuestStorage } from '@/lib/guestStorage';
+import { supabase } from '@/lib/supabase';
+
+interface Props {
+  principle: Principle;
+  project?: Project;
+  onChange?: () => void;
+}
+
+export function PrincipleCard({ principle, project, onChange }: Props) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(principle.content);
+
+  async function persist(patch: Partial<Principle>) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      GuestStorage.updatePrinciple?.(principle.id, patch);
+      const all = GuestStorage.getPrinciples();
+      const idx = all.findIndex((p) => p.id === principle.id);
+      if (idx >= 0) {
+        all[idx] = { ...all[idx], ...patch, updated_at: new Date().toISOString() };
+        window.localStorage.setItem('aop.principles', JSON.stringify(all));
+      }
+    } else {
+      await supabase.from('principles').update(patch).eq('id', principle.id);
+    }
+    onChange?.();
+  }
+
+  return (
+    <div className="rounded-md border border-border bg-card p-3 space-y-2">
+      {editing ? (
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          className="w-full rounded-md border border-[color:var(--color-brand-green)] bg-background p-2 text-small text-foreground"
+          rows={3}
+        />
+      ) : (
+        <p className="text-small text-foreground">
+          {principle.is_master_principle && <span className="text-[color:var(--color-brand-amber)] mr-1">★</span>}
+          {principle.content}
+        </p>
+      )}
+
+      <div className="flex flex-wrap gap-1">
+        {project && (
+          <span className="text-label px-2 py-0.5 rounded-full bg-[var(--color-surface-1)] text-foreground">
+            {project.name}
+          </span>
+        )}
+        {principle.scenario_type && <ScenarioTypeChip type={principle.scenario_type} />}
+        {principle.layer && <LayerChip layer={principle.layer} />}
+      </div>
+
+      <div className="flex gap-3 text-label">
+        {editing ? (
+          <>
+            <button
+              onClick={async () => { await persist({ content: text.trim() }); setEditing(false); }}
+              className="text-[color:var(--color-brand-blue)] hover:underline"
+            >Salvar</button>
+            <button onClick={() => { setText(principle.content); setEditing(false); }} className="text-muted-foreground">
+              Cancelar
+            </button>
+          </>
+        ) : (
+          <>
+            <button onClick={() => setEditing(true)} className="text-[color:var(--color-brand-blue)] hover:underline">
+              Editar
+            </button>
+            <button
+              onClick={() => persist({ is_archived: true })}
+              className="text-muted-foreground hover:underline"
+            >
+              Arquivar
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
