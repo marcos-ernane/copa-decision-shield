@@ -130,6 +130,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <PassiveTracker />
       <MigrationIndicator />
       <AppShell>
         <Outlet />
