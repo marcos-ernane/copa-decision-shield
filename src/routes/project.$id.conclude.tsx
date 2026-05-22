@@ -1,6 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { ConcludeFlow } from '@/components/conclude/ConcludeFlow';
 
 export const Route = createFileRoute('/project/$id/conclude')({
-  component: () => <Placeholder title="Concluir Projeto" />,
+  component: RouteComponent,
 });
+
+function RouteComponent() {
+  const { id } = Route.useParams();
+  return <ConcludeFlow projectId={id} />;
+}
