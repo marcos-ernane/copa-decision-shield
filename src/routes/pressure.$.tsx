@@ -1,6 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { createFileRoute, Navigate } from '@tanstack/react-router';
 
+// Catch-all redireciona para /pressure mantendo o fluxo único do Shell.
 export const Route = createFileRoute('/pressure/$')({
-  component: () => <Placeholder title="Modo Pressão" />,
+  component: () => <Navigate to="/pressure" />,
 });
