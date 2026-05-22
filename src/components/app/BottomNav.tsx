@@ -3,12 +3,12 @@
 import { Link } from '@tanstack/react-router';
 import { Home, LayoutGrid, Compass, BookOpen } from 'lucide-react';
 
-const TABS = [
+const TABS: { to: '/' | '/panel' | '/compass' | '/diary'; label: string; icon: typeof Home; exact: boolean }[] = [
   { to: '/', label: 'Início', icon: Home, exact: true },
-  { to: '/panel', label: 'Painel', icon: LayoutGrid },
-  { to: '/compass', label: 'Bússola', icon: Compass },
-  { to: '/diary', label: 'Diário', icon: BookOpen },
-] as const;
+  { to: '/panel', label: 'Painel', icon: LayoutGrid, exact: false },
+  { to: '/compass', label: 'Bússola', icon: Compass, exact: false },
+  { to: '/diary', label: 'Diário', icon: BookOpen, exact: false },
+];
 
 export function BottomNav() {
   return (
