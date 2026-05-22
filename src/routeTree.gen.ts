@@ -9,21 +9,111 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ReadingModeRouteImport } from './routes/reading-mode'
+import { Route as Protocol5RouteImport } from './routes/protocol5'
+import { Route as PressureRouteImport } from './routes/pressure'
+import { Route as PanelRouteImport } from './routes/panel'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as DiaryRouteImport } from './routes/diary'
+import { Route as CreativeRouteImport } from './routes/creative'
+import { Route as CopaRouteImport } from './routes/copa'
+import { Route as CompassRouteImport } from './routes/compass'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsSplatRouteImport } from './routes/settings.$'
+import { Route as RegisterStructuredRouteImport } from './routes/register.structured'
+import { Route as RegisterPulseRouteImport } from './routes/register.pulse'
 import { Route as ProjectNewRouteImport } from './routes/project.new'
 import { Route as ProjectIdRouteImport } from './routes/project.$id'
+import { Route as PressureSplatRouteImport } from './routes/pressure.$'
+import { Route as PanelTransferRouteImport } from './routes/panel.transfer'
+import { Route as PanelRubricRouteImport } from './routes/panel.rubric'
+import { Route as PanelBaselineRouteImport } from './routes/panel.baseline'
+import { Route as DiarySplatRouteImport } from './routes/diary.$'
+import { Route as CopaProveRouteImport } from './routes/copa.prove'
+import { Route as CopaOrganizeRouteImport } from './routes/copa.organize'
+import { Route as CopaCaptureRouteImport } from './routes/copa.capture'
+import { Route as CopaAssessRouteImport } from './routes/copa.assess'
+import { Route as CompassSplatRouteImport } from './routes/compass.$'
+import { Route as BaselineNewRouteImport } from './routes/baseline.new'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as RegisterCorrectiveEntryIdRouteImport } from './routes/register.corrective.$entryId'
+import { Route as ProjectIdSheetRouteImport } from './routes/project.$id.sheet'
+import { Route as ProjectIdPactRouteImport } from './routes/project.$id.pact'
+import { Route as ProjectIdEditRouteImport } from './routes/project.$id.edit'
+import { Route as ProjectIdDiagnosisRouteImport } from './routes/project.$id.diagnosis'
 import { Route as ProjectIdDashboardRouteImport } from './routes/project.$id.dashboard'
+import { Route as ProjectIdConcludeRouteImport } from './routes/project.$id.conclude'
+import { Route as ProjectIdCapacityRouteImport } from './routes/project.$id.capacity'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReadingModeRoute = ReadingModeRouteImport.update({
+  id: '/reading-mode',
+  path: '/reading-mode',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Protocol5Route = Protocol5RouteImport.update({
+  id: '/protocol5',
+  path: '/protocol5',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PressureRoute = PressureRouteImport.update({
+  id: '/pressure',
+  path: '/pressure',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PanelRoute = PanelRouteImport.update({
+  id: '/panel',
+  path: '/panel',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiaryRoute = DiaryRouteImport.update({
+  id: '/diary',
+  path: '/diary',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreativeRoute = CreativeRouteImport.update({
+  id: '/creative',
+  path: '/creative',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CopaRoute = CopaRouteImport.update({
+  id: '/copa',
+  path: '/copa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompassRoute = CompassRouteImport.update({
+  id: '/compass',
+  path: '/compass',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsSplatRoute = SettingsSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const RegisterStructuredRoute = RegisterStructuredRouteImport.update({
+  id: '/register/structured',
+  path: '/register/structured',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterPulseRoute = RegisterPulseRouteImport.update({
+  id: '/register/pulse',
+  path: '/register/pulse',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectNewRoute = ProjectNewRouteImport.update({
@@ -36,79 +126,398 @@ const ProjectIdRoute = ProjectIdRouteImport.update({
   path: '/project/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PressureSplatRoute = PressureSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => PressureRoute,
+} as any)
+const PanelTransferRoute = PanelTransferRouteImport.update({
+  id: '/transfer',
+  path: '/transfer',
+  getParentRoute: () => PanelRoute,
+} as any)
+const PanelRubricRoute = PanelRubricRouteImport.update({
+  id: '/rubric',
+  path: '/rubric',
+  getParentRoute: () => PanelRoute,
+} as any)
+const PanelBaselineRoute = PanelBaselineRouteImport.update({
+  id: '/baseline',
+  path: '/baseline',
+  getParentRoute: () => PanelRoute,
+} as any)
+const DiarySplatRoute = DiarySplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => DiaryRoute,
+} as any)
+const CopaProveRoute = CopaProveRouteImport.update({
+  id: '/prove',
+  path: '/prove',
+  getParentRoute: () => CopaRoute,
+} as any)
+const CopaOrganizeRoute = CopaOrganizeRouteImport.update({
+  id: '/organize',
+  path: '/organize',
+  getParentRoute: () => CopaRoute,
+} as any)
+const CopaCaptureRoute = CopaCaptureRouteImport.update({
+  id: '/capture',
+  path: '/capture',
+  getParentRoute: () => CopaRoute,
+} as any)
+const CopaAssessRoute = CopaAssessRouteImport.update({
+  id: '/assess',
+  path: '/assess',
+  getParentRoute: () => CopaRoute,
+} as any)
+const CompassSplatRoute = CompassSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => CompassRoute,
+} as any)
+const BaselineNewRoute = BaselineNewRouteImport.update({
+  id: '/baseline/new',
+  path: '/baseline/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterCorrectiveEntryIdRoute =
+  RegisterCorrectiveEntryIdRouteImport.update({
+    id: '/register/corrective/$entryId',
+    path: '/register/corrective/$entryId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProjectIdSheetRoute = ProjectIdSheetRouteImport.update({
+  id: '/sheet',
+  path: '/sheet',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
+const ProjectIdPactRoute = ProjectIdPactRouteImport.update({
+  id: '/pact',
+  path: '/pact',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
+const ProjectIdEditRoute = ProjectIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
+const ProjectIdDiagnosisRoute = ProjectIdDiagnosisRouteImport.update({
+  id: '/diagnosis',
+  path: '/diagnosis',
+  getParentRoute: () => ProjectIdRoute,
 } as any)
 const ProjectIdDashboardRoute = ProjectIdDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => ProjectIdRoute,
 } as any)
+const ProjectIdConcludeRoute = ProjectIdConcludeRouteImport.update({
+  id: '/conclude',
+  path: '/conclude',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
+const ProjectIdCapacityRoute = ProjectIdCapacityRouteImport.update({
+  id: '/capacity',
+  path: '/capacity',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/compass': typeof CompassRouteWithChildren
+  '/copa': typeof CopaRouteWithChildren
+  '/creative': typeof CreativeRoute
+  '/diary': typeof DiaryRouteWithChildren
   '/onboarding': typeof OnboardingRoute
+  '/panel': typeof PanelRouteWithChildren
+  '/pressure': typeof PressureRouteWithChildren
+  '/protocol5': typeof Protocol5Route
+  '/reading-mode': typeof ReadingModeRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/baseline/new': typeof BaselineNewRoute
+  '/compass/$': typeof CompassSplatRoute
+  '/copa/assess': typeof CopaAssessRoute
+  '/copa/capture': typeof CopaCaptureRoute
+  '/copa/organize': typeof CopaOrganizeRoute
+  '/copa/prove': typeof CopaProveRoute
+  '/diary/$': typeof DiarySplatRoute
+  '/panel/baseline': typeof PanelBaselineRoute
+  '/panel/rubric': typeof PanelRubricRoute
+  '/panel/transfer': typeof PanelTransferRoute
+  '/pressure/$': typeof PressureSplatRoute
   '/project/$id': typeof ProjectIdRouteWithChildren
   '/project/new': typeof ProjectNewRoute
+  '/register/pulse': typeof RegisterPulseRoute
+  '/register/structured': typeof RegisterStructuredRoute
+  '/settings/$': typeof SettingsSplatRoute
+  '/project/$id/capacity': typeof ProjectIdCapacityRoute
+  '/project/$id/conclude': typeof ProjectIdConcludeRoute
   '/project/$id/dashboard': typeof ProjectIdDashboardRoute
+  '/project/$id/diagnosis': typeof ProjectIdDiagnosisRoute
+  '/project/$id/edit': typeof ProjectIdEditRoute
+  '/project/$id/pact': typeof ProjectIdPactRoute
+  '/project/$id/sheet': typeof ProjectIdSheetRoute
+  '/register/corrective/$entryId': typeof RegisterCorrectiveEntryIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/compass': typeof CompassRouteWithChildren
+  '/copa': typeof CopaRouteWithChildren
+  '/creative': typeof CreativeRoute
+  '/diary': typeof DiaryRouteWithChildren
   '/onboarding': typeof OnboardingRoute
+  '/panel': typeof PanelRouteWithChildren
+  '/pressure': typeof PressureRouteWithChildren
+  '/protocol5': typeof Protocol5Route
+  '/reading-mode': typeof ReadingModeRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/baseline/new': typeof BaselineNewRoute
+  '/compass/$': typeof CompassSplatRoute
+  '/copa/assess': typeof CopaAssessRoute
+  '/copa/capture': typeof CopaCaptureRoute
+  '/copa/organize': typeof CopaOrganizeRoute
+  '/copa/prove': typeof CopaProveRoute
+  '/diary/$': typeof DiarySplatRoute
+  '/panel/baseline': typeof PanelBaselineRoute
+  '/panel/rubric': typeof PanelRubricRoute
+  '/panel/transfer': typeof PanelTransferRoute
+  '/pressure/$': typeof PressureSplatRoute
   '/project/$id': typeof ProjectIdRouteWithChildren
   '/project/new': typeof ProjectNewRoute
+  '/register/pulse': typeof RegisterPulseRoute
+  '/register/structured': typeof RegisterStructuredRoute
+  '/settings/$': typeof SettingsSplatRoute
+  '/project/$id/capacity': typeof ProjectIdCapacityRoute
+  '/project/$id/conclude': typeof ProjectIdConcludeRoute
   '/project/$id/dashboard': typeof ProjectIdDashboardRoute
+  '/project/$id/diagnosis': typeof ProjectIdDiagnosisRoute
+  '/project/$id/edit': typeof ProjectIdEditRoute
+  '/project/$id/pact': typeof ProjectIdPactRoute
+  '/project/$id/sheet': typeof ProjectIdSheetRoute
+  '/register/corrective/$entryId': typeof RegisterCorrectiveEntryIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/compass': typeof CompassRouteWithChildren
+  '/copa': typeof CopaRouteWithChildren
+  '/creative': typeof CreativeRoute
+  '/diary': typeof DiaryRouteWithChildren
   '/onboarding': typeof OnboardingRoute
+  '/panel': typeof PanelRouteWithChildren
+  '/pressure': typeof PressureRouteWithChildren
+  '/protocol5': typeof Protocol5Route
+  '/reading-mode': typeof ReadingModeRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/baseline/new': typeof BaselineNewRoute
+  '/compass/$': typeof CompassSplatRoute
+  '/copa/assess': typeof CopaAssessRoute
+  '/copa/capture': typeof CopaCaptureRoute
+  '/copa/organize': typeof CopaOrganizeRoute
+  '/copa/prove': typeof CopaProveRoute
+  '/diary/$': typeof DiarySplatRoute
+  '/panel/baseline': typeof PanelBaselineRoute
+  '/panel/rubric': typeof PanelRubricRoute
+  '/panel/transfer': typeof PanelTransferRoute
+  '/pressure/$': typeof PressureSplatRoute
   '/project/$id': typeof ProjectIdRouteWithChildren
   '/project/new': typeof ProjectNewRoute
+  '/register/pulse': typeof RegisterPulseRoute
+  '/register/structured': typeof RegisterStructuredRoute
+  '/settings/$': typeof SettingsSplatRoute
+  '/project/$id/capacity': typeof ProjectIdCapacityRoute
+  '/project/$id/conclude': typeof ProjectIdConcludeRoute
   '/project/$id/dashboard': typeof ProjectIdDashboardRoute
+  '/project/$id/diagnosis': typeof ProjectIdDiagnosisRoute
+  '/project/$id/edit': typeof ProjectIdEditRoute
+  '/project/$id/pact': typeof ProjectIdPactRoute
+  '/project/$id/sheet': typeof ProjectIdSheetRoute
+  '/register/corrective/$entryId': typeof RegisterCorrectiveEntryIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/compass'
+    | '/copa'
+    | '/creative'
+    | '/diary'
     | '/onboarding'
+    | '/panel'
+    | '/pressure'
+    | '/protocol5'
+    | '/reading-mode'
+    | '/settings'
     | '/auth/callback'
+    | '/baseline/new'
+    | '/compass/$'
+    | '/copa/assess'
+    | '/copa/capture'
+    | '/copa/organize'
+    | '/copa/prove'
+    | '/diary/$'
+    | '/panel/baseline'
+    | '/panel/rubric'
+    | '/panel/transfer'
+    | '/pressure/$'
     | '/project/$id'
     | '/project/new'
+    | '/register/pulse'
+    | '/register/structured'
+    | '/settings/$'
+    | '/project/$id/capacity'
+    | '/project/$id/conclude'
     | '/project/$id/dashboard'
+    | '/project/$id/diagnosis'
+    | '/project/$id/edit'
+    | '/project/$id/pact'
+    | '/project/$id/sheet'
+    | '/register/corrective/$entryId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/compass'
+    | '/copa'
+    | '/creative'
+    | '/diary'
     | '/onboarding'
+    | '/panel'
+    | '/pressure'
+    | '/protocol5'
+    | '/reading-mode'
+    | '/settings'
     | '/auth/callback'
+    | '/baseline/new'
+    | '/compass/$'
+    | '/copa/assess'
+    | '/copa/capture'
+    | '/copa/organize'
+    | '/copa/prove'
+    | '/diary/$'
+    | '/panel/baseline'
+    | '/panel/rubric'
+    | '/panel/transfer'
+    | '/pressure/$'
     | '/project/$id'
     | '/project/new'
+    | '/register/pulse'
+    | '/register/structured'
+    | '/settings/$'
+    | '/project/$id/capacity'
+    | '/project/$id/conclude'
     | '/project/$id/dashboard'
+    | '/project/$id/diagnosis'
+    | '/project/$id/edit'
+    | '/project/$id/pact'
+    | '/project/$id/sheet'
+    | '/register/corrective/$entryId'
   id:
     | '__root__'
     | '/'
+    | '/compass'
+    | '/copa'
+    | '/creative'
+    | '/diary'
     | '/onboarding'
+    | '/panel'
+    | '/pressure'
+    | '/protocol5'
+    | '/reading-mode'
+    | '/settings'
     | '/auth/callback'
+    | '/baseline/new'
+    | '/compass/$'
+    | '/copa/assess'
+    | '/copa/capture'
+    | '/copa/organize'
+    | '/copa/prove'
+    | '/diary/$'
+    | '/panel/baseline'
+    | '/panel/rubric'
+    | '/panel/transfer'
+    | '/pressure/$'
     | '/project/$id'
     | '/project/new'
+    | '/register/pulse'
+    | '/register/structured'
+    | '/settings/$'
+    | '/project/$id/capacity'
+    | '/project/$id/conclude'
     | '/project/$id/dashboard'
+    | '/project/$id/diagnosis'
+    | '/project/$id/edit'
+    | '/project/$id/pact'
+    | '/project/$id/sheet'
+    | '/register/corrective/$entryId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CompassRoute: typeof CompassRouteWithChildren
+  CopaRoute: typeof CopaRouteWithChildren
+  CreativeRoute: typeof CreativeRoute
+  DiaryRoute: typeof DiaryRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
+  PanelRoute: typeof PanelRouteWithChildren
+  PressureRoute: typeof PressureRouteWithChildren
+  Protocol5Route: typeof Protocol5Route
+  ReadingModeRoute: typeof ReadingModeRoute
+  SettingsRoute: typeof SettingsRouteWithChildren
   AuthCallbackRoute: typeof AuthCallbackRoute
+  BaselineNewRoute: typeof BaselineNewRoute
   ProjectIdRoute: typeof ProjectIdRouteWithChildren
   ProjectNewRoute: typeof ProjectNewRoute
+  RegisterPulseRoute: typeof RegisterPulseRoute
+  RegisterStructuredRoute: typeof RegisterStructuredRoute
+  RegisterCorrectiveEntryIdRoute: typeof RegisterCorrectiveEntryIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reading-mode': {
+      id: '/reading-mode'
+      path: '/reading-mode'
+      fullPath: '/reading-mode'
+      preLoaderRoute: typeof ReadingModeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/protocol5': {
+      id: '/protocol5'
+      path: '/protocol5'
+      fullPath: '/protocol5'
+      preLoaderRoute: typeof Protocol5RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pressure': {
+      id: '/pressure'
+      path: '/pressure'
+      fullPath: '/pressure'
+      preLoaderRoute: typeof PressureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/panel': {
+      id: '/panel'
+      path: '/panel'
+      fullPath: '/panel'
+      preLoaderRoute: typeof PanelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
@@ -116,11 +525,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/diary': {
+      id: '/diary'
+      path: '/diary'
+      fullPath: '/diary'
+      preLoaderRoute: typeof DiaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/creative': {
+      id: '/creative'
+      path: '/creative'
+      fullPath: '/creative'
+      preLoaderRoute: typeof CreativeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/copa': {
+      id: '/copa'
+      path: '/copa'
+      fullPath: '/copa'
+      preLoaderRoute: typeof CopaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compass': {
+      id: '/compass'
+      path: '/compass'
+      fullPath: '/compass'
+      preLoaderRoute: typeof CompassRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/$': {
+      id: '/settings/$'
+      path: '/$'
+      fullPath: '/settings/$'
+      preLoaderRoute: typeof SettingsSplatRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/register/structured': {
+      id: '/register/structured'
+      path: '/register/structured'
+      fullPath: '/register/structured'
+      preLoaderRoute: typeof RegisterStructuredRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register/pulse': {
+      id: '/register/pulse'
+      path: '/register/pulse'
+      fullPath: '/register/pulse'
+      preLoaderRoute: typeof RegisterPulseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/project/new': {
@@ -137,12 +595,124 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pressure/$': {
+      id: '/pressure/$'
+      path: '/$'
+      fullPath: '/pressure/$'
+      preLoaderRoute: typeof PressureSplatRouteImport
+      parentRoute: typeof PressureRoute
+    }
+    '/panel/transfer': {
+      id: '/panel/transfer'
+      path: '/transfer'
+      fullPath: '/panel/transfer'
+      preLoaderRoute: typeof PanelTransferRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/panel/rubric': {
+      id: '/panel/rubric'
+      path: '/rubric'
+      fullPath: '/panel/rubric'
+      preLoaderRoute: typeof PanelRubricRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/panel/baseline': {
+      id: '/panel/baseline'
+      path: '/baseline'
+      fullPath: '/panel/baseline'
+      preLoaderRoute: typeof PanelBaselineRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/diary/$': {
+      id: '/diary/$'
+      path: '/$'
+      fullPath: '/diary/$'
+      preLoaderRoute: typeof DiarySplatRouteImport
+      parentRoute: typeof DiaryRoute
+    }
+    '/copa/prove': {
+      id: '/copa/prove'
+      path: '/prove'
+      fullPath: '/copa/prove'
+      preLoaderRoute: typeof CopaProveRouteImport
+      parentRoute: typeof CopaRoute
+    }
+    '/copa/organize': {
+      id: '/copa/organize'
+      path: '/organize'
+      fullPath: '/copa/organize'
+      preLoaderRoute: typeof CopaOrganizeRouteImport
+      parentRoute: typeof CopaRoute
+    }
+    '/copa/capture': {
+      id: '/copa/capture'
+      path: '/capture'
+      fullPath: '/copa/capture'
+      preLoaderRoute: typeof CopaCaptureRouteImport
+      parentRoute: typeof CopaRoute
+    }
+    '/copa/assess': {
+      id: '/copa/assess'
+      path: '/assess'
+      fullPath: '/copa/assess'
+      preLoaderRoute: typeof CopaAssessRouteImport
+      parentRoute: typeof CopaRoute
+    }
+    '/compass/$': {
+      id: '/compass/$'
+      path: '/$'
+      fullPath: '/compass/$'
+      preLoaderRoute: typeof CompassSplatRouteImport
+      parentRoute: typeof CompassRoute
+    }
+    '/baseline/new': {
+      id: '/baseline/new'
+      path: '/baseline/new'
+      fullPath: '/baseline/new'
+      preLoaderRoute: typeof BaselineNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/register/corrective/$entryId': {
+      id: '/register/corrective/$entryId'
+      path: '/register/corrective/$entryId'
+      fullPath: '/register/corrective/$entryId'
+      preLoaderRoute: typeof RegisterCorrectiveEntryIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/project/$id/sheet': {
+      id: '/project/$id/sheet'
+      path: '/sheet'
+      fullPath: '/project/$id/sheet'
+      preLoaderRoute: typeof ProjectIdSheetRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
+    '/project/$id/pact': {
+      id: '/project/$id/pact'
+      path: '/pact'
+      fullPath: '/project/$id/pact'
+      preLoaderRoute: typeof ProjectIdPactRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
+    '/project/$id/edit': {
+      id: '/project/$id/edit'
+      path: '/edit'
+      fullPath: '/project/$id/edit'
+      preLoaderRoute: typeof ProjectIdEditRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
+    '/project/$id/diagnosis': {
+      id: '/project/$id/diagnosis'
+      path: '/diagnosis'
+      fullPath: '/project/$id/diagnosis'
+      preLoaderRoute: typeof ProjectIdDiagnosisRouteImport
+      parentRoute: typeof ProjectIdRoute
     }
     '/project/$id/dashboard': {
       id: '/project/$id/dashboard'
@@ -151,15 +721,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectIdDashboardRouteImport
       parentRoute: typeof ProjectIdRoute
     }
+    '/project/$id/conclude': {
+      id: '/project/$id/conclude'
+      path: '/conclude'
+      fullPath: '/project/$id/conclude'
+      preLoaderRoute: typeof ProjectIdConcludeRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
+    '/project/$id/capacity': {
+      id: '/project/$id/capacity'
+      path: '/capacity'
+      fullPath: '/project/$id/capacity'
+      preLoaderRoute: typeof ProjectIdCapacityRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
   }
 }
 
+interface CompassRouteChildren {
+  CompassSplatRoute: typeof CompassSplatRoute
+}
+
+const CompassRouteChildren: CompassRouteChildren = {
+  CompassSplatRoute: CompassSplatRoute,
+}
+
+const CompassRouteWithChildren =
+  CompassRoute._addFileChildren(CompassRouteChildren)
+
+interface CopaRouteChildren {
+  CopaAssessRoute: typeof CopaAssessRoute
+  CopaCaptureRoute: typeof CopaCaptureRoute
+  CopaOrganizeRoute: typeof CopaOrganizeRoute
+  CopaProveRoute: typeof CopaProveRoute
+}
+
+const CopaRouteChildren: CopaRouteChildren = {
+  CopaAssessRoute: CopaAssessRoute,
+  CopaCaptureRoute: CopaCaptureRoute,
+  CopaOrganizeRoute: CopaOrganizeRoute,
+  CopaProveRoute: CopaProveRoute,
+}
+
+const CopaRouteWithChildren = CopaRoute._addFileChildren(CopaRouteChildren)
+
+interface DiaryRouteChildren {
+  DiarySplatRoute: typeof DiarySplatRoute
+}
+
+const DiaryRouteChildren: DiaryRouteChildren = {
+  DiarySplatRoute: DiarySplatRoute,
+}
+
+const DiaryRouteWithChildren = DiaryRoute._addFileChildren(DiaryRouteChildren)
+
+interface PanelRouteChildren {
+  PanelBaselineRoute: typeof PanelBaselineRoute
+  PanelRubricRoute: typeof PanelRubricRoute
+  PanelTransferRoute: typeof PanelTransferRoute
+}
+
+const PanelRouteChildren: PanelRouteChildren = {
+  PanelBaselineRoute: PanelBaselineRoute,
+  PanelRubricRoute: PanelRubricRoute,
+  PanelTransferRoute: PanelTransferRoute,
+}
+
+const PanelRouteWithChildren = PanelRoute._addFileChildren(PanelRouteChildren)
+
+interface PressureRouteChildren {
+  PressureSplatRoute: typeof PressureSplatRoute
+}
+
+const PressureRouteChildren: PressureRouteChildren = {
+  PressureSplatRoute: PressureSplatRoute,
+}
+
+const PressureRouteWithChildren = PressureRoute._addFileChildren(
+  PressureRouteChildren,
+)
+
+interface SettingsRouteChildren {
+  SettingsSplatRoute: typeof SettingsSplatRoute
+}
+
+const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsSplatRoute: SettingsSplatRoute,
+}
+
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
+  SettingsRouteChildren,
+)
+
 interface ProjectIdRouteChildren {
+  ProjectIdCapacityRoute: typeof ProjectIdCapacityRoute
+  ProjectIdConcludeRoute: typeof ProjectIdConcludeRoute
   ProjectIdDashboardRoute: typeof ProjectIdDashboardRoute
+  ProjectIdDiagnosisRoute: typeof ProjectIdDiagnosisRoute
+  ProjectIdEditRoute: typeof ProjectIdEditRoute
+  ProjectIdPactRoute: typeof ProjectIdPactRoute
+  ProjectIdSheetRoute: typeof ProjectIdSheetRoute
 }
 
 const ProjectIdRouteChildren: ProjectIdRouteChildren = {
+  ProjectIdCapacityRoute: ProjectIdCapacityRoute,
+  ProjectIdConcludeRoute: ProjectIdConcludeRoute,
   ProjectIdDashboardRoute: ProjectIdDashboardRoute,
+  ProjectIdDiagnosisRoute: ProjectIdDiagnosisRoute,
+  ProjectIdEditRoute: ProjectIdEditRoute,
+  ProjectIdPactRoute: ProjectIdPactRoute,
+  ProjectIdSheetRoute: ProjectIdSheetRoute,
 }
 
 const ProjectIdRouteWithChildren = ProjectIdRoute._addFileChildren(
@@ -168,11 +839,34 @@ const ProjectIdRouteWithChildren = ProjectIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CompassRoute: CompassRouteWithChildren,
+  CopaRoute: CopaRouteWithChildren,
+  CreativeRoute: CreativeRoute,
+  DiaryRoute: DiaryRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
+  PanelRoute: PanelRouteWithChildren,
+  PressureRoute: PressureRouteWithChildren,
+  Protocol5Route: Protocol5Route,
+  ReadingModeRoute: ReadingModeRoute,
+  SettingsRoute: SettingsRouteWithChildren,
   AuthCallbackRoute: AuthCallbackRoute,
+  BaselineNewRoute: BaselineNewRoute,
   ProjectIdRoute: ProjectIdRouteWithChildren,
   ProjectNewRoute: ProjectNewRoute,
+  RegisterPulseRoute: RegisterPulseRoute,
+  RegisterStructuredRoute: RegisterStructuredRoute,
+  RegisterCorrectiveEntryIdRoute: RegisterCorrectiveEntryIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
