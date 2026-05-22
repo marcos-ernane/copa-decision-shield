@@ -93,6 +93,16 @@ export async function createProject(input: NewProjectInput): Promise<Project> {
     pause_reason: null,
   };
 
+  // REQ-PROJ-01: leitura inicial gerada pelo DiagnosisEngine na criação.
+  const { generateInitialReading } = await import('@/engines/DiagnosisEngine');
+  const initial = generateInitialReading({
+    name: base.name,
+    north: base.north,
+    scenario_type: base.scenario_type,
+  });
+  base.field_reading = initial.field_reading;
+  base.calibrated_action = initial.calibrated_action;
+
   if (!session) {
     GuestStorage.addProject(base);
     return base;
@@ -105,6 +115,8 @@ export async function createProject(input: NewProjectInput): Promise<Project> {
       north: base.north,
       state: base.state,
       scenario_type: base.scenario_type,
+      field_reading: base.field_reading,
+      calibrated_action: base.calibrated_action,
       user_id: session.user.id,
     })
     .select()
