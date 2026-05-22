@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabase";
 import { migrateGuestToCloud } from "@/lib/migrateGuest";
 import { MigrationIndicator } from "@/components/MigrationIndicator";
 import { AppShell } from "@/components/app/AppShell";
+import { PassiveTracker } from "@/components/PassiveTracker";
 
 import appCss from "../styles.css?url";
 
