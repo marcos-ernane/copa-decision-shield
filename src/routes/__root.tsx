@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { migrateGuestToCloud } from "@/lib/migrateGuest";
 import { MigrationIndicator } from "@/components/MigrationIndicator";
+import { AppShell } from "@/components/app/AppShell";
 
 import appCss from "../styles.css?url";
 
@@ -129,7 +130,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <MigrationIndicator />
-      <Outlet />
+      <AppShell>
+        <Outlet />
+      </AppShell>
     </QueryClientProvider>
   );
 }
