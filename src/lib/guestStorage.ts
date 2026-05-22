@@ -109,6 +109,15 @@ export const GuestStorage = {
     write(KEYS.principles, [principle, ...all]);
   },
 
+  // ---------- Chapters ----------
+  getChapters(): Chapter[] {
+    return read<Chapter[]>(KEYS.chapters, []);
+  },
+  addChapter(chapter: Chapter): void {
+    const all = GuestStorage.getChapters();
+    write(KEYS.chapters, [chapter, ...all]);
+  },
+
   // ---------- Clear (após migração) ----------
   clearAll(): void {
     if (!isBrowser()) return;
