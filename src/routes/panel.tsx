@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { OperatorPanel } from '@/components/panel/OperatorPanel';
 
 export const Route = createFileRoute('/panel')({
-  component: () => <Placeholder title="Painel do Operador" />,
+  component: OperatorPanel,
 });
