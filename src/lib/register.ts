@@ -1,0 +1,335 @@
+// Persistência unificada para o sistema de registro (Sprint 6).
+// Pulse / Structured (C/O/P/A) / Corrective / Passive.
+// Funciona em modo guest (localStorage) e autenticado (Supabase).
+
+import { GuestStorage, guestId } from './guestStorage';
+import { supabase } from './supabase';
+import type { Entry, Principle } from '@/types/database';
+import type {
+  EntryType,
+  OperationalLayer,
+  ScenarioType,
+} from '@/types/app';
+
+const INTERPRETATION_TERMS = [
+  'acho que',
+  'parece',
+  'parece que',
+  'deve ser',
+  'imagino',
+  'talvez',
+  'creio',
+  'suponho',
+];
+
+export function detectInterpretation(text: string): boolean {
+  const t = text.toLowerCase();
+  return INTERPRETATION_TERMS.some((term) => t.includes(term));
+}
+
+export type PulseClassification = 'fact' | 'decision' | 'result' | 'doubt';
+
+export interface PulseContent {
+  text: string;
+  fact_text: string;
+  interpretation_text: string;
+  classification: PulseClassification;
+  input_method: 'text' | 'voice';
+  has_mixed_interpretation: boolean;
+}
+
+export interface StructuredCContent {
+  fact_text: string;
+  interpretation_text: string;
+  hypothesis_text: string;
+  imv_possible: string;
+}
+
+export interface StructuredOContent {
+  resources: string;
+  frictions: string;
+  bottleneck: string;
+}
+
+export interface StructuredPContent {
+  action: string;
+  reversible: boolean | null;
+  cheap: boolean | null;
+  specific: boolean | null;
+  measurable: boolean | null;
+  metric: string;
+  deadline: string | null;
+  cut_rule: string;
+  layer: OperationalLayer | null;
+  ethical_check: string | null;
+}
+
+export interface StructuredAContent {
+  fact_text: string;
+  interpretation_text: string;
+  principle_text: string;
+  decision: string;
+  what_worked: string;
+  repeat_rule: string;
+  cut_rule_next: string;
+  next_bottleneck: string;
+}
+
+export interface CorrectiveContent {
+  correct_version: string;
+  why_previous_was_imprecise: string;
+}
+
+async function insertEntry(args: {
+  projectId: string;
+  entry_type: EntryType | 'passive';
+  content: Record<string, unknown>;
+  is_clean_fact: boolean;
+  linked_to?: string | null;
+  ai_assist_used?: boolean;
+  ai_assist_type?: string | null;
+  scenario_type_at_entry?: ScenarioType | null;
+  layer_at_entry?: OperationalLayer | null;
+  classification?: string | null;
+  copa_phase?: 'C' | 'O' | 'P' | 'A' | null;
+}): Promise<Entry> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const now = new Date().toISOString();
+  const userId = session?.user.id ?? 'guest';
+
+  const entry: Entry = {
+    id: guestId(),
+    project_id: args.projectId,
+    user_id: userId,
+    entry_type: args.entry_type,
+    content: args.content,
+    classification: args.classification ?? null,
+    is_clean_fact: args.is_clean_fact,
+    copa_phase: args.copa_phase ?? null,
+    linked_to: args.linked_to ?? null,
+    edit_history: [],
+    scenario_type_at_entry: args.scenario_type_at_entry ?? null,
+    layer_at_entry: args.layer_at_entry ?? null,
+    ai_assist_used: args.ai_assist_used ?? false,
+    ai_assist_type: args.ai_assist_type ?? null,
+    created_at: now,
+  };
+
+  if (!session) {
+    GuestStorage.addEntry(entry);
+    GuestStorage.updateProject(args.projectId, { last_entry_at: now });
+    return entry;
+  }
+
+  const { data, error } = await supabase
+    .from('entries')
+    .insert({
+      project_id: args.projectId,
+      user_id: userId,
+      entry_type: args.entry_type,
+      content: args.content,
+      is_clean_fact: args.is_clean_fact,
+      linked_to: args.linked_to ?? null,
+      classification: args.classification ?? null,
+      copa_phase: args.copa_phase ?? null,
+      scenario_type_at_entry: args.scenario_type_at_entry ?? null,
+      layer_at_entry: args.layer_at_entry ?? null,
+      ai_assist_used: args.ai_assist_used ?? false,
+      ai_assist_type: args.ai_assist_type ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  await supabase.from('projects').update({ last_entry_at: now }).eq('id', args.projectId);
+  return data as Entry;
+}
+
+// ---------- Pulse ----------
+
+export async function savePulse(
+  projectId: string,
+  content: PulseContent,
+): Promise<Entry> {
+  const isCleanFact =
+    content.classification === 'fact' && !content.has_mixed_interpretation;
+  return insertEntry({
+    projectId,
+    entry_type: 'pulse',
+    content: content as unknown as Record<string, unknown>,
+    is_clean_fact: isCleanFact,
+    classification: content.classification,
+    ai_assist_used: false,
+  });
+}
+
+// ---------- Structured ----------
+
+export async function saveStructuredC(
+  projectId: string,
+  content: StructuredCContent,
+): Promise<Entry> {
+  return insertEntry({
+    projectId,
+    entry_type: 'structured_C',
+    content: content as unknown as Record<string, unknown>,
+    is_clean_fact: !!content.fact_text && !content.interpretation_text,
+    copa_phase: 'C',
+  });
+}
+
+export async function saveStructuredO(
+  projectId: string,
+  content: StructuredOContent,
+): Promise<Entry> {
+  return insertEntry({
+    projectId,
+    entry_type: 'structured_O',
+    content: content as unknown as Record<string, unknown>,
+    is_clean_fact: false,
+    copa_phase: 'O',
+  });
+}
+
+export async function saveStructuredP(
+  projectId: string,
+  content: StructuredPContent,
+): Promise<Entry> {
+  return insertEntry({
+    projectId,
+    entry_type: 'structured_P',
+    content: content as unknown as Record<string, unknown>,
+    is_clean_fact: false,
+    layer_at_entry: content.layer,
+    copa_phase: 'P',
+  });
+}
+
+// Salva APA e — se houver principle_text — cria entrada em `principles`.
+// Retorna a entry e flag isFirstPrinciple para acionar RegistrationNudge.
+export async function saveStructuredA(
+  projectId: string,
+  content: StructuredAContent,
+): Promise<{ entry: Entry; principle: Principle | null; isFirstPrinciple: boolean }> {
+  const entry = await insertEntry({
+    projectId,
+    entry_type: 'structured_A',
+    content: content as unknown as Record<string, unknown>,
+    is_clean_fact: false,
+    copa_phase: 'A',
+  });
+
+  if (!content.principle_text.trim()) {
+    return { entry, principle: null, isFirstPrinciple: false };
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const now = new Date().toISOString();
+  const userId = session?.user.id ?? 'guest';
+
+  let isFirstPrinciple = false;
+  let principle: Principle;
+
+  if (!session) {
+    const existing = GuestStorage.getPrinciples().filter(
+      (p) => p.project_id === projectId,
+    );
+    isFirstPrinciple = existing.length === 0;
+
+    principle = {
+      id: guestId(),
+      project_id: projectId,
+      user_id: userId,
+      apa_entry_id: entry.id,
+      content: content.principle_text.trim(),
+      tags: [],
+      connections: [],
+      versions: [],
+      is_archived: false,
+      scenario_type: null,
+      layer: null,
+      is_master_principle: false,
+      recall_count: 0,
+      last_recalled_at: null,
+      created_at: now,
+      updated_at: now,
+    };
+    GuestStorage.addPrinciple(principle);
+  } else {
+    const { count } = await supabase
+      .from('principles')
+      .select('id', { count: 'exact', head: true })
+      .eq('project_id', projectId);
+    isFirstPrinciple = (count ?? 0) === 0;
+
+    const { data, error } = await supabase
+      .from('principles')
+      .insert({
+        project_id: projectId,
+        user_id: userId,
+        apa_entry_id: entry.id,
+        content: content.principle_text.trim(),
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    principle = data as Principle;
+  }
+
+  return { entry, principle, isFirstPrinciple };
+}
+
+// ---------- Corrective ----------
+
+export async function saveCorrective(
+  originalEntryId: string,
+  projectId: string,
+  content: CorrectiveContent,
+): Promise<Entry> {
+  return insertEntry({
+    projectId,
+    entry_type: 'corrective',
+    content: content as unknown as Record<string, unknown>,
+    is_clean_fact: false,
+    linked_to: originalEntryId,
+  });
+}
+
+// ---------- Passive ----------
+
+export interface PassiveEvent {
+  kind:
+    | 'route_visit'
+    | 'register_abandoned'
+    | 'register_completed'
+    | 'time_between_registers';
+  route?: string;
+  entry_type?: string;
+  ms_since_last_entry?: number;
+  hour_local?: number;
+  weekday_local?: number;
+}
+
+export async function savePassive(
+  projectId: string | null,
+  event: PassiveEvent,
+): Promise<void> {
+  // Sem projeto: salva apenas em guest scratchpad (best-effort).
+  if (!projectId) {
+    try {
+      const k = 'aop.passive_buffer';
+      const raw = window.localStorage.getItem(k);
+      const arr = raw ? JSON.parse(raw) : [];
+      arr.push({ ...event, ts: new Date().toISOString() });
+      window.localStorage.setItem(k, JSON.stringify(arr.slice(-200)));
+    } catch { /* noop */ }
+    return;
+  }
+  try {
+    await insertEntry({
+      projectId,
+      entry_type: 'passive',
+      content: event as unknown as Record<string, unknown>,
+      is_clean_fact: false,
+    });
+  } catch { /* noop — registro passivo nunca quebra UI */ }
+}
