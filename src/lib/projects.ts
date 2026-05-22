@@ -112,3 +112,16 @@ export async function createProject(input: NewProjectInput): Promise<Project> {
   if (error) throw error;
   return data as Project;
 }
+
+export async function updateProject(
+  id: string,
+  patch: Partial<Project>,
+): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    GuestStorage.updateProject(id, patch);
+    return;
+  }
+  const { error } = await supabase.from('projects').update(patch).eq('id', id);
+  if (error) throw error;
+}
