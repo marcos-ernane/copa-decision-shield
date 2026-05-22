@@ -27,7 +27,7 @@ export function usePanelData(): PanelData {
         projects: GuestStorage.getProjects(),
         entries: GuestStorage.getEntries(),
         principles: GuestStorage.getPrinciples(),
-        chapters: [],
+        chapters: GuestStorage.getChapters(),
         baselines: [],
         loading: false,
       });

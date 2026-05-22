@@ -2,13 +2,14 @@
 // interfaces das tabelas Supabase. Permite que o app funcione 100%
 // sem conta até o cadastro voluntário (REQ-AUTH-01).
 
-import type { Profile, Project, Entry, Principle } from '@/types/database';
+import type { Profile, Project, Entry, Principle, Chapter } from '@/types/database';
 
 const KEYS = {
   profile: 'aop.profile',
   projects: 'aop.projects',
   entries: 'aop.entries',
   principles: 'aop.principles',
+  chapters: 'aop.chapters',
   guestStartedAt: 'aop.guest_started_at',
 } as const;
 
@@ -106,6 +107,15 @@ export const GuestStorage = {
   addPrinciple(principle: Principle): void {
     const all = GuestStorage.getPrinciples();
     write(KEYS.principles, [principle, ...all]);
+  },
+
+  // ---------- Chapters ----------
+  getChapters(): Chapter[] {
+    return read<Chapter[]>(KEYS.chapters, []);
+  },
+  addChapter(chapter: Chapter): void {
+    const all = GuestStorage.getChapters();
+    write(KEYS.chapters, [chapter, ...all]);
   },
 
   // ---------- Clear (após migração) ----------
