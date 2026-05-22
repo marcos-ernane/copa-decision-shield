@@ -18,7 +18,6 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
   async function persist(patch: Partial<Principle>) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      GuestStorage.updatePrinciple?.(principle.id, patch);
       const all = GuestStorage.getPrinciples();
       const idx = all.findIndex((p) => p.id === principle.id);
       if (idx >= 0) {
