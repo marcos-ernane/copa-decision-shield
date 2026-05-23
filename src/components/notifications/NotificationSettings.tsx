@@ -89,7 +89,10 @@ export function NotificationSettings() {
     await patch({ invite: { ...cfg.invite, frequency_days: Number(v) as 3 | 7 | 14 } });
   }
 
-  useEffect(() => { setCfg(getNotifConfig()); }, []);
+  useEffect(() => {
+    setCfg(getNotifConfig());
+    setMaint(getMaintenanceNotifPrefs());
+  }, []);
 
   return (
     <div className="min-h-screen bg-background pb-24">
