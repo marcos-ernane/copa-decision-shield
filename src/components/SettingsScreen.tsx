@@ -13,6 +13,7 @@ import { PlanBadge } from './PlanBadge';
 import { UpgradeSheet } from './UpgradeSheet';
 import { TrialEndingSheet } from './TrialEndingSheet';
 import { enablePactGlobally, disablePactGlobally } from '@/lib/pact';
+import { isProtocol5FabEnabled, setProtocol5FabEnabled } from '@/components/app/Fabs';
 import type { Profile } from '@/types/database';
 import { ChevronRight } from 'lucide-react';
 
@@ -29,6 +30,11 @@ export function SettingsScreen() {
   const { userId, email, authState, subscription } = useAuthState();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [upgrade, setUpgrade] = useState(false);
+  const [p5Fab, setP5Fab] = useState(false);
+
+  useEffect(() => {
+    setP5Fab(isProtocol5FabEnabled());
+  }, []);
 
   useEffect(() => {
     if (!userId) return;
@@ -104,6 +110,21 @@ export function SettingsScreen() {
                 onCheckedChange={(v) => {
                   setProfile((p) => (p ? { ...p, pact_global_enabled: v } : p));
                   void (v ? enablePactGlobally() : disablePactGlobally());
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between px-4 py-3 gap-4">
+              <div>
+                <p className="text-body">Botão Protocolo 5 Min na Home</p>
+                <p className="text-small text-muted-foreground">
+                  Adiciona um terceiro botão flutuante de acesso rápido.
+                </p>
+              </div>
+              <Switch
+                checked={p5Fab}
+                onCheckedChange={(v) => {
+                  setP5Fab(v);
+                  setProtocol5FabEnabled(v);
                 }}
               />
             </div>

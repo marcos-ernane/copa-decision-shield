@@ -82,7 +82,7 @@ export interface CorrectiveContent {
 
 async function insertEntry(args: {
   projectId: string;
-  entry_type: EntryType | 'passive';
+  entry_type: EntryType | 'passive' | 'protocol_5min';
   content: Record<string, unknown>;
   is_clean_fact: boolean;
   linked_to?: string | null;
@@ -332,4 +332,29 @@ export async function savePassive(
       is_clean_fact: false,
     });
   } catch { /* noop — registro passivo nunca quebra UI */ }
+}
+
+// ---------- Protocol 5 Minutos (Sprint 16) ----------
+
+export interface Protocol5Content {
+  type: ScenarioType;
+  fact_text: string;
+  friction_text: string;
+  micro_action: string;
+  signal: string;
+  layer: OperationalLayer | null;
+}
+
+export async function saveProtocol5(
+  projectId: string,
+  content: Protocol5Content,
+): Promise<Entry> {
+  return insertEntry({
+    projectId,
+    entry_type: 'protocol_5min',
+    content: content as unknown as Record<string, unknown>,
+    is_clean_fact: false,
+    scenario_type_at_entry: content.type,
+    layer_at_entry: content.layer,
+  });
 }

@@ -17,7 +17,7 @@ import { saveCopaSession, countCopaSessions, type CopaSessionData } from '@/lib/
 import { supabase } from '@/lib/supabase';
 import { GuestStorage } from '@/lib/guestStorage';
 import type { Project, Principle } from '@/types/database';
-import type { ScenarioType } from '@/types/app';
+import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 type Step =
   | 'pick_project'
@@ -44,8 +44,14 @@ const FOURTEEN_DAYS = 14 * 24 * 60 * 60 * 1000;
 export function COPAShell() {
   const navigate = useNavigate();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const search = useSearch({ strict: false }) as { projectId?: string };
+  const search = useSearch({ strict: false }) as {
+    projectId?: string;
+    type?: ScenarioType;
+    layer?: OperationalLayer;
+  };
   const initialProjectId = search.projectId ?? null;
+  const presetType = search.type ?? null;
+  const presetLayer = search.layer ?? null;
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState<string | null>(initialProjectId);
@@ -101,7 +107,7 @@ export function COPAShell() {
       setProject(p);
       setPrinciples(prs);
       setHistoryCount(count);
-      setScenario(p?.scenario_type ?? null);
+      setScenario(presetType ?? p?.scenario_type ?? null);
 
       // Decide first step.
       if (alignmentEnabled) setStep('entry_alignment');
@@ -112,6 +118,11 @@ export function COPAShell() {
 
   function decideAfterAlignment(p: Project | null, prs: Principle[]): Step {
     if (!p) return 'capture';
+    // Se veio com type pré-selecionado via search param, pula a tipagem rápida.
+    if (presetType) {
+      if (p.state === 'blocked' && prs.length > 0) return 'recall';
+      return 'capture';
+    }
     const stale =
       !p.scenario_type ||
       (p.last_entry_at && Date.now() - new Date(p.last_entry_at).getTime() > FOURTEEN_DAYS);
@@ -250,6 +261,7 @@ export function COPAShell() {
       <COPAProve
         bottleneck={bottleneck}
         historyCount={historyCount}
+        initialLayer={presetLayer ?? undefined}
         onNext={(d) => { setProveData(d); setStep('assess'); }}
       />
     );
