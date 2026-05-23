@@ -44,8 +44,14 @@ const FOURTEEN_DAYS = 14 * 24 * 60 * 60 * 1000;
 export function COPAShell() {
   const navigate = useNavigate();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const search = useSearch({ strict: false }) as { projectId?: string };
+  const search = useSearch({ strict: false }) as {
+    projectId?: string;
+    type?: ScenarioType;
+    layer?: OperationalLayer;
+  };
   const initialProjectId = search.projectId ?? null;
+  const presetType = search.type ?? null;
+  const presetLayer = search.layer ?? null;
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState<string | null>(initialProjectId);
