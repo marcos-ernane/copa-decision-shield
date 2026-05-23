@@ -24,6 +24,17 @@ type Tab = MaintenanceLevel;
 export function MaintenanceScreen() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('weekly');
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerHour, setOfferHour] = useState(20);
+
+  useEffect(() => {
+    const firstUse = ensureFirstUseTracked();
+    const prefs = getMaintenanceNotifPrefs();
+    if (!prefs.enabled && shouldOfferMaintenanceNotification(firstUse)) {
+      setOfferHour(prefs.time_hour);
+      setOfferOpen(true);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background pb-24">
