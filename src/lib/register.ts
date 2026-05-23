@@ -70,6 +70,7 @@ export interface StructuredAContent {
   principle_text: string;
   decision: string;
   what_worked: string;
+  hidden_cost: string | null;
   repeat_rule: string;
   cut_rule_next: string;
   next_bottleneck: string;

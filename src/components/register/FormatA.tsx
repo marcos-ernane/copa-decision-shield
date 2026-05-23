@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
+import { BookAnchorHint } from '@/components/copa/BookAnchorHint';
 import { saveStructuredA } from '@/lib/register';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { PrincipleHighlight } from './PrincipleHighlight';
@@ -16,6 +17,7 @@ export function FormatA({ projectId, onSaved }: Props) {
   const [interp, setInterp] = useState('');
   const [principle, setPrinciple] = useState('');
   const [decision, setDecision] = useState('');
+  const [hiddenCost, setHiddenCost] = useState('');
   const [worked, setWorked] = useState('');
   const [repeatRule, setRepeatRule] = useState('');
   const [cutNext, setCutNext] = useState('');
