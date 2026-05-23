@@ -30,6 +30,11 @@ export function SettingsScreen() {
   const { userId, email, authState, subscription } = useAuthState();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [upgrade, setUpgrade] = useState(false);
+  const [p5Fab, setP5Fab] = useState(false);
+
+  useEffect(() => {
+    setP5Fab(isProtocol5FabEnabled());
+  }, []);
 
   useEffect(() => {
     if (!userId) return;
