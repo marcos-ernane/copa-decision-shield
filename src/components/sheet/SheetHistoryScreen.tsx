@@ -1,0 +1,146 @@
+// SheetHistoryScreen — lista cronológica de folhas salvas, filtros por tipo/camada.
+
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useNavigate } from '@tanstack/react-router';
+import { ChevronLeft, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
+import { LayerChip } from '@/components/project/LayerChip';
+import { listSheets } from '@/lib/sheet';
+import { listProjects } from '@/lib/projects';
+import type { OperatorSheet, Project } from '@/types/database';
+import type { ScenarioType, OperationalLayer } from '@/types/app';
+
+const SCENARIOS: ScenarioType[] = ['fluxo', 'processo', 'oferta', 'relacionamento', 'pressao'];
+const LAYERS: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia', 'escala'];
+
+function truncate(s: string | null, n = 80): string {
+  if (!s) return '—';
+  return s.length > n ? s.slice(0, n) + '…' : s;
+}
+
+export function SheetHistoryScreen() {
+  const router = useRouter();
+  const navigate = useNavigate();
+  const [sheets, setSheets] = useState<OperatorSheet[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [filterScenario, setFilterScenario] = useState<ScenarioType | null>(null);
+  const [filterLayer, setFilterLayer] = useState<OperationalLayer | null>(null);
+  const [filterProject, setFilterProject] = useState<'all' | 'with' | 'without'>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void Promise.all([listSheets(), listProjects()]).then(([s, p]) => {
+      setSheets(s); setProjects(p); setLoaded(true);
+    });
+  }, []);
+
+  const projectName = (id: string | null) =>
+    projects.find((p) => p.id === id)?.name ?? null;
+
+  const filtered = useMemo(() => sheets.filter((s) => {
+    if (filterScenario && s.scenario_type !== filterScenario) return false;
+    if (filterLayer && s.layer !== filterLayer) return false;
+    if (filterProject === 'with' && !s.project_id) return false;
+    if (filterProject === 'without' && s.project_id) return false;
+    return true;
+  }), [sheets, filterScenario, filterLayer, filterProject]);
+
+  return (
+    <div className="min-h-screen bg-background pb-24">
+      <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
+        <button onClick={() => router.history.back()} className="p-2 -ml-2 rounded-md hover:bg-accent" aria-label="Voltar">
+          <ChevronLeft className="size-5" />
+        </button>
+        <h1 className="text-heading text-foreground flex-1">Folhas salvas</h1>
+        <Button size="sm" onClick={() => navigate({ to: '/compass/sheet' })}>Nova</Button>
+      </header>
+
+      <div className="px-4 py-3 space-y-3 border-b border-border">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setFilterScenario(null)}
+            className={`text-label px-2 py-0.5 rounded-full border ${!filterScenario ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'}`}
+          >Todos os tipos</button>
+          {SCENARIOS.map((s) => (
+            <button key={s} onClick={() => setFilterScenario(filterScenario === s ? null : s)}
+              className={filterScenario === s ? 'opacity-100' : 'opacity-60'}>
+              <ScenarioTypeChip type={s} />
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setFilterLayer(null)}
+            className={`text-label px-2 py-0.5 rounded-full border ${!filterLayer ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'}`}
+          >Todas as camadas</button>
+          {LAYERS.map((l) => (
+            <button key={l} onClick={() => setFilterLayer(filterLayer === l ? null : l)}
+              className={filterLayer === l ? 'opacity-100' : 'opacity-60'}>
+              <LayerChip layer={l} />
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2 text-label">
+          {(['all', 'with', 'without'] as const).map((v) => (
+            <button key={v} onClick={() => setFilterProject(v)}
+              className={`px-2 py-0.5 rounded-full border ${filterProject === v ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'}`}>
+              {v === 'all' ? 'Todas' : v === 'with' ? 'Com projeto' : 'Sem projeto'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <main className="px-4 py-4 max-w-md mx-auto space-y-3">
+        {!loaded ? (
+          <p className="text-small text-muted-foreground">Carregando…</p>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12 space-y-3">
+            <FileText className="size-8 mx-auto text-muted-foreground" />
+            <p className="text-small text-muted-foreground">Nenhuma folha salva ainda.</p>
+            <Button onClick={() => navigate({ to: '/compass/sheet' })}>Criar primeira folha</Button>
+          </div>
+        ) : filtered.map((s) => {
+          const expanded = expandedId === s.id;
+          return (
+            <button key={s.id}
+              onClick={() => setExpandedId(expanded ? null : s.id)}
+              className="w-full text-left rounded-md border border-border bg-card p-3 space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                {s.scenario_type && <ScenarioTypeChip type={s.scenario_type} />}
+                {s.layer && <LayerChip layer={s.layer} />}
+                <span className="text-label text-muted-foreground ml-auto">
+                  {new Date(s.created_at).toLocaleDateString('pt-BR')}
+                </span>
+              </div>
+              <p className="text-small text-foreground">
+                <span className="text-muted-foreground">Fato: </span>
+                {truncate(s.fact)}
+              </p>
+              <p className="text-small text-foreground">
+                <span className="text-muted-foreground">IMV: </span>
+                {truncate(s.imv)}
+              </p>
+              <p className="text-label text-muted-foreground">
+                {s.project_id ? `Projeto: ${projectName(s.project_id) ?? '—'}` : 'Sem projeto'}
+              </p>
+              {expanded && (
+                <div className="pt-2 border-t border-border space-y-1.5 text-small">
+                  {s.friction && <p><span className="text-muted-foreground">Fricção: </span>{s.friction}</p>}
+                  {s.resource && <p><span className="text-muted-foreground">Recurso: </span>{s.resource}</p>}
+                  {s.metric && <p><span className="text-muted-foreground">Métrica: </span>{s.metric}</p>}
+                  {s.deadline && <p><span className="text-muted-foreground">Prazo: </span>{new Date(s.deadline).toLocaleDateString('pt-BR')}</p>}
+                  {s.cut_rule && <p><span className="text-muted-foreground">Corte: </span>{s.cut_rule}</p>}
+                  {s.principle && <p><span className="text-muted-foreground">Princípio: </span>{s.principle}</p>}
+                  {s.next_bottleneck && <p><span className="text-muted-foreground">Próx. gargalo: </span>{s.next_bottleneck}</p>}
+                  {s.next_action && <p><span className="text-muted-foreground">Próx. ação: </span>{s.next_action}</p>}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </main>
+    </div>
+  );
+}

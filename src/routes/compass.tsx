@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { CompassHome } from '@/components/compass/CompassHome';
 
 export const Route = createFileRoute('/compass')({
-  component: () => <Placeholder title="Bússola do Operador" />,
+  component: CompassHome,
 });

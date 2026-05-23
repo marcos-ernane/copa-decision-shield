@@ -35,7 +35,13 @@ import { Route as CopaProveRouteImport } from './routes/copa.prove'
 import { Route as CopaOrganizeRouteImport } from './routes/copa.organize'
 import { Route as CopaCaptureRouteImport } from './routes/copa.capture'
 import { Route as CopaAssessRouteImport } from './routes/copa.assess'
-import { Route as CompassSplatRouteImport } from './routes/compass.$'
+import { Route as CompassSimulationsRouteImport } from './routes/compass.simulations'
+import { Route as CompassSheetsRouteImport } from './routes/compass.sheets'
+import { Route as CompassSheetRouteImport } from './routes/compass.sheet'
+import { Route as CompassPocketRouteImport } from './routes/compass.pocket'
+import { Route as CompassMaintenanceRouteImport } from './routes/compass.maintenance'
+import { Route as CompassGuideRouteImport } from './routes/compass.guide'
+import { Route as CompassFrictionRouteImport } from './routes/compass.friction'
 import { Route as BaselineNewRouteImport } from './routes/baseline.new'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as RegisterCorrectiveEntryIdRouteImport } from './routes/register.corrective.$entryId'
@@ -177,9 +183,39 @@ const CopaAssessRoute = CopaAssessRouteImport.update({
   path: '/assess',
   getParentRoute: () => CopaRoute,
 } as any)
-const CompassSplatRoute = CompassSplatRouteImport.update({
-  id: '/$',
-  path: '/$',
+const CompassSimulationsRoute = CompassSimulationsRouteImport.update({
+  id: '/simulations',
+  path: '/simulations',
+  getParentRoute: () => CompassRoute,
+} as any)
+const CompassSheetsRoute = CompassSheetsRouteImport.update({
+  id: '/sheets',
+  path: '/sheets',
+  getParentRoute: () => CompassRoute,
+} as any)
+const CompassSheetRoute = CompassSheetRouteImport.update({
+  id: '/sheet',
+  path: '/sheet',
+  getParentRoute: () => CompassRoute,
+} as any)
+const CompassPocketRoute = CompassPocketRouteImport.update({
+  id: '/pocket',
+  path: '/pocket',
+  getParentRoute: () => CompassRoute,
+} as any)
+const CompassMaintenanceRoute = CompassMaintenanceRouteImport.update({
+  id: '/maintenance',
+  path: '/maintenance',
+  getParentRoute: () => CompassRoute,
+} as any)
+const CompassGuideRoute = CompassGuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
+  getParentRoute: () => CompassRoute,
+} as any)
+const CompassFrictionRoute = CompassFrictionRouteImport.update({
+  id: '/friction',
+  path: '/friction',
   getParentRoute: () => CompassRoute,
 } as any)
 const BaselineNewRoute = BaselineNewRouteImport.update({
@@ -248,7 +284,13 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
-  '/compass/$': typeof CompassSplatRoute
+  '/compass/friction': typeof CompassFrictionRoute
+  '/compass/guide': typeof CompassGuideRoute
+  '/compass/maintenance': typeof CompassMaintenanceRoute
+  '/compass/pocket': typeof CompassPocketRoute
+  '/compass/sheet': typeof CompassSheetRoute
+  '/compass/sheets': typeof CompassSheetsRoute
+  '/compass/simulations': typeof CompassSimulationsRoute
   '/copa/assess': typeof CopaAssessRoute
   '/copa/capture': typeof CopaCaptureRoute
   '/copa/organize': typeof CopaOrganizeRoute
@@ -287,7 +329,13 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
-  '/compass/$': typeof CompassSplatRoute
+  '/compass/friction': typeof CompassFrictionRoute
+  '/compass/guide': typeof CompassGuideRoute
+  '/compass/maintenance': typeof CompassMaintenanceRoute
+  '/compass/pocket': typeof CompassPocketRoute
+  '/compass/sheet': typeof CompassSheetRoute
+  '/compass/sheets': typeof CompassSheetsRoute
+  '/compass/simulations': typeof CompassSimulationsRoute
   '/copa/assess': typeof CopaAssessRoute
   '/copa/capture': typeof CopaCaptureRoute
   '/copa/organize': typeof CopaOrganizeRoute
@@ -327,7 +375,13 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
-  '/compass/$': typeof CompassSplatRoute
+  '/compass/friction': typeof CompassFrictionRoute
+  '/compass/guide': typeof CompassGuideRoute
+  '/compass/maintenance': typeof CompassMaintenanceRoute
+  '/compass/pocket': typeof CompassPocketRoute
+  '/compass/sheet': typeof CompassSheetRoute
+  '/compass/sheets': typeof CompassSheetsRoute
+  '/compass/simulations': typeof CompassSimulationsRoute
   '/copa/assess': typeof CopaAssessRoute
   '/copa/capture': typeof CopaCaptureRoute
   '/copa/organize': typeof CopaOrganizeRoute
@@ -368,7 +422,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/callback'
     | '/baseline/new'
-    | '/compass/$'
+    | '/compass/friction'
+    | '/compass/guide'
+    | '/compass/maintenance'
+    | '/compass/pocket'
+    | '/compass/sheet'
+    | '/compass/sheets'
+    | '/compass/simulations'
     | '/copa/assess'
     | '/copa/capture'
     | '/copa/organize'
@@ -407,7 +467,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/callback'
     | '/baseline/new'
-    | '/compass/$'
+    | '/compass/friction'
+    | '/compass/guide'
+    | '/compass/maintenance'
+    | '/compass/pocket'
+    | '/compass/sheet'
+    | '/compass/sheets'
+    | '/compass/simulations'
     | '/copa/assess'
     | '/copa/capture'
     | '/copa/organize'
@@ -446,7 +512,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/callback'
     | '/baseline/new'
-    | '/compass/$'
+    | '/compass/friction'
+    | '/compass/guide'
+    | '/compass/maintenance'
+    | '/compass/pocket'
+    | '/compass/sheet'
+    | '/compass/sheets'
+    | '/compass/simulations'
     | '/copa/assess'
     | '/copa/capture'
     | '/copa/organize'
@@ -677,11 +749,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CopaAssessRouteImport
       parentRoute: typeof CopaRoute
     }
-    '/compass/$': {
-      id: '/compass/$'
-      path: '/$'
-      fullPath: '/compass/$'
-      preLoaderRoute: typeof CompassSplatRouteImport
+    '/compass/simulations': {
+      id: '/compass/simulations'
+      path: '/simulations'
+      fullPath: '/compass/simulations'
+      preLoaderRoute: typeof CompassSimulationsRouteImport
+      parentRoute: typeof CompassRoute
+    }
+    '/compass/sheets': {
+      id: '/compass/sheets'
+      path: '/sheets'
+      fullPath: '/compass/sheets'
+      preLoaderRoute: typeof CompassSheetsRouteImport
+      parentRoute: typeof CompassRoute
+    }
+    '/compass/sheet': {
+      id: '/compass/sheet'
+      path: '/sheet'
+      fullPath: '/compass/sheet'
+      preLoaderRoute: typeof CompassSheetRouteImport
+      parentRoute: typeof CompassRoute
+    }
+    '/compass/pocket': {
+      id: '/compass/pocket'
+      path: '/pocket'
+      fullPath: '/compass/pocket'
+      preLoaderRoute: typeof CompassPocketRouteImport
+      parentRoute: typeof CompassRoute
+    }
+    '/compass/maintenance': {
+      id: '/compass/maintenance'
+      path: '/maintenance'
+      fullPath: '/compass/maintenance'
+      preLoaderRoute: typeof CompassMaintenanceRouteImport
+      parentRoute: typeof CompassRoute
+    }
+    '/compass/guide': {
+      id: '/compass/guide'
+      path: '/guide'
+      fullPath: '/compass/guide'
+      preLoaderRoute: typeof CompassGuideRouteImport
+      parentRoute: typeof CompassRoute
+    }
+    '/compass/friction': {
+      id: '/compass/friction'
+      path: '/friction'
+      fullPath: '/compass/friction'
+      preLoaderRoute: typeof CompassFrictionRouteImport
       parentRoute: typeof CompassRoute
     }
     '/baseline/new': {
@@ -758,11 +872,23 @@ declare module '@tanstack/react-router' {
 }
 
 interface CompassRouteChildren {
-  CompassSplatRoute: typeof CompassSplatRoute
+  CompassFrictionRoute: typeof CompassFrictionRoute
+  CompassGuideRoute: typeof CompassGuideRoute
+  CompassMaintenanceRoute: typeof CompassMaintenanceRoute
+  CompassPocketRoute: typeof CompassPocketRoute
+  CompassSheetRoute: typeof CompassSheetRoute
+  CompassSheetsRoute: typeof CompassSheetsRoute
+  CompassSimulationsRoute: typeof CompassSimulationsRoute
 }
 
 const CompassRouteChildren: CompassRouteChildren = {
-  CompassSplatRoute: CompassSplatRoute,
+  CompassFrictionRoute: CompassFrictionRoute,
+  CompassGuideRoute: CompassGuideRoute,
+  CompassMaintenanceRoute: CompassMaintenanceRoute,
+  CompassPocketRoute: CompassPocketRoute,
+  CompassSheetRoute: CompassSheetRoute,
+  CompassSheetsRoute: CompassSheetsRoute,
+  CompassSimulationsRoute: CompassSimulationsRoute,
 }
 
 const CompassRouteWithChildren =
