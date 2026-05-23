@@ -118,6 +118,13 @@ export function COPAShell() {
       setScenario(presetType ?? p?.scenario_type ?? null);
 
       // Decide first step.
+      if (fromCreative) {
+        // Sintetiza bottleneck "excesso de opções" (origem do fluxo criativo).
+        setBottleneck('opcoes');
+        setCaptureData({ text: presetAction ?? '', flagged_interpretation: false });
+        setStep('prove');
+        return;
+      }
       if (alignmentEnabled) setStep('entry_alignment');
       else setStep(decideAfterAlignment(p, prs));
     })();
