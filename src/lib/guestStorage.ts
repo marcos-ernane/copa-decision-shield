@@ -119,6 +119,15 @@ export const GuestStorage = {
     write(KEYS.chapters, [chapter, ...all]);
   },
 
+  // ---------- Baselines ----------
+  getBaselines(): BaselineAssessment[] {
+    return read<BaselineAssessment[]>(KEYS.baselines, []);
+  },
+  addBaseline(baseline: BaselineAssessment): void {
+    const all = GuestStorage.getBaselines();
+    write(KEYS.baselines, [...all, baseline]);
+  },
+
   // ---------- Clear (após migração) ----------
   clearAll(): void {
     if (!isBrowser()) return;
