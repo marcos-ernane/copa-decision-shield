@@ -35,6 +35,9 @@ interface Props {
   bottleneck: Bottleneck;
   historyCount: number;
   initialLayer?: OperationalLayer;
+  initialAction?: string;
+  initialMetric?: string;
+  initialDeadline?: string | null;
   onNext: (data: ProveData) => void;
 }
 
@@ -68,15 +71,15 @@ function YesNo({ value, onChange }: { value: Tri; onChange: (v: boolean) => void
   );
 }
 
-export function COPAProve({ bottleneck, historyCount, initialLayer, onNext }: Props) {
+export function COPAProve({ bottleneck, historyCount, initialLayer, initialAction, initialMetric, initialDeadline, onNext }: Props) {
   const [d, setD] = useState<ProveData>({
-    action: '',
+    action: initialAction ?? '',
     reversible: null,
     cheap: null,
     specific: null,
     measurable: null,
-    metric: '',
-    deadline: null,
+    metric: initialMetric ?? '',
+    deadline: initialDeadline ?? null,
     layer: initialLayer ?? null,
     ethical_check: null,
     situational_fit: null,

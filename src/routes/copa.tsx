@@ -16,6 +16,10 @@ export const Route = createFileRoute('/copa')({
       typeof s.layer === 'string' && (LAYERS as string[]).includes(s.layer)
         ? (s.layer as OperationalLayer)
         : undefined,
+    from: s.from === 'creative' ? ('creative' as const) : undefined,
+    action: typeof s.action === 'string' ? s.action : undefined,
+    metric: typeof s.metric === 'string' ? s.metric : undefined,
+    deadline: typeof s.deadline === 'string' ? s.deadline : undefined,
   }),
   component: COPAShell,
 });

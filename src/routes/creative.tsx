@@ -1,6 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { PaywallGate } from '@/components/PaywallGate';
+import { CreativeShell } from '@/components/creative/CreativeShell';
 
 export const Route = createFileRoute('/creative')({
-  component: () => <Placeholder title="Criatividade Funcional" />,
+  component: CreativeRoute,
 });
+
+function CreativeRoute() {
+  return (
+    <div className="min-h-screen bg-background pb-24">
+      <PaywallGate feature="creative_flow" reason="Criatividade Funcional">
+        <CreativeShell />
+      </PaywallGate>
+    </div>
+  );
+}

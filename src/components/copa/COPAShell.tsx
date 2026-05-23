@@ -48,10 +48,18 @@ export function COPAShell() {
     projectId?: string;
     type?: ScenarioType;
     layer?: OperationalLayer;
+    from?: 'creative';
+    action?: string;
+    metric?: string;
+    deadline?: string;
   };
   const initialProjectId = search.projectId ?? null;
   const presetType = search.type ?? null;
   const presetLayer = search.layer ?? null;
+  const fromCreative = search.from === 'creative';
+  const presetAction = search.action ?? null;
+  const presetMetric = search.metric ?? null;
+  const presetDeadline = search.deadline ?? null;
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState<string | null>(initialProjectId);
@@ -110,6 +118,13 @@ export function COPAShell() {
       setScenario(presetType ?? p?.scenario_type ?? null);
 
       // Decide first step.
+      if (fromCreative) {
+        // Sintetiza bottleneck "excesso de opções" (origem do fluxo criativo).
+        setBottleneck('opcoes');
+        setCaptureData({ text: presetAction ?? '', flagged_interpretation: false });
+        setStep('prove');
+        return;
+      }
       if (alignmentEnabled) setStep('entry_alignment');
       else setStep(decideAfterAlignment(p, prs));
     })();
@@ -262,6 +277,9 @@ export function COPAShell() {
         bottleneck={bottleneck}
         historyCount={historyCount}
         initialLayer={presetLayer ?? undefined}
+        initialAction={presetAction ?? undefined}
+        initialMetric={presetMetric ?? undefined}
+        initialDeadline={presetDeadline ?? undefined}
         onNext={(d) => { setProveData(d); setStep('assess'); }}
       />
     );
