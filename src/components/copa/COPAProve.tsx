@@ -68,7 +68,7 @@ function YesNo({ value, onChange }: { value: Tri; onChange: (v: boolean) => void
   );
 }
 
-export function COPAProve({ bottleneck, historyCount, onNext }: Props) {
+export function COPAProve({ bottleneck, historyCount, initialLayer, onNext }: Props) {
   const [d, setD] = useState<ProveData>({
     action: '',
     reversible: null,
@@ -77,7 +77,7 @@ export function COPAProve({ bottleneck, historyCount, onNext }: Props) {
     measurable: null,
     metric: '',
     deadline: null,
-    layer: null,
+    layer: initialLayer ?? null,
     ethical_check: null,
     situational_fit: null,
   });
