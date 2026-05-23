@@ -1,5 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useRouter } from '@tanstack/react-router';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
 import { FrictionMatrix } from '@/components/compass/FrictionMatrix';
 import type { ScenarioType } from '@/types/app';
