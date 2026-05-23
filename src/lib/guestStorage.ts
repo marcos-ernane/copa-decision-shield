@@ -10,6 +10,7 @@ const KEYS = {
   entries: 'aop.entries',
   principles: 'aop.principles',
   chapters: 'aop.chapters',
+  baselines: 'aop.baselines',
   guestStartedAt: 'aop.guest_started_at',
 } as const;
 
