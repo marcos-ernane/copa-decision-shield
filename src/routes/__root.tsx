@@ -78,14 +78,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Operador de Precisão" },
+      { name: "description", content: "Sistema de inteligência operacional pessoal baseado no Método COPA" },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Operador de Precisão" },
+      { property: "og:description", content: "Sistema de inteligência operacional pessoal baseado no Método COPA" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Operador de Precisão" },
+      { name: "twitter:description", content: "Sistema de inteligência operacional pessoal baseado no Método COPA" },
     ],
     links: [
       {
