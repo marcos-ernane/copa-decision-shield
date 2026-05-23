@@ -174,15 +174,7 @@ function ProjectDashboard() {
 
         {/* Semana do Operador */}
         {project.pact_enabled ? (
-          <section className="rounded-md border border-border bg-card p-4 space-y-2">
-            <h2 className="text-label text-muted-foreground uppercase">Semana do Operador</h2>
-            <div className="grid grid-cols-2 gap-2 text-small text-foreground">
-              <div>Seg — Captura {project.pact_day_capture ? '✔' : '○'}</div>
-              <div>Qua — Organização {project.pact_day_organize ? '✔' : '○'}</div>
-              <div>Sex — Prova {project.pact_day_prove ? '✔' : '○'}</div>
-              <div>Dom — Aferição {project.pact_day_assess ? '✔' : '○'}</div>
-            </div>
-          </section>
+          <PactWeekView projectId={project.id} cycle={getCycle(project)} />
         ) : (
           <Link
             to="/project/$id/pact"
