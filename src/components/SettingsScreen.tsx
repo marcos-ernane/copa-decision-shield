@@ -37,8 +37,16 @@ export function SettingsScreen() {
 
   async function togglePref(key: Pref, value: boolean) {
     setProfile((p) => (p ? { ...p, [key]: value } : p));
-    if (!userId) return;
-    await supabase.from('profiles').update({ [key]: value }).eq('id', userId);
+    GuestStorage.setProfile({ [key]: value });
+    if (userId) {
+      await supabase.from('profiles').update({ [key]: value }).eq('id', userId);
+    }
+    if (key === 'reading_mode_enabled') {
+      // garante sync entre Supabase + GuestStorage + banner
+      await setReadingMode(value);
+    } else {
+      emitReadingModeChange();
+    }
   }
 
   const isPaid = authState === 'AUTHENTICATED_ANNUAL' || authState === 'AUTHENTICATED_LIFETIME' || authState === 'AUTHENTICATED_TRIAL';
