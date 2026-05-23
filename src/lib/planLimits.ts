@@ -83,9 +83,9 @@ const FREE_LIMITS: PlanLimits = {
   entry_alignment: true,
   pressure_reality_check: true,
   principle_recall: true,
-} as const;
+};
 
-const PAID_LIMITS = {
+const PAID_LIMITS: PlanLimits = {
   max_active_projects: Infinity,
   structured_per_month: Infinity,
   timeline_days: Infinity,
@@ -121,9 +121,9 @@ const PAID_LIMITS = {
   entry_alignment: true,
   pressure_reality_check: true,
   principle_recall: true,
-} as const;
+};
 
-export type PlanLimits = typeof FREE_LIMITS;
+
 export type PlanFeature = keyof PlanLimits;
 
 export const PLAN_LIMITS: Record<PlanKey, PlanLimits> = {
