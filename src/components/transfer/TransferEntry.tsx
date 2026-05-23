@@ -1,5 +1,5 @@
 // TransferEntry — tela de entrada com detecção de prova em andamento.
-import { useEffect, useState } from 'react';
+
 
 interface Props {
   inProgress: boolean;
