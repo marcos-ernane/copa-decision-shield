@@ -131,7 +131,7 @@ export function ReadingModeScreen() {
                     key={p.id}
                     className="rounded-lg border border-border bg-card p-4"
                   >
-                    <p className="text-body whitespace-pre-line">{p.text}</p>
+                    <p className="text-body whitespace-pre-line">{p.content}</p>
                   </div>
                 ))}
               </div>
