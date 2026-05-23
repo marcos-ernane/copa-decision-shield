@@ -195,6 +195,13 @@ export function OperatorSheetScreen({
             <section className="space-y-3">
               <p className="text-label uppercase text-muted-foreground">Consolidação</p>
               <SheetField label="Princípio" value={principle} onChange={setPrinciple} type="textarea" />
+              <SheetField
+                label="Custo oculto"
+                value={ethicalCheck}
+                onChange={setEthicalCheck}
+                type="textarea"
+                placeholder="Alguém perde tempo, dinheiro ou relacionamento se der errado?"
+              />
               <SheetField label="Próximo gargalo" value={nextBottleneck} onChange={setNextBottleneck} type="textarea" />
               <SheetField label="Próxima ação" value={nextAction} onChange={setNextAction} type="textarea" />
             </section>
