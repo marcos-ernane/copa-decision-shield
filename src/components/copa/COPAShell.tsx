@@ -261,6 +261,7 @@ export function COPAShell() {
       <COPAProve
         bottleneck={bottleneck}
         historyCount={historyCount}
+        initialLayer={presetLayer ?? undefined}
         onNext={(d) => { setProveData(d); setStep('assess'); }}
       />
     );
