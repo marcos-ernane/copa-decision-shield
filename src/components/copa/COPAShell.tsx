@@ -118,6 +118,11 @@ export function COPAShell() {
 
   function decideAfterAlignment(p: Project | null, prs: Principle[]): Step {
     if (!p) return 'capture';
+    // Se veio com type pré-selecionado via search param, pula a tipagem rápida.
+    if (presetType) {
+      if (p.state === 'blocked' && prs.length > 0) return 'recall';
+      return 'capture';
+    }
     const stale =
       !p.scenario_type ||
       (p.last_entry_at && Date.now() - new Date(p.last_entry_at).getTime() > FOURTEEN_DAYS);
