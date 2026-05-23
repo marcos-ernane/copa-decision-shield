@@ -44,7 +44,9 @@ export function OperatorPanel() {
   }, [projects]);
 
   const lastPrinciples = principles.slice(-3).reverse();
-  const showTransfer = projects.filter((p) => p.state === 'concluded').length >= 3;
+  const copaCycles = entries.filter((e) => e.entry_type === 'copa_session').length;
+  const showTransfer =
+    projects.filter((p) => p.state === 'concluded').length >= 3 || copaCycles >= 10;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -160,12 +162,18 @@ export function OperatorPanel() {
               Você consegue aplicar o método em cenários completamente diferentes?
             </p>
             <div className="flex gap-2">
-              <button disabled className="px-3 py-1.5 rounded-md border border-border text-small text-muted-foreground opacity-60">
+              <Link
+                to="/panel/transfer"
+                className="px-3 py-1.5 rounded-md border border-border text-small text-foreground"
+              >
                 Iniciar prova
-              </button>
-              <button disabled className="px-3 py-1.5 rounded-md border border-border text-small text-muted-foreground opacity-60">
+              </Link>
+              <Link
+                to="/panel/transfer"
+                className="px-3 py-1.5 rounded-md border border-border text-small text-foreground"
+              >
                 Ver resultado
-              </button>
+              </Link>
             </div>
           </section>
         )}
