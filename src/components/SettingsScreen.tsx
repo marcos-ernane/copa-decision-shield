@@ -12,6 +12,7 @@ import { GuestStorage } from '@/lib/guestStorage';
 import { PlanBadge } from './PlanBadge';
 import { UpgradeSheet } from './UpgradeSheet';
 import { TrialEndingSheet } from './TrialEndingSheet';
+import { enablePactGlobally, disablePactGlobally } from '@/lib/pact';
 import type { Profile } from '@/types/database';
 import { ChevronRight } from 'lucide-react';
 
