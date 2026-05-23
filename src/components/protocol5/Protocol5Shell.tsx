@@ -209,7 +209,3 @@ export function Protocol5Shell() {
   );
 }
 
-// Hook utilitário (não usado no shell — apenas para evitar dead import warnings em refactor)
-export function _noop() {
-  useEffect(() => undefined, []);
-}
