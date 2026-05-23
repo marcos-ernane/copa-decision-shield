@@ -61,6 +61,7 @@ export function PressureNextStep({ risk, fact, historyCount, onDefine }: Props) 
             A pressa aqui pode quebrar algo importante?
           </p>
           <VoiceInput value={ethical} onChange={setEthical} rows={2} placeholder="" />
+          <BookAnchorHint text="Isso resolve sem destruir? — princípio ético do COPA, Módulo Base do livro." />
         </div>
       )}
 
