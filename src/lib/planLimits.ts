@@ -123,6 +123,7 @@ const PAID_LIMITS: PlanLimits = {
   entry_alignment: true,
   pressure_reality_check: true,
   principle_recall: true,
+  simulations: true,
 };
 
 
