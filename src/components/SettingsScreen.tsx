@@ -92,8 +92,24 @@ export function SettingsScreen() {
                 />
               </div>
             ))}
+            <div className="flex items-center justify-between px-4 py-3 gap-4">
+              <div>
+                <p className="text-body">Pacto Global</p>
+                <p className="text-small text-muted-foreground">
+                  Ativar pacto semanal em todos os projetos ativos.
+                </p>
+              </div>
+              <Switch
+                checked={Boolean(profile?.pact_global_enabled)}
+                onCheckedChange={(v) => {
+                  setProfile((p) => (p ? { ...p, pact_global_enabled: v } : p));
+                  void (v ? enablePactGlobally() : disablePactGlobally());
+                }}
+              />
+            </div>
           </div>
         </Section>
+
 
         <Section title="Notificações">
           <LinkRow to="/settings/notifications" label="Gerenciar notificações" />
