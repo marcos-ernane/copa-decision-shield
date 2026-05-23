@@ -11,8 +11,13 @@ import {
 import {
   getNotifConfig, setNotifConfig, requestPermission,
   scheduleWeeklyPulse, buildWeeklyPulseContent,
+  scheduleMaintenanceReminders, cancelMaintenanceReminders,
   type NotifConfig,
 } from '@/lib/notifications';
+import {
+  getMaintenanceNotifPrefs, setMaintenanceNotifPrefs,
+  type MaintenanceNotifPrefs,
+} from '@/lib/compass';
 import { listProjects } from '@/lib/projects';
 import { GuestStorage } from '@/lib/guestStorage';
 import { SilenceModeSheet } from './SilenceModeSheet';
