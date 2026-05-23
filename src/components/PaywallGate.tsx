@@ -80,6 +80,7 @@ function labelForFeature(f: PlanFeature): string {
     compass_full: 'Bússola completa',
     creative_flow: 'Fluxo Criativo',
     transfer_proof: 'Prova de Transferência',
+    simulations: 'Simulações do Operador',
   };
   return map[f] ?? 'Esta funcionalidade';
 }
