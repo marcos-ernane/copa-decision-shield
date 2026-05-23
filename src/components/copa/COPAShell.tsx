@@ -48,10 +48,18 @@ export function COPAShell() {
     projectId?: string;
     type?: ScenarioType;
     layer?: OperationalLayer;
+    from?: 'creative';
+    action?: string;
+    metric?: string;
+    deadline?: string;
   };
   const initialProjectId = search.projectId ?? null;
   const presetType = search.type ?? null;
   const presetLayer = search.layer ?? null;
+  const fromCreative = search.from === 'creative';
+  const presetAction = search.action ?? null;
+  const presetMetric = search.metric ?? null;
+  const presetDeadline = search.deadline ?? null;
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState<string | null>(initialProjectId);
