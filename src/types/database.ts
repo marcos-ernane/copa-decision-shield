@@ -181,6 +181,7 @@ export interface OperatorSheet {
   principle: string | null;
   next_bottleneck: string | null;
   next_action: string | null;
+  ethical_check: string | null;
   mode: SheetMode;
   created_at: string;
   updated_at: string;

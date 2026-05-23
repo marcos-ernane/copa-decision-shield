@@ -217,6 +217,7 @@ export function COPAProve({ bottleneck, historyCount, initialLayer, initialActio
           placeholder="Alguém perde tempo, dinheiro ou relacionamento se der errado?"
           rows={2}
         />
+        <BookAnchorHint text="Isso resolve sem destruir? — princípio ético do COPA, Módulo Base do livro." />
       </div>
 
       <div>

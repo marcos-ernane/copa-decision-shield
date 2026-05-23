@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
+import { BookAnchorHint } from '@/components/copa/BookAnchorHint';
 import { saveStructuredA } from '@/lib/register';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { PrincipleHighlight } from './PrincipleHighlight';
@@ -16,6 +17,7 @@ export function FormatA({ projectId, onSaved }: Props) {
   const [interp, setInterp] = useState('');
   const [principle, setPrinciple] = useState('');
   const [decision, setDecision] = useState('');
+  const [hiddenCost, setHiddenCost] = useState('');
   const [worked, setWorked] = useState('');
   const [repeatRule, setRepeatRule] = useState('');
   const [cutNext, setCutNext] = useState('');
@@ -43,6 +45,7 @@ export function FormatA({ projectId, onSaved }: Props) {
       interpretation_text: interp.trim(),
       principle_text: principle.trim(),
       decision: decision.trim(),
+      hidden_cost: hiddenCost.trim() || null,
       what_worked: worked.trim(),
       repeat_rule: repeatRule.trim(),
       cut_rule_next: cutNext.trim(),
@@ -93,6 +96,17 @@ export function FormatA({ projectId, onSaved }: Props) {
       <div>
         <p className="text-small text-muted-foreground mb-1">Decisão a partir deste resultado</p>
         <VoiceInput value={decision} onChange={setDecision} placeholder="" rows={2} />
+      </div>
+
+      <div>
+        <p className="text-small text-muted-foreground mb-1">O que funcionou sem criar dano</p>
+        <VoiceInput
+          value={hiddenCost}
+          onChange={setHiddenCost}
+          placeholder="Houve custo oculto percebido? Para quem?"
+          rows={2}
+        />
+        <BookAnchorHint text="Isso resolve sem destruir? — princípio ético do COPA, Módulo Base do livro." />
       </div>
 
       <details className="rounded-md border border-border p-3">
