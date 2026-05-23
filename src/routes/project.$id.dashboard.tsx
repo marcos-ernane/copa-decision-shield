@@ -18,6 +18,9 @@ import { LayerChip } from '@/components/project/LayerChip';
 import { IMVProgressBar } from '@/components/project/IMVProgressBar';
 import { AccumulatedCapacityCard } from '@/components/project/AccumulatedCapacityCard';
 import { ProjectStateIcon } from '@/components/project/ProjectStateIcon';
+import { PactWeekView } from '@/components/pact/PactWeekView';
+import { PactReturnSheet } from '@/components/pact/PactReturnSheet';
+import { checkPactReturn, getCycle } from '@/lib/pact';
 import type { Project, Entry, Principle } from '@/types/database';
 
 export const Route = createFileRoute('/project/$id/dashboard')({
@@ -32,6 +35,7 @@ function ProjectDashboard() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [principles, setPrinciples] = useState<Principle[]>([]);
   const [northExpanded, setNorthExpanded] = useState(false);
+  const [returnSheet, setReturnSheet] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -47,6 +51,7 @@ function ProjectDashboard() {
       setProject(p);
       setEntries(e);
       setPrinciples(pr);
+      if (checkPactReturn(p)) setReturnSheet(true);
     })();
   }, [id, navigate]);
 
@@ -169,15 +174,7 @@ function ProjectDashboard() {
 
         {/* Semana do Operador */}
         {project.pact_enabled ? (
-          <section className="rounded-md border border-border bg-card p-4 space-y-2">
-            <h2 className="text-label text-muted-foreground uppercase">Semana do Operador</h2>
-            <div className="grid grid-cols-2 gap-2 text-small text-foreground">
-              <div>Seg — Captura {project.pact_day_capture ? '✔' : '○'}</div>
-              <div>Qua — Organização {project.pact_day_organize ? '✔' : '○'}</div>
-              <div>Sex — Prova {project.pact_day_prove ? '✔' : '○'}</div>
-              <div>Dom — Aferição {project.pact_day_assess ? '✔' : '○'}</div>
-            </div>
-          </section>
+          <PactWeekView projectId={project.id} cycle={getCycle(project)} />
         ) : (
           <Link
             to="/project/$id/pact"
@@ -250,6 +247,13 @@ function ProjectDashboard() {
           </Button>
         </div>
       </main>
+      <PactReturnSheet
+        open={returnSheet}
+        projectName={project.name}
+        projectId={project.id}
+        lastCycleAt={project.pact_last_cycle_at}
+        onClose={() => setReturnSheet(false)}
+      />
     </div>
   );
 }
