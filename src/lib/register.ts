@@ -82,7 +82,7 @@ export interface CorrectiveContent {
 
 async function insertEntry(args: {
   projectId: string;
-  entry_type: EntryType | 'passive';
+  entry_type: EntryType | 'passive' | 'protocol_5min';
   content: Record<string, unknown>;
   is_clean_fact: boolean;
   linked_to?: string | null;
