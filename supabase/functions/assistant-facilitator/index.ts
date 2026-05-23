@@ -39,14 +39,33 @@ function anonymize(text: string): string {
     .replace(/\b\d{4}-\d{2}-\d{2}\b/g, '[data]');
 }
 
+const TRANSFER_REPORT_PROMPT = `Analise os 3 cenários fornecidos e gere um relatório de consistência com:
+1. Uma observação sobre a consistência de tipo (os tipos fazem sentido com os contextos?)
+2. Uma observação sobre a qualidade dos fatos (são limpos ou contêm interpretação?)
+3. Uma observação sobre as IMVs (são específicas e mensuráveis?)
+4. Uma observação sobre o princípio final (extrapola os 3 cenários?)
+
+Linguagem: factual, operacional, nunca julgamento.
+Nunca use: aprovado, reprovado, correto, incorreto, errado, certo, parabéns, bom trabalho.
+Use apenas: observação, padrão, tendência, consistente, inconsistente.
+Máximo 4 frases no total — uma por ponto.
+Inclua no final uma linha exatamente no formato: "Score: NN/100".
+Calcule o score (0 a 100) baseado em:
+- Tipos coerentes com contexto: 25 pontos
+- Fatos limpos (sem 'acho que', 'parece'): 25 pontos
+- IMVs com métrica definida: 25 pontos
+- Princípio que extrapola os 3 cenários: 25 pontos`;
+
 async function callClaude(trigger: string, payload: Record<string, unknown>): Promise<string | null> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
   if (!apiKey) return null;
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 3000);
+  const isReport = trigger === 'TRANSFER_CONSISTENCY_REPORT';
+  const timeoutId = setTimeout(() => controller.abort(), isReport ? 7500 : 3000);
 
   try {
+    const system = isReport ? `${SYSTEM_PROMPT}\n\n${TRANSFER_REPORT_PROMPT}` : SYSTEM_PROMPT;
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -56,8 +75,8 @@ async function callClaude(trigger: string, payload: Record<string, unknown>): Pr
       },
       body: JSON.stringify({
         model: 'claude-3-5-haiku-latest',
-        max_tokens: 160,
-        system: SYSTEM_PROMPT,
+        max_tokens: isReport ? 480 : 160,
+        system,
         messages: [
           {
             role: 'user',
