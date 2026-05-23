@@ -119,6 +119,7 @@ async function insertEntry(args: {
   if (!session) {
     GuestStorage.addEntry(entry);
     GuestStorage.updateProject(args.projectId, { last_entry_at: now });
+    triggerIndexUpdate();
     return entry;
   }
 
@@ -142,6 +143,7 @@ async function insertEntry(args: {
     .single();
   if (error) throw error;
   await supabase.from('projects').update({ last_entry_at: now }).eq('id', args.projectId);
+  triggerIndexUpdate();
   return data as Entry;
 }
 
