@@ -18,6 +18,9 @@ import { LayerChip } from '@/components/project/LayerChip';
 import { IMVProgressBar } from '@/components/project/IMVProgressBar';
 import { AccumulatedCapacityCard } from '@/components/project/AccumulatedCapacityCard';
 import { ProjectStateIcon } from '@/components/project/ProjectStateIcon';
+import { PactWeekView } from '@/components/pact/PactWeekView';
+import { PactReturnSheet } from '@/components/pact/PactReturnSheet';
+import { checkPactReturn, getCycle } from '@/lib/pact';
 import type { Project, Entry, Principle } from '@/types/database';
 
 export const Route = createFileRoute('/project/$id/dashboard')({
