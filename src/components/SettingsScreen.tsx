@@ -98,6 +98,27 @@ export function SettingsScreen() {
           <LinkRow to="/settings/notifications" label="Gerenciar notificações" />
         </Section>
 
+        {profile?.community_link && (
+          <Section title="Comunidade">
+            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+              <p className="text-body">Comunidade do Operador</p>
+              <p className="text-small text-muted-foreground">
+                Espaço opcional para troca entre operadores.
+                <br />
+                O uso é voluntário e externo ao app.
+              </p>
+              <a
+                href={profile.community_link}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center text-small text-foreground hover:underline underline-offset-4"
+              >
+                Acessar →
+              </a>
+            </div>
+          </Section>
+        )}
+
         <Section title="Dados">
           <div className="rounded-lg border border-border bg-card divide-y divide-border">
             <button
