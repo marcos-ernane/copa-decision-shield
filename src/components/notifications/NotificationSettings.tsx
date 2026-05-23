@@ -11,8 +11,13 @@ import {
 import {
   getNotifConfig, setNotifConfig, requestPermission,
   scheduleWeeklyPulse, buildWeeklyPulseContent,
+  scheduleMaintenanceReminders, cancelMaintenanceReminders,
   type NotifConfig,
 } from '@/lib/notifications';
+import {
+  getMaintenanceNotifPrefs, setMaintenanceNotifPrefs,
+  type MaintenanceNotifPrefs,
+} from '@/lib/compass';
 import { listProjects } from '@/lib/projects';
 import { GuestStorage } from '@/lib/guestStorage';
 import { SilenceModeSheet } from './SilenceModeSheet';
@@ -25,11 +30,26 @@ export function NotificationSettings() {
   const router = useRouter();
   const navigate = useNavigate();
   const [cfg, setCfg] = useState<NotifConfig>(getNotifConfig());
+  const [maint, setMaint] = useState<MaintenanceNotifPrefs>(getMaintenanceNotifPrefs());
   const [sheet, setSheet] = useState(false);
 
   async function patch(p: Partial<NotifConfig>) {
     const next = setNotifConfig(p);
     setCfg(next);
+  }
+
+  async function toggleMaintenance(enabled: boolean) {
+    if (enabled) await requestPermission();
+    const next = setMaintenanceNotifPrefs({ enabled });
+    setMaint(next);
+    if (enabled) await scheduleMaintenanceReminders({ time_hour: next.time_hour });
+    else await cancelMaintenanceReminders();
+  }
+
+  async function changeMaintenanceHour(hour: number) {
+    const next = setMaintenanceNotifPrefs({ time_hour: hour });
+    setMaint(next);
+    if (next.enabled) await scheduleMaintenanceReminders({ time_hour: next.time_hour });
   }
 
   async function togglePulse(enabled: boolean) {
@@ -69,7 +89,10 @@ export function NotificationSettings() {
     await patch({ invite: { ...cfg.invite, frequency_days: Number(v) as 3 | 7 | 14 } });
   }
 
-  useEffect(() => { setCfg(getNotifConfig()); }, []);
+  useEffect(() => {
+    setCfg(getNotifConfig());
+    setMaint(getMaintenanceNotifPrefs());
+  }, []);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -145,6 +168,37 @@ export function NotificationSettings() {
                   <SelectItem value="3">A cada 3 dias</SelectItem>
                   <SelectItem value="7">A cada 7 dias</SelectItem>
                   <SelectItem value="14">A cada 14 dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </section>
+
+        {/* Rotina de Manutenção */}
+        <section className="space-y-3 rounded-md border border-border bg-card p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-heading text-foreground">Rotina de Manutenção</h2>
+            <Switch checked={maint.enabled} onCheckedChange={toggleMaintenance} />
+          </div>
+          <p className="text-small text-muted-foreground">
+            Lembretes de revisão semanal, quinzenal e mensal.
+          </p>
+          {maint.enabled && (
+            <div className="space-y-1">
+              <label className="text-label text-muted-foreground uppercase">
+                Horário preferido
+              </label>
+              <Select
+                value={String(maint.time_hour)}
+                onValueChange={(v) => void changeMaintenanceHour(Number(v))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {HOURS.map((h) => (
+                    <SelectItem key={h} value={String(h)}>
+                      {String(h).padStart(2, '0')}:00
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

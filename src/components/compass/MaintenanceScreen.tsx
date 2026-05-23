@@ -2,14 +2,21 @@
 // Botão Pular visível em cada etapa. Nunca obriga.
 // Campos opcionais salvos como pulse entry. Princípio mestre opcional → principles.is_master_principle.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useNavigate } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { markMaintenanceCompleted, type MaintenanceLevel } from '@/lib/compass';
+import {
+  markMaintenanceCompleted,
+  shouldOfferMaintenanceNotification,
+  ensureFirstUseTracked,
+  getMaintenanceNotifPrefs,
+  type MaintenanceLevel,
+} from '@/lib/compass';
 import { supabase } from '@/lib/supabase';
 import { GuestStorage, guestId } from '@/lib/guestStorage';
+import { MaintenanceNotifOfferSheet } from './MaintenanceNotifOfferSheet';
 import type { Entry, Principle } from '@/types/database';
 
 type Tab = MaintenanceLevel;
@@ -17,6 +24,17 @@ type Tab = MaintenanceLevel;
 export function MaintenanceScreen() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('weekly');
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerHour, setOfferHour] = useState(20);
+
+  useEffect(() => {
+    const firstUse = ensureFirstUseTracked();
+    const prefs = getMaintenanceNotifPrefs();
+    if (!prefs.enabled && shouldOfferMaintenanceNotification(firstUse)) {
+      setOfferHour(prefs.time_hour);
+      setOfferOpen(true);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -41,6 +59,12 @@ export function MaintenanceScreen() {
       {tab === 'weekly' && <WeeklyReview />}
       {tab === 'biweekly' && <BiweeklyReview />}
       {tab === 'monthly' && <MonthlyReview />}
+
+      <MaintenanceNotifOfferSheet
+        open={offerOpen}
+        onOpenChange={setOfferOpen}
+        defaultHour={offerHour}
+      />
     </div>
   );
 }

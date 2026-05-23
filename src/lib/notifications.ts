@@ -334,6 +334,86 @@ export async function schedulePersonalInvite(project: Project, freq: 3 | 7 | 14)
   });
 }
 
+// ---------- Rotina de Manutenção — Sprint 17 ----------
+
+export interface MaintenanceReminderConfig {
+  time_hour: number; // 0..23
+}
+
+const MAINT_WEEKLY_ID = hashId('maint:weekly');
+const MAINT_BIWEEKLY_BASE = hashId('maint:biweekly');
+const MAINT_MONTHLY_BASE = hashId('maint:monthly');
+
+const MAINT_OCCURRENCES = 12; // ~3 meses para biweekly/monthly
+
+function nextSundayAt(hour: number, offsetWeeks = 0): Date {
+  const d = new Date();
+  d.setHours(hour, 0, 0, 0);
+  const daysUntilSun = (7 - d.getDay()) % 7;
+  // se hoje já é dom e já passou da hora, avança 7 dias
+  const addDays = daysUntilSun === 0 && d.getTime() < Date.now() ? 7 : daysUntilSun;
+  d.setDate(d.getDate() + addDays + offsetWeeks * 7);
+  return d;
+}
+
+function lastSundayOfMonth(year: number, month: number, hour: number): Date {
+  const last = new Date(year, month + 1, 0); // último dia do mês
+  const day = last.getDate() - last.getDay(); // recua até domingo
+  return new Date(year, month, day, hour, 0, 0, 0);
+}
+
+export async function cancelMaintenanceReminders(): Promise<void> {
+  await cancelById(MAINT_WEEKLY_ID);
+  for (let i = 0; i < MAINT_OCCURRENCES; i++) {
+    await cancelById(MAINT_BIWEEKLY_BASE + i);
+    await cancelById(MAINT_MONTHLY_BASE + i);
+  }
+}
+
+export async function scheduleMaintenanceReminders(
+  config: MaintenanceReminderConfig,
+): Promise<void> {
+  await cancelMaintenanceReminders();
+
+  const hour = Math.max(0, Math.min(23, config.time_hour));
+  const extra = { kind: 'maintenance', route: '/compass/maintenance' };
+
+  // Semanal — recorrente todo domingo no horário
+  await schedule({
+    id: MAINT_WEEKLY_ID,
+    title: 'Revisão rápida?',
+    body: '5 minutos para fechar a semana.',
+    on: { weekday: 1, hour, minute: 0 }, // Capacitor: 1=Domingo
+    extra: { ...extra, level: 'weekly' },
+  });
+
+  // Quinzenal — próximas 12 ocorrências a cada 14 dias
+  for (let i = 0; i < MAINT_OCCURRENCES; i++) {
+    const at = nextSundayAt(hour, 1 + i * 2); // semana 2, 4, 6...
+    await schedule({
+      id: MAINT_BIWEEKLY_BASE + i,
+      title: 'Releitura quinzenal',
+      body: 'Seus princípios das últimas duas semanas esperam uma releitura.',
+      at,
+      extra: { ...extra, level: 'biweekly' },
+    });
+  }
+
+  // Mensal — último domingo do mês, próximas 12 ocorrências
+  const now = new Date();
+  for (let i = 0; i < MAINT_OCCURRENCES; i++) {
+    const target = lastSundayOfMonth(now.getFullYear(), now.getMonth() + i, hour);
+    if (target.getTime() <= Date.now()) continue;
+    await schedule({
+      id: MAINT_MONTHLY_BASE + i,
+      title: 'Consolidação mensal',
+      body: 'Final de mês — hora de consolidar o que ficou.',
+      at: target,
+      extra: { ...extra, level: 'monthly' },
+    });
+  }
+}
+
 // ---------- Cancelar projeto ----------
 
 export async function cancelProjectNotifications(projectId: string): Promise<void> {
