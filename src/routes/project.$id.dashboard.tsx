@@ -35,6 +35,7 @@ function ProjectDashboard() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [principles, setPrinciples] = useState<Principle[]>([]);
   const [northExpanded, setNorthExpanded] = useState(false);
+  const [returnSheet, setReturnSheet] = useState(false);
 
   useEffect(() => {
     void (async () => {
