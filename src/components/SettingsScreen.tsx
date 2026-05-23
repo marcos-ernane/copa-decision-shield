@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useAuthState } from '@/lib/planLimits';
 import { openStripePortal } from '@/lib/stripe';
+import { setReadingMode, emitReadingModeChange } from '@/hooks/useReadingMode';
+import { GuestStorage } from '@/lib/guestStorage';
 import { PlanBadge } from './PlanBadge';
 import { UpgradeSheet } from './UpgradeSheet';
 import { TrialEndingSheet } from './TrialEndingSheet';
@@ -35,8 +37,16 @@ export function SettingsScreen() {
 
   async function togglePref(key: Pref, value: boolean) {
     setProfile((p) => (p ? { ...p, [key]: value } : p));
-    if (!userId) return;
-    await supabase.from('profiles').update({ [key]: value }).eq('id', userId);
+    GuestStorage.setProfile({ [key]: value });
+    if (userId) {
+      await supabase.from('profiles').update({ [key]: value }).eq('id', userId);
+    }
+    if (key === 'reading_mode_enabled') {
+      // garante sync entre Supabase + GuestStorage + banner
+      await setReadingMode(value);
+    } else {
+      emitReadingModeChange();
+    }
   }
 
   const isPaid = authState === 'AUTHENTICATED_ANNUAL' || authState === 'AUTHENTICATED_LIFETIME' || authState === 'AUTHENTICATED_TRIAL';
@@ -87,6 +97,27 @@ export function SettingsScreen() {
         <Section title="Notificações">
           <LinkRow to="/settings/notifications" label="Gerenciar notificações" />
         </Section>
+
+        {profile?.community_link && (
+          <Section title="Comunidade">
+            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+              <p className="text-body">Comunidade do Operador</p>
+              <p className="text-small text-muted-foreground">
+                Espaço opcional para troca entre operadores.
+                <br />
+                O uso é voluntário e externo ao app.
+              </p>
+              <a
+                href={profile.community_link}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center text-small text-foreground hover:underline underline-offset-4"
+              >
+                Acessar →
+              </a>
+            </div>
+          </Section>
+        )}
 
         <Section title="Dados">
           <div className="rounded-lg border border-border bg-card divide-y divide-border">
