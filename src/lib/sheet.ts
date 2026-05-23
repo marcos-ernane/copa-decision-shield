@@ -23,6 +23,7 @@ export interface SheetInput {
   principle: string | null;
   next_bottleneck: string | null;
   next_action: string | null;
+  ethical_check: string | null;
   project_id: string | null;
   mode: SheetMode;
 }
@@ -48,6 +49,7 @@ export async function saveSheet(input: SheetInput): Promise<OperatorSheet> {
       principle: input.principle,
       next_bottleneck: input.next_bottleneck,
       next_action: input.next_action,
+      ethical_check: input.ethical_check,
       mode: input.mode,
       created_at: nowIso,
       updated_at: nowIso,
@@ -71,6 +73,7 @@ export async function saveSheet(input: SheetInput): Promise<OperatorSheet> {
     principle: input.principle,
     next_bottleneck: input.next_bottleneck,
     next_action: input.next_action,
+    ethical_check: input.ethical_check,
     mode: input.mode,
   };
 

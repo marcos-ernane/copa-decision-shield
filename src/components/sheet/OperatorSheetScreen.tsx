@@ -52,6 +52,7 @@ export function OperatorSheetScreen({
   const [principle, setPrinciple] = useState('');
   const [nextBottleneck, setNextBottleneck] = useState('');
   const [nextAction, setNextAction] = useState('');
+  const [ethicalCheck, setEthicalCheck] = useState('');
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<OperatorSheet | null>(null);
@@ -78,6 +79,7 @@ export function OperatorSheetScreen({
         principle: mode === 'complete' ? (principle.trim() || null) : null,
         next_bottleneck: mode === 'complete' ? (nextBottleneck.trim() || null) : null,
         next_action: mode === 'complete' ? (nextAction.trim() || null) : null,
+        ethical_check: mode === 'complete' ? (ethicalCheck.trim() || null) : null,
         project_id: projectId,
         mode,
       });
