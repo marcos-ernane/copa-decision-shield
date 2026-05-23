@@ -1,8 +1,7 @@
-// PatternEngine — Sprint 8.
-// Gera padrões do operador (4 cards), Evolução Qualitativa (≤2 frases)
-// e pergunta calibrada para o Relatório Semanal.
-// Atualizado a cada 14 dias. Mínimo 5 registros no período.
-// PROIBIDO: linguagem motivacional, adjetivos vagos, comparações entre usuários.
+// PatternEngine v3.0 — Sprint 23.
+// Padrões por tipo e camada. Strength/Watch/Evolution/Frequent_blocker.
+// Atualiza a cada 14 dias. Mínimo 5 registros no período.
+// PROIBIDO: linguagem motivacional, comparações entre usuários, ranking.
 
 import type { Entry, Principle, Project } from '@/types/database';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
@@ -14,15 +13,41 @@ export interface PatternCard {
   title: string;
   body: string;
   suggestion?: { label: string; route: string };
+  scenario_type?: ScenarioType;
+  layer?: OperationalLayer;
 }
 
 export interface PatternEngineOutput {
   patterns: PatternCard[];
-  qualitative: string | null; // ≤2 frases
+  qualitative: string | null;
   weeklyQuestion: string | null;
+  generatedAt: string;
 }
 
 const MIN_ENTRIES = 5;
+const UPDATE_INTERVAL_MS = 14 * 86400000;
+
+const LAYER_LABEL: Record<OperationalLayer, string> = {
+  operabilidade: 'operabilidade',
+  conversao: 'conversão',
+  recorrencia: 'recorrência',
+  escala: 'escala',
+};
+
+const SCENARIO_LABEL: Record<ScenarioType, string> = {
+  fluxo: 'fluxo',
+  processo: 'processo',
+  oferta: 'oferta',
+  relacionamento: 'relacionamento',
+  pressao: 'pressão',
+};
+
+const LAYER_TOOL: Record<OperationalLayer, { label: string; route: string }> = {
+  operabilidade: { label: 'Abrir Guia Diagnóstico', route: '/compass/guide' },
+  conversao: { label: 'Abrir Tabela de Fricções', route: '/compass/friction' },
+  recorrencia: { label: 'Abrir COPA de Bolso', route: '/compass/pocket' },
+  escala: { label: 'Abrir Criatividade Funcional', route: '/creative' },
+};
 
 function within(entry: Entry, days: number): boolean {
   const t = new Date(entry.created_at).getTime();
@@ -41,97 +66,127 @@ function modeOf<T extends string>(items: T[]): T | null {
   return best;
 }
 
-const LAYER_LABEL: Record<OperationalLayer, string> = {
-  operabilidade: 'operabilidade',
-  conversao: 'conversão',
-  recorrencia: 'recorrência',
-  escala: 'escala',
-};
-
-const SCENARIO_LABEL: Record<ScenarioType, string> = {
-  fluxo: 'fluxo',
-  processo: 'processo',
-  oferta: 'oferta',
-  relacionamento: 'relacionamento',
-  pressao: 'pressão',
-};
+export function shouldUpdate(lastGeneratedIso: string | null): boolean {
+  if (!lastGeneratedIso) return true;
+  return Date.now() - new Date(lastGeneratedIso).getTime() > UPDATE_INTERVAL_MS;
+}
 
 export function generatePatterns(
   entries: Entry[],
   principles: Principle[],
-  _projects: Project[],
+  projects: Project[],
 ): PatternEngineOutput {
+  const generatedAt = new Date().toISOString();
   if (entries.length < MIN_ENTRIES) {
-    return { patterns: [], qualitative: null, weeklyQuestion: null };
+    return { patterns: [], qualitative: null, weeklyQuestion: null, generatedAt };
   }
 
-  const last30 = entries.filter((e) => within(e, 30));
   const last14 = entries.filter((e) => within(e, 14));
+  const last30 = entries.filter((e) => within(e, 30));
 
   const patterns: PatternCard[] = [];
 
-  // ---------- Ponto forte ----------
-  const pulses30 = last30.filter((e) => e.entry_type === 'pulse');
-  const cleanPulses30 = pulses30.filter((e) => e.is_clean_fact);
-  if (pulses30.length >= 3 && cleanPulses30.length / pulses30.length >= 0.7) {
+  // ---------- STRENGTH (tipo com mais % chegando a APA) ----------
+  const typeStats = new Map<ScenarioType, { p: number; a: number }>();
+  for (const e of entries) {
+    const t = e.scenario_type_at_entry;
+    if (!t) continue;
+    if (!typeStats.has(t)) typeStats.set(t, { p: 0, a: 0 });
+    const s = typeStats.get(t)!;
+    if (e.entry_type === 'structured_P') s.p++;
+    if (e.entry_type === 'structured_A') s.a++;
+  }
+  let bestType: { type: ScenarioType; rate: number } | null = null;
+  for (const [type, s] of typeStats) {
+    if (s.p < 2) continue;
+    const rate = s.a / s.p;
+    if (!bestType || rate > bestType.rate) bestType = { type, rate };
+  }
+  if (bestType && bestType.rate >= 0.5) {
     patterns.push({
       kind: 'strength',
       title: 'Ponto forte',
-      body: `Você separou fato de interpretação em ${cleanPulses30.length} de ${pulses30.length} pulsos nos últimos 30 dias.`,
-    });
-  } else if (principles.length >= 3) {
-    patterns.push({
-      kind: 'strength',
-      title: 'Ponto forte',
-      body: `Você extraiu ${principles.length} princípios até agora.`,
+      body: `Em cenários de ${SCENARIO_LABEL[bestType.type]}, você tende a completar os ciclos com mais consistência.`,
+      scenario_type: bestType.type,
     });
   }
 
-  // ---------- Padrão a observar ----------
-  const pEntries30 = last30.filter((e) => e.entry_type === 'structured_P');
-  const aEntries30 = last30.filter((e) => e.entry_type === 'structured_A');
-  if (pEntries30.length > 0 && aEntries30.length / Math.max(1, pEntries30.length) < 0.5) {
+  // ---------- WATCH (tipo com mais abandono em C ou O) ----------
+  const abandonStats = new Map<ScenarioType, { co: number; p: number }>();
+  for (const e of entries) {
+    const t = e.scenario_type_at_entry;
+    if (!t) continue;
+    if (!abandonStats.has(t)) abandonStats.set(t, { co: 0, p: 0 });
+    const s = abandonStats.get(t)!;
+    if (e.entry_type === 'structured_C' || e.entry_type === 'structured_O') s.co++;
+    if (e.entry_type === 'structured_P') s.p++;
+  }
+  let worstType: { type: ScenarioType; gap: number } | null = null;
+  for (const [type, s] of abandonStats) {
+    if (s.co < 2) continue;
+    const gap = s.co - s.p;
+    if (gap > 0 && (!worstType || gap > worstType.gap)) worstType = { type, gap };
+  }
+  if (worstType) {
     patterns.push({
       kind: 'watch',
       title: 'Padrão a observar',
-      body: `Você definiu ${pEntries30.length} IMVs nos últimos 30 dias e fechou ${aEntries30.length}.`,
+      body: `Em cenários de ${SCENARIO_LABEL[worstType.type]}, você tende a interromper antes da Prova.`,
+      scenario_type: worstType.type,
     });
   }
 
-  // ---------- Como você evoluiu este mês ----------
-  const prev30Start = Date.now() - 60 * 86400000;
-  const prev30 = entries.filter((e) => {
+  // ---------- EVOLUTION (últimas 2 semanas vs 2 anteriores) ----------
+  const prev14Start = Date.now() - 28 * 86400000;
+  const prev14End = Date.now() - 14 * 86400000;
+  const prev14 = entries.filter((e) => {
     const t = new Date(e.created_at).getTime();
-    return t >= prev30Start && t < Date.now() - 30 * 86400000;
+    return t >= prev14Start && t < prev14End;
   });
-  if (prev30.length > 0) {
-    const delta = last30.length - prev30.length;
-    if (delta !== 0) {
-      patterns.push({
-        kind: 'evolution',
-        title: 'Como você evoluiu este mês',
-        body: `Você registrou ${last30.length} entradas nos últimos 30 dias contra ${prev30.length} no período anterior.`,
-      });
-    }
+  if (prev14.length > 0 || last14.length > 0) {
+    patterns.push({
+      kind: 'evolution',
+      title: 'Como você evoluiu',
+      body: `Você registrou ${last14.length} entradas nas últimas 2 semanas contra ${prev14.length} no período anterior.`,
+    });
   }
 
-  // ---------- Bloqueio mais frequente ----------
-  const weakLayer = modeOf(
-    last30
-      .filter((e) => e.entry_type === 'structured_P' || e.entry_type === 'structured_O')
-      .map((e) => e.layer_at_entry)
-      .filter((l): l is OperationalLayer => l !== null),
-  );
+  // ---------- FREQUENT BLOCKER (camada mais frequente em projetos bloqueados) ----------
+  const blockedIds = new Set(projects.filter((p) => p.state === 'paused' || p.current_bottleneck).map((p) => p.id));
+  const blockerLayers = last30
+    .filter((e) => blockedIds.has(e.project_id) || e.entry_type === 'structured_P')
+    .map((e) => e.layer_at_entry)
+    .filter((l): l is OperationalLayer => l !== null);
+  const weakLayer = modeOf(blockerLayers);
   if (weakLayer) {
     patterns.push({
       kind: 'frequent_blocker',
       title: 'Bloqueio mais frequente',
       body: `Camada de ${LAYER_LABEL[weakLayer]} aparece com mais frequência nos seus registros.`,
-      suggestion: { label: 'Abrir Mapa 3R', route: '/copa/organize' },
+      suggestion: LAYER_TOOL[weakLayer],
+      layer: weakLayer,
     });
   }
 
-  // ---------- Evolução Qualitativa ----------
+  // ---------- ABANDON PATTERN (>2 projetos parados na mesma fase COPA) ----------
+  const phaseAbandon = new Map<string, number>();
+  for (const p of projects) {
+    if (p.state === 'paused' && p.current_copa_phase) {
+      phaseAbandon.set(p.current_copa_phase, (phaseAbandon.get(p.current_copa_phase) ?? 0) + 1);
+    }
+  }
+  for (const [phase, n] of phaseAbandon) {
+    if (n > 2) {
+      patterns.push({
+        kind: 'watch',
+        title: 'Atenção crítica',
+        body: `${n} projetos pararam na fase ${phase.toUpperCase()}.`,
+      });
+      break;
+    }
+  }
+
+  // ---------- QUALITATIVE EVOLUTION (≤2 frases, mín 5 registros) ----------
   let qualitative: string | null = null;
   if (last14.length >= MIN_ENTRIES) {
     const sentences: string[] = [];
@@ -148,20 +203,29 @@ export function generatePatterns(
     if (sentences.length > 0) qualitative = sentences.slice(0, 2).join(' ');
   }
 
-  // ---------- Weekly Question ----------
+  // ---------- WEEKLY QUESTION ----------
   let weeklyQuestion: string | null = null;
   const last7 = entries.filter((e) => within(e, 7));
-  if (last7.length >= 3) {
+  if (last7.length === 0) {
+    const activeScenario = projects.find((p) => p.scenario_type)?.scenario_type;
+    weeklyQuestion = activeScenario
+      ? `Qual situação em ${SCENARIO_LABEL[activeScenario]} você operou esta semana e ainda não registrou?`
+      : 'Qual cenário você está operando e ainda não registrou?';
+  } else {
     const openP = last7.filter((e) => e.entry_type === 'structured_P').length;
     const closedA = last7.filter((e) => e.entry_type === 'structured_A').length;
-    if (openP > closedA) {
+    const pulsesNoApa = last7.filter((e) => e.entry_type === 'pulse').length;
+    if (pulsesNoApa >= 3 && closedA === 0) {
+      weeklyQuestion = `Você registrou ${pulsesNoApa} situações esta semana. Qual delas tem potencial de IMV?`;
+    } else if (openP > closedA) {
       weeklyQuestion = 'Qual IMV em aberto está esperando uma decisão de corte?';
     } else if (closedA > 0) {
       weeklyQuestion = 'Qual princípio dessa semana você ainda não escreveu?';
-    } else {
-      weeklyQuestion = 'Qual fato observável da semana você ainda não registrou?';
     }
   }
 
-  return { patterns: patterns.slice(0, 4), qualitative, weeklyQuestion };
+  // Evita warning de unused
+  void principles;
+
+  return { patterns: patterns.slice(0, 4), qualitative, weeklyQuestion, generatedAt };
 }
