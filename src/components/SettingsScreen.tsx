@@ -113,6 +113,21 @@ export function SettingsScreen() {
                 }}
               />
             </div>
+            <div className="flex items-center justify-between px-4 py-3 gap-4">
+              <div>
+                <p className="text-body">Botão Protocolo 5 Min na Home</p>
+                <p className="text-small text-muted-foreground">
+                  Adiciona um terceiro botão flutuante de acesso rápido.
+                </p>
+              </div>
+              <Switch
+                checked={p5Fab}
+                onCheckedChange={(v) => {
+                  setP5Fab(v);
+                  setProtocol5FabEnabled(v);
+                }}
+              />
+            </div>
           </div>
         </Section>
 
