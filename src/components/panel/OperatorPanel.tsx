@@ -160,12 +160,18 @@ export function OperatorPanel() {
               Você consegue aplicar o método em cenários completamente diferentes?
             </p>
             <div className="flex gap-2">
-              <button disabled className="px-3 py-1.5 rounded-md border border-border text-small text-muted-foreground opacity-60">
+              <Link
+                to="/panel/transfer"
+                className="px-3 py-1.5 rounded-md border border-border text-small text-foreground"
+              >
                 Iniciar prova
-              </button>
-              <button disabled className="px-3 py-1.5 rounded-md border border-border text-small text-muted-foreground opacity-60">
+              </Link>
+              <Link
+                to="/panel/transfer"
+                className="px-3 py-1.5 rounded-md border border-border text-small text-foreground"
+              >
                 Ver resultado
-              </button>
+              </Link>
             </div>
           </section>
         )}
