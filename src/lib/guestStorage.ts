@@ -129,6 +129,15 @@ export const GuestStorage = {
     write(KEYS.baselines, [...all, baseline]);
   },
 
+  // ---------- Operator Sheets ----------
+  getSheets(): OperatorSheet[] {
+    return read<OperatorSheet[]>(KEYS.sheets, []);
+  },
+  addSheet(sheet: OperatorSheet): void {
+    const all = GuestStorage.getSheets();
+    write(KEYS.sheets, [sheet, ...all]);
+  },
+
   // ---------- Clear (após migração) ----------
   clearAll(): void {
     if (!isBrowser()) return;
