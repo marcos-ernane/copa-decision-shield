@@ -41,3 +41,24 @@ export type EntryType =
   | 'passive';
 
 export type CopaPhase = 'C' | 'O' | 'P' | 'A';
+
+// ---------- Pacto de Execução Semanal ----------
+
+export type PactPhase = 'capture' | 'organize' | 'prove' | 'assess';
+
+export interface WeeklyCycleDay {
+  phase: PactPhase;
+  day_of_week: number; // 0=Dom..6=Sáb
+  time_hour: number;   // 0..23
+  completed_this_week: boolean;
+  last_completed_at: string | null;
+}
+
+export interface WeeklyCycle {
+  capture: WeeklyCycleDay;
+  organize: WeeklyCycleDay;
+  prove: WeeklyCycleDay;
+  assess: WeeklyCycleDay;
+  week_start: string; // ISO date (segunda-feira) usada para reset semanal
+}
+
