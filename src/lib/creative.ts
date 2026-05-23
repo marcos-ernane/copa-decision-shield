@@ -4,6 +4,7 @@
 import { listProjects } from './projects';
 import { supabase } from './supabase';
 import { GuestStorage, guestId } from './guestStorage';
+import { triggerIndexUpdate } from './indexUpdate';
 import type { Entry } from '@/types/database';
 
 export type FunctionCheck = 'yes' | 'partial' | 'no';

@@ -65,6 +65,7 @@ export async function savePressureSession(
   if (error) throw error;
 
   await supabase.from('projects').update({ last_entry_at: now }).eq('id', projectId);
+  triggerIndexUpdate();
   return inserted as Entry;
 }
 
