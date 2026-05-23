@@ -3,6 +3,7 @@
 
 import { GuestStorage, guestId } from './guestStorage';
 import { supabase } from './supabase';
+import { triggerIndexUpdate } from './indexUpdate';
 import type { Entry } from '@/types/database';
 
 export type PressureRisk = 'real' | 'moderate' | 'perception';
@@ -45,6 +46,7 @@ export async function savePressureSession(
   if (!session) {
     GuestStorage.addEntry(entry);
     GuestStorage.updateProject(projectId, { last_entry_at: now });
+    triggerIndexUpdate();
     return entry;
   }
 
