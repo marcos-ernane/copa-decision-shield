@@ -37,11 +37,8 @@ export function FrictionMatrix({
   const [selected, setSelected] = useState<{
     layer: OperationalLayer;
     friction: string;
-  } | null>(
-    initialType && initialLayer
-      ? null
-      : null,
-  );
+  } | null>(null);
+  void initialLayer;
 
   function pick(layer: OperationalLayer, friction: string) {
     if (!type) return;
