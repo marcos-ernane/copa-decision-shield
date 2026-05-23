@@ -24,6 +24,7 @@ const VALID_TRIGGERS = new Set([
   'SUGGESTION_BUTTON_PRESSURE',
   'PRESSURE_REALITY_CHECK',
   'PRESSURE_ABUSE_PATTERN',
+  'CREATIVE_DIVERGE_SUPPORT',
 ]);
 
 // Cache em memória 15 min (best-effort — instância pode reciclar).
