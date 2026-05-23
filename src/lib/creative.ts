@@ -4,6 +4,7 @@
 import { listProjects } from './projects';
 import { supabase } from './supabase';
 import { GuestStorage, guestId } from './guestStorage';
+import { triggerIndexUpdate } from './indexUpdate';
 import type { Entry } from '@/types/database';
 
 export type FunctionCheck = 'yes' | 'partial' | 'no';
@@ -111,6 +112,7 @@ export async function saveCreativeSession(
   if (!session) {
     GuestStorage.addEntry(entry);
     GuestStorage.updateProject(projectId, { last_entry_at: now });
+    triggerIndexUpdate();
     return { entry, projectId };
   }
 
@@ -127,5 +129,6 @@ export async function saveCreativeSession(
     .single();
   if (error) return { entry: null, projectId };
   await supabase.from('projects').update({ last_entry_at: now }).eq('id', projectId);
+  triggerIndexUpdate();
   return { entry: data as Entry, projectId };
 }

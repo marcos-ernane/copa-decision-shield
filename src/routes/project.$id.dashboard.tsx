@@ -21,6 +21,7 @@ import { ProjectStateIcon } from '@/components/project/ProjectStateIcon';
 import { PactWeekView } from '@/components/pact/PactWeekView';
 import { PactReturnSheet } from '@/components/pact/PactReturnSheet';
 import { checkPactReturn, getCycle } from '@/lib/pact';
+import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
 import type { Project, Entry, Principle } from '@/types/database';
 
 export const Route = createFileRoute('/project/$id/dashboard')({
@@ -85,10 +86,11 @@ function ProjectDashboard() {
     ? Math.ceil((Date.now() - provingStart.getTime()) / (1000 * 60 * 60 * 24))
     : 0;
 
-  const recall =
-    (currentState === 'blocked' || currentState === 'new') && principles.length > 0
-      ? principles[0]
+  const recallResult =
+    (currentState === 'blocked' || currentState === 'new')
+      ? suggestPrincipleForProject(project, principles)
       : null;
+  const recall = recallResult?.principle ?? null;
 
   return (
     <div className="min-h-screen bg-background">

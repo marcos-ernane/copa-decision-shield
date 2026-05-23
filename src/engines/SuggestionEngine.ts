@@ -1,9 +1,9 @@
-// SuggestionEngine — Sprint 8.
-// Calcula relevância semântica entre contexto do projeto e cada princípio.
-// Threshold 50% → abaixo retorna null.
-// v3.0: peso adicional para mesmo scenario_type e camada.
+// SuggestionEngine v3.0 — Sprint 23.
+// Principle Recall por relevância semântica (Jaccard tokenizado)
+// + boost por scenario_type e layer. Threshold ≥ 0.5.
 
 import type { Project, Principle } from '@/types/database';
+import type { ScenarioType, OperationalLayer, CopaPhase } from '@/types/app';
 
 const STOPWORDS = new Set([
   'a', 'o', 'e', 'de', 'do', 'da', 'em', 'no', 'na', 'os', 'as', 'um', 'uma',
@@ -35,18 +35,22 @@ export interface SuggestionResult {
   relevance: number; // 0..1
 }
 
-export function suggestPrincipleForProject(
-  project: Project,
+export interface PrincipleContext {
+  north: string;
+  bottleneck: string;
+  phase?: CopaPhase | null;
+  scenario_type?: ScenarioType | null;
+  layer?: OperationalLayer | null;
+}
+
+// v3.0 — assinatura por contexto explícito.
+export function findRelevantPrinciple(
+  context: PrincipleContext,
   principles: Principle[],
 ): SuggestionResult | null {
   if (principles.length === 0) return null;
 
-  const ctxText = [
-    project.name,
-    project.north,
-    project.current_bottleneck ?? '',
-    project.field_reading ?? '',
-  ].join(' ');
+  const ctxText = [context.north, context.bottleneck, context.phase ?? ''].join(' ');
   const ctxTokens = new Set(tokenize(ctxText));
 
   let best: SuggestionResult | null = null;
@@ -56,9 +60,8 @@ export function suggestPrincipleForProject(
     const pTokens = new Set(tokenize(p.content));
     let score = jaccard(ctxTokens, pTokens);
 
-    // Boost: mesma camada (+0.2) e mesmo cenário (+0.2)
-    if (project.current_layer && p.layer === project.current_layer) score += 0.2;
-    if (project.scenario_type && p.scenario_type === project.scenario_type) score += 0.2;
+    if (context.scenario_type && p.scenario_type === context.scenario_type) score += 0.2;
+    if (context.layer && p.layer === context.layer) score += 0.2;
     score = Math.min(1, score);
 
     if (!best || score > best.relevance) {
@@ -68,4 +71,21 @@ export function suggestPrincipleForProject(
 
   if (!best || best.relevance < 0.5) return null;
   return best;
+}
+
+// Wrapper de compatibilidade — recebe Project diretamente.
+export function suggestPrincipleForProject(
+  project: Project,
+  principles: Principle[],
+): SuggestionResult | null {
+  return findRelevantPrinciple(
+    {
+      north: project.name + ' ' + project.north,
+      bottleneck: [project.current_bottleneck ?? '', project.field_reading ?? ''].join(' '),
+      phase: project.current_copa_phase,
+      scenario_type: project.scenario_type,
+      layer: project.current_layer,
+    },
+    principles,
+  );
 }

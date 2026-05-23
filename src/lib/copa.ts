@@ -3,6 +3,7 @@
 
 import { GuestStorage, guestId } from './guestStorage';
 import { supabase } from './supabase';
+import { triggerIndexUpdate } from './indexUpdate';
 import type { Entry } from '@/types/database';
 import type { ScenarioType, OperationalLayer, ProjectState } from '@/types/app';
 
@@ -109,9 +110,11 @@ export async function saveCopaSession(
       })
       .eq('id', projectId);
 
+    triggerIndexUpdate();
     return { entry: inserted as Entry, isFirstApa };
   }
 
+  triggerIndexUpdate();
   return { entry, isFirstApa };
 }
 
