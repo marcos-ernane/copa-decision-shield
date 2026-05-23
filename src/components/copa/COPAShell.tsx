@@ -107,7 +107,7 @@ export function COPAShell() {
       setProject(p);
       setPrinciples(prs);
       setHistoryCount(count);
-      setScenario(p?.scenario_type ?? null);
+      setScenario(presetType ?? p?.scenario_type ?? null);
 
       // Decide first step.
       if (alignmentEnabled) setStep('entry_alignment');
