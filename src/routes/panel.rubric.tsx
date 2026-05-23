@@ -1,14 +1,21 @@
 import { createFileRoute, useRouter, Link } from '@tanstack/react-router';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { usePanelData } from '@/hooks/usePanelData';
-import { calculateIndex } from '@/engines/IndexCalculator';
+import { calculateIndex, type RubricScores } from '@/engines/IndexCalculator';
 import { RubricDetail } from '@/components/panel/RubricDetail';
+import { getLatestBaseline, parseScores } from '@/lib/baseline';
+import type { BaselineAssessment } from '@/types/database';
 
 function RubricPage() {
   const router = useRouter();
   const { projects, entries, principles, loading } = usePanelData();
   const idx = useMemo(() => calculateIndex(entries, principles, projects), [entries, principles, projects]);
+
+  const [latest, setLatest] = useState<BaselineAssessment | null>(null);
+  useEffect(() => { void getLatestBaseline().then(setLatest); }, []);
+
+  const assessed: RubricScores | null = latest ? parseScores(latest.scores) : null;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -23,12 +30,23 @@ function RubricPage() {
           <p className="text-small text-muted-foreground">Carregando…</p>
         ) : (
           <>
-            <RubricDetail scores={idx.rubric} total={idx.rubricTotal} />
+            <RubricDetail
+              scores={idx.rubric}
+              total={idx.rubricTotal}
+              assessedScores={assessed}
+              assessedTotal={latest?.total_score ?? null}
+              assessedDate={latest?.created_at ?? null}
+            />
+            {!latest && (
+              <p className="text-small text-muted-foreground">
+                Nenhuma avaliação manual registrada ainda.
+              </p>
+            )}
             <Link
               to="/baseline/new"
               className="inline-flex text-small text-[color:var(--color-brand-blue)] hover:underline"
             >
-              Fazer nova avaliação →
+              {latest ? 'Fazer nova avaliação' : 'Fazer avaliação de linha de base'} →
             </Link>
           </>
         )}
