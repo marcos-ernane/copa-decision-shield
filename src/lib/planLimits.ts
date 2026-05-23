@@ -8,7 +8,45 @@ import type { Subscription } from '@/types/database';
 
 export type PlanKey = 'free' | 'trial' | 'paid';
 
-const FREE_LIMITS = {
+export interface PlanLimits {
+  max_active_projects: number;
+  structured_per_month: number;
+  timeline_days: number;
+  max_principles: number;
+  panel_enabled: boolean;
+  weekly_report: boolean;
+  manual_enabled: boolean;
+  pdf_export: boolean;
+  ai_assist_suggestions: boolean;
+  qualitative_evolution: boolean;
+  cloud_sync: boolean;
+  multi_device: boolean;
+  operator_sheet_complete: boolean;
+  compass_full: boolean;
+  creative_flow: boolean;
+  transfer_proof: boolean;
+  simulations_max: number;
+  copa_unlimited: boolean;
+  pressure_unlimited: boolean;
+  pulse_unlimited: boolean;
+  reading_mode: boolean;
+  community_access: boolean;
+  baseline_assessments: boolean;
+  pact_execution: boolean;
+  operator_sheet_quick: boolean;
+  compass_basic: boolean;
+  friction_matrix: boolean;
+  protocol_5min: boolean;
+  maintenance_routine: boolean;
+  diagnostic_guide: boolean;
+  critical_alerts: boolean;
+  book_anchor_hints: boolean;
+  entry_alignment: boolean;
+  pressure_reality_check: boolean;
+  principle_recall: boolean;
+}
+
+const FREE_LIMITS: PlanLimits = {
   max_active_projects: 1,
   structured_per_month: 5,
   timeline_days: 30,
