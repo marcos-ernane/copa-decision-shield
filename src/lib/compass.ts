@@ -63,3 +63,65 @@ export function markMaintenanceNotificationOffered(): void {
   meta.notification_offered_at = new Date().toISOString();
   saveMaintenanceMeta(meta);
 }
+
+// ---------- First-use tracking (para regra dos 7 dias) ----------
+
+const FIRST_USE_KEY = 'aop.first_use_at';
+
+export function ensureFirstUseTracked(): string {
+  if (!isBrowser()) return new Date().toISOString();
+  try {
+    const existing = window.localStorage.getItem(FIRST_USE_KEY);
+    if (existing) return existing;
+    const now = new Date().toISOString();
+    window.localStorage.setItem(FIRST_USE_KEY, now);
+    return now;
+  } catch {
+    return new Date().toISOString();
+  }
+}
+
+export function getFirstUseDate(): string | null {
+  if (!isBrowser()) return null;
+  try {
+    return window.localStorage.getItem(FIRST_USE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+// ---------- Preferências de notificação de manutenção (offline-only) ----------
+
+const NOTIF_ENABLED_KEY = 'aop.maintenance_notif_enabled';
+const NOTIF_HOUR_KEY = 'aop.maintenance_notif_hour';
+
+export interface MaintenanceNotifPrefs {
+  enabled: boolean;
+  time_hour: number; // 0..23
+}
+
+export function getMaintenanceNotifPrefs(): MaintenanceNotifPrefs {
+  if (!isBrowser()) return { enabled: false, time_hour: 20 };
+  try {
+    const enabled = window.localStorage.getItem(NOTIF_ENABLED_KEY) === '1';
+    const hourRaw = window.localStorage.getItem(NOTIF_HOUR_KEY);
+    const hour = hourRaw !== null ? Number(hourRaw) : 20;
+    return {
+      enabled,
+      time_hour: Number.isFinite(hour) && hour >= 0 && hour <= 23 ? hour : 20,
+    };
+  } catch {
+    return { enabled: false, time_hour: 20 };
+  }
+}
+
+export function setMaintenanceNotifPrefs(patch: Partial<MaintenanceNotifPrefs>): MaintenanceNotifPrefs {
+  const next = { ...getMaintenanceNotifPrefs(), ...patch };
+  if (isBrowser()) {
+    try {
+      window.localStorage.setItem(NOTIF_ENABLED_KEY, next.enabled ? '1' : '0');
+      window.localStorage.setItem(NOTIF_HOUR_KEY, String(next.time_hour));
+    } catch { /* noop */ }
+  }
+  return next;
+}
