@@ -21,12 +21,10 @@ export function PactWeekView({ projectId, cycle }: Props) {
   const navigate = useNavigate();
   const phases: PactPhase[] = ['capture', 'organize', 'prove', 'assess'];
 
-  function openFormat(phase: PactPhase) {
-    void navigate({
-      to: '/register/structured',
-      search: { project_id: projectId, format: PHASE_TO_FORMAT[phase] } as never,
-    });
+  function openFormat(_phase: PactPhase) {
+    void navigate({ to: '/register/structured' });
   }
+
 
   return (
     <section className="rounded-md border border-border bg-card p-4 space-y-3">
