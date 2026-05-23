@@ -51,6 +51,7 @@ function ProjectDashboard() {
       setProject(p);
       setEntries(e);
       setPrinciples(pr);
+      if (checkPactReturn(p)) setReturnSheet(true);
     })();
   }, [id, navigate]);
 
