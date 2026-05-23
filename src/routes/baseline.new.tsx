@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { BaselineAssessmentFlow } from '@/components/baseline/BaselineAssessmentFlow';
 
 export const Route = createFileRoute('/baseline/new')({
-  component: () => <Placeholder title="Linha de Base" />,
+  component: BaselineAssessmentFlow,
 });
