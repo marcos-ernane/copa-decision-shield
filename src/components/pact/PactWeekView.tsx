@@ -10,9 +10,7 @@ const DAY_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const PHASE_LABEL: Record<PactPhase, string> = {
   capture: 'Captura', organize: 'Organização', prove: 'Prova', assess: 'Aferição',
 };
-const PHASE_TO_FORMAT: Record<PactPhase, 'C' | 'O' | 'P' | 'A'> = {
-  capture: 'C', organize: 'O', prove: 'P', assess: 'A',
-};
+
 
 interface Props {
   projectId: string;
