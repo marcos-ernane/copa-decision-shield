@@ -84,6 +84,7 @@ const FREE_LIMITS: PlanLimits = {
   entry_alignment: true,
   pressure_reality_check: true,
   principle_recall: true,
+  simulations: false,
 };
 
 const PAID_LIMITS: PlanLimits = {
