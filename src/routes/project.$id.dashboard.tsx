@@ -247,6 +247,13 @@ function ProjectDashboard() {
           </Button>
         </div>
       </main>
+      <PactReturnSheet
+        open={returnSheet}
+        projectName={project.name}
+        projectId={project.id}
+        lastCycleAt={project.pact_last_cycle_at}
+        onClose={() => setReturnSheet(false)}
+      />
     </div>
   );
 }
