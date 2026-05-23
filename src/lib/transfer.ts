@@ -9,9 +9,8 @@ import { GuestStorage, guestId } from './guestStorage';
 import type {
   TransferProof,
   TransferProofStatus,
-  ScenarioType,
-  OperationalLayer,
 } from '@/types/database';
+import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 export interface TransferScenario {
   context: string;
