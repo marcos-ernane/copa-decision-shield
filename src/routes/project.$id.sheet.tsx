@@ -1,6 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { OperatorSheetScreen } from '@/components/sheet/OperatorSheetScreen';
 
 export const Route = createFileRoute('/project/$id/sheet')({
-  component: () => <Placeholder title="Folha do Operador" />,
+  component: Page,
 });
+
+function Page() {
+  const { id } = Route.useParams();
+  return <OperatorSheetScreen initialProjectId={id} />;
+}
