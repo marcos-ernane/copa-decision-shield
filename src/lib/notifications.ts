@@ -277,14 +277,8 @@ export function buildWeeklyPulseContent(projects: Project[], entries: Entry[]): 
 
 // ---------- Pacto de Execução — REQ-PACT-NOTIF-01/02 ----------
 
-interface PactDays {
-  capture: number;  // hora (0..23) ou 0=off
-  organize: number;
-  prove: number;
-  assess: number;
-}
 
-const WEEKDAY = { capture: 2 /* seg */, organize: 4 /* qua */, prove: 6 /* sex */, assess: 1 /* dom */ };
+
 
 interface PactCyclePhase {
   day_of_week: number; // 0=Dom..6=Sáb
