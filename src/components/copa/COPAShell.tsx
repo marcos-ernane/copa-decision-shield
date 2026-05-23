@@ -17,7 +17,7 @@ import { saveCopaSession, countCopaSessions, type CopaSessionData } from '@/lib/
 import { supabase } from '@/lib/supabase';
 import { GuestStorage } from '@/lib/guestStorage';
 import type { Project, Principle } from '@/types/database';
-import type { ScenarioType } from '@/types/app';
+import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 type Step =
   | 'pick_project'
