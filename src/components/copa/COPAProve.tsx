@@ -34,6 +34,7 @@ interface ProveData {
 interface Props {
   bottleneck: Bottleneck;
   historyCount: number;
+  initialLayer?: OperationalLayer;
   onNext: (data: ProveData) => void;
 }
 
