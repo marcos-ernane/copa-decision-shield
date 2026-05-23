@@ -2,7 +2,7 @@
 // interfaces das tabelas Supabase. Permite que o app funcione 100%
 // sem conta até o cadastro voluntário (REQ-AUTH-01).
 
-import type { Profile, Project, Entry, Principle, Chapter, BaselineAssessment } from '@/types/database';
+import type { Profile, Project, Entry, Principle, Chapter, BaselineAssessment, OperatorSheet } from '@/types/database';
 
 const KEYS = {
   profile: 'aop.profile',
@@ -11,6 +11,7 @@ const KEYS = {
   principles: 'aop.principles',
   chapters: 'aop.chapters',
   baselines: 'aop.baselines',
+  sheets: 'aop.sheets',
   guestStartedAt: 'aop.guest_started_at',
 } as const;
 
