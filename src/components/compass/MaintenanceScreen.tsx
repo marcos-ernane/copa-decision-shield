@@ -59,6 +59,12 @@ export function MaintenanceScreen() {
       {tab === 'weekly' && <WeeklyReview />}
       {tab === 'biweekly' && <BiweeklyReview />}
       {tab === 'monthly' && <MonthlyReview />}
+
+      <MaintenanceNotifOfferSheet
+        open={offerOpen}
+        onOpenChange={setOfferOpen}
+        defaultHour={offerHour}
+      />
     </div>
   );
 }
