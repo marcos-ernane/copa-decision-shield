@@ -82,7 +82,7 @@ export function SimulationApply({ simulation, onClose }: Props) {
                   onClick={() => openCopaForProject(p.id)}
                   className="w-full text-left rounded-md border border-border bg-card p-3 hover:bg-accent/30"
                 >
-                  <p className="text-body text-foreground">{p.title}</p>
+                  <p className="text-body text-foreground">{p.name}</p>
                 </button>
               </li>
             ))}
