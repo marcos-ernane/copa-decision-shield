@@ -25,6 +25,7 @@ const VALID_TRIGGERS = new Set([
   'PRESSURE_REALITY_CHECK',
   'PRESSURE_ABUSE_PATTERN',
   'CREATIVE_DIVERGE_SUPPORT',
+  'TRANSFER_CONSISTENCY_REPORT',
 ]);
 
 // Cache em memória 15 min (best-effort — instância pode reciclar).
