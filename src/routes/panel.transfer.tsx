@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Placeholder } from '@/components/Placeholder';
+import { TransferProofScreen } from '@/components/transfer/TransferProofScreen';
 
 export const Route = createFileRoute('/panel/transfer')({
-  component: () => <Placeholder title="Painel — Transferência" />,
+  component: TransferProofScreen,
 });
