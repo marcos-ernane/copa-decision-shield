@@ -174,6 +174,37 @@ export function NotificationSettings() {
           )}
         </section>
 
+        {/* Rotina de Manutenção */}
+        <section className="space-y-3 rounded-md border border-border bg-card p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-heading text-foreground">Rotina de Manutenção</h2>
+            <Switch checked={maint.enabled} onCheckedChange={toggleMaintenance} />
+          </div>
+          <p className="text-small text-muted-foreground">
+            Lembretes de revisão semanal, quinzenal e mensal.
+          </p>
+          {maint.enabled && (
+            <div className="space-y-1">
+              <label className="text-label text-muted-foreground uppercase">
+                Horário preferido
+              </label>
+              <Select
+                value={String(maint.time_hour)}
+                onValueChange={(v) => void changeMaintenanceHour(Number(v))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {HOURS.map((h) => (
+                    <SelectItem key={h} value={String(h)}>
+                      {String(h).padStart(2, '0')}:00
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </section>
+
         <hr className="border-border" />
 
         {/* Modo silêncio */}
