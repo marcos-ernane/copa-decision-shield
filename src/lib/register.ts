@@ -4,6 +4,7 @@
 
 import { GuestStorage, guestId } from './guestStorage';
 import { supabase } from './supabase';
+import { triggerIndexUpdate } from './indexUpdate';
 import type { Entry, Principle } from '@/types/database';
 import type {
   EntryType,
