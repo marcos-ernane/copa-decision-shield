@@ -30,11 +30,26 @@ export function NotificationSettings() {
   const router = useRouter();
   const navigate = useNavigate();
   const [cfg, setCfg] = useState<NotifConfig>(getNotifConfig());
+  const [maint, setMaint] = useState<MaintenanceNotifPrefs>(getMaintenanceNotifPrefs());
   const [sheet, setSheet] = useState(false);
 
   async function patch(p: Partial<NotifConfig>) {
     const next = setNotifConfig(p);
     setCfg(next);
+  }
+
+  async function toggleMaintenance(enabled: boolean) {
+    if (enabled) await requestPermission();
+    const next = setMaintenanceNotifPrefs({ enabled });
+    setMaint(next);
+    if (enabled) await scheduleMaintenanceReminders({ time_hour: next.time_hour });
+    else await cancelMaintenanceReminders();
+  }
+
+  async function changeMaintenanceHour(hour: number) {
+    const next = setMaintenanceNotifPrefs({ time_hour: hour });
+    setMaint(next);
+    if (next.enabled) await scheduleMaintenanceReminders({ time_hour: next.time_hour });
   }
 
   async function togglePulse(enabled: boolean) {
