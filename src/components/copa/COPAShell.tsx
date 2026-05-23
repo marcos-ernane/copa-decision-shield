@@ -277,6 +277,9 @@ export function COPAShell() {
         bottleneck={bottleneck}
         historyCount={historyCount}
         initialLayer={presetLayer ?? undefined}
+        initialAction={presetAction ?? undefined}
+        initialMetric={presetMetric ?? undefined}
+        initialDeadline={presetDeadline ?? undefined}
         onNext={(d) => { setProveData(d); setStep('assess'); }}
       />
     );
