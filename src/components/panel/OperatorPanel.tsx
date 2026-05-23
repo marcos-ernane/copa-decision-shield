@@ -44,7 +44,9 @@ export function OperatorPanel() {
   }, [projects]);
 
   const lastPrinciples = principles.slice(-3).reverse();
-  const showTransfer = projects.filter((p) => p.state === 'concluded').length >= 3;
+  const copaCycles = entries.filter((e) => e.entry_type === 'copa_session').length;
+  const showTransfer =
+    projects.filter((p) => p.state === 'concluded').length >= 3 || copaCycles >= 10;
 
   return (
     <div className="min-h-screen bg-background pb-24">
