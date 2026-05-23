@@ -18,9 +18,21 @@ const LAYERS: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia',
 
 interface Props {
   initialProjectId?: string | null;
+  initialFact?: string | null;
+  initialFriction?: string | null;
+  initialImv?: string | null;
+  initialScenario?: ScenarioType | null;
+  initialLayer?: OperationalLayer | null;
 }
 
-export function OperatorSheetScreen({ initialProjectId = null }: Props) {
+export function OperatorSheetScreen({
+  initialProjectId = null,
+  initialFact = null,
+  initialFriction = null,
+  initialImv = null,
+  initialScenario = null,
+  initialLayer = null,
+}: Props) {
   const router = useRouter();
   const navigate = useNavigate();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -28,12 +40,12 @@ export function OperatorSheetScreen({ initialProjectId = null }: Props) {
   const [mode, setMode] = useState<SheetMode>('quick');
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState<string | null>(initialProjectId);
-  const [scenario, setScenario] = useState<ScenarioType | null>(null);
-  const [layer, setLayer] = useState<OperationalLayer | null>(null);
-  const [fact, setFact] = useState('');
-  const [friction, setFriction] = useState('');
+  const [scenario, setScenario] = useState<ScenarioType | null>(initialScenario);
+  const [layer, setLayer] = useState<OperationalLayer | null>(initialLayer);
+  const [fact, setFact] = useState(initialFact ?? '');
+  const [friction, setFriction] = useState(initialFriction ?? '');
   const [resource, setResource] = useState('');
-  const [imv, setImv] = useState('');
+  const [imv, setImv] = useState(initialImv ?? '');
   const [metric, setMetric] = useState('');
   const [deadline, setDeadline] = useState('');
   const [cutRule, setCutRule] = useState('');
