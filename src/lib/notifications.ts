@@ -286,36 +286,44 @@ interface PactDays {
 
 const WEEKDAY = { capture: 2 /* seg */, organize: 4 /* qua */, prove: 6 /* sex */, assess: 1 /* dom */ };
 
-export async function schedulePactReminders(project: Project): Promise<void> {
+interface PactCyclePhase {
+  day_of_week: number; // 0=Dom..6=Sáb
+  time_hour: number;   // 0..23
+}
+export interface PactCycleConfig {
+  capture: PactCyclePhase;
+  organize: PactCyclePhase;
+  prove: PactCyclePhase;
+  assess: PactCyclePhase;
+}
+
+const PACT_LABELS: Record<keyof PactCycleConfig, string> = {
+  capture: 'dia de Captura. 5 minutos.',
+  organize: 'dia de Organização.',
+  prove: 'dia de Prova.',
+  assess: 'dia de Aferição.',
+};
+
+export async function schedulePactReminders(project: Project, cycle?: PactCycleConfig): Promise<void> {
   // cancela existentes
   for (const k of ['capture', 'organize', 'prove', 'assess'] as const) {
     await cancelById(id('pact', project.id, k));
   }
-  if (!project.pact_enabled) return;
-  const days: PactDays = {
-    capture: project.pact_day_capture,
-    organize: project.pact_day_organize,
-    prove: project.pact_day_prove,
-    assess: project.pact_day_assess,
-  };
-  const phases: Array<[keyof PactDays, string]> = [
-    ['capture', 'dia de Captura. 5 minutos.'],
-    ['organize', 'dia de Organização.'],
-    ['prove', 'dia de Prova.'],
-    ['assess', 'dia de Aferição.'],
-  ];
-  for (const [key, label] of phases) {
-    const hour = days[key];
-    if (!hour) continue;
+  if (!project.pact_enabled || !cycle) return;
+  for (const key of ['capture', 'organize', 'prove', 'assess'] as const) {
+    const phase = cycle[key];
     await schedule({
       id: id('pact', project.id, key),
       title: project.name,
-      body: `${project.name} — ${label}`,
-      on: { weekday: WEEKDAY[key], hour, minute: 0 },
+      // REQ-PACT-NOTIF-02: tom de convite, nunca cobrança.
+      body: `${project.name} — ${PACT_LABELS[key]}`,
+      // Capacitor: weekday 1=Dom..7=Sáb → day_of_week (0..6) + 1
+      on: { weekday: phase.day_of_week + 1, hour: phase.time_hour, minute: 0 },
       extra: { projectId: project.id, kind: 'pact', phase: key },
     });
   }
 }
+
 
 // ---------- Convite Pessoal por projeto ----------
 
