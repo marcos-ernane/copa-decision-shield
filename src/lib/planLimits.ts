@@ -44,6 +44,7 @@ export interface PlanLimits {
   entry_alignment: boolean;
   pressure_reality_check: boolean;
   principle_recall: boolean;
+  simulations: boolean;
 }
 
 const FREE_LIMITS: PlanLimits = {
