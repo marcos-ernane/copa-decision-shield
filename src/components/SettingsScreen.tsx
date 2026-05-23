@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useAuthState } from '@/lib/planLimits';
 import { openStripePortal } from '@/lib/stripe';
+import { setReadingMode, emitReadingModeChange } from '@/hooks/useReadingMode';
+import { GuestStorage } from '@/lib/guestStorage';
 import { PlanBadge } from './PlanBadge';
 import { UpgradeSheet } from './UpgradeSheet';
 import { TrialEndingSheet } from './TrialEndingSheet';
