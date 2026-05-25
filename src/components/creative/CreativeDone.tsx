@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveCreativeSession, type CreativeSessionContent } from '@/lib/creative';
 
 interface Props {
@@ -114,7 +114,7 @@ export function CreativeDone({ baseSession, mode, onAdjust }: Props) {
 
       <div>
         <label className="text-small font-medium">Ação</label>
-        <Textarea value={action} onChange={(e) => setAction(e.target.value)} rows={2} />
+        <VoiceInput value={action} onChange={setAction} rows={2} />
         <p className="text-small text-muted-foreground mt-1">
           Editável — use a alternativa como ponto de partida.
         </p>

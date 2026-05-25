@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import type { NorthReached } from '@/types/database';
 
 interface Props {
@@ -43,12 +44,7 @@ export function ConcludeNorth({ initialNorth, initialWhatHappened, onNext, onBac
         <label className="text-label text-muted-foreground uppercase">
           Em 1 frase, o que de fato aconteceu? (opcional)
         </label>
-        <textarea
-          value={what}
-          onChange={(e) => setWhat(e.target.value)}
-          rows={3}
-          className="w-full rounded-md border border-border bg-background p-2 text-small text-foreground"
-        />
+        <VoiceInput value={what} onChange={setWhat} rows={3} />
       </div>
       <div className="flex gap-2">
         {onBack && (

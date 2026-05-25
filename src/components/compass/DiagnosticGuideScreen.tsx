@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import { getActiveProjectId } from '@/lib/creative';
@@ -186,8 +186,7 @@ function GuidedFlow({
       {step === 3 && (
         <section className="space-y-3">
           <p className="text-small text-foreground">Escreva 1 fato limpo.</p>
-          <Textarea value={fact} onChange={(e) => setFact(e.target.value)} rows={4}
-            placeholder="O que você viu — sem concluir" />
+          <VoiceInput value={fact} onChange={setFact} rows={4} placeholder="O que você viu — sem concluir" />
           {hasInterpretive && (
             <p className="text-label text-[color:var(--color-brand-blue)] bg-surface-2 rounded px-2 py-1">
               Atenção: linguagem interpretativa detectada. Tente descrever apenas o observável.
@@ -203,7 +202,7 @@ function GuidedFlow({
       {step === 4 && (
         <section className="space-y-3">
           <p className="text-small text-foreground">O que está travando especificamente?</p>
-          <Textarea value={friction} onChange={(e) => setFriction(e.target.value)} rows={4} />
+          <VoiceInput value={friction} onChange={setFriction} rows={4} />
           <button
             onClick={() => navigate({ to: '/compass/friction' })}
             className="text-label text-[color:var(--color-brand-blue)] hover:underline"
@@ -220,8 +219,7 @@ function GuidedFlow({
       {step === 5 && (
         <section className="space-y-3">
           <p className="text-small text-foreground">Qual o menor teste possível?</p>
-          <Textarea value={imv} onChange={(e) => setImv(e.target.value)} rows={4}
-            placeholder="Reversível + métrica definida" />
+          <VoiceInput value={imv} onChange={setImv} rows={4} placeholder="Reversível + métrica definida" />
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setStep(4)}>← Voltar</Button>
             <Button disabled={!imv.trim()} onClick={() => setStep(6)}>Concluir →</Button>

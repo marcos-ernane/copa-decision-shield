@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useNavigate } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import {
   markMaintenanceCompleted,
   shouldOfferMaintenanceNotification,
@@ -207,8 +207,7 @@ function WeeklyReview() {
         <SkipLink label="Revisar →" onClick={() => navigate({ to: '/' })} />
       </StepBlock>
       <StepBlock num={4} title="Qual foi o maior aprendizado desta semana?">
-        <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3}
-          placeholder="Opcional — salvo como pulso" />
+        <VoiceInput value={note} onChange={setNote} rows={3} placeholder="Opcional — salvo como pulso" />
       </StepBlock>
       <div className="text-right">
         <SkipLink label="Pular" onClick={() => navigate({ to: '/compass' })} />
@@ -238,8 +237,7 @@ function BiweeklyReview() {
         <SkipLink label="Ver banco →" onClick={() => navigate({ to: '/diary' })} />
       </StepBlock>
       <StepBlock num={3} title="Qual padrão você quer observar nas próximas 2 semanas?">
-        <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3}
-          placeholder="Opcional — salvo como nota de padrão" />
+        <VoiceInput value={note} onChange={setNote} rows={3} placeholder="Opcional — salvo como nota de padrão" />
       </StepBlock>
       <div className="text-right">
         <SkipLink label="Pular" onClick={() => navigate({ to: '/compass' })} />
@@ -272,8 +270,7 @@ function MonthlyReview() {
         <SkipLink label="Ver banco de princípios →" onClick={() => navigate({ to: '/diary' })} />
       </StepBlock>
       <StepBlock num={4} title="Consolide 1 princípio mestre do mês.">
-        <Textarea value={master} onChange={(e) => setMaster(e.target.value)} rows={3}
-          placeholder="Opcional — salvo como princípio mestre" />
+        <VoiceInput value={master} onChange={setMaster} rows={3} placeholder="Opcional — salvo como princípio mestre" />
       </StepBlock>
       <StepBlock num={5} title="Compare sua linha de base.">
         <SkipLink label="Ver evolução →" onClick={() => navigate({ to: '/panel' })} />

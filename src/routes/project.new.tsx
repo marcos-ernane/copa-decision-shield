@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import { createProject } from '@/lib/projects';
 import type { ScenarioType } from '@/types/app';
 
@@ -79,13 +80,7 @@ function NewProject() {
           <label className="text-label text-muted-foreground uppercase">
             Vai estar melhor quando…
           </label>
-          <textarea
-            value={north}
-            onChange={(e) => setNorth(e.target.value)}
-            maxLength={300}
-            rows={4}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-body focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-          />
+          <VoiceInput value={north} onChange={setNorth} rows={4} />
           <p className="text-label text-muted-foreground">{north.length}/300</p>
         </div>
 

@@ -1,5 +1,6 @@
 // TransferScenarioContext — campo de contexto de um cenário.
 import { useState } from 'react';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import { isContextValid } from '@/lib/transfer';
 
 interface Props {
@@ -21,13 +22,7 @@ export function TransferScenarioContext({ scenarioIndex, initial, onContinue }: 
         <h2 className="text-title text-foreground">
           Descreva um cenário diferente dos seus projetos atuais
         </h2>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="1 a 3 frases"
-          rows={4}
-          className="w-full rounded-md border border-border bg-card p-3 text-body text-foreground"
-        />
+        <VoiceInput value={text} onChange={setText} placeholder="1 a 3 frases" rows={4} />
         <div className="text-small text-muted-foreground space-y-1">
           <p>Exemplos:</p>
           <p>"Loja de roupa no centro sem movimento"</p>

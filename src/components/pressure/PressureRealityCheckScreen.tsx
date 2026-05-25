@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { localRealityHeuristic } from '@/lib/pressure';
 import { useNavigate } from '@tanstack/react-router';
@@ -83,12 +83,7 @@ export function PressureRealityCheckScreen({ onSkip, onProceed }: Props) {
           o que de pior aconteceria?
         </h2>
       </div>
-      <Textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Uma frase."
-        rows={3}
-      />
+      <VoiceInput value={text} onChange={setText} placeholder="Uma frase." rows={3} />
       <div className="space-y-2">
         <Button className="w-full" onClick={analyze} disabled={analyzing}>
           {analyzing ? 'Analisando…' : 'Continuar'}

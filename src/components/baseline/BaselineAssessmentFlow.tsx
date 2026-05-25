@@ -13,6 +13,7 @@ import {
   type BaselineScores,
 } from '@/lib/baseline';
 import { RadarChart } from './RadarChart';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -154,11 +155,10 @@ function Step1({ form, setForm, onNext }: { form: FormState; setForm: (f: FormSt
         Escolha um cenário real para diagnosticar.<br />
         Pode ser seu projeto atual ou outro que você esteja acompanhando.
       </p>
-      <TextArea
+      <VoiceInput
         rows={3}
-        maxLength={200}
         value={form.scenario_context}
-        onChange={(e) => setForm({ ...form, scenario_context: e.target.value })}
+        onChange={(v) => setForm({ ...form, scenario_context: v })}
         placeholder="Descreva o cenário em 1 ou 2 linhas"
       />
       <Helper>
@@ -206,11 +206,10 @@ function Step3({ form, setForm, onNext }: { form: FormState; setForm: (f: FormSt
       <p className="text-body text-foreground">
         O que já existe neste cenário que poderia ser usado sem criar nada novo?
       </p>
-      <TextArea
+      <VoiceInput
         rows={5}
-        maxLength={1000}
         value={form.existing_resources}
-        onChange={(e) => setForm({ ...form, existing_resources: e.target.value })}
+        onChange={(v) => setForm({ ...form, existing_resources: v })}
         placeholder="Recursos disponíveis"
       />
       <Helper>Exemplos: pessoas disponíveis, equipamentos, espaço físico, relacionamentos, dados</Helper>
@@ -256,11 +255,10 @@ function Step5({ form, setForm, onNext }: { form: FormState; setForm: (f: FormSt
       <p className="text-body text-foreground">
         Qual seria o menor teste possível neste cenário agora?
       </p>
-      <TextArea
+      <VoiceInput
         rows={5}
-        maxLength={500}
         value={form.minimum_intervention}
-        onChange={(e) => setForm({ ...form, minimum_intervention: e.target.value })}
+        onChange={(v) => setForm({ ...form, minimum_intervention: v })}
         placeholder="IMV inicial: reversível, barato, específico, mensurável"
       />
       <PrimaryButton disabled={!valid} onClick={onNext}>Continuar</PrimaryButton>

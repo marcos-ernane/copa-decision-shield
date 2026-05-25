@@ -1,5 +1,6 @@
 // TransferPrincipalExtraction — extração do princípio final.
 import { useState } from 'react';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import { isPrincipleValid } from '@/lib/transfer';
 
 interface Props {
@@ -20,12 +21,7 @@ export function TransferPrincipalExtraction({ initial, onConclude }: Props) {
         <p className="text-small text-muted-foreground">
           Em 1 frase: o aprendizado que atravessa os três cenários.
         </p>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={4}
-          className="w-full rounded-md border border-border bg-card p-3 text-body text-foreground"
-        />
+        <VoiceInput value={text} onChange={setText} rows={4} />
         <button
           type="button"
           disabled={!valid}
