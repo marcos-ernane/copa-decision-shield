@@ -3,7 +3,7 @@
 // - calibrated (7-14 dias): CalibratedReturnScreen
 // - new_cycle (> 14 dias ou primeiro acesso): DiagnosisFlow
 
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, Outlet } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { CalibratedReturnScreen } from '@/components/diagnosis/CalibratedReturnScreen';
 import { getProject } from '@/lib/projects';
@@ -41,7 +41,7 @@ function ProjectEntryRouter() {
     })();
   }, [id, navigate]);
 
-  if (!showCalibrated || !project) return null;
+  if (!showCalibrated || !project) return <Outlet />;
 
   const days = daysSince(project.last_entry_at);
   return <CalibratedReturnScreen project={project} daysSinceLast={days} />;
