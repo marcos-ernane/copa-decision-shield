@@ -22,7 +22,6 @@ import { Route as CompassRouteImport } from './routes/compass'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CompassIndexRouteImport } from './routes/compass.index'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
-import { Route as SettingsSplatRouteImport } from './routes/settings.$'
 import { Route as RegisterStructuredRouteImport } from './routes/register.structured'
 import { Route as RegisterPulseRouteImport } from './routes/register.pulse'
 import { Route as ProjectNewRouteImport } from './routes/project.new'
@@ -117,11 +116,6 @@ const CompassIndexRoute = CompassIndexRouteImport.update({
 const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsSplatRoute = SettingsSplatRouteImport.update({
-  id: '/$',
-  path: '/$',
   getParentRoute: () => SettingsRoute,
 } as any)
 const RegisterStructuredRoute = RegisterStructuredRouteImport.update({
@@ -310,7 +304,6 @@ export interface FileRoutesByFullPath {
   '/project/new': typeof ProjectNewRoute
   '/register/pulse': typeof RegisterPulseRoute
   '/register/structured': typeof RegisterStructuredRoute
-  '/settings/$': typeof SettingsSplatRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/compass/': typeof CompassIndexRoute
   '/project/$id/capacity': typeof ProjectIdCapacityRoute
@@ -355,7 +348,6 @@ export interface FileRoutesByTo {
   '/project/new': typeof ProjectNewRoute
   '/register/pulse': typeof RegisterPulseRoute
   '/register/structured': typeof RegisterStructuredRoute
-  '/settings/$': typeof SettingsSplatRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/compass': typeof CompassIndexRoute
   '/project/$id/capacity': typeof ProjectIdCapacityRoute
@@ -402,7 +394,6 @@ export interface FileRoutesById {
   '/project/new': typeof ProjectNewRoute
   '/register/pulse': typeof RegisterPulseRoute
   '/register/structured': typeof RegisterStructuredRoute
-  '/settings/$': typeof SettingsSplatRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/compass/': typeof CompassIndexRoute
   '/project/$id/capacity': typeof ProjectIdCapacityRoute
@@ -450,7 +441,6 @@ export interface FileRouteTypes {
     | '/project/new'
     | '/register/pulse'
     | '/register/structured'
-    | '/settings/$'
     | '/settings/notifications'
     | '/compass/'
     | '/project/$id/capacity'
@@ -495,7 +485,6 @@ export interface FileRouteTypes {
     | '/project/new'
     | '/register/pulse'
     | '/register/structured'
-    | '/settings/$'
     | '/settings/notifications'
     | '/compass'
     | '/project/$id/capacity'
@@ -541,7 +530,6 @@ export interface FileRouteTypes {
     | '/project/new'
     | '/register/pulse'
     | '/register/structured'
-    | '/settings/$'
     | '/settings/notifications'
     | '/compass/'
     | '/project/$id/capacity'
@@ -666,13 +654,6 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/settings/notifications'
       preLoaderRoute: typeof SettingsNotificationsRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/settings/$': {
-      id: '/settings/$'
-      path: '/$'
-      fullPath: '/settings/$'
-      preLoaderRoute: typeof SettingsSplatRouteImport
       parentRoute: typeof SettingsRoute
     }
     '/register/structured': {
@@ -966,12 +947,10 @@ const PressureRouteWithChildren = PressureRoute._addFileChildren(
 )
 
 interface SettingsRouteChildren {
-  SettingsSplatRoute: typeof SettingsSplatRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
-  SettingsSplatRoute: SettingsSplatRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
 }
 
