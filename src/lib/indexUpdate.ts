@@ -32,9 +32,9 @@ async function loadData(): Promise<{
     };
   }
   const [projectsR, entriesR, principlesR] = await Promise.all([
-    supabase.from('projects').select('*'),
-    supabase.from('entries').select('*'),
-    supabase.from('principles').select('*'),
+    supabase.from('projects').select('*').eq('user_id', session.user.id),
+    supabase.from('entries').select('*').eq('user_id', session.user.id),
+    supabase.from('principles').select('*').eq('user_id', session.user.id),
   ]);
   return {
     userId: session.user.id,

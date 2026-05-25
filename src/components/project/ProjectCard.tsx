@@ -2,7 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import type { Project, Principle } from '@/types/database';
 import { ProjectStateIcon } from './ProjectStateIcon';
 import { ScenarioTypeChip } from './ScenarioTypeChip';
-import { STATE_DISPLAY, daysSince } from '@/lib/projectState';
+import { STATE_DISPLAY, daysSince, determineEntryType } from '@/lib/projectState';
 
 interface Props {
   project: Project;
@@ -11,6 +11,7 @@ interface Props {
 
 export function ProjectCard({ project, recallPrinciple }: Props) {
   const navigate = useNavigate();
+  const entryType = determineEntryType(project);
   const days = daysSince(project.last_entry_at);
   const showStale = days > 5 && days !== Infinity;
   const showRecall =
@@ -20,7 +21,13 @@ export function ProjectCard({ project, recallPrinciple }: Props) {
   return (
     <div className="space-y-2">
       <Link
-        to="/project/$id"
+        to={
+          entryType === 'direct'
+            ? '/project/$id/dashboard'
+            : entryType === 'new_cycle'
+            ? '/project/$id/diagnosis'
+            : '/project/$id'
+        }
         params={{ id: project.id }}
         className="block rounded-md border border-border bg-card p-4 hover:bg-accent transition-colors"
       >

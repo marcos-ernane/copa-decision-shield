@@ -65,6 +65,7 @@ export async function askFacilitator(
 
     const { data, error } = await supabase.functions.invoke('assistant-facilitator', {
       body: { trigger, context },
+      signal: controller.signal,
     });
     clearTimeout(timer);
     if (error) return null;
