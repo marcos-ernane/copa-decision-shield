@@ -5,6 +5,7 @@ import { TimelineTab } from './TimelineTab';
 import { PrinciplesTab } from './PrinciplesTab';
 import { SymptomIndex } from './SymptomIndex';
 import { WeeklyReport } from './WeeklyReport';
+import { OperatorManual } from '@/components/manual/OperatorManual';
 
 export type DiaryTab = 'timeline' | 'principles' | 'symptoms' | 'weekly' | 'manual';
 
@@ -64,6 +65,7 @@ export function DiaryShell({ active, children }: Props) {
             {tab === 'principles' && <PrinciplesTab />}
             {tab === 'symptoms' && <SymptomIndex />}
             {tab === 'weekly' && <WeeklyReport />}
+            {tab === 'manual' && <OperatorManual />}
           </>
         )}
       </div>
