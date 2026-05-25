@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { COPAEntryAlignment } from './COPAEntryAlignment';
 import { COPACapture } from './COPACapture';
@@ -176,30 +177,38 @@ export function COPAShell() {
   // ---------- RENDER ----------
   if (!projectId) {
     return (
-      <div className="space-y-4 p-4">
-        <h2 className="text-title">Para qual projeto é este COPA?</h2>
-        {projects.length === 0 && (
-          <div className="space-y-3">
-            <p className="text-body text-muted-foreground">
-              Você ainda não tem projetos. Crie um para começar.
-            </p>
-            <Button onClick={() => navigate({ to: '/project/new' })}>
-              Criar projeto
-            </Button>
+      <div className="min-h-screen bg-background">
+        <header className="flex items-center gap-3 px-4 py-4 border-b border-border">
+          <button onClick={() => navigate({ to: '/' })} className="p-1 rounded-md hover:bg-accent" aria-label="Voltar">
+            <ArrowLeft className="size-5 text-muted-foreground" />
+          </button>
+          <h1 className="text-heading text-foreground">COPA de Bolso</h1>
+        </header>
+        <div className="space-y-4 p-4">
+          <h2 className="text-title">Para qual projeto é este COPA?</h2>
+          {projects.length === 0 && (
+            <div className="space-y-3">
+              <p className="text-body text-muted-foreground">
+                Você ainda não tem projetos. Crie um para começar.
+              </p>
+              <Button onClick={() => navigate({ to: '/project/new' })}>
+                Criar projeto
+              </Button>
+            </div>
+          )}
+          <div className="space-y-2">
+            {projects.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setProjectId(p.id)}
+                className="w-full rounded-lg border border-border bg-card p-3 text-left hover:bg-accent"
+              >
+                <p className="text-heading text-foreground">{p.name}</p>
+                <p className="text-small text-muted-foreground line-clamp-1">{p.north}</p>
+              </button>
+            ))}
           </div>
-        )}
-        <div className="space-y-2">
-          {projects.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setProjectId(p.id)}
-              className="w-full rounded-lg border border-border bg-card p-3 text-left hover:bg-accent"
-            >
-              <p className="text-heading text-foreground">{p.name}</p>
-              <p className="text-small text-muted-foreground line-clamp-1">{p.north}</p>
-            </button>
-          ))}
         </div>
       </div>
     );
