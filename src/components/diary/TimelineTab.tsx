@@ -21,13 +21,27 @@ const PERIODS = [
 
 function entryPreview(e: Entry): string {
   const c = e.content as Record<string, unknown>;
+
+  if (e.entry_type === 'copa_session') {
+    const capture = c.capture as Record<string, unknown> | undefined;
+    const prove = c.prove as Record<string, unknown> | undefined;
+    const text = (capture?.text as string) || (prove?.action as string) || '';
+    return text || '—';
+  }
+
+  if (e.entry_type === 'pressure_session') {
+    const fact = (c.fact as string) || '';
+    const nextStep = (c.next_step as string) || '';
+    return fact || nextStep || '—';
+  }
+
   return (
     (c.text as string) ||
     (c.fact_text as string) ||
     (c.action as string) ||
     (c.principle_text as string) ||
     (c.correct_version as string) ||
-    JSON.stringify(c).slice(0, 80)
+    '—'
   );
 }
 
