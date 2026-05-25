@@ -47,6 +47,11 @@ Máximo 2 frases.`,
 Ofereça UMA ação específica, concreta e de baixo risco baseada no fato descrito.
 Máximo 2 frases.`,
 
+  PRESSURE_DONT_KNOW: `O usuário está sob pressão e declarou que não sabe o que fazer a seguir.
+Com base no fato descrito, faça UMA pergunta de diagnóstico curta que ajude a identificar o que está bloqueando.
+A pergunta deve ser específica para o contexto fornecido, não genérica. Não dê sugestões — apenas a pergunta.
+Máximo 1 frase, terminando com "?".`,
+
   PRESSURE_REALITY_CHECK: `O usuário descreveu o que poderia acontecer se não agir agora.
 Classifique internamente se é urgência REAL (consequência observável e imediata) ou PERCEBIDA (ansiedade, suposição sem evidência).
 Se for percebida ou vaga: comece com "PRESSÃO_VAGA:" e explique em 1 frase o que está faltando.

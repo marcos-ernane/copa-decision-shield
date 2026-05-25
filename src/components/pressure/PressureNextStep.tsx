@@ -1,7 +1,8 @@
 // Tela 3 — Próximo Passo. Campo de ação + ético opcional (apenas se risk='real').
-// [Ver sugestões] usa o SuggestionSheet do COPA (trigger SUGGESTION_BUTTON_PRESSURE).
+// [Ver sugestões] → ações concretas (trigger SUGGESTION_BUTTON_PRESSURE).
+// [Não sei] → perguntas diagnósticas para desbloquear (trigger PRESSURE_DONT_KNOW).
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { BookAnchorHint } from '@/components/copa/BookAnchorHint';
@@ -9,6 +10,12 @@ import { SuggestionSheet } from '@/components/copa/SuggestionSheet';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { FIXED_SUGGESTIONS, suggestionStateFor } from '@/lib/copa';
 import type { PressureRisk } from '@/lib/pressure';
+
+const DONT_KNOW_QUESTIONS = [
+  'Qual é a menor coisa que você consegue confirmar agora?',
+  'Se você tivesse mais 1 hora, o que faria primeiro?',
+  'Existe algo que você poderia adiar para ganhar clareza?',
+];
 
 interface Props {
   risk: PressureRisk;
@@ -20,23 +27,34 @@ interface Props {
 export function PressureNextStep({ risk, fact, historyCount, onDefine }: Props) {
   const [text, setText] = useState('');
   const [ethical, setEthical] = useState('');
-  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const [sugOpen, setSugOpen] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
+
+  const [dontKnowOpen, setDontKnowOpen] = useState(false);
+  const [aiDiagnostic, setAiDiagnostic] = useState<string | null>(null);
+  const [loadingDiagnostic, setLoadingDiagnostic] = useState(false);
 
   const sugState = suggestionStateFor(historyCount);
 
   async function openSuggestions() {
-    setSheetOpen(true);
+    setSugOpen(true);
     if (sugState !== 'no_history' && !aiSuggestion) {
       setLoadingSuggestion(true);
-      const r = await askFacilitator('SUGGESTION_BUTTON_PRESSURE', {
-        fact,
-        risk,
-        history_count: historyCount,
-      });
+      const r = await askFacilitator('SUGGESTION_BUTTON_PRESSURE', { fact, risk, history_count: historyCount });
       setAiSuggestion(r);
       setLoadingSuggestion(false);
+    }
+  }
+
+  async function openDontKnow() {
+    setDontKnowOpen(true);
+    if (!aiDiagnostic) {
+      setLoadingDiagnostic(true);
+      const r = await askFacilitator('PRESSURE_DONT_KNOW', { fact, risk });
+      setAiDiagnostic(r);
+      setLoadingDiagnostic(false);
     }
   }
 
@@ -46,6 +64,10 @@ export function PressureNextStep({ risk, fact, historyCount, onDefine }: Props) 
       : aiSuggestion
         ? [aiSuggestion, ...FIXED_SUGGESTIONS]
         : [...FIXED_SUGGESTIONS];
+
+  const diagnosticQuestions: string[] = aiDiagnostic
+    ? [aiDiagnostic, ...DONT_KNOW_QUESTIONS]
+    : [...DONT_KNOW_QUESTIONS];
 
   return (
     <div className="space-y-4 p-4">
@@ -69,14 +91,7 @@ export function PressureNextStep({ risk, fact, historyCount, onDefine }: Props) 
         <Button variant="outline" className="flex-1" onClick={openSuggestions}>
           Ver sugestões
         </Button>
-        <Button
-          variant="ghost"
-          className="flex-1"
-          onClick={() => {
-            // [NÃO SEI] — abre o mesmo sheet de sugestões.
-            openSuggestions();
-          }}
-        >
+        <Button variant="ghost" className="flex-1" onClick={openDontKnow}>
           Não sei
         </Button>
       </div>
@@ -95,11 +110,19 @@ export function PressureNextStep({ risk, fact, historyCount, onDefine }: Props) 
       </Button>
 
       <SuggestionSheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
+        open={sugOpen}
+        onClose={() => setSugOpen(false)}
         title="Sugestões"
         suggestions={suggestions}
-        footerHint={loadingSuggestion ? 'Buscando sugestão…' : null}
+        footerHint={loadingSuggestion ? 'Facilitador analisando…' : null}
+      />
+
+      <SuggestionSheet
+        open={dontKnowOpen}
+        onClose={() => setDontKnowOpen(false)}
+        title="Perguntas para clarificar"
+        suggestions={diagnosticQuestions}
+        footerHint={loadingDiagnostic ? 'Facilitador analisando…' : 'Use uma dessas perguntas para destravar o próximo passo.'}
       />
     </div>
   );
