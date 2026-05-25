@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { CompassHome } from '@/components/compass/CompassHome';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/compass')({
-  component: CompassHome,
+  component: () => <Outlet />,
 });

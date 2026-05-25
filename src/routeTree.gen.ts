@@ -20,6 +20,7 @@ import { Route as CreativeRouteImport } from './routes/creative'
 import { Route as CopaRouteImport } from './routes/copa'
 import { Route as CompassRouteImport } from './routes/compass'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CompassIndexRouteImport } from './routes/compass.index'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
 import { Route as SettingsSplatRouteImport } from './routes/settings.$'
 import { Route as RegisterStructuredRouteImport } from './routes/register.structured'
@@ -107,6 +108,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CompassIndexRoute = CompassIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CompassRoute,
 } as any)
 const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
   id: '/notifications',
@@ -306,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/register/structured': typeof RegisterStructuredRoute
   '/settings/$': typeof SettingsSplatRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/compass/': typeof CompassIndexRoute
   '/project/$id/capacity': typeof ProjectIdCapacityRoute
   '/project/$id/conclude': typeof ProjectIdConcludeRoute
   '/project/$id/dashboard': typeof ProjectIdDashboardRoute
@@ -317,7 +324,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/compass': typeof CompassRouteWithChildren
   '/copa': typeof CopaRouteWithChildren
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
@@ -351,6 +357,7 @@ export interface FileRoutesByTo {
   '/register/structured': typeof RegisterStructuredRoute
   '/settings/$': typeof SettingsSplatRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/compass': typeof CompassIndexRoute
   '/project/$id/capacity': typeof ProjectIdCapacityRoute
   '/project/$id/conclude': typeof ProjectIdConcludeRoute
   '/project/$id/dashboard': typeof ProjectIdDashboardRoute
@@ -397,6 +404,7 @@ export interface FileRoutesById {
   '/register/structured': typeof RegisterStructuredRoute
   '/settings/$': typeof SettingsSplatRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/compass/': typeof CompassIndexRoute
   '/project/$id/capacity': typeof ProjectIdCapacityRoute
   '/project/$id/conclude': typeof ProjectIdConcludeRoute
   '/project/$id/dashboard': typeof ProjectIdDashboardRoute
@@ -444,6 +452,7 @@ export interface FileRouteTypes {
     | '/register/structured'
     | '/settings/$'
     | '/settings/notifications'
+    | '/compass/'
     | '/project/$id/capacity'
     | '/project/$id/conclude'
     | '/project/$id/dashboard'
@@ -455,7 +464,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/compass'
     | '/copa'
     | '/creative'
     | '/diary'
@@ -489,6 +497,7 @@ export interface FileRouteTypes {
     | '/register/structured'
     | '/settings/$'
     | '/settings/notifications'
+    | '/compass'
     | '/project/$id/capacity'
     | '/project/$id/conclude'
     | '/project/$id/dashboard'
@@ -534,6 +543,7 @@ export interface FileRouteTypes {
     | '/register/structured'
     | '/settings/$'
     | '/settings/notifications'
+    | '/compass/'
     | '/project/$id/capacity'
     | '/project/$id/conclude'
     | '/project/$id/dashboard'
@@ -643,6 +653,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/compass/': {
+      id: '/compass/'
+      path: '/'
+      fullPath: '/compass/'
+      preLoaderRoute: typeof CompassIndexRouteImport
+      parentRoute: typeof CompassRoute
     }
     '/settings/notifications': {
       id: '/settings/notifications'
@@ -879,6 +896,7 @@ interface CompassRouteChildren {
   CompassSheetRoute: typeof CompassSheetRoute
   CompassSheetsRoute: typeof CompassSheetsRoute
   CompassSimulationsRoute: typeof CompassSimulationsRoute
+  CompassIndexRoute: typeof CompassIndexRoute
 }
 
 const CompassRouteChildren: CompassRouteChildren = {
@@ -889,6 +907,7 @@ const CompassRouteChildren: CompassRouteChildren = {
   CompassSheetRoute: CompassSheetRoute,
   CompassSheetsRoute: CompassSheetsRoute,
   CompassSimulationsRoute: CompassSimulationsRoute,
+  CompassIndexRoute: CompassIndexRoute,
 }
 
 const CompassRouteWithChildren =
