@@ -4,6 +4,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { Plus, Settings as SettingsIcon } from 'lucide-react';
 import { GuestStorage } from '@/lib/guestStorage';
+import { supabase } from '@/lib/supabase';
 import { listProjects, listPrinciples } from '@/lib/projects';
 import { sortProjects } from '@/lib/projectState';
 import { ProjectCard } from '@/components/project/ProjectCard';
@@ -24,14 +25,31 @@ function Home() {
   const [showConcluded, setShowConcluded] = useState(false);
 
   useEffect(() => {
-    const profile = GuestStorage.getProfile();
-    if (!profile || !profile.onboarding_completed) {
-      navigate({ to: '/onboarding' });
-      return;
-    }
-    setName(profile.display_name);
-    setCommunityLink(profile.community_link ?? null);
-    void load();
+    void (async () => {
+      // Usuário autenticado: sessão Supabase tem precedência — nunca vai para onboarding.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('display_name, community_link')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        const p = data as { display_name?: string; community_link?: string } | null;
+        setName(p?.display_name ?? session.user.email ?? 'Operador');
+        setCommunityLink(p?.community_link ?? null);
+        void load();
+        return;
+      }
+      // Usuário guest: verifica onboarding no localStorage.
+      const profile = GuestStorage.getProfile();
+      if (!profile || !profile.onboarding_completed) {
+        navigate({ to: '/onboarding' });
+        return;
+      }
+      setName(profile.display_name);
+      setCommunityLink(profile.community_link ?? null);
+      void load();
+    })();
   }, [navigate]);
 
   async function load() {
