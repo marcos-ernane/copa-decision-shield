@@ -16,6 +16,7 @@ interface Props {
 export function COPACapture({ initialText, onNext }: Props) {
   const [text, setText] = useState(initialText);
   const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
   const [flagged, setFlagged] = useState(false);
   const askedRef = useRef<string | null>(null);
 
@@ -26,7 +27,9 @@ export function COPACapture({ initialText, onNext }: Props) {
     if (askedRef.current === text) return;
     askedRef.current = text;
     const timer = window.setTimeout(async () => {
+      setLoadingSuggestion(true);
       const out = await askFacilitator('COPA_CAPTURE_INTERPRETATION', { text });
+      setLoadingSuggestion(false);
       if (out) setSuggestion(out);
     }, 1200);
     return () => window.clearTimeout(timer);
@@ -60,6 +63,10 @@ export function COPACapture({ initialText, onNext }: Props) {
         >
           Isso parece uma interpretação. Você viu isso ou concluiu?
         </div>
+      )}
+
+      {loadingSuggestion && !suggestion && (
+        <p className="text-small text-muted-foreground">Facilitador analisando…</p>
       )}
 
       {suggestion && (

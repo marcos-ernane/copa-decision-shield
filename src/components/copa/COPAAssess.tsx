@@ -38,16 +38,19 @@ export function COPAAssess({ historyCount, onDone }: Props) {
   });
   const [sheetOpen, setSheetOpen] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
   const state: SuggestionState = suggestionStateFor(historyCount);
   const canNext = d.success_signal.trim() && d.cut_rule.trim();
 
   async function openSuggestions() {
     setSheetOpen(true);
-    if (state === 'rich_history') {
+    if (state === 'rich_history' && !aiSuggestion) {
+      setLoadingSuggestion(true);
       const out = await askFacilitator('SUGGESTION_BUTTON_COPA_ASSESS', {
         success_signal: d.success_signal,
         cut_rule: d.cut_rule,
       });
+      setLoadingSuggestion(false);
       if (out) setAiSuggestion(out);
     }
   }
@@ -108,7 +111,9 @@ export function COPAAssess({ historyCount, onDone }: Props) {
         title="Sugestões para a Aferição"
         suggestions={suggestions}
         footerHint={
-          state === 'no_history'
+          loadingSuggestion
+            ? 'Facilitador analisando…'
+            : state === 'no_history'
             ? 'Quanto mais você usar o app, mais precisa fica a sugestão.'
             : null
         }

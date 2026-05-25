@@ -86,18 +86,21 @@ export function COPAProve({ bottleneck, historyCount, initialLayer, initialActio
   });
   const [sheetOpen, setSheetOpen] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
   const state: SuggestionState = suggestionStateFor(historyCount);
 
   const canNext = d.action.trim().length > 0 && d.metric.trim().length > 0;
 
   async function openSuggestions() {
     setSheetOpen(true);
-    if (state === 'rich_history') {
+    if (state === 'rich_history' && !aiSuggestion) {
+      setLoadingSuggestion(true);
       const out = await askFacilitator('SUGGESTION_BUTTON_COPA_PROVE', {
         bottleneck,
         action: d.action,
         layer: d.layer,
       });
+      setLoadingSuggestion(false);
       if (out) setAiSuggestion(out);
     }
   }
@@ -262,7 +265,9 @@ export function COPAProve({ bottleneck, historyCount, initialLayer, initialActio
         title="Sugestões para a Prova"
         suggestions={suggestions}
         footerHint={
-          state === 'no_history'
+          loadingSuggestion
+            ? 'Facilitador analisando…'
+            : state === 'no_history'
             ? 'Quanto mais você usar o app, mais precisa fica a sugestão.'
             : null
         }

@@ -11,22 +11,60 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SYSTEM_PROMPT = `Você é um facilitador operacional. Seu papel é ajudar o usuário a formular pensamentos com mais clareza usando o Método COPA. Você nunca toma decisões. Nunca diz ao usuário o que fazer. Apenas oferece reformulações ou alternativas como opção. Linguagem: direta, factual, operacional. Sem elogios. Sem coaching. Sem afirmações emocionais. Máximo 2 frases na resposta.
-Quando sugerir uma ação ou reformulação, nunca ignore consequências humanas ou sistêmicas. Se a ação sugerida tiver custo oculto evidente, nomeie-o em 1 frase como informação, nunca como julgamento.`;
+const SYSTEM_PROMPT = `Você é um facilitador operacional do Método COPA. Ajuda o usuário a formular pensamentos com mais clareza. Você nunca toma decisões. Nunca diz ao usuário o que fazer. Apenas oferece reformulações ou alternativas como opção. Linguagem: direta, factual, operacional. Sem elogios. Sem coaching. Sem afirmações emocionais. Quando sugerir algo, nunca ignore consequências humanas ou sistêmicas — se houver custo oculto evidente, nomeie-o em 1 frase como informação, nunca como julgamento.`;
 
-const VALID_TRIGGERS = new Set([
-  'COPA_CAPTURE_INTERPRETATION',
-  'COPA_IMV_METRIC_VAGUE',
-  'COPA_APA_PRINCIPLE_GENERIC',
-  'COPA_IMV_SITUATIONAL_FIT',
-  'SUGGESTION_BUTTON_COPA_PROVE',
-  'SUGGESTION_BUTTON_COPA_ASSESS',
-  'SUGGESTION_BUTTON_PRESSURE',
-  'PRESSURE_REALITY_CHECK',
-  'PRESSURE_ABUSE_PATTERN',
-  'CREATIVE_DIVERGE_SUPPORT',
-  'TRANSFER_CONSISTENCY_REPORT',
-]);
+// Instruções específicas por gatilho — complementam o SYSTEM_PROMPT.
+const TRIGGER_PROMPTS: Record<string, string> = {
+  COPA_CAPTURE_INTERPRETATION: `O usuário escreveu um texto com interpretação misturada com fato.
+Ofereça UMA reformulação factual — remova adjetivos de julgamento, "acho que", "parece que", suposições.
+Exemplo: "Acho que o cliente não gostou" → "O cliente não respondeu em 3 dias."
+Máximo 2 frases.`,
+
+  COPA_APA_PRINCIPLE_GENERIC: `O usuário formulou um princípio muito curto (menos de 5 palavras) após uma análise.
+Ofereça UMA versão expandida: universal (aplicável a outros projetos), factual, específica.
+Não use "sempre", "nunca", "melhor". Use: padrão observado + condição de aplicação.
+Máximo 2 frases.`,
+
+  COPA_IMV_METRIC_VAGUE: `O usuário definiu uma métrica vaga para seu teste (IMV).
+Ofereça UMA versão com número específico, prazo e critério de medição claro.
+Exemplo: "aumentar vendas" → "3 novos contratos em 30 dias medidos por planilha de acompanhamento."
+Máximo 2 frases.`,
+
+  COPA_IMV_SITUATIONAL_FIT: `O usuário está avaliando se sua ação mínima se encaixa no contexto atual.
+Faça UMA observação sobre o que pode precisar de ajuste dado o contexto fornecido.
+Nunca diga se está certo ou errado — apenas nomeie o ponto de atenção.
+Máximo 2 frases.`,
+
+  SUGGESTION_BUTTON_COPA_PROVE: `O usuário está na etapa de Prova (IMV) do Método COPA.
+Com base no gargalo e contexto, ofereça UMA sugestão de ação mínima verificável.
+Deve ser reversível, de baixo custo e mensurável. Máximo 2 frases.`,
+
+  SUGGESTION_BUTTON_COPA_ASSESS: `O usuário está na etapa de Aferição do Método COPA.
+Ofereça UMA sugestão de sinal de sucesso específico e mensurável, ou uma regra de corte clara.
+Máximo 2 frases.`,
+
+  SUGGESTION_BUTTON_PRESSURE: `O usuário está sob pressão e precisa definir o próximo passo mínimo (15 minutos).
+Ofereça UMA ação específica, concreta e de baixo risco baseada no fato descrito.
+Máximo 2 frases.`,
+
+  PRESSURE_REALITY_CHECK: `O usuário descreveu o que poderia acontecer se não agir agora.
+Classifique internamente se é urgência REAL (consequência observável e imediata) ou PERCEBIDA (ansiedade, suposição sem evidência).
+Se for percebida ou vaga: comece com "PRESSÃO_VAGA:" e explique em 1 frase o que está faltando.
+Se for real ou incerta: comece com "PRESSÃO_REAL:" e confirme brevemente.
+Nunca use mais de 2 frases no total.`,
+
+  PRESSURE_ABUSE_PATTERN: `O usuário ativou o Modo Pressão muitas vezes seguidas no mesmo projeto.
+Faça UMA observação factual sobre o padrão — sem julgamento, sem conselho.
+Exemplo: "Múltiplas ativações em poucos dias frequentemente indicam gargalo estrutural não resolvido, não urgências independentes."
+Máximo 2 frases.`,
+
+  CREATIVE_DIVERGE_SUPPORT: `O usuário está na etapa de divergência criativa com um objetivo/função vago.
+Ofereça UMA pergunta de especificidade OU UMA reformulação mais concreta do que já foi descrito.
+Nunca sugira o que fazer — apenas ajude a clarificar o que já existe.
+Máximo 2 frases.`,
+};
+
+const VALID_TRIGGERS = new Set(Object.keys(TRIGGER_PROMPTS).concat(['TRANSFER_CONSISTENCY_REPORT']));
 
 // Cache em memória 15 min (best-effort — instância pode reciclar).
 const cache = new Map<string, { value: string; expiresAt: number }>();
@@ -62,10 +100,16 @@ async function callClaude(trigger: string, payload: Record<string, unknown>): Pr
 
   const controller = new AbortController();
   const isReport = trigger === 'TRANSFER_CONSISTENCY_REPORT';
-  const timeoutId = setTimeout(() => controller.abort(), isReport ? 7500 : 3000);
+  const timeoutId = setTimeout(() => controller.abort(), isReport ? 7500 : 4000);
 
   try {
-    const system = isReport ? `${SYSTEM_PROMPT}\n\n${TRANSFER_REPORT_PROMPT}` : SYSTEM_PROMPT;
+    const triggerInstruction = TRIGGER_PROMPTS[trigger] ?? '';
+    const system = isReport
+      ? `${SYSTEM_PROMPT}\n\n${TRANSFER_REPORT_PROMPT}`
+      : triggerInstruction
+      ? `${SYSTEM_PROMPT}\n\n${triggerInstruction}`
+      : SYSTEM_PROMPT;
+
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -75,7 +119,7 @@ async function callClaude(trigger: string, payload: Record<string, unknown>): Pr
       },
       body: JSON.stringify({
         model: 'claude-3-5-haiku-latest',
-        max_tokens: isReport ? 480 : 160,
+        max_tokens: isReport ? 480 : 180,
         system,
         messages: [
           {

@@ -38,9 +38,8 @@ export function PressureRealityCheckScreen({ onSkip, onProceed }: Props) {
     // Consulta IA (timeout silencioso).
     const ai = await askFacilitator('PRESSURE_REALITY_CHECK', { text: trimmed });
     setAnalyzing(false);
-    // Se IA classificou como vaga (ou heurística disse vaga e IA não respondeu)
-    const aiSaysVague =
-      typeof ai === 'string' && /perceb|vaga|pressão de percepção|percepcao/i.test(ai);
+    // IA retorna "PRESSÃO_VAGA:" ou "PRESSÃO_REAL:" como prefixo estruturado.
+    const aiSaysVague = typeof ai === 'string' && ai.startsWith('PRESSÃO_VAGA:');
     if (local === 'vague' || aiSaysVague) {
       setPhase('vague_warning');
       return;
