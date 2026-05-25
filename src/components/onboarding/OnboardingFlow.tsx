@@ -6,6 +6,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import { GuestStorage, guestId } from '@/lib/guestStorage';
 import type {
   OnboardingProfile,
@@ -359,13 +360,7 @@ function ProjectScreen({ onCreated }: { onCreated: (id: string) => void }) {
         <label className="text-label text-muted-foreground uppercase">
           Vai estar melhor quando…
         </label>
-        <textarea
-          value={north}
-          onChange={(e) => setNorth(e.target.value)}
-          maxLength={300}
-          rows={4}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-body focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-        />
+        <VoiceInput value={north} onChange={setNorth} rows={4} />
         <p className="text-label text-muted-foreground">{north.length}/300</p>
       </div>
 
@@ -524,13 +519,7 @@ function CopaPocketScreen({
 
       <p className="text-body text-foreground">{current.prompt}</p>
 
-      <textarea
-        autoFocus
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows={6}
-        className="w-full rounded-md border border-input bg-background px-3 py-2 text-body focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-      />
+      <VoiceInput value={text} onChange={setText} rows={6} />
 
       <Button
         size="lg"

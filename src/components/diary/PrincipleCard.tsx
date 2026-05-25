@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import type { Principle, Project } from '@/types/database';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
@@ -33,12 +34,7 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
   return (
     <div className="rounded-md border border-border bg-card p-3 space-y-2">
       {editing ? (
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          className="w-full rounded-md border border-[color:var(--color-brand-green)] bg-background p-2 text-small text-foreground"
-          rows={3}
-        />
+        <VoiceInput value={text} onChange={setText} rows={3} />
       ) : (
         <p className="text-small text-foreground">
           {principle.is_master_principle && <span className="text-[color:var(--color-brand-amber)] mr-1">★</span>}

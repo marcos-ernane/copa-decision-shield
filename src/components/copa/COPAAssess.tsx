@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { VoiceInput } from './VoiceInput';
 import { BookAnchorHint } from './BookAnchorHint';
 import { SuggestionSheet } from './SuggestionSheet';
 import {
@@ -68,11 +68,7 @@ export function COPAAssess({ historyCount, onDone }: Props) {
 
       <div>
         <label className="text-small font-medium">Sinal de sucesso</label>
-        <Textarea
-          value={d.success_signal}
-          onChange={(e) => setD({ ...d, success_signal: e.target.value })}
-          rows={2}
-        />
+        <VoiceInput value={d.success_signal} onChange={(v) => setD({ ...d, success_signal: v })} rows={2} />
       </div>
 
       <div>
@@ -86,12 +82,7 @@ export function COPAAssess({ historyCount, onDone }: Props) {
 
       <div>
         <label className="text-small font-medium">Regra de corte</label>
-        <Textarea
-          value={d.cut_rule}
-          onChange={(e) => setD({ ...d, cut_rule: e.target.value })}
-          placeholder="Se até [data] não acontecer [X], encerro o teste"
-          rows={2}
-        />
+        <VoiceInput value={d.cut_rule} onChange={(v) => setD({ ...d, cut_rule: v })} placeholder="Se até [data] não acontecer [X], encerro o teste" rows={2} />
       </div>
 
       <BookAnchorHint text="A regra de corte é o que torna a aferição honesta — princípio do encerramento de ciclos do livro." />

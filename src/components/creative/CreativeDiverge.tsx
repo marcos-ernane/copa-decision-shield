@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { isFunctionVague } from '@/lib/creative';
 
@@ -118,11 +118,11 @@ export function CreativeDiverge({ initialFunction, initialAlternatives, onContin
             Alternativa {i + 1}
             {i > 0 && <span className="text-muted-foreground"> (opcional)</span>}
           </label>
-          <Textarea
+          <VoiceInput
             value={alts[i]}
-            onChange={(e) => {
+            onChange={(v) => {
               const next = [...alts];
-              next[i] = e.target.value;
+              next[i] = v;
               setAlts(next);
             }}
             rows={2}

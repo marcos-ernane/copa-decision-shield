@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import type { Chapter, Project, Principle } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 
@@ -85,12 +86,7 @@ export function ChapterDetail({ chapter, project, principles = [], onClose, onCh
       <Section label="Nota final">
         {editing ? (
           <div className="space-y-2">
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={4}
-              className="w-full rounded-md border border-[color:var(--color-brand-green)] bg-background p-2 text-small text-foreground"
-            />
+            <VoiceInput value={note} onChange={setNote} rows={4} />
             <button onClick={saveNote} className="text-small text-[color:var(--color-brand-blue)]">Salvar</button>
           </div>
         ) : (

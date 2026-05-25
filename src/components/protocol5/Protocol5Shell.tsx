@@ -3,8 +3,8 @@
 
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import { cn } from '@/lib/utils';
 import { Protocol5Step } from './Protocol5Step';
 import { Protocol5Done } from './Protocol5Done';
@@ -115,9 +115,9 @@ export function Protocol5Shell() {
         onNext={() => setStep(3)}
         canNext={state.fact.trim().length > 0}
       >
-        <Textarea
+        <VoiceInput
           value={state.fact}
-          onChange={(e) => setState((s) => ({ ...s, fact: e.target.value }))}
+          onChange={(v) => setState((s) => ({ ...s, fact: v }))}
           placeholder="O que você viu, sem interpretar..."
           rows={3}
         />
@@ -142,9 +142,9 @@ export function Protocol5Shell() {
           onNext={() => setStep(4)}
           canNext={state.friction.trim().length > 0}
         >
-          <Textarea
+          <VoiceInput
             value={state.friction}
-            onChange={(e) => setState((s) => ({ ...s, friction: e.target.value }))}
+            onChange={(v) => setState((s) => ({ ...s, friction: v }))}
             placeholder="Em uma frase..."
             rows={3}
           />

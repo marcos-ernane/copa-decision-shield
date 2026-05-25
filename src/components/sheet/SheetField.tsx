@@ -1,7 +1,7 @@
 // SheetField — campo individual da Folha do Operador.
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 
 interface Props {
   label: string;
@@ -17,13 +17,7 @@ export function SheetField({ label, value, onChange, placeholder, type = 'text',
     <div className="space-y-1">
       <Label className="text-label uppercase text-muted-foreground">{label}</Label>
       {type === 'textarea' ? (
-        <Textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          rows={rows}
-          className="bg-transparent"
-        />
+        <VoiceInput value={value} onChange={onChange} placeholder={placeholder} rows={rows} />
       ) : (
         <Input
           type={type === 'date' ? 'date' : 'text'}
