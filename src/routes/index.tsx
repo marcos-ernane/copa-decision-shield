@@ -80,13 +80,14 @@ function Home() {
           <p className="text-label text-muted-foreground uppercase">Operador</p>
           <h1 className="text-title text-foreground mt-1">{name || 'Operador'}</h1>
         </div>
-        <Link
-          to="/settings"
+        <button
+          type="button"
+          onClick={() => navigate({ to: '/settings' })}
           className="p-2 -mr-2 rounded-md hover:bg-accent"
           aria-label="Configurações"
         >
           <SettingsIcon className="size-5 text-muted-foreground" />
-        </Link>
+        </button>
       </header>
 
       <main className="px-6 space-y-3">
