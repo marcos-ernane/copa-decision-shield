@@ -27,15 +27,30 @@ export function PrinciplesTab() {
     [activeProject, principles],
   );
 
+  const projectMap = useMemo(
+    () => Object.fromEntries(projects.map((p) => [p.id, p])),
+    [projects],
+  );
+
+  const noActiveFilters = !scenario && !layer && !masterOnly;
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return principles
       .filter((p) => !p.is_archived)
-      .filter((p) => !scenario || p.scenario_type === scenario)
-      .filter((p) => !layer || p.layer === layer)
+      .filter((p) => {
+        if (!scenario) return true;
+        const s = p.scenario_type ?? projectMap[p.project_id]?.scenario_type ?? null;
+        return s === scenario;
+      })
+      .filter((p) => {
+        if (!layer) return true;
+        const l = p.layer ?? projectMap[p.project_id]?.current_layer ?? null;
+        return l === layer;
+      })
       .filter((p) => !masterOnly || p.is_master_principle)
       .filter((p) => !q || p.content.toLowerCase().includes(q));
-  }, [principles, scenario, layer, masterOnly, query]);
+  }, [principles, projectMap, scenario, layer, masterOnly, query]);
 
   return (
     <div className="space-y-3">
@@ -50,7 +65,7 @@ export function PrinciplesTab() {
       <div className="flex flex-wrap gap-1">
         <button
           onClick={() => { setScenario(null); setLayer(null); setMasterOnly(false); }}
-          className="text-label px-2 py-0.5 rounded-full border border-border"
+          className={`text-label px-2 py-0.5 rounded-full border ${noActiveFilters ? 'bg-foreground text-background border-foreground' : 'border-border'}`}
         >Todos</button>
         {SCENARIOS.map((s) => (
           <button key={s} onClick={() => setScenario(scenario === s ? null : s)}

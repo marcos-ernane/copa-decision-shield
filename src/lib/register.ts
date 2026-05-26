@@ -265,8 +265,8 @@ export async function saveStructuredA(
       connections: [],
       versions: [],
       is_archived: false,
-      scenario_type: null,
-      layer: null,
+      scenario_type: scenarioType ?? null,
+      layer: layerAtEntry ?? null,
       is_master_principle: false,
       recall_count: 0,
       last_recalled_at: null,
@@ -288,6 +288,8 @@ export async function saveStructuredA(
         user_id: userId,
         apa_entry_id: entry.id,
         content: content.principle_text.trim(),
+        scenario_type: scenarioType ?? null,
+        layer: layerAtEntry ?? null,
       })
       .select()
       .single();
