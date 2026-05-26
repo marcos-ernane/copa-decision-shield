@@ -27,7 +27,7 @@ export function Protocol5Step({
   nextLabel = 'Próximo →',
 }: Props) {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background">
       <header className="px-4 py-3 border-b border-border">
         <p className="text-label uppercase tracking-wide text-muted-foreground">
           Etapa {step} de {total}
@@ -40,24 +40,23 @@ export function Protocol5Step({
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-6 max-w-md mx-auto w-full space-y-4">
+      <main className="px-4 py-6 pb-24 max-w-md mx-auto w-full space-y-4">
         <h2 className="text-title text-foreground">{title}</h2>
         {children}
         {helper && (
           <p className="text-small text-muted-foreground">{helper}</p>
         )}
-      </main>
-
-      <footer className="px-4 py-3 border-t border-border flex items-center gap-2 max-w-md mx-auto w-full">
-        {onBack && (
-          <Button variant="outline" onClick={onBack} className="flex-1">
-            Voltar
+        <div className="flex items-center gap-2 pt-2">
+          {onBack && (
+            <Button variant="outline" onClick={onBack} className="flex-1">
+              Voltar
+            </Button>
+          )}
+          <Button onClick={onNext} disabled={!canNext} className="flex-[2]">
+            {nextLabel}
           </Button>
-        )}
-        <Button onClick={onNext} disabled={!canNext} className="flex-[2]">
-          {nextLabel}
-        </Button>
-      </footer>
+        </div>
+      </main>
     </div>
   );
 }
