@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
@@ -42,6 +43,21 @@ export function SettingsScreen() {
       .then(({ data }) => setProfile((data as Profile | null) ?? null));
   }, [userId]);
 
+  async function handleManageSubscription() {
+    if (!subscription?.stripe_subscription_id) {
+      setUpgrade(true);
+      return;
+    }
+    const success = await openStripePortal();
+    if (!success) {
+      toast.error('Não foi possível abrir o portal de assinatura.', {
+        description: 'Escolha ou altere seu plano abaixo.',
+        duration: 4000,
+      });
+      setUpgrade(true);
+    }
+  }
+
   async function togglePref(key: Pref, value: boolean) {
     setProfile((p) => (p ? { ...p, [key]: value } : p));
     GuestStorage.setProfile({ [key]: value });
@@ -75,13 +91,13 @@ export function SettingsScreen() {
               </div>
               <PlanBadge />
             </div>
-            {subscription?.stripe_subscription_id ? (
-              <Button variant="outline" className="w-full" onClick={() => void openStripePortal()}>
-                Gerenciar assinatura
-              </Button>
-            ) : userId ? (
-              <Button className="w-full" onClick={() => setUpgrade(true)}>
-                {isPaid ? 'Ver planos' : 'Conhecer Plano Operador'}
+            {userId ? (
+              <Button
+                variant={subscription?.stripe_subscription_id ? 'outline' : 'default'}
+                className="w-full"
+                onClick={() => void handleManageSubscription()}
+              >
+                {subscription?.stripe_subscription_id ? 'Gerenciar assinatura' : isPaid ? 'Ver planos' : 'Conhecer Plano Operador'}
               </Button>
             ) : null}
           </div>

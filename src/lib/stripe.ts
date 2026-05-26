@@ -42,16 +42,22 @@ export async function startCheckout(
   }
 }
 
-export async function openStripePortal(): Promise<void> {
+/** Retorna true se o portal foi aberto com sucesso, false caso contrário. */
+export async function openStripePortal(): Promise<boolean> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    const { data } = await supabase.functions.invoke('stripe-portal', {
+    if (!session) return false;
+    const { data, error } = await supabase.functions.invoke('stripe-portal', {
       body: { userId: session.user.id },
     });
-    const url = (data as { url?: string } | null)?.url;
-    if (url) window.location.href = url;
+    if (error) return false;
+    const url = (data as { url?: string; error?: string } | null)?.url;
+    if (url) {
+      window.location.href = url;
+      return true;
+    }
+    return false;
   } catch {
-    // silencioso
+    return false;
   }
 }
