@@ -9,10 +9,11 @@ import { saveStructuredA } from '@/lib/register';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { PrincipleHighlight } from './PrincipleHighlight';
 import { RegistrationNudge } from '@/components/RegistrationNudge';
+import type { ScenarioType, OperationalLayer } from '@/types/app';
 
-interface Props { projectId: string; onSaved: () => void; }
+interface Props { projectId: string; scenarioType?: ScenarioType | null; currentLayer?: OperationalLayer | null; onSaved: () => void; }
 
-export function FormatA({ projectId, onSaved }: Props) {
+export function FormatA({ projectId, scenarioType, currentLayer, onSaved }: Props) {
   const [fact, setFact] = useState('');
   const [interp, setInterp] = useState('');
   const [principle, setPrinciple] = useState('');
@@ -55,7 +56,7 @@ export function FormatA({ projectId, onSaved }: Props) {
       repeat_rule: repeatRule.trim(),
       cut_rule_next: cutNext.trim(),
       next_bottleneck: nextBottleneck.trim(),
-    });
+    }, scenarioType, currentLayer);
     setSaving(false);
     if (isFirstPrinciple) {
       setNudge(true);

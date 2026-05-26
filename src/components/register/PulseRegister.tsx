@@ -68,6 +68,7 @@ export function PulseRegister() {
   async function onSave() {
     if (!projectId || !classification || !text.trim()) return;
     setSaving(true);
+    const project = projects.find((p) => p.id === projectId);
     try {
       await savePulse(projectId, {
         text: text.trim(),
@@ -76,7 +77,7 @@ export function PulseRegister() {
         classification,
         input_method: inputMethod,
         has_mixed_interpretation: hasInterpretation,
-      });
+      }, project?.scenario_type ?? null);
       navigate({ to: '/project/$id/dashboard', params: { id: projectId } });
     } finally {
       setSaving(false);

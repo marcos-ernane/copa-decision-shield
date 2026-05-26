@@ -9,9 +9,13 @@ const SCENARIOS: ScenarioType[] = ['fluxo', 'processo', 'oferta', 'relacionament
 const LAYERS: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia', 'escala'];
 const ENTRY_TYPES = [
   { v: 'pulse', label: 'Pulso' },
-  { v: 'structured_A', label: 'APA' },
-  { v: 'structured_P', label: 'IMV' },
   { v: 'structured_C', label: 'Análise' },
+  { v: 'structured_O', label: 'Organização' },
+  { v: 'structured_P', label: 'IMV' },
+  { v: 'structured_A', label: 'APA' },
+  { v: 'corrective', label: 'Corretiva' },
+  { v: 'copa_session', label: 'COPA' },
+  { v: 'pressure_session', label: 'Pressão' },
 ] as const;
 const PERIODS = [
   { v: 7, label: '7 dias' },
@@ -66,16 +70,32 @@ export function TimelineTab() {
   const [period, setPeriod] = useState<number>(0);
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  // Mapa projectId → project para fallback de cenário/camada em entradas sem metadado
+  const projectMap = useMemo(
+    () => Object.fromEntries(projects.map((p) => [p.id, p])),
+    [projects],
+  );
+
   const filtered = useMemo(() => {
     const now = Date.now();
     return entries
       .filter((e) => project === 'all' || e.project_id === project)
-      .filter((e) => !scenario || e.scenario_type_at_entry === scenario)
-      .filter((e) => !layer || e.layer_at_entry === layer)
+      .filter((e) => {
+        if (!scenario) return true;
+        // Entradas antigas podem não ter scenario_type_at_entry — usa o do projeto como fallback
+        const s = e.scenario_type_at_entry ?? projectMap[e.project_id]?.scenario_type ?? null;
+        return s === scenario;
+      })
+      .filter((e) => {
+        if (!layer) return true;
+        // Entradas antigas podem não ter layer_at_entry — usa current_layer do projeto como fallback
+        const l = e.layer_at_entry ?? projectMap[e.project_id]?.current_layer ?? null;
+        return l === layer;
+      })
       .filter((e) => !etype || e.entry_type === etype)
       .filter((e) => period === 0 || now - new Date(e.created_at).getTime() <= period * 86400000)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [entries, project, scenario, layer, etype, period]);
+  }, [entries, projects, project, scenario, layer, etype, period, projectMap]);
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? '—';
 
