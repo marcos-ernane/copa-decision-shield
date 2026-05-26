@@ -114,9 +114,9 @@ const CompassIndexRoute = CompassIndexRouteImport.update({
   getParentRoute: () => CompassRoute,
 } as any)
 const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => SettingsRoute,
+  id: '/settings/notifications',
+  path: '/settings/notifications',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterStructuredRoute = RegisterStructuredRouteImport.update({
   id: '/register/structured',
@@ -281,7 +281,7 @@ export interface FileRoutesByFullPath {
   '/pressure': typeof PressureRouteWithChildren
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
-  '/settings': typeof SettingsRouteWithChildren
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
@@ -325,7 +325,7 @@ export interface FileRoutesByTo {
   '/pressure': typeof PressureRouteWithChildren
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
-  '/settings': typeof SettingsRouteWithChildren
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
@@ -371,7 +371,7 @@ export interface FileRoutesById {
   '/pressure': typeof PressureRouteWithChildren
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
-  '/settings': typeof SettingsRouteWithChildren
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
@@ -553,7 +553,8 @@ export interface RootRouteChildren {
   PressureRoute: typeof PressureRouteWithChildren
   Protocol5Route: typeof Protocol5Route
   ReadingModeRoute: typeof ReadingModeRoute
-  SettingsRoute: typeof SettingsRouteWithChildren
+  SettingsRoute: typeof SettingsRoute
+  SettingsNotificationsRoute: typeof SettingsNotificationsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   BaselineNewRoute: typeof BaselineNewRoute
   ProjectIdRoute: typeof ProjectIdRouteWithChildren
@@ -651,10 +652,10 @@ declare module '@tanstack/react-router' {
     }
     '/settings/notifications': {
       id: '/settings/notifications'
-      path: '/notifications'
+      path: '/settings/notifications'
       fullPath: '/settings/notifications'
       preLoaderRoute: typeof SettingsNotificationsRouteImport
-      parentRoute: typeof SettingsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/register/structured': {
       id: '/register/structured'
@@ -946,18 +947,6 @@ const PressureRouteWithChildren = PressureRoute._addFileChildren(
   PressureRouteChildren,
 )
 
-interface SettingsRouteChildren {
-  SettingsNotificationsRoute: typeof SettingsNotificationsRoute
-}
-
-const SettingsRouteChildren: SettingsRouteChildren = {
-  SettingsNotificationsRoute: SettingsNotificationsRoute,
-}
-
-const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
-  SettingsRouteChildren,
-)
-
 interface ProjectIdRouteChildren {
   ProjectIdCapacityRoute: typeof ProjectIdCapacityRoute
   ProjectIdConcludeRoute: typeof ProjectIdConcludeRoute
@@ -993,7 +982,8 @@ const rootRouteChildren: RootRouteChildren = {
   PressureRoute: PressureRouteWithChildren,
   Protocol5Route: Protocol5Route,
   ReadingModeRoute: ReadingModeRoute,
-  SettingsRoute: SettingsRouteWithChildren,
+  SettingsRoute: SettingsRoute,
+  SettingsNotificationsRoute: SettingsNotificationsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   BaselineNewRoute: BaselineNewRoute,
   ProjectIdRoute: ProjectIdRouteWithChildren,
