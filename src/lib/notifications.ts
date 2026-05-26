@@ -31,7 +31,7 @@ export interface NotifConfig {
 
 const DEFAULT_CONFIG: NotifConfig = {
   pulse: { enabled: false, day_of_week: 0, time_hour: 20 },
-  invite: { enabled: false, frequency_days: 3 },
+  invite: { enabled: true, frequency_days: 14 },
   silence_until: null,
   silence_indefinite: false,
   last_sent_date: null,
@@ -319,7 +319,7 @@ export async function schedulePactReminders(project: Project, cycle?: PactCycleC
 }
 
 
-// ---------- Convite Pessoal por projeto ----------
+// ---------- Lembrete de Ausência de Registros por projeto ----------
 
 export async function schedulePersonalInvite(project: Project, freq: 3 | 7 | 14): Promise<void> {
   await cancelById(id('invite', project.id));
