@@ -153,6 +153,7 @@ async function insertEntry(args: {
 export async function savePulse(
   projectId: string,
   content: PulseContent,
+  scenarioType?: ScenarioType | null,
 ): Promise<Entry> {
   const isCleanFact =
     content.classification === 'fact' && !content.has_mixed_interpretation;
@@ -163,6 +164,7 @@ export async function savePulse(
     is_clean_fact: isCleanFact,
     classification: content.classification,
     ai_assist_used: false,
+    scenario_type_at_entry: scenarioType ?? null,
   });
 }
 
@@ -171,6 +173,8 @@ export async function savePulse(
 export async function saveStructuredC(
   projectId: string,
   content: StructuredCContent,
+  scenarioType?: ScenarioType | null,
+  layerAtEntry?: OperationalLayer | null,
 ): Promise<Entry> {
   return insertEntry({
     projectId,
@@ -178,12 +182,16 @@ export async function saveStructuredC(
     content: content as unknown as Record<string, unknown>,
     is_clean_fact: !!content.fact_text && !content.interpretation_text,
     copa_phase: 'C',
+    scenario_type_at_entry: scenarioType ?? null,
+    layer_at_entry: layerAtEntry ?? null,
   });
 }
 
 export async function saveStructuredO(
   projectId: string,
   content: StructuredOContent,
+  scenarioType?: ScenarioType | null,
+  layerAtEntry?: OperationalLayer | null,
 ): Promise<Entry> {
   return insertEntry({
     projectId,
@@ -191,20 +199,24 @@ export async function saveStructuredO(
     content: content as unknown as Record<string, unknown>,
     is_clean_fact: false,
     copa_phase: 'O',
+    scenario_type_at_entry: scenarioType ?? null,
+    layer_at_entry: layerAtEntry ?? null,
   });
 }
 
 export async function saveStructuredP(
   projectId: string,
   content: StructuredPContent,
+  scenarioType?: ScenarioType | null,
 ): Promise<Entry> {
   return insertEntry({
     projectId,
     entry_type: 'structured_P',
     content: content as unknown as Record<string, unknown>,
     is_clean_fact: false,
-    layer_at_entry: content.layer,
+    layer_at_entry: content.layer, // layer vem do form (escolha explícita do usuário)
     copa_phase: 'P',
+    scenario_type_at_entry: scenarioType ?? null,
   });
 }
 
@@ -213,12 +225,16 @@ export async function saveStructuredP(
 export async function saveStructuredA(
   projectId: string,
   content: StructuredAContent,
+  scenarioType?: ScenarioType | null,
+  layerAtEntry?: OperationalLayer | null,
 ): Promise<{ entry: Entry; principle: Principle | null; isFirstPrinciple: boolean }> {
   const entry = await insertEntry({
     projectId,
     entry_type: 'structured_A',
     content: content as unknown as Record<string, unknown>,
     is_clean_fact: false,
+    scenario_type_at_entry: scenarioType ?? null,
+    layer_at_entry: layerAtEntry ?? null,
     copa_phase: 'A',
   });
 

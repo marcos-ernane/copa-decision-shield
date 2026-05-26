@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredC } from '@/lib/register';
+import type { ScenarioType, OperationalLayer } from '@/types/app';
 
-interface Props { projectId: string; onSaved: () => void; }
+interface Props { projectId: string; scenarioType?: ScenarioType | null; currentLayer?: OperationalLayer | null; onSaved: () => void; }
 
-export function FormatC({ projectId, onSaved }: Props) {
+export function FormatC({ projectId, scenarioType, currentLayer, onSaved }: Props) {
   const [fact, setFact] = useState('');
   const [interp, setInterp] = useState('');
   const [hyp, setHyp] = useState('');
@@ -21,7 +22,7 @@ export function FormatC({ projectId, onSaved }: Props) {
       interpretation_text: interp.trim(),
       hypothesis_text: hyp.trim(),
       imv_possible: imv.trim(),
-    });
+    }, scenarioType, currentLayer);
     setSaving(false);
     onSaved();
   }

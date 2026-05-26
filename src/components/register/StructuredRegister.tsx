@@ -11,7 +11,8 @@ import { FormatP } from './FormatP';
 import { FormatA } from './FormatA';
 import { useProjectPicker } from '@/hooks/useProjectPicker';
 import { getProject } from '@/lib/projects';
-import type { CopaPhase } from '@/types/app';
+import type { Project } from '@/types/database';
+import type { CopaPhase, ScenarioType, OperationalLayer } from '@/types/app';
 
 type Format = 'C' | 'O' | 'P' | 'A';
 
@@ -26,14 +27,19 @@ export function StructuredRegister() {
   const navigate = useNavigate();
   const { projectId, setProjectId, projects } = useProjectPicker();
   const [format, setFormat] = useState<Format>('C');
+  const [projectData, setProjectData] = useState<Project | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
     getProject(projectId).then((p) => {
+      setProjectData(p ?? null);
       const phase: CopaPhase | null = p?.current_copa_phase ?? null;
       if (phase) setFormat(phase);
     });
   }, [projectId]);
+
+  const scenarioType: ScenarioType | null = projectData?.scenario_type ?? null;
+  const currentLayer: OperationalLayer | null = projectData?.current_layer ?? null;
 
   if (!projectId) {
     return <ProjectPicker projects={projects} onPick={setProjectId} />;
@@ -64,10 +70,10 @@ export function StructuredRegister() {
         </div>
       </div>
 
-      {format === 'C' && <FormatC projectId={projectId} onSaved={onSaved} />}
-      {format === 'O' && <FormatO projectId={projectId} onSaved={onSaved} />}
-      {format === 'P' && <FormatP projectId={projectId} onSaved={onSaved} />}
-      {format === 'A' && <FormatA projectId={projectId} onSaved={onSaved} />}
+      {format === 'C' && <FormatC projectId={projectId} scenarioType={scenarioType} currentLayer={currentLayer} onSaved={onSaved} />}
+      {format === 'O' && <FormatO projectId={projectId} scenarioType={scenarioType} currentLayer={currentLayer} onSaved={onSaved} />}
+      {format === 'P' && <FormatP projectId={projectId} scenarioType={scenarioType} onSaved={onSaved} />}
+      {format === 'A' && <FormatA projectId={projectId} scenarioType={scenarioType} currentLayer={currentLayer} onSaved={onSaved} />}
     </div>
   );
 }

@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredO } from '@/lib/register';
+import type { ScenarioType, OperationalLayer } from '@/types/app';
 
-interface Props { projectId: string; onSaved: () => void; }
+interface Props { projectId: string; scenarioType?: ScenarioType | null; currentLayer?: OperationalLayer | null; onSaved: () => void; }
 
-export function FormatO({ projectId, onSaved }: Props) {
+export function FormatO({ projectId, scenarioType, currentLayer, onSaved }: Props) {
   const [resources, setResources] = useState('');
   const [frictions, setFrictions] = useState('');
   const [bottleneck, setBottleneck] = useState('');
@@ -19,7 +20,7 @@ export function FormatO({ projectId, onSaved }: Props) {
       resources: resources.trim(),
       frictions: frictions.trim(),
       bottleneck: bottleneck.trim(),
-    });
+    }, scenarioType, currentLayer);
     setSaving(false);
     onSaved();
   }

@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredP } from '@/lib/register';
-import type { OperationalLayer } from '@/types/app';
+import type { OperationalLayer, ScenarioType } from '@/types/app';
 
-interface Props { projectId: string; onSaved: () => void; }
+interface Props { projectId: string; scenarioType?: ScenarioType | null; onSaved: () => void; }
 
 const LAYERS: { value: OperationalLayer; label: string }[] = [
   { value: 'operabilidade', label: 'Operabilidade' },
@@ -25,7 +25,7 @@ function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boole
   );
 }
 
-export function FormatP({ projectId, onSaved }: Props) {
+export function FormatP({ projectId, scenarioType, onSaved }: Props) {
   const [action, setAction] = useState('');
   const [reversible, setReversible] = useState<boolean | null>(null);
   const [cheap, setCheap] = useState<boolean | null>(null);
@@ -51,7 +51,7 @@ export function FormatP({ projectId, onSaved }: Props) {
       cut_rule: cutRule.trim(),
       layer,
       ethical_check: ethical.trim() || null,
-    });
+    }, scenarioType);
     setSaving(false);
     onSaved();
   }
