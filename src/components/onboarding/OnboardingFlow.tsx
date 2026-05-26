@@ -149,9 +149,8 @@ function LogoScreen({ onStart }: { onStart: () => void }) {
 
 function MirrorScreen({ onContinue }: { onContinue: () => void }) {
   return (
-    <div className="flex-1 flex flex-col justify-between px-6 py-12 max-w-md mx-auto w-full">
-      <div className="flex-1 flex items-center">
-        <p className="text-body text-foreground whitespace-pre-line leading-relaxed">
+    <div className="flex-1 flex flex-col px-6 py-12 max-w-md mx-auto w-full gap-8">
+      <p className="text-body text-foreground whitespace-pre-line leading-relaxed">
 {`Você provavelmente chegou aqui porque
 já conhece essa sensação:
 
@@ -160,8 +159,7 @@ tomou dezenas de decisões,
 resolveu problema atrás de problema —
 e no fim do dia a sensação foi de que
 não avançou nada no que realmente importava.`}
-        </p>
-      </div>
+      </p>
       <Button size="lg" className="w-full" onClick={onContinue}>
         CONTINUAR
       </Button>
@@ -234,30 +232,28 @@ function NameScreen({
 
 function ContractScreen({ onContinue }: { onContinue: () => void }) {
   return (
-    <div className="flex-1 flex flex-col justify-between px-6 py-12 max-w-md mx-auto w-full">
-      <div className="flex-1 flex items-center">
-        <div className="space-y-6 text-body text-foreground">
-          <div>
-            <p className="font-semibold">✗ Cobrar streak de dias consecutivos</p>
-            <p className="text-muted-foreground">
-              Se você sumir por uma semana, o app celebra sua volta — não te penaliza.
-            </p>
-          </div>
-          <div>
-            <p className="font-semibold">✗ Te empurrar com notificações</p>
-            <p className="text-muted-foreground">
-              Você configura o que quer. O app convida — nunca cobra.
-            </p>
-          </div>
-          <div>
-            <p className="font-semibold">✗ Substituir seu julgamento</p>
-            <p className="text-muted-foreground">
-              O app lê o campo com você. Quem decide é sempre você.
-            </p>
-          </div>
+    <div className="flex-1 flex flex-col px-6 py-12 max-w-md mx-auto w-full gap-8">
+      <div className="space-y-6 text-body text-foreground">
+        <div>
+          <p className="font-semibold">✗ Cobrar streak de dias consecutivos</p>
+          <p className="text-muted-foreground">
+            Se você sumir por uma semana, o app celebra sua volta — não te penaliza.
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold">✗ Te empurrar com notificações</p>
+          <p className="text-muted-foreground">
+            Você configura o que quer. O app convida — nunca cobra.
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold">✗ Substituir seu julgamento</p>
+          <p className="text-muted-foreground">
+            O app lê o campo com você. Quem decide é sempre você.
+          </p>
         </div>
       </div>
-      <Button size="lg" className="w-full mt-8" onClick={onContinue}>
+      <Button size="lg" className="w-full" onClick={onContinue}>
         ENTENDI — VAMOS CRIAR SEU PRIMEIRO PROJETO
       </Button>
     </div>
@@ -266,9 +262,8 @@ function ContractScreen({ onContinue }: { onContinue: () => void }) {
 
 function CourseVariantScreen({ name, onContinue }: { name: string; onContinue: () => void }) {
   return (
-    <div className="flex-1 flex flex-col justify-between px-6 py-12 max-w-md mx-auto w-full">
-      <div className="flex-1 flex items-center">
-        <p className="text-body text-foreground whitespace-pre-line leading-relaxed">
+    <div className="flex-1 flex flex-col px-6 py-12 max-w-md mx-auto w-full gap-8">
+      <p className="text-body text-foreground whitespace-pre-line leading-relaxed">
 {`${name || 'Operador'}, você veio pelo curso.
 Isso significa que você já conhece o método.
 Este app é onde o método sai do caderno
@@ -277,8 +272,7 @@ e entra na prática.
 O app acompanha sua progressão nos módulos —
 não pelo que você assistiu,
 mas pelo que você praticou.`}
-        </p>
-      </div>
+      </p>
       <Button size="lg" className="w-full" onClick={onContinue}>
         CONTINUAR
       </Button>
@@ -400,13 +394,11 @@ function BaselineOfferScreen({
   onSkip: () => void;
 }) {
   return (
-    <div className="flex-1 flex flex-col justify-between px-6 py-12 max-w-md mx-auto w-full">
-      <div className="flex-1 flex items-center">
-        <p className="text-body text-foreground">
-          Antes de começar, quer fazer um diagnóstico de 12 minutos para registrar seu
-          ponto de partida?
-        </p>
-      </div>
+    <div className="flex-1 flex flex-col px-6 py-12 max-w-md mx-auto w-full gap-8">
+      <p className="text-body text-foreground">
+        Antes de começar, quer fazer um diagnóstico de 12 minutos para registrar seu
+        ponto de partida?
+      </p>
       <div className="space-y-3">
         <Button size="lg" className="w-full" onClick={onTake}>
           SIM — FAZER O DIAGNÓSTICO
