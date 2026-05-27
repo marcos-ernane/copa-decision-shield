@@ -1,10 +1,11 @@
-import { Link, useRouter } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
-import { useMemo } from 'react';
+import { Link, useNavigate, useRouter } from '@tanstack/react-router';
+import { ChevronLeft, MoreVertical } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { usePanelData } from '@/hooks/usePanelData';
 import { GuestStorage } from '@/lib/guestStorage';
 import { calculateIndex } from '@/engines/IndexCalculator';
 import { generatePatterns } from '@/engines/PatternEngine';
+import { updateProject } from '@/lib/projects';
 import { IndexRings } from './IndexRings';
 import { BaselineEvolution } from './BaselineEvolution';
 import { PatternCards } from './PatternCards';
@@ -12,11 +13,37 @@ import { QualitativeEvolution } from './QualitativeEvolution';
 import { ProjectStateIcon } from '@/components/project/ProjectStateIcon';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 
 export function OperatorPanel() {
   const router = useRouter();
-  const { projects, entries, principles, baselines, loading } = usePanelData();
+  const navigate = useNavigate();
+  const { projects, entries, principles, baselines, loading, refresh } = usePanelData();
+  const [archivingId, setArchivingId] = useState<string | null>(null);
+
+  async function handleArchive() {
+    if (!archivingId) return;
+    await updateProject(archivingId, { archived_at: new Date().toISOString() });
+    setArchivingId(null);
+    refresh();
+  }
   const profile = GuestStorage.getProfile();
   const baselineCompleted = !!profile?.baseline_completed || baselines.length > 0;
 
@@ -97,17 +124,46 @@ export function OperatorPanel() {
           ) : (
             <ul className="space-y-2">
               {projects.map((p) => (
-                <li key={p.id}>
+                <li key={p.id} className="flex items-center gap-1 rounded-md border border-border bg-card overflow-hidden">
                   <Link
                     to="/project/$id/dashboard"
                     params={{ id: p.id }}
-                    className="flex items-center gap-3 rounded-md border border-border bg-card p-3 hover:bg-accent"
+                    className="flex items-center gap-3 flex-1 p-3 hover:bg-accent min-w-0"
                   >
                     <ProjectStateIcon state={p.state} />
                     <span className="flex-1 text-small text-foreground truncate">{p.name}</span>
                     {p.scenario_type && <ScenarioTypeChip type={p.scenario_type} />}
                     {p.current_layer && <LayerChip layer={p.current_layer} />}
                   </Link>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="p-2 mr-1 rounded-md hover:bg-accent shrink-0"
+                        aria-label="Mais opções"
+                      >
+                        <MoreVertical className="size-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem
+                        onClick={() => navigate({ to: '/project/$id/dashboard', params: { id: p.id } })}
+                      >
+                        Ver Dashboard
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
+                      >
+                        Concluir projeto
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => setArchivingId(p.id)}
+                      >
+                        Arquivar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </li>
               ))}
             </ul>
@@ -178,6 +234,23 @@ export function OperatorPanel() {
           </section>
         )}
       </div>
+
+      {/* Dialog: Arquivar */}
+      <AlertDialog open={!!archivingId} onOpenChange={(v) => !v && setArchivingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Arquivar projeto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O projeto será removido da lista ativa. Nenhum dado é apagado. Use "Concluir" se o
+              Norte foi alcançado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handleArchive()}>Arquivar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
