@@ -85,7 +85,7 @@ function ProjectDashboard() {
   }
 
   async function handleArchive() {
-    await updateProject(id, { archived_at: new Date().toISOString() });
+    await updateProject(id, { archived_at: new Date().toISOString(), state: 'archived' });
     navigate({ to: '/' });
   }
 
