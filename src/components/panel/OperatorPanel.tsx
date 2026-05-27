@@ -40,10 +40,17 @@ export function OperatorPanel() {
 
   async function handleArchive() {
     if (!archivingId) return;
-    await updateProject(archivingId, { archived_at: new Date().toISOString() });
+    await updateProject(archivingId, { archived_at: new Date().toISOString(), state: 'archived' });
     setArchivingId(null);
-    refresh();
+    void refresh();
   }
+
+  // Apenas projetos ativos no menu [•••] — PRD Seção 12.1
+  const activeProjects = useMemo(
+    () => projects.filter((p) => p.state !== 'archived' && p.state !== 'concluded'),
+    [projects],
+  );
+
   const profile = GuestStorage.getProfile();
   const baselineCompleted = !!profile?.baseline_completed || baselines.length > 0;
 
@@ -119,11 +126,11 @@ export function OperatorPanel() {
         {/* Seção 3 — Visão geral de projetos */}
         <section className="space-y-2">
           <h2 className="text-heading text-foreground">Visão geral de projetos</h2>
-          {projects.length === 0 ? (
-            <p className="text-small text-muted-foreground">Nenhum projeto ainda.</p>
+          {activeProjects.length === 0 ? (
+            <p className="text-small text-muted-foreground">Nenhum projeto ativo.</p>
           ) : (
             <ul className="space-y-2">
-              {projects.map((p) => (
+              {activeProjects.map((p) => (
                 <li key={p.id} className="flex items-center gap-1 rounded-md border border-border bg-card overflow-hidden">
                   <Link
                     to="/project/$id/dashboard"

@@ -5,10 +5,20 @@ import { useEffect, useState } from 'react';
 import { Plus, Settings as SettingsIcon } from 'lucide-react';
 import { GuestStorage } from '@/lib/guestStorage';
 import { supabase } from '@/lib/supabase';
-import { listProjects, listPrinciples } from '@/lib/projects';
+import { listProjects, listPrinciples, updateProject } from '@/lib/projects';
 import { sortProjects } from '@/lib/projectState';
 import { ProjectCard } from '@/components/project/ProjectCard';
 import { CommunityLink } from '@/components/project/CommunityLink';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { Project, Principle } from '@/types/database';
 
 export const Route = createFileRoute('/')({
@@ -23,6 +33,7 @@ function Home() {
   const [name, setName] = useState('');
   const [communityLink, setCommunityLink] = useState<string | null>(null);
   const [showConcluded, setShowConcluded] = useState(false);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -69,6 +80,16 @@ function Home() {
     setReady(true);
   }
 
+  async function handleArchive() {
+    if (!archivingId) return;
+    await updateProject(archivingId, {
+      archived_at: new Date().toISOString(),
+      state: 'archived',
+    });
+    setArchivingId(null);
+    void load();
+  }
+
   if (!ready) return null;
 
   const { active, concluded } = sortProjects(projects);
@@ -97,7 +118,13 @@ function Home() {
           </p>
         )}
         {active.map((p) => (
-          <ProjectCard key={p.id} project={p} recallPrinciple={principles[p.id]} />
+          <ProjectCard
+            key={p.id}
+            project={p}
+            recallPrinciple={principles[p.id]}
+            onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
+            onArchive={() => setArchivingId(p.id)}
+          />
         ))}
 
         <Link
@@ -128,6 +155,25 @@ function Home() {
 
         <CommunityLink url={communityLink} />
       </main>
+
+      {/* Dialog: Arquivar projeto — PRD Seção 12.1 */}
+      <AlertDialog open={!!archivingId} onOpenChange={(v) => !v && setArchivingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Arquivar projeto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O projeto será removido da lista ativa. Nenhum dado é apagado.
+              Use "Concluir projeto" se o Norte foi alcançado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handleArchive()}>
+              Arquivar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
