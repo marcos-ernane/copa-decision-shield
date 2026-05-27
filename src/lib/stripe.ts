@@ -31,14 +31,28 @@ export async function startCheckout(
         isTrial: options.isTrial ?? false,
       },
     });
-    if (error) return { error: 'Não foi possível iniciar o checkout.' };
+
+    if (error) {
+      const msg = (error as { message?: string })?.message ?? 'Erro desconhecido';
+      console.error('[stripe-checkout] invoke error:', msg, error);
+      return { error: `Não foi possível iniciar o checkout. (${msg})` };
+    }
+
     const payload = data as CheckoutResult;
-    if (payload.sessionUrl) {
+
+    if (payload?.error) {
+      console.error('[stripe-checkout] function error:', payload.error);
+      return { error: payload.error };
+    }
+
+    if (payload?.sessionUrl) {
       window.location.href = payload.sessionUrl;
     }
-    return payload;
-  } catch {
-    return { error: 'Não foi possível iniciar o checkout.' };
+
+    return payload ?? { error: 'Resposta inválida do servidor.' };
+  } catch (err) {
+    console.error('[stripe-checkout] unexpected error:', err);
+    return { error: 'Não foi possível iniciar o checkout. Tente novamente.' };
   }
 }
 

@@ -13,13 +13,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const APP_URL = Deno.env.get('APP_URL') ?? 'https://operador-precisao.lovable.app';
+const APP_URL = Deno.env.get('APP_URL') ?? 'https://copa-decision-shield.lovable.app';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!stripeKey) {
+      console.error('STRIPE_SECRET_KEY não configurada');
+      return json({ error: 'Serviço de pagamento não configurado. Contate o suporte.' }, 500);
+    }
+
+    const stripe = new Stripe(stripeKey, {
       apiVersion: '2024-06-20',
     });
     const supabase = createClient(
@@ -27,9 +33,10 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    const { priceId, userId, isTrial } = await req.json();
+    const body = await req.json().catch(() => null);
+    const { priceId, userId, isTrial } = body ?? {};
     if (!priceId || !userId) {
-      return json({ error: 'Missing params' }, 400);
+      return json({ error: 'Parâmetros inválidos. Tente novamente.' }, 400);
     }
 
     const { data: userResult } = await supabase.auth.admin.getUserById(userId);
@@ -84,8 +91,9 @@ Deno.serve(async (req) => {
 
     return json({ sessionUrl: session.url });
   } catch (err) {
-    console.error('stripe-checkout error', err);
-    return json({ error: 'checkout_failed' }, 500);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('stripe-checkout error:', msg);
+    return json({ error: `Falha no checkout: ${msg}` }, 500);
   }
 });
 
