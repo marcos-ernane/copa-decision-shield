@@ -21,8 +21,8 @@ import { ChevronRight } from 'lucide-react';
 type Pref = 'entry_alignment_enabled' | 'book_anchors_enabled' | 'reading_mode_enabled' | 'compass_enabled';
 
 const PREFS: { key: Pref; label: string }[] = [
-  { key: 'entry_alignment_enabled', label: 'Entry Alignment' },
-  { key: 'book_anchors_enabled', label: 'BookAnchorHints' },
+  { key: 'entry_alignment_enabled', label: 'Alinhamento de Entradas' },
+  { key: 'book_anchors_enabled', label: 'Dicas de Âncora' },
   { key: 'reading_mode_enabled', label: 'Modo Leitura' },
   { key: 'compass_enabled', label: 'Bússola' },
 ];
