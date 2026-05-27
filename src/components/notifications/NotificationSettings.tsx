@@ -153,12 +153,15 @@ export function NotificationSettings() {
           )}
         </section>
 
-        {/* Convite pessoal */}
+        {/* Lembrete de ausência de registros */}
         <section className="space-y-3 rounded-md border border-border bg-card p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-heading text-foreground">Convite Pessoal</h2>
+            <h2 className="text-heading text-foreground">Lembrete - Ausências de Registros</h2>
             <Switch checked={cfg.invite.enabled} onCheckedChange={toggleInvite} />
           </div>
+          <p className="text-small text-muted-foreground">
+            Avisa quando um projeto fica sem registros por muito tempo.
+          </p>
           {cfg.invite.enabled && (
             <div className="space-y-1">
               <label className="text-label text-muted-foreground uppercase">Frequência</label>
