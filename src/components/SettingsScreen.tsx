@@ -44,10 +44,15 @@ export function SettingsScreen() {
   }, [userId]);
 
   async function handleManageSubscription() {
-    if (!subscription?.stripe_subscription_id) {
+    const isTrial = authState === 'AUTHENTICATED_TRIAL';
+
+    // Usuário em trial ou sem assinatura paga → mostra seletor de planos
+    if (!subscription?.stripe_subscription_id || isTrial) {
       setUpgrade(true);
       return;
     }
+
+    // Usuário com assinatura PAGA ativa → abre portal do Stripe
     const success = await openStripePortal();
     if (!success) {
       toast.error('Não foi possível abrir o portal de assinatura.', {
@@ -93,11 +98,17 @@ export function SettingsScreen() {
             </div>
             {userId ? (
               <Button
-                variant={subscription?.stripe_subscription_id ? 'outline' : 'default'}
+                variant={subscription?.stripe_subscription_id && authState !== 'AUTHENTICATED_TRIAL' ? 'outline' : 'default'}
                 className="w-full"
                 onClick={() => void handleManageSubscription()}
               >
-                {subscription?.stripe_subscription_id ? 'Gerenciar assinatura' : isPaid ? 'Ver planos' : 'Conhecer Plano Operador'}
+                {authState === 'AUTHENTICATED_TRIAL'
+                  ? 'Escolher plano'
+                  : subscription?.stripe_subscription_id
+                    ? 'Gerenciar assinatura'
+                    : isPaid
+                      ? 'Ver planos'
+                      : 'Conhecer Plano Operador'}
               </Button>
             ) : null}
           </div>
