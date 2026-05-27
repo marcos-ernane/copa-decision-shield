@@ -2,6 +2,7 @@
 // Sem urgência, sem contagem regressiva. Opção gratuita sempre visível.
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { startCheckout, type StripePriceKey } from '@/lib/stripe';
@@ -20,8 +21,20 @@ export function UpgradeSheet({ open, onOpenChange, reason }: Props) {
 
   async function buy(key: StripePriceKey, isTrial = false) {
     setBusy(isTrial ? 'trial' : key);
-    await startCheckout(key, { isTrial });
-    setBusy(null);
+    try {
+      const result = await startCheckout(key, { isTrial });
+      if (result.error) {
+        toast.error('Não foi possível processar o pagamento.', {
+          description: result.error,
+          duration: 5000,
+        });
+      }
+      // Se result.sessionUrl existir, window.location.href já redirecionou
+    } catch {
+      toast.error('Erro inesperado. Tente novamente em instantes.');
+    } finally {
+      setBusy(null);
+    }
   }
 
   return (
