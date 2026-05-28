@@ -68,7 +68,10 @@ function EditProject() {
         >
           <ChevronLeft className="size-5" />
         </button>
-        <h1 className="text-heading text-foreground">Editar projeto</h1>
+        <div>
+          <p className="text-label uppercase tracking-wide text-muted-foreground">Editar projeto</p>
+          <h1 className="text-heading text-foreground">{name}</h1>
+        </div>
       </header>
 
       <main className="flex-1 px-6 py-6 max-w-md mx-auto w-full space-y-6">

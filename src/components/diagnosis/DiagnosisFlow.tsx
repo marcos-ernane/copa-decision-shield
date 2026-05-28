@@ -2,7 +2,8 @@
 // REQ-DIAG-01: ativado apenas em onboarding de projeto novo ou novo ciclo (tipo C).
 
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useRouter } from '@tanstack/react-router';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DiagnosisQuestion } from './DiagnosisQuestion';
 import { LayerTriageFlow } from './LayerTriageFlow';
@@ -55,6 +56,7 @@ interface Props {
 
 export function DiagnosisFlow({ projectId }: Props) {
   const navigate = useNavigate();
+  const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [entries, setEntries] = useState<Awaited<ReturnType<typeof listEntries>>>([]);
   const [allProjects, setAllProjects] = useState<Project[]>([]);
@@ -112,36 +114,53 @@ export function DiagnosisFlow({ projectId }: Props) {
     return <div className="p-6 text-small text-muted-foreground">Carregando…</div>;
   }
 
+  const pageHeader = (
+    <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
+      <button
+        onClick={() => router.history.back()}
+        className="p-2 -ml-2 rounded-md hover:bg-accent"
+        aria-label="Voltar"
+      >
+        <ChevronLeft className="size-5" />
+      </button>
+      <div>
+        <p className="text-label uppercase tracking-wide text-muted-foreground">Diagnóstico</p>
+        <h1 className="text-heading text-foreground">{project.name}</h1>
+      </div>
+    </header>
+  );
+
   if (output) {
     return (
-      <div className="min-h-screen bg-background px-6 py-8 max-w-md mx-auto w-full">
-        <DiagnosisOutput
-          output={output}
-          onConfirm={async (f) => {
-            await updateProject(projectId, {
-              field_reading: f.field_reading,
-              calibrated_action: f.calibrated_action,
-              current_copa_phase: f.phase,
-              scenario_type: f.scenario_type,
-              current_layer: f.layer,
-            });
-          }}
-          onStartCopa={() => navigate({ to: '/copa' })}
-          onRegisterNow={() => navigate({ to: '/register/pulse' })}
-          onViewProject={() =>
-            navigate({ to: '/project/$id/dashboard', params: { id: projectId } })
-          }
-        />
+      <div className="min-h-screen bg-background">
+        {pageHeader}
+        <div className="px-6 py-8 max-w-md mx-auto w-full">
+          <DiagnosisOutput
+            output={output}
+            onConfirm={async (f) => {
+              await updateProject(projectId, {
+                field_reading: f.field_reading,
+                calibrated_action: f.calibrated_action,
+                current_copa_phase: f.phase,
+                scenario_type: f.scenario_type,
+                current_layer: f.layer,
+              });
+            }}
+            onStartCopa={() => navigate({ to: '/copa' })}
+            onRegisterNow={() => navigate({ to: '/register/pulse' })}
+            onViewProject={() =>
+              navigate({ to: '/project/$id/dashboard', params: { id: projectId } })
+            }
+          />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background px-6 py-8 max-w-md mx-auto w-full space-y-6">
-      <header>
-        <p className="text-label text-muted-foreground uppercase">Diagnóstico</p>
-        <h1 className="text-heading text-foreground">{project.name}</h1>
-      </header>
+    <div className="min-h-screen bg-background">
+      {pageHeader}
+      <div className="px-6 py-8 max-w-md mx-auto w-full space-y-6">
 
       {step === 1 && (
         <>
@@ -242,6 +261,7 @@ export function DiagnosisFlow({ projectId }: Props) {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }

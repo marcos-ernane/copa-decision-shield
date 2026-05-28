@@ -135,6 +135,9 @@ function ProjectDashboard() {
         >
           <ChevronLeft className="size-5" />
         </button>
+        <div className="flex-1 min-w-0 px-2 text-center">
+          <p className="text-label text-muted-foreground uppercase tracking-wide truncate">{project.name}</p>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-2 -mr-2 rounded-md hover:bg-accent" aria-label="Mais opções">
