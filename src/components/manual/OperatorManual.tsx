@@ -65,7 +65,11 @@ export function OperatorManual() {
           Nenhum capítulo ainda. Capítulos são gerados ao concluir um projeto.
         </p>
       ) : (
-        <ul className="space-y-4">
+        <>
+          <h3 className="text-label uppercase tracking-wide text-muted-foreground px-1">
+            Projetos Concluídos
+          </h3>
+          <ul className="space-y-4">
           {chapters.map((c) => {
             const project = projects.find((p) => p.id === c.project_id);
             const isConcluded = !project || project.state === 'concluded';
@@ -120,6 +124,7 @@ export function OperatorManual() {
             );
           })}
         </ul>
+        </>
       )}
 
       {/* Container offscreen para export PDF */}
