@@ -17,6 +17,9 @@ import { getProject, listEntries, listProjects, updateProject } from '@/lib/proj
 import type { Project } from '@/types/database';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 
+// Mapeamento inverso: CopaPhase → resposta Q1
+const PHASE_TO_Q1: Record<string, Q1> = { C: 'A', O: 'B', P: 'C', A: 'D' };
+
 const Q1_OPTIONS = [
   { value: 'A' as Q1, label: 'Ainda estou tentando entender o que está acontecendo de verdade' },
   { value: 'B' as Q1, label: 'Sei o que está acontecendo, mas não sei o que atacar primeiro' },
@@ -75,8 +78,18 @@ export function DiagnosisFlow({ projectId }: Props) {
       setProject(p);
       setEntries(es);
       setAllProjects(all);
+      if (p?.current_copa_phase) {
+        const mapped = PHASE_TO_Q1[p.current_copa_phase];
+        if (mapped) setQ1(mapped);
+      }
       if (p?.scenario_type) setScenario(p.scenario_type);
       if (p?.current_layer) setLayer(p.current_layer);
+      // Posiciona no primeiro passo ainda sem dados salvos
+      const initialStep = !p?.current_copa_phase ? 1
+        : !p?.scenario_type ? 2
+        : !p?.current_layer ? 3
+        : 4;
+      setStep(initialStep);
       setLoading(false);
     })();
   }, [projectId]);
