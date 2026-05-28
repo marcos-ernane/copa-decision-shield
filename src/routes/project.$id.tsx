@@ -26,6 +26,9 @@ function ProjectEntryRouter() {
 
   useEffect(() => {
     void (async () => {
+      // Não redireciona quando já está em rota filha específica (conclude, dashboard, etc.)
+      if (!isParentOnly) return;
+
       const p = await getProject(id);
       if (!p) {
         navigate({ to: '/' });
@@ -43,7 +46,7 @@ function ProjectEntryRouter() {
       setProject(p);
       setShowCalibrated(true);
     })();
-  }, [id, navigate]);
+  }, [id, navigate, isParentOnly]);
 
   if (!showCalibrated || !project) {
     // Se está em /project/:id sem filho → spinner enquanto determina destino (caso calibrated)
