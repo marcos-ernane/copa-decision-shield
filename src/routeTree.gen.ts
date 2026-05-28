@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ConcludedRouteImport } from './routes/concluded'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReadingModeRouteImport } from './routes/reading-mode'
 import { Route as Protocol5RouteImport } from './routes/protocol5'
@@ -19,10 +18,11 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as DiaryRouteImport } from './routes/diary'
 import { Route as CreativeRouteImport } from './routes/creative'
 import { Route as CopaRouteImport } from './routes/copa'
+import { Route as ConcludedRouteImport } from './routes/concluded'
 import { Route as CompassRouteImport } from './routes/compass'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CompassIndexRouteImport } from './routes/compass.index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as CompassIndexRouteImport } from './routes/compass.index'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
 import { Route as RegisterStructuredRouteImport } from './routes/register.structured'
 import { Route as RegisterPulseRouteImport } from './routes/register.pulse'
@@ -55,11 +55,6 @@ import { Route as ProjectIdDashboardRouteImport } from './routes/project.$id.das
 import { Route as ProjectIdConcludeRouteImport } from './routes/project.$id.conclude'
 import { Route as ProjectIdCapacityRouteImport } from './routes/project.$id.capacity'
 
-const ConcludedRoute = ConcludedRouteImport.update({
-  id: '/concluded',
-  path: '/concluded',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -105,6 +100,11 @@ const CopaRoute = CopaRouteImport.update({
   path: '/copa',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConcludedRoute = ConcludedRouteImport.update({
+  id: '/concluded',
+  path: '/concluded',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CompassRoute = CompassRouteImport.update({
   id: '/compass',
   path: '/compass',
@@ -115,18 +115,18 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const CompassIndexRoute = CompassIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => CompassRoute,
 } as any)
-const SettingsIndexRoute = SettingsIndexRouteImport.update({
-  id: '/settings/',
-  path: '/',
-  getParentRoute: () => SettingsRoute,
-} as any)
 const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
-  id: '/settings/notifications',
+  id: '/notifications',
   path: '/notifications',
   getParentRoute: () => SettingsRoute,
 } as any)
@@ -317,9 +317,9 @@ export interface FileRoutesByFullPath {
   '/project/new': typeof ProjectNewRoute
   '/register/pulse': typeof RegisterPulseRoute
   '/register/structured': typeof RegisterStructuredRoute
-  '/settings/': typeof SettingsIndexRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/compass/': typeof CompassIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/project/$id/capacity': typeof ProjectIdCapacityRoute
   '/project/$id/conclude': typeof ProjectIdConcludeRoute
   '/project/$id/dashboard': typeof ProjectIdDashboardRoute
@@ -340,7 +340,6 @@ export interface FileRoutesByTo {
   '/pressure': typeof PressureRouteWithChildren
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
-  '/settings': typeof SettingsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
@@ -363,9 +362,9 @@ export interface FileRoutesByTo {
   '/project/new': typeof ProjectNewRoute
   '/register/pulse': typeof RegisterPulseRoute
   '/register/structured': typeof RegisterStructuredRoute
-  '/settings/': typeof SettingsIndexRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/compass': typeof CompassIndexRoute
+  '/settings': typeof SettingsIndexRoute
   '/project/$id/capacity': typeof ProjectIdCapacityRoute
   '/project/$id/conclude': typeof ProjectIdConcludeRoute
   '/project/$id/dashboard': typeof ProjectIdDashboardRoute
@@ -411,9 +410,9 @@ export interface FileRoutesById {
   '/project/new': typeof ProjectNewRoute
   '/register/pulse': typeof RegisterPulseRoute
   '/register/structured': typeof RegisterStructuredRoute
-  '/settings/': typeof SettingsIndexRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/compass/': typeof CompassIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/project/$id/capacity': typeof ProjectIdCapacityRoute
   '/project/$id/conclude': typeof ProjectIdConcludeRoute
   '/project/$id/dashboard': typeof ProjectIdDashboardRoute
@@ -427,8 +426,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/concluded'
     | '/compass'
+    | '/concluded'
     | '/copa'
     | '/creative'
     | '/diary'
@@ -460,9 +459,9 @@ export interface FileRouteTypes {
     | '/project/new'
     | '/register/pulse'
     | '/register/structured'
-    | '/settings/'
     | '/settings/notifications'
     | '/compass/'
+    | '/settings/'
     | '/project/$id/capacity'
     | '/project/$id/conclude'
     | '/project/$id/dashboard'
@@ -483,7 +482,6 @@ export interface FileRouteTypes {
     | '/pressure'
     | '/protocol5'
     | '/reading-mode'
-    | '/settings'
     | '/auth/callback'
     | '/baseline/new'
     | '/compass/friction'
@@ -506,9 +504,9 @@ export interface FileRouteTypes {
     | '/project/new'
     | '/register/pulse'
     | '/register/structured'
-    | '/settings/'
     | '/settings/notifications'
     | '/compass'
+    | '/settings'
     | '/project/$id/capacity'
     | '/project/$id/conclude'
     | '/project/$id/dashboard'
@@ -520,8 +518,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/concluded'
     | '/compass'
+    | '/concluded'
     | '/copa'
     | '/creative'
     | '/diary'
@@ -553,9 +551,9 @@ export interface FileRouteTypes {
     | '/project/new'
     | '/register/pulse'
     | '/register/structured'
-    | '/settings/'
     | '/settings/notifications'
     | '/compass/'
+    | '/settings/'
     | '/project/$id/capacity'
     | '/project/$id/conclude'
     | '/project/$id/dashboard'
@@ -568,8 +566,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ConcludedRoute: typeof ConcludedRoute
   CompassRoute: typeof CompassRouteWithChildren
+  ConcludedRoute: typeof ConcludedRoute
   CopaRoute: typeof CopaRouteWithChildren
   CreativeRoute: typeof CreativeRoute
   DiaryRoute: typeof DiaryRouteWithChildren
@@ -590,13 +588,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/concluded': {
-      id: '/concluded'
-      path: '/concluded'
-      fullPath: '/concluded'
-      preLoaderRoute: typeof ConcludedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -660,6 +651,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CopaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/concluded': {
+      id: '/concluded'
+      path: '/concluded'
+      fullPath: '/concluded'
+      preLoaderRoute: typeof ConcludedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/compass': {
       id: '/compass'
       path: '/compass'
@@ -674,19 +672,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/compass/': {
-      id: '/compass/'
-      path: '/'
-      fullPath: '/compass/'
-      preLoaderRoute: typeof CompassIndexRouteImport
-      parentRoute: typeof CompassRoute
-    }
     '/settings/': {
       id: '/settings/'
       path: '/'
       fullPath: '/settings/'
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof SettingsRoute
+    }
+    '/compass/': {
+      id: '/compass/'
+      path: '/'
+      fullPath: '/compass/'
+      preLoaderRoute: typeof CompassIndexRouteImport
+      parentRoute: typeof CompassRoute
     }
     '/settings/notifications': {
       id: '/settings/notifications'
@@ -986,13 +984,13 @@ const PressureRouteWithChildren = PressureRoute._addFileChildren(
 )
 
 interface SettingsRouteChildren {
-  SettingsIndexRoute: typeof SettingsIndexRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
-  SettingsIndexRoute: SettingsIndexRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
 }
 
 const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
@@ -1025,8 +1023,8 @@ const ProjectIdRouteWithChildren = ProjectIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ConcludedRoute: ConcludedRoute,
   CompassRoute: CompassRouteWithChildren,
+  ConcludedRoute: ConcludedRoute,
   CopaRoute: CopaRouteWithChildren,
   CreativeRoute: CreativeRoute,
   DiaryRoute: DiaryRouteWithChildren,
