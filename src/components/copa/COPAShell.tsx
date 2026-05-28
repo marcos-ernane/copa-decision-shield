@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { COPAEntryAlignment } from './COPAEntryAlignment';
 import { COPACapture } from './COPACapture';
@@ -214,26 +214,52 @@ export function COPAShell() {
     );
   }
 
+
+  // Header compartilhado para todos os passos com projeto selecionado
+  const copaHeader = (
+    <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
+      <button
+        onClick={() => navigate({ to: '/project/$id/dashboard', params: { id: projectId } })}
+        className="p-2 -ml-2 rounded-md hover:bg-accent"
+        aria-label="Voltar"
+      >
+        <ChevronLeft className="size-5" />
+      </button>
+      <div>
+        <p className="text-label uppercase tracking-wide text-muted-foreground">COPA</p>
+        <p className="text-heading text-foreground">{project?.name ?? '...'}</p>
+      </div>
+    </header>
+  );
+
   if (step === 'entry_alignment') {
-    return <COPAEntryAlignment onContinue={() => setStep(decideAfterAlignment(project, principles))} />;
+    return (
+      <div className="min-h-screen bg-background">
+        {copaHeader}
+        <COPAEntryAlignment onContinue={() => setStep(decideAfterAlignment(project, principles))} />
+      </div>
+    );
   }
 
   if (step === 'scenario_type') {
     return (
-      <div className="space-y-4 p-4">
-        <h2 className="text-title">Confirme o tipo de cenário deste projeto:</h2>
-        <div className="flex flex-wrap gap-2">
-          {SCENARIOS.map((s) => (
-            <Button
-              key={s.label}
-              type="button"
-              variant={scenario === s.key && s.key !== null ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => { setScenario(s.key); afterScenario(); }}
-            >
-              {s.label}
-            </Button>
-          ))}
+      <div className="min-h-screen bg-background">
+        {copaHeader}
+        <div className="space-y-4 p-4">
+          <h2 className="text-title">Confirme o tipo de cenário deste projeto:</h2>
+          <div className="flex flex-wrap gap-2">
+            {SCENARIOS.map((s) => (
+              <Button
+                key={s.label}
+                type="button"
+                variant={scenario === s.key && s.key !== null ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => { setScenario(s.key); afterScenario(); }}
+              >
+                {s.label}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -241,7 +267,9 @@ export function COPAShell() {
 
   if (step === 'recall' && recallPrinciple) {
     return (
-      <div className="space-y-4 p-4">
+      <div className="min-h-screen bg-background">
+        {copaHeader}
+        <div className="space-y-4 p-4">
         <div
           className="rounded-lg p-4"
           style={{ backgroundColor: 'var(--color-surface-1)' }}
@@ -259,60 +287,78 @@ export function COPAShell() {
         <Button className="w-full" onClick={() => setStep('capture')}>
           Continuar para Captura
         </Button>
+        </div>
       </div>
     );
   }
 
   if (step === 'capture') {
     return (
-      <COPACapture
-        initialText=""
-        onNext={(d) => { setCaptureData(d); setStep('organize'); }}
-      />
+      <div className="min-h-screen bg-background">
+        {copaHeader}
+        <COPACapture
+          initialText=""
+          onNext={(d) => { setCaptureData(d); setStep('organize'); }}
+        />
+      </div>
     );
   }
 
   if (step === 'organize') {
     return (
-      <COPAOrganize
-        onNext={(b) => { setBottleneck(b); setStep('prove'); }}
-      />
+      <div className="min-h-screen bg-background">
+        {copaHeader}
+        <COPAOrganize
+          onNext={(b) => { setBottleneck(b); setStep('prove'); }}
+        />
+      </div>
     );
   }
 
   if (step === 'prove' && bottleneck) {
     return (
-      <COPAProve
-        bottleneck={bottleneck}
-        historyCount={historyCount}
-        initialLayer={presetLayer ?? undefined}
-        initialAction={presetAction ?? undefined}
-        initialMetric={presetMetric ?? undefined}
-        initialDeadline={presetDeadline ?? undefined}
-        onNext={(d) => { setProveData(d); setStep('assess'); }}
-      />
+      <div className="min-h-screen bg-background">
+        {copaHeader}
+        <COPAProve
+          bottleneck={bottleneck}
+          historyCount={historyCount}
+          initialLayer={presetLayer ?? undefined}
+          initialAction={presetAction ?? undefined}
+          initialMetric={presetMetric ?? undefined}
+          initialDeadline={presetDeadline ?? undefined}
+          onNext={(d) => { setProveData(d); setStep('assess'); }}
+        />
+      </div>
     );
   }
 
   if (step === 'assess') {
-    return <COPAAssess historyCount={historyCount} onDone={handleDone} />;
+    return (
+      <div className="min-h-screen bg-background">
+        {copaHeader}
+        <COPAAssess historyCount={historyCount} onDone={handleDone} />
+      </div>
+    );
   }
 
   if (step === 'done' && proveData) {
     return (
       <>
-        <COPADone
-          projectId={projectId}
-          metric={proveData.metric}
-          deadline={proveData.deadline}
-          onNewCopa={() => {
-            setCaptureData(null);
-            setBottleneck(null);
-            setProveData(null);
-            setAssessData(null);
-            setStep(alignmentEnabled ? 'entry_alignment' : 'capture');
-          }}
-        />
+        <div className="min-h-screen bg-background">
+          {copaHeader}
+          <COPADone
+            projectId={projectId}
+            metric={proveData.metric}
+            deadline={proveData.deadline}
+            onNewCopa={() => {
+              setCaptureData(null);
+              setBottleneck(null);
+              setProveData(null);
+              setAssessData(null);
+              setStep(alignmentEnabled ? 'entry_alignment' : 'capture');
+            }}
+          />
+        </div>
         <RegistrationNudge open={nudge} moment={1} onDismiss={() => setNudge(false)} />
       </>
     );

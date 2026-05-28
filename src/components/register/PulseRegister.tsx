@@ -2,7 +2,8 @@
 // Texto + voz, classificação obrigatória, detecção suave de interpretação.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useRouter } from '@tanstack/react-router';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { ProjectPicker } from './ProjectPicker';
@@ -23,6 +24,7 @@ const OPTIONS: { value: PulseClassification; label: string }[] = [
 
 export function PulseRegister() {
   const navigate = useNavigate();
+  const router = useRouter();
   const { projectId, setProjectId, projects } = useProjectPicker();
   const [text, setText] = useState('');
   const [classification, setClassification] = useState<PulseClassification | null>(null);
@@ -84,9 +86,24 @@ export function PulseRegister() {
     }
   }
 
+  const currentProject = projects.find((p) => p.id === projectId);
+
   return (
-    <div className="space-y-4 p-4">
-      <h2 className="text-title text-foreground">Registro de Pulso</h2>
+    <div className="min-h-screen bg-background">
+      <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
+        <button
+          onClick={() => router.history.back()}
+          className="p-2 -ml-2 rounded-md hover:bg-accent"
+          aria-label="Voltar"
+        >
+          <ChevronLeft className="size-5" />
+        </button>
+        <div>
+          <p className="text-label uppercase tracking-wide text-muted-foreground">Registro de Pulso</p>
+          <p className="text-heading text-foreground">{currentProject?.name ?? '…'}</p>
+        </div>
+      </header>
+      <div className="space-y-4 p-4">
       <VoiceInput
         value={text}
         onChange={handleChange}
@@ -142,6 +159,7 @@ export function PulseRegister() {
       >
         {saving ? 'Salvando…' : 'Salvar'}
       </Button>
+      </div>
     </div>
   );
 }

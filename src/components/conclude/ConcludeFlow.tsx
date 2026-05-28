@@ -89,7 +89,10 @@ export function ConcludeFlow({ projectId }: Props) {
           >
             <ChevronLeft className="size-5" />
           </button>
-          <h1 className="text-heading text-foreground">Concluir projeto</h1>
+          <div>
+            <p className="text-label uppercase tracking-wide text-muted-foreground">Concluir projeto</p>
+            <h1 className="text-heading text-foreground">{project.name}</h1>
+          </div>
         </div>
       </header>
 

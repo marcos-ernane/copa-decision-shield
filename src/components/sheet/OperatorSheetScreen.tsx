@@ -100,7 +100,14 @@ export function OperatorSheetScreen({
         <button onClick={() => router.history.back()} className="p-2 -ml-2 rounded-md hover:bg-accent" aria-label="Voltar">
           <ChevronLeft className="size-5" />
         </button>
-        <h1 className="text-heading text-foreground flex-1">Folha do Operador</h1>
+        <div className="flex-1 min-w-0">
+          <p className="text-label uppercase tracking-wide text-muted-foreground">Folha do Operador</p>
+          {projectId && (
+            <p className="text-heading text-foreground truncate">
+              {projects.find((p) => p.id === projectId)?.name ?? '…'}
+            </p>
+          )}
+        </div>
         <div className="flex rounded-md border border-border overflow-hidden text-label">
           <button
             onClick={() => setMode('quick')}
