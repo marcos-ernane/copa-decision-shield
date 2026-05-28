@@ -65,7 +65,11 @@ export function computeProjectState(
 export type ProjectEntryType = 'direct' | 'calibrated' | 'new_cycle';
 
 export function determineEntryType(project: Project): ProjectEntryType {
-  if (!project.last_entry_at) return 'new_cycle';
+  if (!project.last_entry_at) {
+    // Diagnóstico já concluído (current_copa_phase definido) mas sem entradas → dashboard direto.
+    // Sem diagnóstico → novo ciclo obrigatório.
+    return project.current_copa_phase ? 'direct' : 'new_cycle';
+  }
   const d = daysSince(project.last_entry_at);
   if (d < 7) return 'direct';
   if (d < 14) return 'calibrated';
