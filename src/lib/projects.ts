@@ -137,3 +137,15 @@ export async function updateProject(
   const { error } = await supabase.from('projects').update(patch).eq('id', id);
   if (error) throw error;
 }
+
+export async function deleteProject(id: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    GuestStorage.deleteProject(id);
+    return;
+  }
+  // Remove capítulo gerado e o projeto (FK cascade cuida de entries/principles se configurado)
+  await supabase.from('chapters').delete().eq('project_id', id);
+  const { error } = await supabase.from('projects').delete().eq('id', id);
+  if (error) throw error;
+}

@@ -92,6 +92,10 @@ export const GuestStorage = {
     );
     write(KEYS.projects, all);
   },
+  deleteProject(id: string): void {
+    write(KEYS.projects, GuestStorage.getProjects().filter((p) => p.id !== id));
+    write(KEYS.chapters, GuestStorage.getChapters().filter((c) => c.project_id !== id));
+  },
 
   // ---------- Entries ----------
   getEntries(): Entry[] {

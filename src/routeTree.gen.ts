@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ConcludedRouteImport } from './routes/concluded'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReadingModeRouteImport } from './routes/reading-mode'
 import { Route as Protocol5RouteImport } from './routes/protocol5'
@@ -54,6 +55,11 @@ import { Route as ProjectIdDashboardRouteImport } from './routes/project.$id.das
 import { Route as ProjectIdConcludeRouteImport } from './routes/project.$id.conclude'
 import { Route as ProjectIdCapacityRouteImport } from './routes/project.$id.capacity'
 
+const ConcludedRoute = ConcludedRouteImport.update({
+  id: '/concluded',
+  path: '/concluded',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -279,6 +285,7 @@ const ProjectIdCapacityRoute = ProjectIdCapacityRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/compass': typeof CompassRouteWithChildren
+  '/concluded': typeof ConcludedRoute
   '/copa': typeof CopaRouteWithChildren
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
@@ -324,6 +331,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/concluded': typeof ConcludedRoute
   '/copa': typeof CopaRouteWithChildren
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
@@ -371,6 +379,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/compass': typeof CompassRouteWithChildren
+  '/concluded': typeof ConcludedRoute
   '/copa': typeof CopaRouteWithChildren
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
@@ -418,6 +427,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/concluded'
     | '/compass'
     | '/copa'
     | '/creative'
@@ -464,6 +474,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/concluded'
     | '/copa'
     | '/creative'
     | '/diary'
@@ -509,6 +520,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/concluded'
     | '/compass'
     | '/copa'
     | '/creative'
@@ -556,6 +568,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ConcludedRoute: typeof ConcludedRoute
   CompassRoute: typeof CompassRouteWithChildren
   CopaRoute: typeof CopaRouteWithChildren
   CreativeRoute: typeof CreativeRoute
@@ -577,6 +590,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/concluded': {
+      id: '/concluded'
+      path: '/concluded'
+      fullPath: '/concluded'
+      preLoaderRoute: typeof ConcludedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -1005,6 +1025,7 @@ const ProjectIdRouteWithChildren = ProjectIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ConcludedRoute: ConcludedRoute,
   CompassRoute: CompassRouteWithChildren,
   CopaRoute: CopaRouteWithChildren,
   CreativeRoute: CreativeRoute,

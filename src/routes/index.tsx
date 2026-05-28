@@ -136,13 +136,21 @@ function Home() {
         </Link>
 
         {concluded.length > 0 && (
-          <div className="pt-4">
-            <button
-              onClick={() => setShowConcluded((s) => !s)}
-              className="w-full text-left text-label text-muted-foreground uppercase py-2"
-            >
-              Concluídos ({concluded.length}) {showConcluded ? '−' : '+'}
-            </button>
+          <div className="pt-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setShowConcluded((s) => !s)}
+                className="text-left text-label text-muted-foreground uppercase py-2"
+              >
+                Concluídos ({concluded.length}) {showConcluded ? '−' : '+'}
+              </button>
+              <Link
+                to="/concluded"
+                className="text-label text-[color:var(--color-brand-blue)] hover:underline"
+              >
+                Ver todos →
+              </Link>
+            </div>
             {showConcluded && (
               <div className="space-y-3">
                 {concluded.map((p) => (
