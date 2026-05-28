@@ -18,7 +18,7 @@ export function PreConcludeChecks({ projectId, checks, onContinue }: Props) {
 
   function resolve(c: PreConcludeCheck) {
     if (c.id === 'imv_without_apa' || c.id === 'apa_without_principle') {
-      navigate({ to: '/register/structured' });
+      navigate({ to: '/register/structured', search: { projectId } as never });
     } else if (c.id === 'no_scenario_type') {
       navigate({ to: '/project/$id/edit', params: { id: projectId } });
     }

@@ -147,7 +147,7 @@ export function DiagnosisFlow({ projectId }: Props) {
               });
             }}
             onStartCopa={() => navigate({ to: '/copa' })}
-            onRegisterNow={() => navigate({ to: '/register/pulse' })}
+            onRegisterNow={() => navigate({ to: '/register/pulse', search: { projectId } as never })}
             onViewProject={() =>
               navigate({ to: '/project/$id/dashboard', params: { id: projectId } })
             }

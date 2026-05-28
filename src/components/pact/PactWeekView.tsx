@@ -22,7 +22,7 @@ export function PactWeekView({ projectId, cycle }: Props) {
   const phases: PactPhase[] = ['capture', 'organize', 'prove', 'assess'];
 
   function openFormat(_phase: PactPhase) {
-    void navigate({ to: '/register/structured' });
+    void navigate({ to: '/register/structured', search: { projectId } as never });
   }
 
 

@@ -275,7 +275,7 @@ function ProjectDashboard() {
           <Button
             size="lg"
             className="flex-1"
-            onClick={() => navigate({ to: '/register/structured' })}
+            onClick={() => navigate({ to: '/register/structured', search: { projectId: id } as never })}
           >
             + REGISTRAR
           </Button>
