@@ -149,3 +149,18 @@ export async function deleteProject(id: string): Promise<void> {
   const { error } = await supabase.from('projects').delete().eq('id', id);
   if (error) throw error;
 }
+
+export async function reopenProject(projectId: string, chapterId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    GuestStorage.deleteChapter(chapterId);
+    GuestStorage.updateProject(projectId, { state: 'capturing', concluded_at: null });
+    return;
+  }
+  await supabase.from('chapters').delete().eq('id', chapterId);
+  const { error } = await supabase
+    .from('projects')
+    .update({ state: 'capturing', concluded_at: null })
+    .eq('id', projectId);
+  if (error) throw error;
+}

@@ -3,7 +3,6 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +15,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { usePanelData } from '@/hooks/usePanelData';
 import { GuestStorage } from '@/lib/guestStorage';
-import { updateProject, deleteProject } from '@/lib/projects';
+import { deleteProject, reopenProject } from '@/lib/projects';
 import { ChapterCard } from './ChapterCard';
 import { ChapterDetail } from './ChapterDetail';
 import { exportManualPDF } from '@/lib/exportManual';
@@ -41,9 +40,10 @@ export function OperatorManual() {
     }
   }
 
-  async function handleReopen(projectId: string) {
-    await updateProject(projectId, { state: 'capturing', concluded_at: null });
+  async function handleReopen(projectId: string, chapterId: string) {
+    await reopenProject(projectId, chapterId);
     void refresh();
+    navigate({ to: '/project/$id', params: { id: projectId } });
   }
 
   async function handleDelete() {
@@ -97,7 +97,7 @@ export function OperatorManual() {
                   <button
                     className="flex-1 py-2 text-label text-foreground hover:bg-accent transition-colors disabled:opacity-40"
                     disabled={!isConcluded}
-                    onClick={() => project && void handleReopen(project.id)}
+                    onClick={() => project && void handleReopen(project.id, c.id)}
                   >
                     Reabrir
                   </button>
