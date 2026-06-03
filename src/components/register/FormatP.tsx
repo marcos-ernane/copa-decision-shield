@@ -4,10 +4,15 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceInput } from '@/components/copa/VoiceInput';
-import { saveStructuredP } from '@/lib/register';
+import { saveStructuredP, type StructuredPContent } from '@/lib/register';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 
-interface Props { projectId: string; scenarioType?: ScenarioType | null; onSaved: () => void; }
+interface Props {
+  projectId: string;
+  scenarioType?: ScenarioType | null;
+  onSaved: () => void;
+  initialData?: StructuredPContent | null;
+}
 
 const LAYERS: { value: OperationalLayer; label: string }[] = [
   { value: 'operabilidade', label: 'Operabilidade' },
@@ -25,17 +30,17 @@ function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boole
   );
 }
 
-export function FormatP({ projectId, scenarioType, onSaved }: Props) {
-  const [action, setAction] = useState('');
-  const [reversible, setReversible] = useState<boolean | null>(null);
-  const [cheap, setCheap] = useState<boolean | null>(null);
-  const [specific, setSpecific] = useState<boolean | null>(null);
-  const [measurable, setMeasurable] = useState<boolean | null>(null);
-  const [metric, setMetric] = useState('');
-  const [deadline, setDeadline] = useState('');
-  const [cutRule, setCutRule] = useState('');
-  const [layer, setLayer] = useState<OperationalLayer | null>(null);
-  const [ethical, setEthical] = useState('');
+export function FormatP({ projectId, scenarioType, onSaved, initialData }: Props) {
+  const [action, setAction] = useState(initialData?.action ?? '');
+  const [reversible, setReversible] = useState<boolean | null>(initialData?.reversible ?? null);
+  const [cheap, setCheap] = useState<boolean | null>(initialData?.cheap ?? null);
+  const [specific, setSpecific] = useState<boolean | null>(initialData?.specific ?? null);
+  const [measurable, setMeasurable] = useState<boolean | null>(initialData?.measurable ?? null);
+  const [metric, setMetric] = useState(initialData?.metric ?? '');
+  const [deadline, setDeadline] = useState(initialData?.deadline ?? '');
+  const [cutRule, setCutRule] = useState(initialData?.cut_rule ?? '');
+  const [layer, setLayer] = useState<OperationalLayer | null>(initialData?.layer ?? null);
+  const [ethical, setEthical] = useState(initialData?.ethical_check ?? '');
   const [saving, setSaving] = useState(false);
 
   async function save() {

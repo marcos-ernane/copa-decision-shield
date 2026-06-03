@@ -3,15 +3,21 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
-import { saveStructuredO } from '@/lib/register';
+import { saveStructuredO, type StructuredOContent } from '@/lib/register';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
-interface Props { projectId: string; scenarioType?: ScenarioType | null; currentLayer?: OperationalLayer | null; onSaved: () => void; }
+interface Props {
+  projectId: string;
+  scenarioType?: ScenarioType | null;
+  currentLayer?: OperationalLayer | null;
+  onSaved: () => void;
+  initialData?: StructuredOContent | null;
+}
 
-export function FormatO({ projectId, scenarioType, currentLayer, onSaved }: Props) {
-  const [resources, setResources] = useState('');
-  const [frictions, setFrictions] = useState('');
-  const [bottleneck, setBottleneck] = useState('');
+export function FormatO({ projectId, scenarioType, currentLayer, onSaved, initialData }: Props) {
+  const [resources, setResources] = useState(initialData?.resources ?? '');
+  const [frictions, setFrictions] = useState(initialData?.frictions ?? '');
+  const [bottleneck, setBottleneck] = useState(initialData?.bottleneck ?? '');
   const [saving, setSaving] = useState(false);
 
   async function save() {
