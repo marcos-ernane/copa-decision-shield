@@ -15,6 +15,7 @@ import { RegistrationNudge } from '@/components/RegistrationNudge';
 import { listProjects, getProject } from '@/lib/projects';
 import { listPrinciples } from '@/lib/projects';
 import { saveCopaSession, countCopaSessions, type CopaSessionData } from '@/lib/copa';
+import { markAllPhasesComplete } from '@/lib/pact';
 import { supabase } from '@/lib/supabase';
 import { GuestStorage } from '@/lib/guestStorage';
 import type { Project, Principle } from '@/types/database';
@@ -164,6 +165,9 @@ export function COPAShell() {
     };
     const { isFirstApa } = await saveCopaSession(projectId, payload);
     setStep('done');
+
+    // Marca todas as fases do pacto como concluídas (COPA completo = semana cumprida).
+    if (project?.pact_enabled) void markAllPhasesComplete(projectId);
 
     const { data: { session } } = await supabase.auth.getSession();
     if (isFirstApa && !session) setNudge(true);

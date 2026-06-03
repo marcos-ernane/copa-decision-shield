@@ -82,13 +82,10 @@ export function PactSetupScreen({ projectId }: Props) {
       <main className="max-w-2xl mx-auto px-4 py-6 pb-24 space-y-6">
         <section className="space-y-2">
           <p className="text-body text-foreground">
-            O pacto é uma rotina de 20 minutos por semana:
-          </p>
-          <p className="text-small text-muted-foreground whitespace-pre-line">
-            {`Segunda — Captura (5 min)\nQuarta — Organização (5 min)\nSexta — Prova (5 min)\nDomingo — Aferição (5 min)`}
+            Rotina de 20 min por semana — 5 min por fase, cada uma num dia diferente.
           </p>
           <p className="text-small text-muted-foreground">
-            Você pode personalizar os dias e horários.
+            Configure o dia e horário ideal para cada fase do COPA.
           </p>
         </section>
 

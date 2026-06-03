@@ -216,4 +216,21 @@ export async function disablePactGlobally(): Promise<void> {
   // Não desativa pactos individuais — o usuário decide projeto a projeto.
 }
 
+// Marca todas as 4 fases como completas (ex.: ao concluir um COPA completo).
+export async function markAllPhasesComplete(projectId: string): Promise<void> {
+  const project = await getProject(projectId);
+  if (!project || !project.pact_enabled) return;
+  const cycle = getCycle(project);
+  const now = new Date().toISOString();
+  const next: WeeklyCycle = {
+    ...cycle,
+    capture: { ...cycle.capture, completed_this_week: true, last_completed_at: now },
+    organize: { ...cycle.organize, completed_this_week: true, last_completed_at: now },
+    prove: { ...cycle.prove, completed_this_week: true, last_completed_at: now },
+    assess: { ...cycle.assess, completed_this_week: true, last_completed_at: now },
+  };
+  writeCycle(projectId, next);
+  await updateProject(projectId, { pact_last_cycle_at: now });
+}
+
 export { PHASES };
