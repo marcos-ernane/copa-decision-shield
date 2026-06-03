@@ -22,13 +22,15 @@ export interface DiagnosisAnswers {
 }
 
 export interface DiagnosisOutput {
+  // Leitura contextual limpa — só isso é persistido em project.field_reading.
   field_reading: string;
   calibrated_action: string;
   gentle_alert: string | null;
   suggested_format: CopaPhase;
   scenario_type: ScenarioType;
   layer: OperationalLayer;
-  // metadados de diagnóstico (não exibidos diretamente, mas registráveis)
+  // Notas transientes — exibidas na tela de diagnóstico, não persistem no projeto.
+  diagnostic_notes: string[];
   consistency_mismatch: boolean;
   actual_phase: CopaPhase | null;
   depth_gap: string | null;
@@ -243,22 +245,23 @@ export function runDiagnosis(input: RunDiagnosisInput): DiagnosisOutput {
   const lxp = readingLayerXPhase(answers.layer, declaredPhase);
   const txp = readingTypeXPhase(answers.scenario_type, declaredPhase);
 
-  const parts: string[] = [];
-  parts.push(txl ?? lxp ?? txp);
+  // field_reading: apenas a leitura contextual limpa — é o que persiste no projeto.
+  const field_reading = txl ?? lxp ?? txp;
+
+  // diagnostic_notes: alertas transientes mostrados na tela, nunca persistidos.
+  const diagnostic_notes: string[] = [];
   if (consistency_mismatch) {
-    parts.push(
+    diagnostic_notes.push(
       `Você declarou fase ${declaredPhase} mas seus registros indicam fase ${actual}. Vale reconciliar antes de avançar.`,
     );
   }
-  if (depth_gap) parts.push(depth_gap);
+  if (depth_gap) diagnostic_notes.push(depth_gap);
   if (days_in_phase > 7)
-    parts.push(`Mais de ${days_in_phase} dias nesta fase sem progressão registrada.`);
+    diagnostic_notes.push(`Mais de ${days_in_phase} dias nesta fase sem progressão registrada.`);
   if (pattern_repeat)
-    parts.push('Padrão observado: você costuma parar nesta mesma fase em outros projetos.');
+    diagnostic_notes.push('Padrão observado: você costuma parar nesta mesma fase em outros projetos.');
 
-  const field_reading = parts.filter(Boolean).join(' ');
   const calibrated_action = calibratedActionFor(declaredPhase);
-
   const gentle_alert = answers.q4 === 'D' ? GENTLE_ALERT_Q4_D : null;
 
   return {
@@ -268,6 +271,7 @@ export function runDiagnosis(input: RunDiagnosisInput): DiagnosisOutput {
     suggested_format: declaredPhase,
     scenario_type: answers.scenario_type,
     layer: answers.layer,
+    diagnostic_notes,
     consistency_mismatch,
     actual_phase: actual,
     depth_gap,
