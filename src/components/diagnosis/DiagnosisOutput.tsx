@@ -74,6 +74,11 @@ export function DiagnosisOutput({
         <p className="text-label text-muted-foreground uppercase">Leitura do campo</p>
         <p className="text-body text-foreground">{output.field_reading}</p>
 
+        {/* Notas diagnósticas transientes — não persistem no projeto */}
+        {output.diagnostic_notes.filter((n) => !output.consistency_mismatch || !n.includes('Vale reconciliar')).map((note, i) => (
+          <p key={i} className="text-small text-muted-foreground italic">{note}</p>
+        ))}
+
         {/* Botão de reconciliação — aparece só quando há divergência de fase */}
         {output.consistency_mismatch && output.actual_phase && (
           isReconciled ? (
