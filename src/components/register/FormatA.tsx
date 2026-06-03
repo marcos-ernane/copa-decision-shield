@@ -5,24 +5,30 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { BookAnchorHint } from '@/components/copa/BookAnchorHint';
-import { saveStructuredA } from '@/lib/register';
+import { saveStructuredA, type StructuredAContent } from '@/lib/register';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { PrincipleHighlight } from './PrincipleHighlight';
 import { RegistrationNudge } from '@/components/RegistrationNudge';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
-interface Props { projectId: string; scenarioType?: ScenarioType | null; currentLayer?: OperationalLayer | null; onSaved: () => void; }
+interface Props {
+  projectId: string;
+  scenarioType?: ScenarioType | null;
+  currentLayer?: OperationalLayer | null;
+  onSaved: () => void;
+  initialData?: StructuredAContent | null;
+}
 
-export function FormatA({ projectId, scenarioType, currentLayer, onSaved }: Props) {
-  const [fact, setFact] = useState('');
-  const [interp, setInterp] = useState('');
-  const [principle, setPrinciple] = useState('');
-  const [decision, setDecision] = useState('');
-  const [hiddenCost, setHiddenCost] = useState('');
-  const [worked, setWorked] = useState('');
-  const [repeatRule, setRepeatRule] = useState('');
-  const [cutNext, setCutNext] = useState('');
-  const [nextBottleneck, setNextBottleneck] = useState('');
+export function FormatA({ projectId, scenarioType, currentLayer, onSaved, initialData }: Props) {
+  const [fact, setFact] = useState(initialData?.fact_text ?? '');
+  const [interp, setInterp] = useState(initialData?.interpretation_text ?? '');
+  const [principle, setPrinciple] = useState(initialData?.principle_text ?? '');
+  const [decision, setDecision] = useState(initialData?.decision ?? '');
+  const [hiddenCost, setHiddenCost] = useState(initialData?.hidden_cost ?? '');
+  const [worked, setWorked] = useState(initialData?.what_worked ?? '');
+  const [repeatRule, setRepeatRule] = useState(initialData?.repeat_rule ?? '');
+  const [cutNext, setCutNext] = useState(initialData?.cut_rule_next ?? '');
+  const [nextBottleneck, setNextBottleneck] = useState(initialData?.next_bottleneck ?? '');
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [loadingAiSuggestion, setLoadingAiSuggestion] = useState(false);
   const [saving, setSaving] = useState(false);

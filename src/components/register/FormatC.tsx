@@ -3,16 +3,22 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
-import { saveStructuredC } from '@/lib/register';
+import { saveStructuredC, type StructuredCContent } from '@/lib/register';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
-interface Props { projectId: string; scenarioType?: ScenarioType | null; currentLayer?: OperationalLayer | null; onSaved: () => void; }
+interface Props {
+  projectId: string;
+  scenarioType?: ScenarioType | null;
+  currentLayer?: OperationalLayer | null;
+  onSaved: () => void;
+  initialData?: StructuredCContent | null;
+}
 
-export function FormatC({ projectId, scenarioType, currentLayer, onSaved }: Props) {
-  const [fact, setFact] = useState('');
-  const [interp, setInterp] = useState('');
-  const [hyp, setHyp] = useState('');
-  const [imv, setImv] = useState('');
+export function FormatC({ projectId, scenarioType, currentLayer, onSaved, initialData }: Props) {
+  const [fact, setFact] = useState(initialData?.fact_text ?? '');
+  const [interp, setInterp] = useState(initialData?.interpretation_text ?? '');
+  const [hyp, setHyp] = useState(initialData?.hypothesis_text ?? '');
+  const [imv, setImv] = useState(initialData?.imv_possible ?? '');
   const [saving, setSaving] = useState(false);
 
   async function save() {
