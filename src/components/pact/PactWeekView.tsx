@@ -1,6 +1,6 @@
 // PactWeekView — semana do operador funcional.
-// ✔ = fase executada; ○ = pendente. Toque em ✔ vai ao registro;
-// toque em ○ abre o formato correspondente do Registro Estruturado.
+// ✔ = fase executada; ○ = pendente. Toque em ✔ vai ao diário;
+// toque em ○ abre o fluxo COPA para o projeto.
 
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Check, Circle } from 'lucide-react';
@@ -22,7 +22,7 @@ export function PactWeekView({ projectId, cycle }: Props) {
   const phases: PactPhase[] = ['capture', 'organize', 'prove', 'assess'];
 
   function openFormat(_phase: PactPhase) {
-    void navigate({ to: '/register/structured', search: { projectId } as never });
+    void navigate({ to: '/copa', search: { projectId } as never });
   }
 
 
