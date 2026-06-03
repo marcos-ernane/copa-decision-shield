@@ -30,6 +30,7 @@ export interface DiagnosisOutput {
   layer: OperationalLayer;
   // metadados de diagnóstico (não exibidos diretamente, mas registráveis)
   consistency_mismatch: boolean;
+  actual_phase: CopaPhase | null;
   depth_gap: string | null;
   days_in_phase: number;
   pattern_repeat: boolean;
@@ -133,7 +134,7 @@ function readingTypeXLayer(
 
 // ---------- Calibrated action por fase ----------
 
-function calibratedActionFor(phase: CopaPhase): string {
+export function calibratedActionFor(phase: CopaPhase): string {
   switch (phase) {
     case 'C':
       return 'Nos próximos 15 minutos: abra o registro de Pulso e anote 3 fatos limpos do que você viu hoje.';
@@ -268,6 +269,7 @@ export function runDiagnosis(input: RunDiagnosisInput): DiagnosisOutput {
     scenario_type: answers.scenario_type,
     layer: answers.layer,
     consistency_mismatch,
+    actual_phase: actual,
     depth_gap,
     days_in_phase,
     pattern_repeat,
