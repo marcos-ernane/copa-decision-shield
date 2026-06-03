@@ -39,6 +39,21 @@ export const Route = createFileRoute('/project/$id/dashboard')({
   component: ProjectDashboard,
 });
 
+// Remove frases transientes que eram erroneamente incluídas no field_reading antes do fix.
+// Aplica-se a dados já persistidos no banco — filtro de compatibilidade retroativa.
+function sanitizeFieldReading(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const clean = text
+    .replace(/\s*Você declarou fase [A-Z] mas seus registros indicam fase [A-Z]\. Vale reconciliar antes de avançar\./g, '')
+    .replace(/\s*Mais de \d+ dias nesta fase sem progressão registrada\./g, '')
+    .replace(/\s*Poucos fatos limpos — predominam interpretações\./g, '')
+    .replace(/\s*IMVs sem métrica registrada\./g, '')
+    .replace(/\s*APAs sem princípio extraído\./g, '')
+    .replace(/\s*Padrão observado: você costuma parar nesta mesma fase em outros projetos\./g, '')
+    .trim();
+  return clean || null;
+}
+
 function ProjectDashboard() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -67,6 +82,12 @@ function ProjectDashboard() {
       setEntries(e);
       setPrinciples(pr);
       if (checkPactReturn(p)) setReturnSheet(true);
+      // Limpa field_reading antigo que continha alertas transientes concatenados.
+      const clean = sanitizeFieldReading(p.field_reading);
+      if (p.field_reading && clean !== p.field_reading) {
+        void updateProject(id, { field_reading: clean ?? undefined });
+        setProject({ ...p, field_reading: clean });
+      }
     })();
   }, [id, navigate]);
 
@@ -250,10 +271,10 @@ function ProjectDashboard() {
         />
 
         {/* Alerta do motor */}
-        {project.field_reading && (
+        {sanitizeFieldReading(project.field_reading) && (
           <section className="rounded-md border border-[var(--color-brand-amber)] bg-card p-4">
             <h2 className="text-label text-muted-foreground uppercase">Alerta do motor</h2>
-            <p className="text-body text-foreground mt-1">"{project.field_reading}"</p>
+            <p className="text-body text-foreground mt-1">"{sanitizeFieldReading(project.field_reading)}"</p>
           </section>
         )}
 
