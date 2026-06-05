@@ -36,16 +36,29 @@ import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
 import type { Project, Entry, Principle } from '@/types/database';
 import type { ProjectState } from '@/types/app';
 
-const STATE_ACTION_HINTS: Record<ProjectState, string | null> = {
-  new:        'Inicie o primeiro ciclo COPA',
-  capturing:  'Continue a análise de situação',
-  organizing: 'Continue o Mapa 3R',
-  proving:    'Acompanhe o IMV em andamento',
-  blocked:    'Execute um diagnóstico para destravar',
-  paused:     null,
-  concluded:  null,
-  archived:   null,
+const COPA_PHASE_ORDER = ['C', 'O', 'P', 'A'] as const;
+const COPA_PHASE_LABELS: Record<string, string> = {
+  C: 'Análise de Situação',
+  O: 'Mapa 3R',
+  P: 'Definição de IMV',
+  A: 'Análise Pós-Ação',
 };
+
+function computeCopaProgress(entries: Entry[]): {
+  lastDone: string | null;
+  nextPhase: string | null;
+  allDone: boolean;
+} {
+  const done = COPA_PHASE_ORDER.filter((ph) =>
+    entries.some((e) => e.entry_type === `structured_${ph}`),
+  );
+  const next = COPA_PHASE_ORDER.find((ph) => !done.includes(ph)) ?? null;
+  return {
+    lastDone: done.length > 0 ? done[done.length - 1] : null,
+    nextPhase: next,
+    allDone: next === null,
+  };
+}
 
 export const Route = createFileRoute('/project/$id/dashboard')({
   component: ProjectDashboard,
@@ -232,14 +245,31 @@ function ProjectDashboard() {
 
         {/* Onde estou agora */}
         {(() => {
-          const hint = STATE_ACTION_HINTS[currentState];
+          const { lastDone, nextPhase, allDone } = computeCopaProgress(entries);
+          const isTerminal = currentState === 'paused' || currentState === 'concluded' || currentState === 'archived';
+          const isBlocked = currentState === 'blocked';
+
+          let hint: string | null = null;
+          if (!isTerminal) {
+            if (isBlocked) {
+              hint = 'Execute um diagnóstico para destravar';
+            } else if (allDone) {
+              hint = 'Ciclo COPA completo — revise ou inicie novo ciclo';
+            } else if (nextPhase) {
+              hint = lastDone
+                ? `Formato ${lastDone} concluído · Próximo: ${nextPhase} — ${COPA_PHASE_LABELS[nextPhase]}`
+                : `Inicie pelo Formato C — ${COPA_PHASE_LABELS['C']}`;
+            }
+          }
+
           const handleStateClick = () => {
-            if (currentState === 'blocked') {
+            if (isBlocked) {
               void navigate({ to: '/project/$id/diagnosis', params: { id } });
             } else {
               void navigate({ to: '/register/structured', search: { projectId: id } as never });
             }
           };
+
           return hint ? (
             <button
               type="button"
