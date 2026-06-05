@@ -78,7 +78,9 @@ export function OperatorPanel() {
   }, [projects]);
 
   const lastPrinciples = principles.slice(-3).reverse();
-  const copaCycles = entries.filter((e) => e.entry_type === 'copa_session').length;
+  const copaCycles = entries.filter(
+    (e) => e.entry_type === 'copa_session' || e.entry_type === 'structured_C',
+  ).length;
   const showTransfer =
     projects.filter((p) => p.state === 'concluded').length >= 3 || copaCycles >= 10;
 

@@ -36,7 +36,7 @@ export async function checkTrialDay12(userId: string): Promise<TrialEndingData |
         .from('entries')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
-        .eq('entry_type', 'copa_session'),
+        .in('entry_type', ['copa_session', 'structured_C']),
     ]);
 
     return {
