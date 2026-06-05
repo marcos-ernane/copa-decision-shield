@@ -1,4 +1,4 @@
-// Formato O — Mapa 3R: Recursos, Fricções, Gargalo. 3 passos sequenciais.
+// Formato O — Mapa 3R: R1 Recursos, R2 Ruídos, R3 Restrições. 3 passos sequenciais.
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -49,22 +49,25 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
 
       {step === 0 && (
         <div>
-          <p className="text-small text-muted-foreground mb-1">Recursos disponíveis</p>
-          <VoiceInput value={resources} onChange={setResources} placeholder="O que já existe sem precisar criar." rows={3} />
+          <p className="text-small font-medium mb-0.5">R1 — Recursos</p>
+          <p className="text-small text-muted-foreground mb-1">O que já existe sem precisar criar.</p>
+          <VoiceInput value={resources} onChange={setResources} placeholder="" rows={3} />
         </div>
       )}
 
       {step === 1 && (
         <div>
-          <p className="text-small text-muted-foreground mb-1">Fricções e obstáculos</p>
-          <VoiceInput value={frictions} onChange={setFrictions} placeholder="Onde o sistema perde energia." rows={3} />
+          <p className="text-small font-medium mb-0.5">R2 — Ruídos</p>
+          <p className="text-small text-muted-foreground mb-1">Onde o sistema perde energia — obstáculos, atritos, interferências.</p>
+          <VoiceInput value={frictions} onChange={setFrictions} placeholder="" rows={3} />
         </div>
       )}
 
       {step === 2 && (
         <div>
-          <p className="text-small text-muted-foreground mb-1">Gargalo principal — 1 frase</p>
-          <VoiceInput value={bottleneck} onChange={setBottleneck} placeholder="O que mais governa o resultado." rows={2} />
+          <p className="text-small font-medium mb-0.5">R3 — Restrições</p>
+          <p className="text-small text-muted-foreground mb-1">O principal limitante que governa o resultado — 1 frase.</p>
+          <VoiceInput value={bottleneck} onChange={setBottleneck} placeholder="" rows={2} />
         </div>
       )}
 

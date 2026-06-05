@@ -25,7 +25,7 @@ type PhaseStatus = 'done' | 'next' | 'locked';
 
 const LABELS: Record<Format, string> = {
   C: 'C — Análise de Situação',
-  O: 'O — Mapa 3R',
+  O: 'O — Recursos, Ruídos, Restrições',
   P: 'P — Definição de IMV',
   A: 'A — Análise Pós-Ação',
 };
