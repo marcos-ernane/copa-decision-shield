@@ -1,9 +1,10 @@
 // Persistência de uma sessão COPA completa (guest ou Supabase) +
 // utilitários de sugestão (3 estados) e detecção de interpretação.
+// saveCopaSession grava como structured_C/O/P para ser reconhecida pelos motores.
 
-import { GuestStorage, guestId } from './guestStorage';
+import { GuestStorage } from './guestStorage';
 import { supabase } from './supabase';
-import { triggerIndexUpdate } from './indexUpdate';
+import { saveStructuredC, saveStructuredO, saveStructuredP } from './register';
 import type { Entry } from '@/types/database';
 import type { ScenarioType, OperationalLayer, ProjectState } from '@/types/app';
 
@@ -38,41 +39,65 @@ export function detectInterpretation(text: string): boolean {
   return INTERPRETATION_TERMS.some((term) => t.includes(term));
 }
 
+// Rótulos legíveis para o enum de gargalo do COPA de Bolso.
+const BOTTLENECK_LABELS: Record<CopaSessionData['organize']['bottleneck'], string> = {
+  recurso: 'Falta de recurso',
+  opcoes: 'Excesso de opções',
+  travamento: 'Travamento / bloqueio',
+  direcao: 'Falta de direção',
+};
+
 export async function saveCopaSession(
   projectId: string,
   data: CopaSessionData,
 ): Promise<{ entry: Entry; isFirstApa: boolean }> {
   const { data: { session } } = await supabase.auth.getSession();
   const now = new Date().toISOString();
-  const userId = session?.user.id ?? 'guest';
 
-  const entry: Entry = {
-    id: guestId(),
-    project_id: projectId,
-    user_id: userId,
-    entry_type: 'copa_session',
-    content: data as unknown as Record<string, unknown>,
-    classification: null,
-    is_clean_fact: !data.capture.flagged_interpretation,
-    copa_phase: 'A',
-    linked_to: null,
-    edit_history: [],
-    scenario_type_at_entry: data.scenario_type,
-    layer_at_entry: data.prove.layer,
-    ai_assist_used: false,
-    ai_assist_type: null,
-    created_at: now,
-  };
-
-  // Detecta se é o primeiro COPA do projeto.
+  // Detecta se é o primeiro ciclo COPA do projeto (antes de salvar).
   let isFirstApa = false;
-
   if (!session) {
-    const existing = GuestStorage.getEntries().filter(
-      (e) => e.project_id === projectId && e.entry_type === 'copa_session',
+    isFirstApa = !GuestStorage.getEntries().some(
+      (e) => e.project_id === projectId && e.entry_type === 'structured_C',
     );
-    isFirstApa = existing.length === 0;
-    GuestStorage.addEntry(entry);
+  } else {
+    const { count } = await supabase
+      .from('entries')
+      .select('id', { count: 'exact', head: true })
+      .eq('project_id', projectId)
+      .eq('entry_type', 'structured_C');
+    isFirstApa = (count ?? 0) === 0;
+  }
+
+  // Salva C → O → P como entradas estruturadas (reconhecidas por todos os motores).
+  await saveStructuredC(projectId, {
+    fact_text: data.capture.text,
+    interpretation_text: '',
+    hypothesis_text: '',
+    imv_possible: '',
+  }, data.scenario_type);
+
+  await saveStructuredO(projectId, {
+    resources: '',
+    frictions: '',
+    bottleneck: BOTTLENECK_LABELS[data.organize.bottleneck],
+  }, data.scenario_type, data.prove.layer);
+
+  const pEntry = await saveStructuredP(projectId, {
+    action: data.prove.action,
+    reversible: data.prove.reversible,
+    cheap: data.prove.cheap,
+    specific: data.prove.specific,
+    measurable: data.prove.measurable,
+    metric: data.prove.metric,
+    deadline: data.prove.deadline ?? null,
+    cut_rule: data.assess.cut_rule,
+    layer: data.prove.layer,
+    ethical_check: data.prove.ethical_check,
+  }, data.scenario_type);
+
+  // Atualiza estado do projeto (state, layer, scenario_type).
+  if (!session) {
     GuestStorage.updateProject(projectId, {
       last_entry_at: now,
       state: 'proving' as ProjectState,
@@ -81,29 +106,6 @@ export async function saveCopaSession(
       scenario_type: data.scenario_type ?? null,
     });
   } else {
-    const { count } = await supabase
-      .from('entries')
-      .select('id', { count: 'exact', head: true })
-      .eq('project_id', projectId)
-      .eq('entry_type', 'copa_session');
-    isFirstApa = (count ?? 0) === 0;
-
-    const { data: inserted, error } = await supabase
-      .from('entries')
-      .insert({
-        project_id: projectId,
-        user_id: userId,
-        entry_type: 'copa_session',
-        content: entry.content,
-        is_clean_fact: entry.is_clean_fact,
-        copa_phase: 'A',
-        scenario_type_at_entry: entry.scenario_type_at_entry,
-        layer_at_entry: entry.layer_at_entry,
-      })
-      .select()
-      .single();
-    if (error) throw error;
-
     await supabase
       .from('projects')
       .update({
@@ -114,27 +116,24 @@ export async function saveCopaSession(
         scenario_type: data.scenario_type ?? null,
       })
       .eq('id', projectId);
-
-    triggerIndexUpdate();
-    return { entry: inserted as Entry, isFirstApa };
   }
 
-  triggerIndexUpdate();
-  return { entry, isFirstApa };
+  return { entry: pEntry, isFirstApa };
 }
 
+// Conta ciclos COPA completos do projeto (structured_C = 1 por ciclo).
 export async function countCopaSessions(projectId: string): Promise<number> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     return GuestStorage.getEntries().filter(
-      (e) => e.project_id === projectId && e.entry_type === 'copa_session',
+      (e) => e.project_id === projectId && e.entry_type === 'structured_C',
     ).length;
   }
   const { count } = await supabase
     .from('entries')
     .select('id', { count: 'exact', head: true })
     .eq('project_id', projectId)
-    .eq('entry_type', 'copa_session');
+    .eq('entry_type', 'structured_C');
   return count ?? 0;
 }
 
