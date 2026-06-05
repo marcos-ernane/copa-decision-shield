@@ -39,13 +39,24 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
 
   const isLastStep = step === TOTAL_STEPS - 1;
 
-  const nextDisabled =
+  // Em revisão, permite navegar livremente — validação só no Salvar.
+  const nextDisabled = !isReviewing && (
     (step === 0 && !resources.trim()) ||
-    (step === 1 && !frictions.trim());
+    (step === 1 && !frictions.trim())
+  );
+
+  // Campos vazios em revisão indicam que o registro veio do COPA de Bolso.
+  const fromCopa = isReviewing && !resources.trim() && !frictions.trim();
 
   return (
     <div className="space-y-4">
       <StepDots current={step} total={TOTAL_STEPS} />
+
+      {fromCopa && (
+        <p className="text-small text-muted-foreground rounded-md bg-muted px-3 py-2">
+          R1 e R2 não foram coletados pelo COPA de Bolso. Preencha e salve para completar o Mapa 3R.
+        </p>
+      )}
 
       {step === 0 && (
         <div>
