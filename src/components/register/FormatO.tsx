@@ -58,7 +58,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
       {step === 1 && (
         <div>
           <p className="text-small font-medium mb-0.5">R2 — Ruídos</p>
-          <p className="text-small text-muted-foreground mb-1">Onde o sistema perde energia — obstáculos, atritos, interferências.</p>
+          <p className="text-small text-muted-foreground mb-1">O que parece importante mas não muda o resultado — dispersa do objetivo.</p>
           <VoiceInput value={frictions} onChange={setFrictions} placeholder="" rows={3} />
         </div>
       )}
@@ -66,7 +66,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
       {step === 2 && (
         <div>
           <p className="text-small font-medium mb-0.5">R3 — Restrições</p>
-          <p className="text-small text-muted-foreground mb-1">O principal limitante que governa o resultado — 1 frase.</p>
+          <p className="text-small text-muted-foreground mb-1">O que está limitando hoje para avançar.</p>
           <VoiceInput value={bottleneck} onChange={setBottleneck} placeholder="" rows={2} />
         </div>
       )}
