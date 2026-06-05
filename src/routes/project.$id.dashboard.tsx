@@ -2,7 +2,7 @@
 
 import { createFileRoute, useNavigate, Link, useRouter } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronLeft, MoreVertical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -34,6 +34,18 @@ import { PactReturnSheet } from '@/components/pact/PactReturnSheet';
 import { checkPactReturn, getCycle } from '@/lib/pact';
 import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
 import type { Project, Entry, Principle } from '@/types/database';
+import type { ProjectState } from '@/types/app';
+
+const STATE_ACTION_HINTS: Record<ProjectState, string | null> = {
+  new:        'Inicie o primeiro ciclo COPA',
+  capturing:  'Continue a análise de situação',
+  organizing: 'Continue o Mapa 3R',
+  proving:    'Acompanhe o IMV em andamento',
+  blocked:    'Execute um diagnóstico para destravar',
+  paused:     null,
+  concluded:  null,
+  archived:   null,
+};
 
 export const Route = createFileRoute('/project/$id/dashboard')({
   component: ProjectDashboard,
@@ -219,13 +231,44 @@ function ProjectDashboard() {
         </section>
 
         {/* Onde estou agora */}
-        <section className="rounded-md border border-border bg-card p-4 space-y-2">
-          <h2 className="text-label text-muted-foreground uppercase">Onde estou agora</h2>
-          <p className="text-heading text-foreground">{STATE_DISPLAY[currentState].label}</p>
-          {currentState === 'proving' && totalDays > 0 && (
-            <IMVProgressBar current_day={currentDay} total_days={totalDays} />
-          )}
-        </section>
+        {(() => {
+          const hint = STATE_ACTION_HINTS[currentState];
+          const handleStateClick = () => {
+            if (currentState === 'blocked') {
+              void navigate({ to: '/project/$id/diagnosis', params: { id } });
+            } else {
+              void navigate({ to: '/register/structured', search: { projectId: id } as never });
+            }
+          };
+          return hint ? (
+            <button
+              type="button"
+              onClick={handleStateClick}
+              className="w-full text-left rounded-md border border-border bg-card p-4 space-y-1 hover:bg-accent transition-colors"
+            >
+              <h2 className="text-label text-muted-foreground uppercase">Onde estou agora</h2>
+              <div className="flex items-center justify-between">
+                <p className={`text-heading ${STATE_DISPLAY[currentState].color}`}>
+                  {STATE_DISPLAY[currentState].icon} {STATE_DISPLAY[currentState].label}
+                </p>
+                <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+              </div>
+              <p className="text-small text-muted-foreground">{hint}</p>
+              {currentState === 'proving' && totalDays > 0 && (
+                <div className="pt-1">
+                  <IMVProgressBar current_day={currentDay} total_days={totalDays} />
+                </div>
+              )}
+            </button>
+          ) : (
+            <section className="rounded-md border border-border bg-card p-4 space-y-1">
+              <h2 className="text-label text-muted-foreground uppercase">Onde estou agora</h2>
+              <p className={`text-heading ${STATE_DISPLAY[currentState].color}`}>
+                {STATE_DISPLAY[currentState].icon} {STATE_DISPLAY[currentState].label}
+              </p>
+            </section>
+          );
+        })()}
 
         {/* O que está governando */}
         {project.current_bottleneck && (
