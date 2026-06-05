@@ -155,6 +155,13 @@ export function StructuredRegister() {
     }
   }
 
+  // Recarrega entries sem avançar de fase — usado pelo auto-save silencioso do FormatP.
+  async function handleAutoSaved() {
+    if (!projectId) return;
+    const newEntries = await listEntries(projectId);
+    setEntries(newEntries);
+  }
+
   async function onSaved() {
     if (!projectId) return;
     const newEntries = await listEntries(projectId);
@@ -284,6 +291,7 @@ export function StructuredRegister() {
             scenarioType={scenarioType}
             onSaved={onSaved}
             onNextStep={handleNextStep}
+            onAutoSaved={handleAutoSaved}
             step={currentStep}
             isReviewing={isReviewing}
             initialData={statuses['P'] === 'done' ? lastContent<StructuredPContent>(entries, 'structured_P') : null}
