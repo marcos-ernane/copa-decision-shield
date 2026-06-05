@@ -119,6 +119,14 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, initialD
 
       {step === 3 && (
         <div className="space-y-3">
+          {deadline && (
+            <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2">
+              <span className="text-label text-muted-foreground uppercase tracking-wide">Prazo do IMV:</span>
+              <span className="text-small text-foreground font-medium">
+                {deadline.split('-').reverse().join('/')}
+              </span>
+            </div>
+          )}
           <div>
             <p className="text-small text-muted-foreground mb-1">Regra de corte</p>
             <VoiceInput value={cutRule} onChange={setCutRule} placeholder="Quando parar." rows={2} />
