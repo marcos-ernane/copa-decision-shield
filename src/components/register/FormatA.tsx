@@ -1,5 +1,6 @@
 // Formato A — APA. Campo "Princípio" é o coração do produto.
 // REQ-REG-04: PrincipleHighlight. REQ-REG-05: IA nunca substitui sem ação.
+// 5 passos sequenciais.
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { saveStructuredA, type StructuredAContent } from '@/lib/register';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { PrincipleHighlight } from './PrincipleHighlight';
 import { RegistrationNudge } from '@/components/RegistrationNudge';
+import { StepDots } from './StepDots';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 interface Props {
@@ -16,10 +18,15 @@ interface Props {
   scenarioType?: ScenarioType | null;
   currentLayer?: OperationalLayer | null;
   onSaved: () => void;
+  onNextStep: () => void;
   initialData?: StructuredAContent | null;
+  step: number;
+  isReviewing?: boolean;
 }
 
-export function FormatA({ projectId, scenarioType, currentLayer, onSaved, initialData }: Props) {
+const TOTAL_STEPS = 5;
+
+export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing }: Props) {
   const [fact, setFact] = useState(initialData?.fact_text ?? '');
   const [interp, setInterp] = useState(initialData?.interpretation_text ?? '');
   const [principle, setPrinciple] = useState(initialData?.principle_text ?? '');
@@ -36,6 +43,7 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, initia
 
   // Detecta princípio vago (<5 palavras). Consulta IA — nunca substitui.
   useEffect(() => {
+    if (step !== 2) return;
     const wordCount = principle.trim().split(/\s+/).filter(Boolean).length;
     if (wordCount === 0 || wordCount >= 5) { setAiSuggestion(null); return; }
     let cancelled = false;
@@ -48,7 +56,7 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, initia
       }
     }, 800);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [principle, fact, interp]);
+  }, [principle, fact, interp, step]);
 
   async function save() {
     setSaving(true);
@@ -71,64 +79,80 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, initia
     onSaved();
   }
 
+  const isLastStep = step === TOTAL_STEPS - 1;
+
+  const nextDisabled =
+    (step === 0 && !fact.trim()) ||
+    (step === 1 && !interp.trim()) ||
+    (step === 3 && !decision.trim());
+
   return (
     <div className="space-y-4">
-      <div>
-        <p className="text-small text-muted-foreground mb-1">O que aconteceu</p>
-        <VoiceInput value={fact} onChange={setFact} placeholder="" rows={3} />
-      </div>
-      <div>
-        <p className="text-small text-muted-foreground mb-1">Por que aconteceu</p>
-        <VoiceInput value={interp} onChange={setInterp} placeholder="" rows={3} />
-      </div>
+      <StepDots current={step} total={TOTAL_STEPS} />
 
-      <PrincipleHighlight>
-        <VoiceInput
-          value={principle}
-          onChange={setPrinciple}
-          placeholder="Uma frase que você levaria para qualquer outro projeto."
-          rows={2}
-        />
-        {loadingAiSuggestion && !aiSuggestion && (
-          <p className="text-small text-muted-foreground">Facilitador analisando…</p>
-        )}
-        {aiSuggestion && (
-          <div className="rounded-md bg-muted p-2 text-small text-foreground">
-            <p className="text-muted-foreground mb-1">Sugestão de reformulação (opcional):</p>
-            {aiSuggestion}
-            <div className="mt-2 flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => setPrinciple(aiSuggestion)}>
-                Aplicar
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setAiSuggestion(null)}>
-                Ignorar
-              </Button>
+      {step === 0 && (
+        <div>
+          <p className="text-small text-muted-foreground mb-1">O que aconteceu</p>
+          <VoiceInput value={fact} onChange={setFact} placeholder="" rows={3} />
+        </div>
+      )}
+
+      {step === 1 && (
+        <div>
+          <p className="text-small text-muted-foreground mb-1">Por que aconteceu</p>
+          <VoiceInput value={interp} onChange={setInterp} placeholder="" rows={3} />
+        </div>
+      )}
+
+      {step === 2 && (
+        <PrincipleHighlight>
+          <VoiceInput
+            value={principle}
+            onChange={setPrinciple}
+            placeholder="Uma frase que você levaria para qualquer outro projeto."
+            rows={2}
+          />
+          {loadingAiSuggestion && !aiSuggestion && (
+            <p className="text-small text-muted-foreground">Facilitador analisando…</p>
+          )}
+          {aiSuggestion && (
+            <div className="rounded-md bg-muted p-2 text-small text-foreground">
+              <p className="text-muted-foreground mb-1">Sugestão de reformulação (opcional):</p>
+              {aiSuggestion}
+              <div className="mt-2 flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setPrinciple(aiSuggestion)}>
+                  Aplicar
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setAiSuggestion(null)}>
+                  Ignorar
+                </Button>
+              </div>
             </div>
+          )}
+        </PrincipleHighlight>
+      )}
+
+      {step === 3 && (
+        <div className="space-y-3">
+          <div>
+            <p className="text-small text-muted-foreground mb-1">Decisão a partir deste resultado</p>
+            <VoiceInput value={decision} onChange={setDecision} placeholder="" rows={2} />
           </div>
-        )}
-      </PrincipleHighlight>
+          <div>
+            <p className="text-small text-muted-foreground mb-1">Custo oculto percebido</p>
+            <VoiceInput
+              value={hiddenCost}
+              onChange={setHiddenCost}
+              placeholder="Houve custo oculto percebido? Para quem?"
+              rows={2}
+            />
+            <BookAnchorHint text="Isso resolve sem destruir? — princípio ético do COPA, Módulo Base do livro." />
+          </div>
+        </div>
+      )}
 
-      <div>
-        <p className="text-small text-muted-foreground mb-1">Decisão a partir deste resultado</p>
-        <VoiceInput value={decision} onChange={setDecision} placeholder="" rows={2} />
-      </div>
-
-      <div>
-        <p className="text-small text-muted-foreground mb-1">O que funcionou sem criar dano</p>
-        <VoiceInput
-          value={hiddenCost}
-          onChange={setHiddenCost}
-          placeholder="Houve custo oculto percebido? Para quem?"
-          rows={2}
-        />
-        <BookAnchorHint text="Isso resolve sem destruir? — princípio ético do COPA, Módulo Base do livro." />
-      </div>
-
-      <details className="rounded-md border border-border p-3">
-        <summary className="text-small text-muted-foreground cursor-pointer">
-          Campos opcionais
-        </summary>
-        <div className="mt-3 space-y-3">
+      {step === 4 && (
+        <div className="space-y-3">
           <div>
             <p className="text-small text-muted-foreground mb-1">O que funcionou sem criar dano</p>
             <VoiceInput value={worked} onChange={setWorked} placeholder="" rows={2} />
@@ -146,15 +170,28 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, initia
             <VoiceInput value={nextBottleneck} onChange={setNextBottleneck} placeholder="" rows={2} />
           </div>
         </div>
-      </details>
+      )}
 
-      <Button
-        className="w-full"
-        disabled={!fact.trim() || !interp.trim() || !decision.trim() || saving}
-        onClick={save}
-      >
-        {saving ? 'Salvando…' : 'Salvar APA'}
-      </Button>
+      {isLastStep ? (
+        <div className="space-y-2">
+          <Button
+            className="w-full"
+            disabled={!fact.trim() || !interp.trim() || !decision.trim() || saving}
+            onClick={save}
+          >
+            {saving ? 'Salvando…' : isReviewing ? 'Salvar nova versão' : 'Salvar APA'}
+          </Button>
+          {isReviewing && (
+            <Button variant="outline" className="w-full" onClick={onNextStep}>
+              Avançar sem salvar →
+            </Button>
+          )}
+        </div>
+      ) : (
+        <Button className="w-full" disabled={nextDisabled} onClick={onNextStep}>
+          Próximo
+        </Button>
+      )}
 
       <RegistrationNudge open={nudge} moment={1} onDismiss={() => { setNudge(false); onSaved(); }} />
     </div>

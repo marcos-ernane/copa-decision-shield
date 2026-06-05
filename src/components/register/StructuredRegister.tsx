@@ -1,10 +1,14 @@
 // StructuredRegister — fluxo sequencial C → O → P → A.
 // Fases concluídas: revisáveis com último registro pré-carregado.
 // Próxima fase: destacada e habilitada. Fases futuras: bloqueadas.
+// Navegação em dois níveis: voltar retroage campo a campo, depois tela a tela.
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { ChevronLeft, CheckCircle2, Lock, ArrowRight } from 'lucide-react';
+
+// Total de passos por formato (passo final = índice TOTAL_STEPS - 1)
+const FORMAT_STEPS: Record<'C' | 'O' | 'P' | 'A', number> = { C: 4, O: 3, P: 4, A: 5 };
 import { ProjectPicker } from './ProjectPicker';
 import { FormatC } from './FormatC';
 import { FormatO } from './FormatO';
@@ -65,6 +69,7 @@ export function StructuredRegister() {
   const router = useRouter();
   const { projectId, setProjectId, projects } = useProjectPicker();
   const [format, setFormat] = useState<Format>('C');
+  const [currentStep, setCurrentStep] = useState(0);
   const [projectData, setProjectData] = useState<Project | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
 
@@ -77,6 +82,7 @@ export function StructuredRegister() {
       const statuses = computeStatuses(es);
       const next = PHASE_ORDER.find((ph) => statuses[ph] === 'next') ?? 'C';
       setFormat(next);
+      setCurrentStep(0);
     })();
   }, [projectId]);
 
@@ -89,12 +95,50 @@ export function StructuredRegister() {
   const scenarioType: ScenarioType | null = projectData?.scenario_type ?? null;
   const currentLayer: OperationalLayer | null = projectData?.current_layer ?? null;
 
+  // Nível 1: retrocede campo a campo dentro do formato.
+  // Nível 2: ao chegar no passo 0, retrocede para o último passo do formato anterior (done).
+  // Nível 3: se já estiver no primeiro formato, volta para a tela anterior (histórico).
+  function handleBack() {
+    if (currentStep > 0) {
+      setCurrentStep((s) => s - 1);
+      return;
+    }
+    const idx = PHASE_ORDER.indexOf(format);
+    if (idx > 0) {
+      const prev = PHASE_ORDER[idx - 1];
+      if (statuses[prev] === 'done') {
+        setFormat(prev);
+        setCurrentStep(FORMAT_STEPS[prev] - 1);
+        return;
+      }
+    }
+    router.history.back();
+  }
+
+  // Avança passo dentro do formato. Se chamado no último passo de um formato já concluído
+  // (botão "Avançar sem salvar →"), salta para o início do próximo formato acessível.
+  function handleNextStep() {
+    const maxStep = FORMAT_STEPS[format] - 1;
+    if (currentStep < maxStep) {
+      setCurrentStep((s) => s + 1);
+      return;
+    }
+    // Último passo — avança formato (apenas em modo revisão, sem salvar)
+    const idx = PHASE_ORDER.indexOf(format);
+    const nextFmt = PHASE_ORDER[idx + 1] as Format | undefined;
+    if (nextFmt && statuses[nextFmt] !== 'locked') {
+      setFormat(nextFmt);
+      setCurrentStep(0);
+    }
+  }
+
   async function onSaved() {
     if (!projectId) return;
     const newEntries = await listEntries(projectId);
     setEntries(newEntries);
     const newStatuses = computeStatuses(newEntries);
     const next = PHASE_ORDER.find((ph) => newStatuses[ph] === 'next');
+    setCurrentStep(0);
     if (next) {
       setFormat(next);
     } else {
@@ -109,7 +153,7 @@ export function StructuredRegister() {
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
         <button
-          onClick={() => router.history.back()}
+          onClick={handleBack}
           className="p-2 -ml-2 rounded-md hover:bg-accent"
           aria-label="Voltar"
         >
@@ -134,7 +178,7 @@ export function StructuredRegister() {
                   key={k}
                   type="button"
                   disabled={status === 'locked'}
-                  onClick={() => status !== 'locked' && setFormat(k)}
+                  onClick={() => { if (status !== 'locked') { setFormat(k); setCurrentStep(0); } }}
                   className={[
                     'flex items-center gap-1.5 rounded-md border px-3 py-2 text-small text-left transition-colors',
                     isActive
@@ -184,6 +228,9 @@ export function StructuredRegister() {
             scenarioType={scenarioType}
             currentLayer={currentLayer}
             onSaved={onSaved}
+            onNextStep={handleNextStep}
+            step={currentStep}
+            isReviewing={isReviewing}
             initialData={statuses['C'] === 'done' ? lastContent<StructuredCContent>(entries, 'structured_C') : null}
           />
         )}
@@ -194,6 +241,9 @@ export function StructuredRegister() {
             scenarioType={scenarioType}
             currentLayer={currentLayer}
             onSaved={onSaved}
+            onNextStep={handleNextStep}
+            step={currentStep}
+            isReviewing={isReviewing}
             initialData={statuses['O'] === 'done' ? lastContent<StructuredOContent>(entries, 'structured_O') : null}
           />
         )}
@@ -203,6 +253,9 @@ export function StructuredRegister() {
             projectId={projectId}
             scenarioType={scenarioType}
             onSaved={onSaved}
+            onNextStep={handleNextStep}
+            step={currentStep}
+            isReviewing={isReviewing}
             initialData={statuses['P'] === 'done' ? lastContent<StructuredPContent>(entries, 'structured_P') : null}
           />
         )}
@@ -213,6 +266,9 @@ export function StructuredRegister() {
             scenarioType={scenarioType}
             currentLayer={currentLayer}
             onSaved={onSaved}
+            onNextStep={handleNextStep}
+            step={currentStep}
+            isReviewing={isReviewing}
             initialData={statuses['A'] === 'done' ? lastContent<StructuredAContent>(entries, 'structured_A') : null}
           />
         )}
