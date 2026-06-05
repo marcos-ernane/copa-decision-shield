@@ -33,17 +33,39 @@ const LABELS: Record<Format, string> = {
 const PHASE_ORDER: Format[] = ['C', 'O', 'P', 'A'];
 
 function computeStatuses(entries: Entry[]): Record<Format, PhaseStatus> {
+  const aLockedUntil = getALockedUntil(entries);
   const statuses: Record<Format, PhaseStatus> = { C: 'locked', O: 'locked', P: 'locked', A: 'locked' };
   let foundNext = false;
   for (const phase of PHASE_ORDER) {
     if (entries.some((e) => e.entry_type === `structured_${phase}`)) {
       statuses[phase] = 'done';
     } else if (!foundNext) {
-      statuses[phase] = 'next';
-      foundNext = true;
+      if (phase === 'A' && aLockedUntil) {
+        // A bloqueada pelo prazo do IMV — mantém 'locked' até a data ser atingida
+        foundNext = true;
+      } else {
+        statuses[phase] = 'next';
+        foundNext = true;
+      }
     }
   }
   return statuses;
+}
+
+// Retorna o prazo (YYYY-MM-DD) do último entry structured_P se ainda estiver no futuro; null caso contrário.
+function getALockedUntil(entries: Entry[]): string | null {
+  const pEntry = [...entries]
+    .filter((e) => e.entry_type === 'structured_P')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+  const deadline = (pEntry?.content as { deadline?: string | null } | undefined)?.deadline ?? null;
+  if (!deadline) return null;
+  return new Date(deadline + 'T00:00:00').getTime() > Date.now() ? deadline : null;
+}
+
+// Formata YYYY-MM-DD → DD/MM/AAAA sem problemas de fuso horário.
+function fmtDeadline(ymd: string): string {
+  const [y, m, d] = ymd.split('-');
+  return `${d}/${m}/${y}`;
 }
 
 function lastContent<T>(entries: Entry[], type: string): T | null {
@@ -91,6 +113,7 @@ export function StructuredRegister() {
   }
 
   const statuses = computeStatuses(entries);
+  const aLockedUntil = getALockedUntil(entries);
   const allDone = PHASE_ORDER.every((p) => statuses[p] === 'done');
   const scenarioType: ScenarioType | null = projectData?.scenario_type ?? null;
   const currentLayer: OperationalLayer | null = projectData?.current_layer ?? null;
@@ -199,7 +222,14 @@ export function StructuredRegister() {
                   {status === 'locked' && (
                     <Lock className="size-3.5 shrink-0" />
                   )}
-                  <span className="truncate">{LABELS[k]}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="block truncate">{LABELS[k]}</span>
+                    {k === 'A' && status === 'locked' && aLockedUntil && (
+                      <span className="block text-[10px] leading-tight mt-0.5 opacity-70">
+                        a partir de {fmtDeadline(aLockedUntil)}
+                      </span>
+                    )}
+                  </div>
                 </button>
               );
             })}
