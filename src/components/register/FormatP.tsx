@@ -13,6 +13,7 @@ interface Props {
   scenarioType?: ScenarioType | null;
   onSaved: () => void;
   onNextStep: () => void;
+  onAutoSaved?: () => Promise<void>;
   initialData?: StructuredPContent | null;
   step: number;
   isReviewing?: boolean;
@@ -36,7 +37,7 @@ function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boole
   );
 }
 
-export function FormatP({ projectId, scenarioType, onSaved, onNextStep, initialData, step, isReviewing }: Props) {
+export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSaved, initialData, step, isReviewing }: Props) {
   const [action, setAction] = useState(initialData?.action ?? '');
   const [reversible, setReversible] = useState<boolean | null>(initialData?.reversible ?? null);
   const [cheap, setCheap] = useState<boolean | null>(initialData?.cheap ?? null);
@@ -65,6 +66,29 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, initialD
     }, scenarioType);
     setSaving(false);
     onSaved();
+  }
+
+  // No passo 2 (Métrica + Prazo) em modo revisão, salva silenciosamente antes de avançar
+  // para que o prazo novo já esteja no banco ao verificar o bloqueio do Formato A.
+  async function handleProximo() {
+    if (isReviewing && step === 2 && onAutoSaved) {
+      setSaving(true);
+      await saveStructuredP(projectId, {
+        action: action.trim(),
+        reversible,
+        cheap,
+        specific,
+        measurable,
+        metric: metric.trim(),
+        deadline: deadline || null,
+        cut_rule: cutRule.trim(),
+        layer,
+        ethical_check: ethical.trim() || null,
+      }, scenarioType);
+      await onAutoSaved();
+      setSaving(false);
+    }
+    onNextStep();
   }
 
   const isLastStep = step === TOTAL_STEPS - 1;
@@ -165,7 +189,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, initialD
           )}
         </div>
       ) : (
-        <Button className="w-full" disabled={nextDisabled} onClick={onNextStep}>
+        <Button className="w-full" disabled={nextDisabled || saving} onClick={() => void handleProximo()}>
           Próximo
         </Button>
       )}
