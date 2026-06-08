@@ -1,13 +1,13 @@
 // PactWeekView — semana do operador.
-// Mostra progresso semanal, destaca fase do dia e permite marcar cada fase como feita.
+// Mostra progresso semanal, destaca fase do dia e permite marcar/desmarcar cada fase.
 
 import { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Check } from 'lucide-react';
-import { markPhaseComplete } from '@/lib/pact';
+import { markPhaseComplete, markPhaseIncomplete } from '@/lib/pact';
 import type { WeeklyCycle, PactPhase } from '@/types/app';
 
-const DAY_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const DAY_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 const PHASE_LABEL: Record<PactPhase, string> = {
   capture: 'Captura', organize: 'Organização', prove: 'Prova', assess: 'Aferição',
@@ -34,14 +34,23 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
   const doneCount = phases.filter((p) => cycle[p].completed_this_week).length;
   const allDone = doneCount === phases.length;
 
-  async function handleMarkDone(phase: PactPhase, e: React.MouseEvent) {
+  async function handleToggle(phase: PactPhase, e: React.MouseEvent) {
     e.stopPropagation();
-    const now = new Date().toISOString();
-    setCycle((prev) => ({
-      ...prev,
-      [phase]: { ...prev[phase], completed_this_week: true, last_completed_at: now },
-    }));
-    await markPhaseComplete(projectId, phase);
+    const isDone = cycle[phase].completed_this_week;
+    if (isDone) {
+      setCycle((prev) => ({
+        ...prev,
+        [phase]: { ...prev[phase], completed_this_week: false, last_completed_at: null },
+      }));
+      await markPhaseIncomplete(projectId, phase);
+    } else {
+      const now = new Date().toISOString();
+      setCycle((prev) => ({
+        ...prev,
+        [phase]: { ...prev[phase], completed_this_week: true, last_completed_at: now },
+      }));
+      await markPhaseComplete(projectId, phase);
+    }
   }
 
   function handlePhaseClick(phase: PactPhase) {
@@ -136,23 +145,25 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
                       )}
                     </div>
                     <p className="text-label text-muted-foreground">
-                      {DAY_SHORT[day.day_of_week]} · {PHASE_DESC[phase]}
+                      {DAY_FULL[day.day_of_week]} · {PHASE_DESC[phase]}
                     </p>
                   </div>
                 </button>
 
-                {/* Botão marcar como feita */}
-                {!done && (
-                  <button
-                    type="button"
-                    onClick={(e) => void handleMarkDone(phase, e)}
-                    className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                    aria-label={`Marcar ${PHASE_LABEL[phase]} como feita`}
-                    title="Marcar como feita"
-                  >
-                    <Check className="size-4" />
-                  </button>
-                )}
+                {/* Botão marcar/desmarcar — sempre visível */}
+                <button
+                  type="button"
+                  onClick={(e) => void handleToggle(phase, e)}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    done
+                      ? 'text-[color:var(--color-status-success,#16a34a)] hover:text-destructive hover:bg-accent'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  }`}
+                  aria-label={done ? `Desmarcar ${PHASE_LABEL[phase]}` : `Marcar ${PHASE_LABEL[phase]} como feita`}
+                  title={done ? 'Desmarcar' : 'Marcar como feita'}
+                >
+                  <Check className="size-4" />
+                </button>
               </div>
             </li>
           );

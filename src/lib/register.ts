@@ -5,6 +5,7 @@
 import { GuestStorage, guestId } from './guestStorage';
 import { supabase } from './supabase';
 import { triggerIndexUpdate } from './indexUpdate';
+import { markPhaseComplete } from './pact';
 import type { Entry, Principle } from '@/types/database';
 import type {
   EntryType,
@@ -84,7 +85,7 @@ export interface CorrectiveContent {
 
 async function insertEntry(args: {
   projectId: string;
-  entry_type: EntryType | 'passive' | 'protocol_5min' | 'creative_session' | 'simulation_session';
+  entry_type: EntryType | 'passive' | 'protocol_5min' | 'creative_session' | 'simulation_session' | 'copa_session' | 'pressure_session';
   content: Record<string, unknown>;
   is_clean_fact: boolean;
   linked_to?: string | null;
@@ -176,7 +177,7 @@ export async function saveStructuredC(
   scenarioType?: ScenarioType | null,
   layerAtEntry?: OperationalLayer | null,
 ): Promise<Entry> {
-  return insertEntry({
+  const entry = await insertEntry({
     projectId,
     entry_type: 'structured_C',
     content: content as unknown as Record<string, unknown>,
@@ -185,6 +186,8 @@ export async function saveStructuredC(
     scenario_type_at_entry: scenarioType ?? null,
     layer_at_entry: layerAtEntry ?? null,
   });
+  void markPhaseComplete(projectId, 'capture').catch(() => {});
+  return entry;
 }
 
 export async function saveStructuredO(
@@ -193,7 +196,7 @@ export async function saveStructuredO(
   scenarioType?: ScenarioType | null,
   layerAtEntry?: OperationalLayer | null,
 ): Promise<Entry> {
-  return insertEntry({
+  const entry = await insertEntry({
     projectId,
     entry_type: 'structured_O',
     content: content as unknown as Record<string, unknown>,
@@ -202,6 +205,8 @@ export async function saveStructuredO(
     scenario_type_at_entry: scenarioType ?? null,
     layer_at_entry: layerAtEntry ?? null,
   });
+  void markPhaseComplete(projectId, 'organize').catch(() => {});
+  return entry;
 }
 
 export async function saveStructuredP(
@@ -209,15 +214,17 @@ export async function saveStructuredP(
   content: StructuredPContent,
   scenarioType?: ScenarioType | null,
 ): Promise<Entry> {
-  return insertEntry({
+  const entry = await insertEntry({
     projectId,
     entry_type: 'structured_P',
     content: content as unknown as Record<string, unknown>,
     is_clean_fact: false,
-    layer_at_entry: content.layer, // layer vem do form (escolha explícita do usuário)
+    layer_at_entry: content.layer,
     copa_phase: 'P',
     scenario_type_at_entry: scenarioType ?? null,
   });
+  void markPhaseComplete(projectId, 'prove').catch(() => {});
+  return entry;
 }
 
 // Salva APA e — se houver principle_text — cria entrada em `principles`.
@@ -237,6 +244,7 @@ export async function saveStructuredA(
     layer_at_entry: layerAtEntry ?? null,
     copa_phase: 'A',
   });
+  void markPhaseComplete(projectId, 'assess').catch(() => {});
 
   if (!content.principle_text.trim()) {
     return { entry, principle: null, isFirstPrinciple: false };
@@ -381,22 +389,15 @@ export async function saveProtocol5(
   });
 }
 
+// ---------- Simulation Session ----------
+
 export async function insertSimulationEntry(
-  projectId: string | null,
+  projectId: string,
   simulationId: string,
   simulationTitle: string,
   type: ScenarioType,
   layer: OperationalLayer,
 ): Promise<void> {
-  if (!projectId) {
-    const { listProjects } = await import('./projects');
-    const projects = await listProjects();
-    const active = projects.find(
-      (p) => p.state !== 'concluded' && p.state !== 'archived' && p.state !== 'paused',
-    );
-    if (!active) return;
-    projectId = active.id;
-  }
   await insertEntry({
     projectId,
     entry_type: 'simulation_session',

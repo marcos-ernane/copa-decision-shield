@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearch } from '@tanstack/react-router';
 import { usePanelData } from '@/hooks/usePanelData';
 import { PrincipleCard } from './PrincipleCard';
 import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
@@ -8,13 +9,15 @@ const SCENARIOS: ScenarioType[] = ['fluxo', 'processo', 'oferta', 'relacionament
 const LAYERS: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia', 'escala'];
 
 export function PrinciplesTab() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const search = useSearch({ strict: false }) as { projectId?: string };
   const { principles, projects, refresh } = usePanelData();
+  const [projectFilter, setProjectFilter] = useState<string | null>(search.projectId ?? null);
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
   const [layer, setLayer] = useState<OperationalLayer | null>(null);
   const [masterOnly, setMasterOnly] = useState(false);
   const [query, setQuery] = useState('');
 
-  // Active project = most recent non-concluded
   const activeProject = useMemo(
     () => projects
       .filter((p) => p.state !== 'concluded' && p.state !== 'archived')
@@ -32,12 +35,13 @@ export function PrinciplesTab() {
     [projects],
   );
 
-  const noActiveFilters = !scenario && !layer && !masterOnly;
+  const noActiveFilters = !scenario && !layer && !masterOnly && !projectFilter;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return principles
       .filter((p) => !p.is_archived)
+      .filter((p) => !projectFilter || p.project_id === projectFilter)
       .filter((p) => {
         if (!scenario) return true;
         const s = p.scenario_type ?? projectMap[p.project_id]?.scenario_type ?? null;
@@ -50,7 +54,7 @@ export function PrinciplesTab() {
       })
       .filter((p) => !masterOnly || p.is_master_principle)
       .filter((p) => !q || p.content.toLowerCase().includes(q));
-  }, [principles, projectMap, scenario, layer, masterOnly, query]);
+  }, [principles, projectMap, projectFilter, scenario, layer, masterOnly, query]);
 
   return (
     <div className="space-y-3">
@@ -62,9 +66,24 @@ export function PrinciplesTab() {
         className="w-full rounded-md border border-border bg-background text-small p-2"
       />
 
+      {projectFilter && (
+        <div className="flex items-center gap-2 text-small">
+          <span className="text-muted-foreground">
+            Projeto: <span className="text-foreground">{projectMap[projectFilter]?.name ?? projectFilter}</span>
+          </span>
+          <button
+            onClick={() => setProjectFilter(null)}
+            className="text-label text-muted-foreground hover:text-foreground"
+            aria-label="Limpar filtro de projeto"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-1">
         <button
-          onClick={() => { setScenario(null); setLayer(null); setMasterOnly(false); }}
+          onClick={() => { setScenario(null); setLayer(null); setMasterOnly(false); setProjectFilter(null); }}
           className={`text-label px-2 py-0.5 rounded-full border ${noActiveFilters ? 'bg-foreground text-background border-foreground' : 'border-border'}`}
         >Todos</button>
         {SCENARIOS.map((s) => (
@@ -85,8 +104,7 @@ export function PrinciplesTab() {
         </button>
       </div>
 
-      {/* PrincipleRecallPrompt — 1 só, contexto do projeto ativo */}
-      {recall && (
+      {recall && !projectFilter && (
         <div className="rounded-md border border-[color:var(--color-brand-blue)] bg-card p-3">
           <div className="text-label text-muted-foreground uppercase tracking-wide">
             Princípio relevante para {activeProject?.name}

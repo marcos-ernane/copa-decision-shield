@@ -25,10 +25,10 @@ interface Capacity {
 
 function entryLabel(type: string): string {
   const map: Record<string, string> = {
-    structured_C: 'Análise (C)',
-    structured_O: 'Mapa 3R (O)',
-    structured_P: 'IMV (P)',
-    structured_A: 'APA (A)',
+    structured_C: '[C]-Captura',
+    structured_O: '[O]-Organização',
+    structured_P: '[P]-Prova',
+    structured_A: '[A]-Aferição',
     pulse: 'Pulso',
     corrective: 'Corretiva',
     copa_session: 'COPA',
