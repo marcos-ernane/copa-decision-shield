@@ -1,9 +1,13 @@
 import { useState, useMemo } from 'react';
+import { Link } from '@tanstack/react-router';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
+import { EditZoneGuard } from '@/components/EditZoneGuard';
+import { supabase } from '@/lib/supabase';
+import { GuestStorage } from '@/lib/guestStorage';
 
 const SCENARIOS: ScenarioType[] = ['fluxo', 'processo', 'oferta', 'relacionamento', 'pressao'];
 const LAYERS: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia', 'escala'];
@@ -61,8 +65,23 @@ const TYPE_ICON: Record<string, string> = {
   passive: '·',
 };
 
+async function archiveEntry(id: string) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    const all = GuestStorage.getEntries();
+    const idx = all.findIndex((e) => e.id === id);
+    if (idx >= 0) {
+      // Soft-delete: marcar como arquivado via classification
+      all[idx] = { ...all[idx], classification: 'archived' };
+      window.localStorage.setItem('aop.entries', JSON.stringify(all));
+    }
+    return;
+  }
+  await supabase.from('entries').update({ classification: 'archived' }).eq('id', id);
+}
+
 export function TimelineTab() {
-  const { entries, projects } = usePanelData();
+  const { entries, projects, refresh } = usePanelData();
   const [project, setProject] = useState<string>('all');
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
   const [layer, setLayer] = useState<OperationalLayer | null>(null);
@@ -162,23 +181,57 @@ export function TimelineTab() {
         {filtered.map((e) => (
           <li
             key={e.id}
-            onClick={() => setExpanded(expanded === e.id ? null : e.id)}
-            className="rounded-md border border-border bg-card p-3 cursor-pointer hover:bg-accent"
+            className="rounded-md border border-border bg-card p-3"
           >
-            <div className="flex items-center gap-2 text-label text-muted-foreground">
-              <span className="font-mono">{TYPE_ICON[e.entry_type] ?? '?'}</span>
-              {e.entry_type === 'corrective' && <span className="text-[color:var(--color-brand-amber)]">[C]</span>}
-              <span>{new Date(e.created_at).toLocaleDateString('pt-BR')}</span>
-              <span>·</span>
-              <span className="truncate">{projectName(e.project_id)}</span>
+            <div
+              className="cursor-pointer"
+              onClick={() => setExpanded(expanded === e.id ? null : e.id)}
+            >
+              <div className="flex items-center gap-2 text-label text-muted-foreground">
+                <span className="font-mono">{TYPE_ICON[e.entry_type] ?? '?'}</span>
+                {e.entry_type === 'corrective' && <span className="text-[color:var(--color-brand-amber)]">[C]</span>}
+                <span>{new Date(e.created_at).toLocaleDateString('pt-BR')}</span>
+                <span>·</span>
+                <span className="truncate">{projectName(e.project_id)}</span>
+              </div>
+              <p className={`text-small text-foreground mt-1 ${expanded === e.id ? '' : 'line-clamp-2'}`}>
+                {entryPreview(e)}
+              </p>
+              <div className="flex gap-1 mt-1 flex-wrap">
+                {e.scenario_type_at_entry && <ScenarioTypeChip type={e.scenario_type_at_entry} />}
+                {e.layer_at_entry && <LayerChip layer={e.layer_at_entry} />}
+              </div>
             </div>
-            <p className={`text-small text-foreground mt-1 ${expanded === e.id ? '' : 'line-clamp-2'}`}>
-              {entryPreview(e)}
-            </p>
-            <div className="flex gap-1 mt-1 flex-wrap">
-              {e.scenario_type_at_entry && <ScenarioTypeChip type={e.scenario_type_at_entry} />}
-              {e.layer_at_entry && <LayerChip layer={e.layer_at_entry} />}
-            </div>
+            {expanded === e.id && (
+              <div className="mt-3 pt-3 border-t border-border flex gap-3">
+                {e.entry_type !== 'corrective' && (
+                  <Link
+                    to="/register/corrective/$entryId"
+                    params={{ entryId: e.id }}
+                    className="text-label text-[color:var(--color-brand-blue)] hover:underline"
+                  >
+                    Criar registro corretivo
+                  </Link>
+                )}
+                <EditZoneGuard
+                  zone="red"
+                  title="Arquivar registro?"
+                  description="Este registro ficará oculto no Timeline. Use o Registro Corretivo para corrigir o conteúdo."
+                  confirmLabel="Arquivar"
+                  onConfirm={async () => { await archiveEntry(e.id); void refresh(); }}
+                >
+                  {(open) => (
+                    <button
+                      type="button"
+                      onClick={open}
+                      className="text-label text-muted-foreground hover:text-destructive"
+                    >
+                      Arquivar
+                    </button>
+                  )}
+                </EditZoneGuard>
+              </div>
+            )}
           </li>
         ))}
       </ul>

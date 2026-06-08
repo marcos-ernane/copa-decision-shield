@@ -2,16 +2,29 @@
 
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
+import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 interface Props {
   projectId: string;
   metric: string;
   deadline: string | null;
+  captureText?: string;
+  scenarioType?: ScenarioType | null;
+  layer?: OperationalLayer | null;
   onNewCopa: () => void;
 }
 
-export function COPADone({ projectId, metric, deadline, onNewCopa }: Props) {
+export function COPADone({ projectId, metric, deadline, captureText, scenarioType, layer, onNewCopa }: Props) {
   const navigate = useNavigate();
+
+  function goToSheet() {
+    const search: Record<string, string> = { projectId };
+    if (captureText) search.fact = captureText;
+    if (scenarioType) search.type = scenarioType;
+    if (layer) search.layer = layer;
+    navigate({ to: '/compass/sheet', search: search as never });
+  }
+
   return (
     <div className="space-y-4 p-4">
       <h2 className="text-title">COPA concluído.</h2>
@@ -38,6 +51,13 @@ export function COPADone({ projectId, metric, deadline, onNewCopa }: Props) {
           Novo COPA
         </Button>
       </div>
+      <button
+        type="button"
+        onClick={goToSheet}
+        className="w-full text-center text-small text-muted-foreground hover:text-foreground py-1"
+      >
+        Preencher Folha do Operador →
+      </button>
     </div>
   );
 }

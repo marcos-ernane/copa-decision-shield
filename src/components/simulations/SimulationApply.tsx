@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { listProjects } from '@/lib/projects';
+import { insertSimulationEntry } from '@/lib/register';
 import type { Project } from '@/types/database';
 import type { Simulation } from '@/data/simulations';
 
@@ -40,18 +41,14 @@ export function SimulationApply({ simulation, onClose }: Props) {
     };
   }, []);
 
-  function openCopaNew() {
-    navigate({
-      to: '/copa',
-      search: { type: simulation.type, layer: simulation.layer },
-    });
+  async function openCopaNew() {
+    await insertSimulationEntry(null, simulation.id, simulation.title, simulation.type, simulation.layer);
+    navigate({ to: '/copa', search: { type: simulation.type, layer: simulation.layer } });
   }
 
-  function openCopaForProject(projectId: string) {
-    navigate({
-      to: '/copa',
-      search: { projectId, type: simulation.type, layer: simulation.layer },
-    });
+  async function openCopaForProject(projectId: string) {
+    await insertSimulationEntry(projectId, simulation.id, simulation.title, simulation.type, simulation.layer);
+    navigate({ to: '/copa', search: { projectId, type: simulation.type, layer: simulation.layer } });
   }
 
   return (
@@ -65,7 +62,7 @@ export function SimulationApply({ simulation, onClose }: Props) {
         </p>
       </div>
 
-      <Button className="w-full" onClick={openCopaNew}>
+      <Button className="w-full" onClick={() => void openCopaNew()}>
         Abrir COPA com tipo e camada
       </Button>
 
@@ -79,7 +76,7 @@ export function SimulationApply({ simulation, onClose }: Props) {
               <li key={p.id}>
                 <button
                   type="button"
-                  onClick={() => openCopaForProject(p.id)}
+                  onClick={() => void openCopaForProject(p.id)}
                   className="w-full text-left rounded-md border border-border bg-card p-3 hover:bg-accent/30"
                 >
                   <p className="text-body text-foreground">{p.name}</p>
