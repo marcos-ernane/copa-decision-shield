@@ -30,6 +30,20 @@ const LABELS: Record<Format, string> = {
   A: 'A — Análise Pós-Ação',
 };
 
+const PHASE_NAMES: Record<Format, string> = {
+  C: '[C]-Captura',
+  O: '[O]-Organização',
+  P: '[P]-Prova',
+  A: '[A]-Aferição',
+};
+
+const PHASE_QUESTIONS: Record<Format, string> = {
+  C: 'O QUE ESTÁ ACONTECENDO DE VERDADE?',
+  O: 'DO QUE EU TENHO AQUI, O QUE IMPORTA E COMO SE CONECTA?',
+  P: 'QUAL É O MENOR TESTE QUE CONSIGO FAZER PARA CONFIRMAR SE ESTOU CERTO?',
+  A: 'O QUE MUDOU, POR QUE MUDOU E O QUE EU FAÇO COM ISSO AGORA?',
+};
+
 const PHASE_ORDER: Format[] = ['C', 'O', 'P', 'A'];
 
 function computeStatuses(entries: Entry[]): Record<Format, PhaseStatus> {
@@ -191,6 +205,7 @@ export function StructuredRegister() {
         </button>
         <div>
           <p className="text-label uppercase tracking-wide text-muted-foreground">Registro estruturado</p>
+          <p className="text-label text-muted-foreground uppercase tracking-wide">Nome</p>
           <p className="text-heading text-foreground">{projectData?.name ?? '…'}</p>
         </div>
       </header>
@@ -241,6 +256,16 @@ export function StructuredRegister() {
               );
             })}
           </div>
+        </div>
+
+        {/* Fase atual + pergunta central */}
+        <div className="rounded-md bg-[color:var(--color-surface-1)] px-4 py-3 space-y-1">
+          <p className="text-label font-semibold text-foreground uppercase tracking-wide">
+            {PHASE_NAMES[format]}
+          </p>
+          <p className="text-small font-medium text-foreground">
+            {PHASE_QUESTIONS[format]}
+          </p>
         </div>
 
         {/* Indicador de revisão */}
