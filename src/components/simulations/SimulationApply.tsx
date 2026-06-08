@@ -42,13 +42,25 @@ export function SimulationApply({ simulation, onClose }: Props) {
   }, []);
 
   async function openCopaNew() {
-    await insertSimulationEntry(null, simulation.id, simulation.title, simulation.type, simulation.layer);
-    navigate({ to: '/copa', search: { type: simulation.type, layer: simulation.layer } });
+    const all = await listProjects();
+    const active = all.find(
+      (p) => p.state !== 'concluded' && p.state !== 'archived' && p.state !== 'paused',
+    );
+    if (active) {
+      void insertSimulationEntry(active.id, simulation.id, simulation.title, simulation.type, simulation.layer).catch(() => {});
+    }
+    navigate({
+      to: '/copa',
+      search: { type: simulation.type, layer: simulation.layer },
+    });
   }
 
   async function openCopaForProject(projectId: string) {
-    await insertSimulationEntry(projectId, simulation.id, simulation.title, simulation.type, simulation.layer);
-    navigate({ to: '/copa', search: { projectId, type: simulation.type, layer: simulation.layer } });
+    void insertSimulationEntry(projectId, simulation.id, simulation.title, simulation.type, simulation.layer).catch(() => {});
+    navigate({
+      to: '/copa',
+      search: { projectId, type: simulation.type, layer: simulation.layer },
+    });
   }
 
   return (

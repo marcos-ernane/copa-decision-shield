@@ -37,14 +37,38 @@ import type { Project, Entry, Principle } from '@/types/database';
 import type { ProjectState } from '@/types/app';
 
 const COPA_PHASE_ORDER = ['C', 'O', 'P', 'A'] as const;
-const COPA_PHASE_LABELS: Record<string, string> = {
-  C: 'Análise de Situação',
-  O: 'Mapa 3R',
-  P: 'Definição de IMV',
-  A: 'Análise Pós-Ação',
+
+const COPA_STEP_NAMES: Record<string, string> = {
+  C: 'Captura', O: 'Organização', P: 'Prova', A: 'Aferição',
 };
 
+function CopaStepsRow({ done, next, allDone }: { done: string[]; next: string | null; allDone: boolean }) {
+  return (
+    <div className="flex items-center flex-wrap gap-y-0.5 text-label mt-1">
+      {COPA_PHASE_ORDER.map((ph, i) => {
+        const isDone = done.includes(ph);
+        const isNext = ph === next && !allDone;
+        return (
+          <span key={ph} className="flex items-center">
+            {i > 0 && <span className="mx-1.5 text-muted-foreground">·</span>}
+            <span className={
+              isDone
+                ? 'text-muted-foreground line-through'
+                : isNext
+                ? 'text-foreground font-medium'
+                : 'text-muted-foreground/50'
+            }>
+              [{ph}]-{COPA_STEP_NAMES[ph]}
+            </span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function computeCopaProgress(entries: Entry[]): {
+  done: string[];
   lastDone: string | null;
   nextPhase: string | null;
   allDone: boolean;
@@ -54,6 +78,7 @@ function computeCopaProgress(entries: Entry[]): {
   );
   const next = COPA_PHASE_ORDER.find((ph) => !done.includes(ph)) ?? null;
   return {
+    done: [...done],
     lastDone: done.length > 0 ? done[done.length - 1] : null,
     nextPhase: next,
     allDone: next === null,
@@ -220,15 +245,18 @@ function ProjectDashboard() {
       <main className="px-6 py-6 space-y-6 max-w-md mx-auto">
         {/* Cabeçalho */}
         <section className="space-y-2">
-          <div className="flex items-center gap-2">
-            <ProjectStateIcon state={currentState} />
-            <h1 className="text-title text-foreground">{project.name}</h1>
+          <div>
+            <p className="text-label text-muted-foreground uppercase tracking-wide">Nome</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <ProjectStateIcon state={currentState} />
+              <h1 className="text-title text-foreground">{project.name}</h1>
+            </div>
           </div>
           <button
             onClick={() => setNorthExpanded((v) => !v)}
             className="text-left w-full"
           >
-            <p className="text-label text-muted-foreground uppercase">Norte</p>
+            <p className="text-label text-muted-foreground uppercase">Norte/Objetivo</p>
             <p
               className={`text-small text-foreground ${
                 northExpanded ? '' : 'line-clamp-2'
@@ -245,22 +273,10 @@ function ProjectDashboard() {
 
         {/* Onde estou agora */}
         {(() => {
-          const { lastDone, nextPhase, allDone } = computeCopaProgress(entries);
+          const { done, nextPhase, allDone } = computeCopaProgress(entries);
           const isTerminal = currentState === 'paused' || currentState === 'concluded' || currentState === 'archived';
           const isBlocked = currentState === 'blocked';
-
-          let hint: string | null = null;
-          if (!isTerminal) {
-            if (isBlocked) {
-              hint = 'Execute um diagnóstico para destravar';
-            } else if (allDone) {
-              hint = 'Ciclo COPA completo — revise ou inicie novo ciclo';
-            } else if (nextPhase) {
-              hint = lastDone
-                ? `Formato ${lastDone} concluído · Próximo: ${nextPhase} — ${COPA_PHASE_LABELS[nextPhase]}`
-                : `Inicie pelo Formato C — ${COPA_PHASE_LABELS['C']}`;
-            }
-          }
+          const showInteractive = !isTerminal;
 
           const handleStateClick = () => {
             if (isBlocked) {
@@ -270,7 +286,7 @@ function ProjectDashboard() {
             }
           };
 
-          return hint ? (
+          return showInteractive ? (
             <button
               type="button"
               onClick={handleStateClick}
@@ -283,7 +299,14 @@ function ProjectDashboard() {
                 </p>
                 <ChevronRight className="size-4 text-muted-foreground shrink-0" />
               </div>
-              <p className="text-small text-muted-foreground">{hint}</p>
+              {isBlocked ? (
+                <p className="text-small text-muted-foreground">Execute um diagnóstico para destravar</p>
+              ) : (
+                <CopaStepsRow done={done} next={nextPhase} allDone={allDone} />
+              )}
+              {!isBlocked && allDone && (
+                <p className="text-small text-muted-foreground mt-1">Ciclo completo — revise ou inicie novo ciclo</p>
+              )}
               {currentState === 'proving' && totalDays > 0 && (
                 <div className="pt-1">
                   <IMVProgressBar current_day={currentDay} total_days={totalDays} />
@@ -324,19 +347,44 @@ function ProjectDashboard() {
         {/* Meu histórico */}
         <section className="rounded-md border border-border bg-card p-4 space-y-2">
           <h2 className="text-label text-muted-foreground uppercase">Meu histórico</h2>
-          <div className="flex gap-4 text-small text-foreground">
-            <span>{counts.pulse} pulsos</span>
-            <span>·</span>
-            <span>{counts.structured} análises</span>
-            <span>·</span>
-            <span>{counts.apas} APAs</span>
-            <span>·</span>
-            <span>{counts.principles} princípios</span>
+          <div className="flex gap-3 text-small flex-wrap">
+            <button
+              type="button"
+              onClick={() => void navigate({ to: '/diary', search: { projectId: id, type: 'pulse' } as never })}
+              className="text-[color:var(--color-brand-blue)] hover:underline"
+            >
+              {counts.pulse} pulsos
+            </button>
+            <span className="text-muted-foreground">·</span>
+            <button
+              type="button"
+              onClick={() => void navigate({ to: '/diary', search: { projectId: id } as never })}
+              className="text-[color:var(--color-brand-blue)] hover:underline"
+            >
+              {counts.structured} análises
+            </button>
+            <span className="text-muted-foreground">·</span>
+            <button
+              type="button"
+              onClick={() => void navigate({ to: '/diary', search: { projectId: id, type: 'structured_A' } as never })}
+              className="text-[color:var(--color-brand-blue)] hover:underline"
+            >
+              {counts.apas} APAs
+            </button>
+            <span className="text-muted-foreground">·</span>
+            <button
+              type="button"
+              onClick={() => void navigate({ to: '/diary/$', params: { _splat: 'principles' }, search: { projectId: id } as never })}
+              className="text-[color:var(--color-brand-blue)] hover:underline"
+            >
+              {counts.principles} princípios
+            </button>
           </div>
         </section>
 
         {/* Capacidade Acumulada */}
         <AccumulatedCapacityCard
+          projectId={id}
           imvs_tested={counts.structured}
           valid_principles={counts.principles}
           discarded_patterns={0}

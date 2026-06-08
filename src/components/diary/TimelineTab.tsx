@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useSearch } from '@tanstack/react-router';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
@@ -71,7 +71,6 @@ async function archiveEntry(id: string) {
     const all = GuestStorage.getEntries();
     const idx = all.findIndex((e) => e.id === id);
     if (idx >= 0) {
-      // Soft-delete: marcar como arquivado via classification
       all[idx] = { ...all[idx], classification: 'archived' };
       window.localStorage.setItem('aop.entries', JSON.stringify(all));
     }
@@ -81,15 +80,16 @@ async function archiveEntry(id: string) {
 }
 
 export function TimelineTab() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const search = useSearch({ strict: false }) as { projectId?: string; type?: string };
   const { entries, projects, refresh } = usePanelData();
-  const [project, setProject] = useState<string>('all');
+  const [project, setProject] = useState<string>(search.projectId ?? 'all');
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
   const [layer, setLayer] = useState<OperationalLayer | null>(null);
-  const [etype, setEtype] = useState<string | null>(null);
+  const [etype, setEtype] = useState<string | null>(search.type ?? null);
   const [period, setPeriod] = useState<number>(0);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  // Mapa projectId → project para fallback de cenário/camada em entradas sem metadado
   const projectMap = useMemo(
     () => Object.fromEntries(projects.map((p) => [p.id, p])),
     [projects],
@@ -101,13 +101,11 @@ export function TimelineTab() {
       .filter((e) => project === 'all' || e.project_id === project)
       .filter((e) => {
         if (!scenario) return true;
-        // Entradas antigas podem não ter scenario_type_at_entry — usa o do projeto como fallback
         const s = e.scenario_type_at_entry ?? projectMap[e.project_id]?.scenario_type ?? null;
         return s === scenario;
       })
       .filter((e) => {
         if (!layer) return true;
-        // Entradas antigas podem não ter layer_at_entry — usa current_layer do projeto como fallback
         const l = e.layer_at_entry ?? projectMap[e.project_id]?.current_layer ?? null;
         return l === layer;
       })

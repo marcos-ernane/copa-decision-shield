@@ -122,7 +122,6 @@ export function COPAShell() {
       setScenario(presetType ?? p?.scenario_type ?? null);
 
       // Verifica padrão de bloqueio recorrente (COPA_RECURRENT_DEVIATION).
-      // Apenas para usuários autenticados com dados suficientes.
       const { data: { session } } = await supabase.auth.getSession();
       if (session && count >= 3) {
         const { data: idxRow } = await supabase
@@ -139,7 +138,6 @@ export function COPAShell() {
 
       // Decide first step.
       if (fromCreative) {
-        // Sintetiza bottleneck "excesso de opções" (origem do fluxo criativo).
         setBottleneck('opcoes');
         setCaptureData({ text: presetAction ?? '', flagged_interpretation: false });
         setStep('prove');
@@ -153,7 +151,6 @@ export function COPAShell() {
 
   function decideAfterAlignment(p: Project | null, prs: Principle[]): Step {
     if (!p) return 'capture';
-    // Se veio com type pré-selecionado via search param, pula a tipagem rápida.
     if (presetType) {
       if (p.state === 'blocked' && prs.length > 0) return 'recall';
       return 'capture';
@@ -184,7 +181,6 @@ export function COPAShell() {
     const { isFirstApa } = await saveCopaSession(projectId, payload);
     setStep('done');
 
-    // Marca todas as fases do pacto como concluídas (COPA completo = semana cumprida).
     if (project?.pact_enabled) void markAllPhasesComplete(projectId);
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -235,7 +231,6 @@ export function COPAShell() {
       </div>
     );
   }
-
 
   // Header compartilhado para todos os passos com projeto selecionado
   const copaHeader = (
@@ -303,7 +298,7 @@ export function COPAShell() {
             className="mt-2 text-heading"
             style={{ color: 'var(--color-text-primary)' }}
           >
-            “{recallPrinciple}”
+            "{recallPrinciple}"
           </p>
         </div>
         <Button className="w-full" onClick={() => setStep('capture')}>

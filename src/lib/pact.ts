@@ -174,6 +174,17 @@ export async function markPhaseComplete(projectId: string, phase: PactPhase): Pr
   await updateProject(projectId, { pact_last_cycle_at: now });
 }
 
+export async function markPhaseIncomplete(projectId: string, phase: PactPhase): Promise<void> {
+  const project = await getProject(projectId);
+  if (!project || !project.pact_enabled) return;
+  const cycle = getCycle(project);
+  const next: WeeklyCycle = {
+    ...cycle,
+    [phase]: { ...cycle[phase], completed_this_week: false, last_completed_at: null },
+  };
+  writeCycle(projectId, next);
+}
+
 // ---------- Return celebration ----------
 
 export function daysSince(iso: string | null): number {
