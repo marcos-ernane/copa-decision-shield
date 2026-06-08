@@ -3,6 +3,7 @@ import { VoiceInput } from '@/components/copa/VoiceInput';
 import type { Principle, Project } from '@/types/database';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
+import { EditZoneGuard } from '@/components/EditZoneGuard';
 import { GuestStorage } from '@/lib/guestStorage';
 import { supabase } from '@/lib/supabase';
 
@@ -68,12 +69,19 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
             <button onClick={() => setEditing(true)} className="text-[color:var(--color-brand-blue)] hover:underline">
               Editar
             </button>
-            <button
-              onClick={() => persist({ is_archived: true })}
-              className="text-muted-foreground hover:underline"
+            <EditZoneGuard
+              zone="yellow"
+              title="Arquivar princípio?"
+              description="O princípio ficará oculto no banco. É possível visualizá-lo nos registros de origem."
+              confirmLabel="Arquivar"
+              onConfirm={() => persist({ is_archived: true })}
             >
-              Arquivar
-            </button>
+              {(open) => (
+                <button onClick={open} className="text-muted-foreground hover:underline">
+                  Arquivar
+                </button>
+              )}
+            </EditZoneGuard>
           </>
         )}
       </div>

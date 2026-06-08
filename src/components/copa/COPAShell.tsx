@@ -11,6 +11,7 @@ import { COPAOrganize, type Bottleneck } from './COPAOrganize';
 import { COPAProve, type ProveData } from './COPAProve';
 import { COPAAssess, type AssessData } from './COPAAssess';
 import { COPADone } from './COPADone';
+import { BookAnchorHint } from './BookAnchorHint';
 import { RegistrationNudge } from '@/components/RegistrationNudge';
 import { listProjects, getProject } from '@/lib/projects';
 import { listPrinciples } from '@/lib/projects';
@@ -18,7 +19,7 @@ import { saveCopaSession, countCopaSessions, type CopaSessionData } from '@/lib/
 import { markAllPhasesComplete } from '@/lib/pact';
 import { supabase } from '@/lib/supabase';
 import { GuestStorage } from '@/lib/guestStorage';
-import type { Project, Principle } from '@/types/database';
+import type { Project, Principle, OperatorIndex } from '@/types/database';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 type Step =
@@ -78,6 +79,7 @@ export function COPAShell() {
   const [assessData, setAssessData] = useState<AssessData | null>(null);
 
   const [nudge, setNudge] = useState(false);
+  const [blockerHint, setBlockerHint] = useState<string | null>(null);
 
   // Load profile prefs.
   useEffect(() => {
@@ -118,6 +120,22 @@ export function COPAShell() {
       setPrinciples(prs);
       setHistoryCount(count);
       setScenario(presetType ?? p?.scenario_type ?? null);
+
+      // Verifica padrão de bloqueio recorrente (COPA_RECURRENT_DEVIATION).
+      // Apenas para usuários autenticados com dados suficientes.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && count >= 3) {
+        const { data: idxRow } = await supabase
+          .from('operator_index')
+          .select('patterns')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        const patterns = ((idxRow as OperatorIndex | null)?.patterns ?? []) as Array<{
+          type: string; title: string; description: string;
+        }>;
+        const blocker = patterns.find((pt) => pt.type === 'frequent_blocker');
+        if (blocker) setBlockerHint(blocker.description);
+      }
 
       // Decide first step.
       if (fromCreative) {
@@ -300,6 +318,11 @@ export function COPAShell() {
     return (
       <div className="min-h-screen bg-background">
         {copaHeader}
+        {blockerHint && (
+          <div className="px-4 pt-3">
+            <BookAnchorHint text={blockerHint} />
+          </div>
+        )}
         <COPACapture
           initialText=""
           onNext={(d) => { setCaptureData(d); setStep('organize'); }}
@@ -354,6 +377,9 @@ export function COPAShell() {
             projectId={projectId}
             metric={proveData.metric}
             deadline={proveData.deadline}
+            captureText={captureData?.text}
+            scenarioType={scenario}
+            layer={proveData.layer}
             onNewCopa={() => {
               setCaptureData(null);
               setBottleneck(null);

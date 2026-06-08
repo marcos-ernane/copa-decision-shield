@@ -84,7 +84,7 @@ export interface CorrectiveContent {
 
 async function insertEntry(args: {
   projectId: string;
-  entry_type: EntryType | 'passive' | 'protocol_5min' | 'creative_session';
+  entry_type: EntryType | 'passive' | 'protocol_5min' | 'creative_session' | 'simulation_session';
   content: Record<string, unknown>;
   is_clean_fact: boolean;
   linked_to?: string | null;
@@ -378,5 +378,31 @@ export async function saveProtocol5(
     is_clean_fact: false,
     scenario_type_at_entry: content.type,
     layer_at_entry: content.layer,
+  });
+}
+
+export async function insertSimulationEntry(
+  projectId: string | null,
+  simulationId: string,
+  simulationTitle: string,
+  type: ScenarioType,
+  layer: OperationalLayer,
+): Promise<void> {
+  if (!projectId) {
+    const { listProjects } = await import('./projects');
+    const projects = await listProjects();
+    const active = projects.find(
+      (p) => p.state !== 'concluded' && p.state !== 'archived' && p.state !== 'paused',
+    );
+    if (!active) return;
+    projectId = active.id;
+  }
+  await insertEntry({
+    projectId,
+    entry_type: 'simulation_session',
+    content: { simulation_id: simulationId, simulation_title: simulationTitle },
+    is_clean_fact: false,
+    scenario_type_at_entry: type,
+    layer_at_entry: layer,
   });
 }
