@@ -102,40 +102,56 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
 
       {step === 0 && (
         <div>
-          <p className="text-small text-muted-foreground mb-1">Ação específica</p>
-          <VoiceInput value={action} onChange={setAction} placeholder="" rows={2} />
+          <p className="text-small text-muted-foreground mb-1">IMV - Intervenção Mínima Viável _ Uma ação específica. Sem IMV o método não avança. (Obrigatório)</p>
+          <VoiceInput value={action} onChange={setAction} placeholder="Um teste pequeno e seguro no cenário real." rows={2} />
         </div>
       )}
 
       {step === 1 && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-3">
           <div>
-            <p className="text-small mb-1">Reversível</p>
+            <p className="text-small mb-0.5">Reversível</p>
+            <p className="text-[11px] text-muted-foreground mb-1">Se não funcionar, você desfaz sem prejuízo grande.</p>
             <YesNo value={reversible} onChange={setReversible} />
             {reversible === false && (
               <p className="text-small mt-1" style={{ color: '#f97316' }}>Atenção: ação irreversível</p>
             )}
           </div>
-          <div><p className="text-small mb-1">Barato</p><YesNo value={cheap} onChange={setCheap} /></div>
           <div>
-            <p className="text-small mb-1">Específico</p>
+            <p className="text-small mb-0.5">Barato</p>
+            <p className="text-[11px] text-muted-foreground mb-1">Exige pouco investimento, tempo e esforço.</p>
+            <YesNo value={cheap} onChange={setCheap} />
+            {cheap === false && (
+              <p className="text-small mt-1" style={{ color: '#f97316' }}>Tem custo relevante sendo assumido aqui.</p>
+            )}
+          </div>
+          <div>
+            <p className="text-small mb-0.5">Específico</p>
+            <p className="text-[11px] text-muted-foreground mb-1">Atua na fricção principal, uma coisa por vez.</p>
             <YesNo value={specific} onChange={setSpecific} />
             {specific === false && (
               <p className="text-small mt-1" style={{ color: '#eab308' }}>Defina melhor antes de executar</p>
             )}
           </div>
-          <div><p className="text-small mb-1">Mensurável</p><YesNo value={measurable} onChange={setMeasurable} /></div>
+          <div>
+            <p className="text-small mb-0.5">Mensurável</p>
+            <p className="text-[11px] text-muted-foreground mb-1">Gera número como resultado para saber se melhorou ou não.</p>
+            <YesNo value={measurable} onChange={setMeasurable} />
+            {measurable === false && (
+              <p className="text-small mt-1" style={{ color: '#eab308' }}>Sem medir a IMV não é teste completo, revise-a.</p>
+            )}
+          </div>
         </div>
       )}
 
       {step === 2 && (
         <div className="space-y-3">
           <div>
-            <p className="text-small text-muted-foreground mb-1">Métrica (obrigatório)</p>
-            <Input value={metric} onChange={(e) => setMetric(e.target.value)} placeholder="Ex.: 3 ligações até sexta" />
+            <p className="text-small text-muted-foreground mb-1">Métrica planejada (obrigatório)</p>
+            <Input value={metric} onChange={(e) => setMetric(e.target.value)} placeholder="Um fator númerico para se medir" />
           </div>
           <div>
-            <p className="text-small text-muted-foreground mb-1">Prazo</p>
+            <p className="text-small text-muted-foreground mb-1">Prazo limite da IMV em ação</p>
             <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
           </div>
         </div>
@@ -152,11 +168,11 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
             </div>
           )}
           <div>
-            <p className="text-small text-muted-foreground mb-1">Regra de corte</p>
-            <VoiceInput value={cutRule} onChange={setCutRule} placeholder="Quando parar." rows={2} />
+            <p className="text-small text-muted-foreground mb-1">Regra de corte condicional</p>
+            <VoiceInput value={cutRule} onChange={setCutRule} placeholder="Condição que se deve parar ou ajustar uma IMV ativa" rows={2} />
           </div>
           <div>
-            <p className="text-small text-muted-foreground mb-1">Camada afetada</p>
+            <p className="text-small text-muted-foreground mb-1">Camada que é afetada pelo corte ou ajuste</p>
             <div className="flex flex-wrap gap-2">
               {LAYERS.map((l) => (
                 <Button
@@ -171,7 +187,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
             </div>
           </div>
           <div className="rounded-md border border-border bg-card p-3 space-y-2">
-            <p className="text-small text-muted-foreground">Quem paga o custo oculto desta ação? (opcional)</p>
+            <p className="text-small text-muted-foreground">Se houver, de quem é o custo oculto desta ação? (opcional)</p>
             <VoiceInput value={ethical} onChange={setEthical} placeholder="" rows={2} />
           </div>
         </div>
