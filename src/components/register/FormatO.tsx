@@ -62,7 +62,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
         <div>
           <p className="text-small font-medium mb-0.5">R1 — Recursos</p>
           <p className="text-small text-muted-foreground mb-1">O que já existe sem precisar criar.</p>
-          <VoiceInput value={resources} onChange={setResources} placeholder="" rows={3} />
+          <VoiceInput value={resources} onChange={setResources} placeholder="Liste 10 recursos do cenário ou o que for possível (não invente nada)." rows={3} />
         </div>
       )}
 
@@ -70,7 +70,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
         <div>
           <p className="text-small font-medium mb-0.5">R2 — Ruídos</p>
           <p className="text-small text-muted-foreground mb-1">O que parece importante mas não muda o resultado — dispersa do objetivo.</p>
-          <VoiceInput value={frictions} onChange={setFrictions} placeholder="" rows={3} />
+          <VoiceInput value={frictions} onChange={setFrictions} placeholder="Liste 03 coisas sem peso importante no resultado." rows={3} />
         </div>
       )}
 
@@ -78,7 +78,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
         <div>
           <p className="text-small font-medium mb-0.5">R3 — Restrições</p>
           <p className="text-small text-muted-foreground mb-1">O que está limitando hoje para avançar.</p>
-          <VoiceInput value={bottleneck} onChange={setBottleneck} placeholder="" rows={2} />
+          <VoiceInput value={bottleneck} onChange={setBottleneck} placeholder="Liste 03 restrições reais que te limitam." rows={2} />
         </div>
       )}
 
