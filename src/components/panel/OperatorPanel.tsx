@@ -133,16 +133,22 @@ export function OperatorPanel() {
           ) : (
             <ul className="space-y-2">
               {activeProjects.map((p) => (
-                <li key={p.id} className="flex items-center gap-1 rounded-md border border-border bg-card overflow-hidden">
+                <li key={p.id} className="flex items-stretch rounded-md border border-border bg-card overflow-hidden">
                   <Link
                     to="/project/$id/dashboard"
                     params={{ id: p.id }}
-                    className="flex items-center gap-3 flex-1 p-3 hover:bg-accent min-w-0"
+                    className="flex-1 p-3 hover:bg-accent min-w-0 space-y-1"
                   >
-                    <ProjectStateIcon state={p.state} />
-                    <span className="flex-1 text-small text-foreground truncate">{p.name}</span>
-                    {p.scenario_type && <ScenarioTypeChip type={p.scenario_type} />}
-                    {p.current_layer && <LayerChip layer={p.current_layer} />}
+                    <div className="flex items-center gap-2">
+                      <ProjectStateIcon state={p.state} />
+                      <span className="text-small text-foreground">{p.name}</span>
+                    </div>
+                    {(p.scenario_type || p.current_layer) && (
+                      <div className="flex gap-1 flex-wrap pl-5">
+                        {p.scenario_type && <ScenarioTypeChip type={p.scenario_type} />}
+                        {p.current_layer && <LayerChip layer={p.current_layer} />}
+                      </div>
+                    )}
                   </Link>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
