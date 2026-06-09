@@ -22,6 +22,7 @@ import { Route as ConcludedRouteImport } from './routes/concluded'
 import { Route as CompassRouteImport } from './routes/compass'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as PanelIndexRouteImport } from './routes/panel.index'
 import { Route as CompassIndexRouteImport } from './routes/compass.index'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
 import { Route as RegisterStructuredRouteImport } from './routes/register.structured'
@@ -119,6 +120,11 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => SettingsRoute,
+} as any)
+const PanelIndexRoute = PanelIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PanelRoute,
 } as any)
 const CompassIndexRoute = CompassIndexRouteImport.update({
   id: '/',
@@ -319,6 +325,7 @@ export interface FileRoutesByFullPath {
   '/register/structured': typeof RegisterStructuredRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/compass/': typeof CompassIndexRoute
+  '/panel/': typeof PanelIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/project/$id/capacity': typeof ProjectIdCapacityRoute
   '/project/$id/conclude': typeof ProjectIdConcludeRoute
@@ -336,7 +343,6 @@ export interface FileRoutesByTo {
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
   '/onboarding': typeof OnboardingRoute
-  '/panel': typeof PanelRouteWithChildren
   '/pressure': typeof PressureRouteWithChildren
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
@@ -364,6 +370,7 @@ export interface FileRoutesByTo {
   '/register/structured': typeof RegisterStructuredRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/compass': typeof CompassIndexRoute
+  '/panel': typeof PanelIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/project/$id/capacity': typeof ProjectIdCapacityRoute
   '/project/$id/conclude': typeof ProjectIdConcludeRoute
@@ -412,6 +419,7 @@ export interface FileRoutesById {
   '/register/structured': typeof RegisterStructuredRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/compass/': typeof CompassIndexRoute
+  '/panel/': typeof PanelIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/project/$id/capacity': typeof ProjectIdCapacityRoute
   '/project/$id/conclude': typeof ProjectIdConcludeRoute
@@ -461,6 +469,7 @@ export interface FileRouteTypes {
     | '/register/structured'
     | '/settings/notifications'
     | '/compass/'
+    | '/panel/'
     | '/settings/'
     | '/project/$id/capacity'
     | '/project/$id/conclude'
@@ -478,7 +487,6 @@ export interface FileRouteTypes {
     | '/creative'
     | '/diary'
     | '/onboarding'
-    | '/panel'
     | '/pressure'
     | '/protocol5'
     | '/reading-mode'
@@ -506,6 +514,7 @@ export interface FileRouteTypes {
     | '/register/structured'
     | '/settings/notifications'
     | '/compass'
+    | '/panel'
     | '/settings'
     | '/project/$id/capacity'
     | '/project/$id/conclude'
@@ -553,6 +562,7 @@ export interface FileRouteTypes {
     | '/register/structured'
     | '/settings/notifications'
     | '/compass/'
+    | '/panel/'
     | '/settings/'
     | '/project/$id/capacity'
     | '/project/$id/conclude'
@@ -678,6 +688,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/'
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof SettingsRoute
+    }
+    '/panel/': {
+      id: '/panel/'
+      path: '/'
+      fullPath: '/panel/'
+      preLoaderRoute: typeof PanelIndexRouteImport
+      parentRoute: typeof PanelRoute
     }
     '/compass/': {
       id: '/compass/'
@@ -961,12 +978,14 @@ interface PanelRouteChildren {
   PanelBaselineRoute: typeof PanelBaselineRoute
   PanelRubricRoute: typeof PanelRubricRoute
   PanelTransferRoute: typeof PanelTransferRoute
+  PanelIndexRoute: typeof PanelIndexRoute
 }
 
 const PanelRouteChildren: PanelRouteChildren = {
   PanelBaselineRoute: PanelBaselineRoute,
   PanelRubricRoute: PanelRubricRoute,
   PanelTransferRoute: PanelTransferRoute,
+  PanelIndexRoute: PanelIndexRoute,
 }
 
 const PanelRouteWithChildren = PanelRoute._addFileChildren(PanelRouteChildren)
@@ -1045,13 +1064,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
