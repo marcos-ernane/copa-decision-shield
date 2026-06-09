@@ -48,28 +48,28 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
       {step === 0 && (
         <div>
           <p className="text-small text-muted-foreground mb-1">Quadro 1 — Fatos observados</p>
-          <VoiceInput value={fact} onChange={setFact} placeholder="O que você viu, sem interpretar." rows={3} />
+          <VoiceInput value={fact} onChange={setFact} placeholder="O que você somente observou sem opnar ou justificar." rows={3} />
         </div>
       )}
 
       {step === 1 && (
         <div>
           <p className="text-small text-muted-foreground mb-1">Quadro 2 — Interpretações</p>
-          <VoiceInput value={interp} onChange={setInterp} placeholder="O que você concluiu." rows={3} />
+          <VoiceInput value={interp} onChange={setInterp} placeholder="O que você já conclui mesmo sem verificar." rows={3} />
         </div>
       )}
 
       {step === 2 && (
         <div>
           <p className="text-small text-muted-foreground mb-1">Quadro 3 — Hipóteses testáveis</p>
-          <VoiceInput value={hyp} onChange={setHyp} placeholder="O que poderia ser verdade." rows={3} />
+          <VoiceInput value={hyp} onChange={setHyp} placeholder="O que poderia ser verdade e precisa mexer para o fato mudar." rows={3} />
         </div>
       )}
 
       {step === 3 && (
         <div>
-          <p className="text-small text-muted-foreground mb-1">Quadro 4 — IMV possível (opcional)</p>
-          <VoiceInput value={imv} onChange={setImv} placeholder="O menor teste que caberia aqui." rows={2} />
+          <p className="text-small text-muted-foreground mb-1">Quadro 4 (Opcional) — IMV_Intervenção Mínima Viável</p>
+          <VoiceInput value={imv} onChange={setImv} placeholder="A menor intervenção que já caberia pensar fazer aqui." rows={2} />
         </div>
       )}
 
