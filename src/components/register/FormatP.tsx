@@ -103,7 +103,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
       {step === 0 && (
         <div>
           <p className="text-small text-muted-foreground mb-1">IMV - Intervenção Mínima Viável _ Uma ação específica. Sem IMV o método não avança. (Obrigatório)</p>
-          <VoiceInput value={action} onChange={setAction} placeholder="Um teste pequeno e seguro no cenário real." rows={2} />
+          <VoiceInput value={action} onChange={setAction} placeholder="Teste pequeno para confirmar se sua leitura do cenário está certa." rows={2} />
         </div>
       )}
 
