@@ -17,6 +17,12 @@ const PHASE_LABELS: Record<PactPhase, string> = {
   prove: 'Prova',
   assess: 'Aferição',
 };
+const PHASE_QUESTIONS: Record<PactPhase, string> = {
+  capture: 'O que está acontecendo de verdade?',
+  organize: 'Do que eu tenho aqui, o que importa?',
+  prove: 'Qual é o menor teste que consigo fazer?',
+  assess: 'O que mudou e o que eu faço com isso?',
+};
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 
 interface Props { projectId: string }
@@ -80,12 +86,15 @@ export function PactSetupScreen({ projectId }: Props) {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-24 space-y-6">
-        <section className="space-y-2">
-          <p className="text-body text-foreground">
-            Rotina de 20 min por semana — 5 min por fase, cada uma num dia diferente.
+        <section className="space-y-3">
+          <p className="text-body text-foreground font-medium">
+            O app vai te lembrar nos dias configurados.
           </p>
           <p className="text-small text-muted-foreground">
-            Configure o dia e horário ideal para cada fase do COPA.
+            Você receberá uma notificação por fase, no horário escolhido. Ao abrir, cai direto no projeto.
+          </p>
+          <p className="text-small text-muted-foreground">
+            O dashboard registra o que foi feito na semana. Cada fase concluída aparece marcada automaticamente na Semana do Operador.
           </p>
         </section>
 
@@ -93,30 +102,33 @@ export function PactSetupScreen({ projectId }: Props) {
           {PHASES.map((phase) => {
             const c = cycle[phase];
             return (
-              <div key={phase} className="rounded-md border border-border bg-card p-3 flex items-center gap-3">
-                <select
-                  value={c.day_of_week}
-                  onChange={(e) => updatePhase(phase, { day_of_week: Number(e.target.value) })}
-                  className="rounded-md bg-background border border-border px-2 py-2 text-small text-foreground"
-                  aria-label={`Dia de ${PHASE_LABELS[phase]}`}
-                >
-                  {DAY_LABELS.map((label, i) => (
-                    <option key={i} value={i}>{label}</option>
-                  ))}
-                </select>
-                <select
-                  value={c.time_hour}
-                  onChange={(e) => updatePhase(phase, { time_hour: Number(e.target.value) })}
-                  className="rounded-md bg-background border border-border px-2 py-2 text-small text-foreground"
-                  aria-label={`Horário de ${PHASE_LABELS[phase]}`}
-                >
-                  {HOURS.map((h) => (
-                    <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>
-                  ))}
-                </select>
-                <span className="text-small text-foreground ml-auto uppercase tracking-wide">
-                  {PHASE_LABELS[phase]}
-                </span>
+              <div key={phase} className="rounded-md border border-border bg-card p-3 space-y-2">
+                <div className="flex items-center gap-3">
+                  <select
+                    value={c.day_of_week}
+                    onChange={(e) => updatePhase(phase, { day_of_week: Number(e.target.value) })}
+                    className="rounded-md bg-background border border-border px-2 py-2 text-small text-foreground"
+                    aria-label={`Dia de ${PHASE_LABELS[phase]}`}
+                  >
+                    {DAY_LABELS.map((label, i) => (
+                      <option key={i} value={i}>{label}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={c.time_hour}
+                    onChange={(e) => updatePhase(phase, { time_hour: Number(e.target.value) })}
+                    className="rounded-md bg-background border border-border px-2 py-2 text-small text-foreground"
+                    aria-label={`Horário de ${PHASE_LABELS[phase]}`}
+                  >
+                    {HOURS.map((h) => (
+                      <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>
+                    ))}
+                  </select>
+                  <span className="text-small text-foreground ml-auto uppercase tracking-wide font-medium">
+                    {PHASE_LABELS[phase]}
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">{PHASE_QUESTIONS[phase]}</p>
               </div>
             );
           })}
