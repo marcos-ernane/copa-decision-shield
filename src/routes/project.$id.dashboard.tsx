@@ -85,6 +85,26 @@ function computeCopaProgress(entries: Entry[]): {
   };
 }
 
+// Retorna label/ícone/cor derivados do progresso COPA, sobrepondo o estado do banco.
+// Oportunidade 1: allDone → "Ciclo completo"
+// Oportunidade 2: fase mais avançada concluída determina o status
+function deriveCopaStatus(
+  allDone: boolean,
+  lastDone: string | null,
+  baseState: ProjectState,
+): { icon: string; label: string; color: string } {
+  if (allDone) {
+    return { icon: '◆', label: 'Ciclo completo', color: 'text-green-600' };
+  }
+  switch (lastDone) {
+    case 'A': return { icon: '◆', label: 'Aferindo', color: 'text-green-600' };
+    case 'P': return { icon: '▶', label: 'Em Prova', color: 'text-green-600' };
+    case 'O': return { icon: '◈', label: 'Organizando', color: 'text-amber-500' };
+    case 'C': return { icon: '◎', label: 'Capturando', color: 'text-amber-500' };
+    default:  return STATE_DISPLAY[baseState];
+  }
+}
+
 export const Route = createFileRoute('/project/$id/dashboard')({
   component: ProjectDashboard,
 });
@@ -273,10 +293,12 @@ function ProjectDashboard() {
 
         {/* Onde estou agora */}
         {(() => {
-          const { done, nextPhase, allDone } = computeCopaProgress(entries);
+          const { done, lastDone, nextPhase, allDone } = computeCopaProgress(entries);
           const isTerminal = currentState === 'paused' || currentState === 'concluded' || currentState === 'archived';
           const isBlocked = currentState === 'blocked';
           const showInteractive = !isTerminal;
+
+          const copaStatus = isBlocked ? STATE_DISPLAY[currentState] : deriveCopaStatus(allDone, lastDone, currentState);
 
           const handleStateClick = () => {
             if (isBlocked) {
@@ -294,8 +316,8 @@ function ProjectDashboard() {
             >
               <h2 className="text-label text-muted-foreground uppercase">Onde estou agora</h2>
               <div className="flex items-center justify-between">
-                <p className={`text-heading ${STATE_DISPLAY[currentState].color}`}>
-                  {STATE_DISPLAY[currentState].icon} {STATE_DISPLAY[currentState].label}
+                <p className={`text-heading ${copaStatus.color}`}>
+                  {copaStatus.icon} {copaStatus.label}
                 </p>
                 <ChevronRight className="size-4 text-muted-foreground shrink-0" />
               </div>
