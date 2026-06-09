@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { OperatorPanel } from '@/components/panel/OperatorPanel';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/panel')({
-  component: OperatorPanel,
+  component: () => <Outlet />,
 });

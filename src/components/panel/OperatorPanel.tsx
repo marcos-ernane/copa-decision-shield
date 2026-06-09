@@ -106,8 +106,8 @@ export function OperatorPanel() {
           {baselineCompleted ? (
             <Link to="/panel/rubric" className="mt-4 block rounded-md border border-border bg-card p-3">
               <div className="flex justify-between text-small">
-                <span className="text-foreground">Rubrica do operador</span>
-                <span className="text-muted-foreground">{idx.rubricTotal}/35 →</span>
+                <span className="text-foreground">Treinamento do operador</span>
+                <span className="text-muted-foreground">{idx.rubricTotal}/35 pontos →</span>
               </div>
               <div className="h-2 mt-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
                 <div className="h-full bg-[var(--color-brand-blue)]" style={{ width: `${(idx.rubricTotal / 35) * 100}%` }} />

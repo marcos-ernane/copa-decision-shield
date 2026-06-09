@@ -13,19 +13,21 @@ function Ring({ value, label, caption }: RingProps) {
   const dash = (v / 100) * c;
   return (
     <div className="flex flex-col items-center">
-      <svg width={96} height={96} viewBox="0 0 96 96" className="-rotate-90">
-        <circle cx={48} cy={48} r={r} stroke="var(--color-surface-2)" strokeWidth={8} fill="none" />
-        <circle
-          cx={48} cy={48} r={r}
-          stroke="var(--color-brand-blue)"
-          strokeWidth={8}
-          fill="none"
-          strokeDasharray={`${dash} ${c - dash}`}
-          strokeLinecap="round"
-        />
-      </svg>
-      <div className="-mt-16 mb-6 text-heading text-foreground">{v}</div>
-      <div className="text-small text-foreground">{label}</div>
+      <div className="relative w-24 h-24">
+        <svg width={96} height={96} viewBox="0 0 96 96" className="-rotate-90">
+          <circle cx={48} cy={48} r={r} stroke="var(--color-surface-2)" strokeWidth={8} fill="none" />
+          <circle
+            cx={48} cy={48} r={r}
+            stroke="var(--color-brand-blue)"
+            strokeWidth={8}
+            fill="none"
+            strokeDasharray={`${dash} ${c - dash}`}
+            strokeLinecap="round"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center text-heading text-foreground">{v}</div>
+      </div>
+      <div className="text-small text-foreground mt-1">{label}</div>
       {caption && <div className="text-label text-muted-foreground">{caption}</div>}
     </div>
   );
