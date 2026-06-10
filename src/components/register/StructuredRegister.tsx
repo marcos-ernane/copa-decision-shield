@@ -23,11 +23,18 @@ import type { ScenarioType, OperationalLayer } from '@/types/app';
 type Format = 'C' | 'O' | 'P' | 'A';
 type PhaseStatus = 'done' | 'next' | 'locked';
 
-const LABELS: Record<Format, string> = {
-  C: 'C — Análise de Situação',
-  O: 'O — Mapa 3R',
-  P: 'P — Definição de IMV',
-  A: 'A — Análise Pós-Ação',
+const PHASE_LABEL_TOP: Record<Format, string> = {
+  C: '[C] Captura',
+  O: '[O] Organização',
+  P: '[P] Prova',
+  A: '[A] Aferição',
+};
+
+const PHASE_LABEL_BOTTOM: Record<Format, string> = {
+  C: 'Análise da situação',
+  O: 'Mapa 3R',
+  P: 'Definição de IMV',
+  A: 'Análise pós-ação',
 };
 
 const PHASE_NAMES: Record<Format, string> = {
@@ -225,7 +232,7 @@ export function StructuredRegister() {
                   disabled={status === 'locked'}
                   onClick={() => { if (status !== 'locked') { setFormat(k); setCurrentStep(0); } }}
                   className={[
-                    'flex items-center gap-1.5 rounded-md border px-3 py-2 text-small text-left transition-colors',
+                    'flex items-start gap-1.5 rounded-md border px-3 py-2.5 text-left transition-colors',
                     isActive
                       ? 'border-foreground bg-foreground text-background'
                       : status === 'done'
@@ -235,19 +242,22 @@ export function StructuredRegister() {
                       : 'border-border bg-card text-muted-foreground opacity-40 cursor-not-allowed',
                   ].join(' ')}
                 >
-                  {status === 'done' && !isActive && (
-                    <CheckCircle2 className="size-3.5 shrink-0 text-[color:var(--color-status-success,#16a34a)]" />
-                  )}
-                  {status === 'next' && !isActive && (
-                    <ArrowRight className="size-3.5 shrink-0" />
-                  )}
-                  {status === 'locked' && (
-                    <Lock className="size-3.5 shrink-0" />
-                  )}
+                  <span className="mt-0.5 shrink-0">
+                    {status === 'done' && !isActive && (
+                      <CheckCircle2 className="size-3.5 text-[color:var(--color-status-success,#16a34a)]" />
+                    )}
+                    {status === 'next' && !isActive && (
+                      <ArrowRight className="size-3.5" />
+                    )}
+                    {status === 'locked' && (
+                      <Lock className="size-3.5" />
+                    )}
+                  </span>
                   <div className="flex-1 min-w-0">
-                    <span className="block truncate">{LABELS[k]}</span>
+                    <span className="block text-[11px] font-semibold leading-tight">{PHASE_LABEL_TOP[k]}</span>
+                    <span className="block text-[11px] leading-tight mt-0.5 opacity-80">{PHASE_LABEL_BOTTOM[k]}</span>
                     {k === 'A' && status === 'locked' && aLockedUntil && (
-                      <span className="block text-[10px] leading-tight mt-0.5 opacity-70">
+                      <span className="block text-[10px] leading-tight mt-1 opacity-60">
                         a partir de {fmtDeadline(aLockedUntil)}
                       </span>
                     )}
