@@ -38,10 +38,10 @@ const PHASE_LABEL_BOTTOM: Record<Format, string> = {
 };
 
 const PHASE_NAMES: Record<Format, string> = {
-  C: '[C]-Captura',
-  O: '[O]-Organização',
-  P: '[P]-Prova',
-  A: '[A]-Aferição',
+  C: '[C]-CAPTURA DIZ:',
+  O: '[O]-ORGANIZAÇÃO DIZ:',
+  P: '[P]-PROVA DIZ:',
+  A: '[A]-AFERIÇÃO DIZ:',
 };
 
 const PHASE_QUESTIONS: Record<Format, string> = {
