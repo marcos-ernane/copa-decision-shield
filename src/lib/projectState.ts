@@ -92,6 +92,55 @@ export const STATE_ORDER: ProjectState[] = [
   'paused',
 ];
 
+const COPA_PHASE_ORDER = ['C', 'O', 'P', 'A'] as const;
+
+/** Calcula progresso COPA a partir das entries de um projeto. */
+export function computeCopaProgress(entries: Entry[]): {
+  done: string[];
+  lastDone: string | null;
+  allDone: boolean;
+} {
+  const done = COPA_PHASE_ORDER.filter((ph) =>
+    entries.some((e) => e.entry_type === `structured_${ph}`),
+  );
+  return {
+    done: [...done],
+    lastDone: done.length > 0 ? done[done.length - 1] : null,
+    allDone: done.length === 4,
+  };
+}
+
+/**
+ * Deriva o status de exibição final de um projeto combinando
+ * computeProjectState + progresso COPA. Único ponto de verdade
+ * para ícone/label/cor — usado no painel e no dashboard.
+ */
+export function deriveProjectStatus(
+  project: Project,
+  projectEntries: Entry[],
+): { icon: string; label: string; color: string } {
+  const computedState = computeProjectState(project, projectEntries);
+
+  if (
+    computedState === 'paused' ||
+    computedState === 'concluded' ||
+    computedState === 'archived' ||
+    computedState === 'blocked'
+  ) {
+    return STATE_DISPLAY[computedState];
+  }
+
+  const { allDone, lastDone } = computeCopaProgress(projectEntries);
+  if (allDone) return { icon: '◆', label: 'Ciclo completo', color: 'text-green-600' };
+  switch (lastDone) {
+    case 'A': return { icon: '◆', label: 'Aferindo', color: 'text-green-600' };
+    case 'P': return { icon: '▶', label: 'Em Prova', color: 'text-green-600' };
+    case 'O': return { icon: '◈', label: 'Organizando', color: 'text-amber-500' };
+    case 'C': return { icon: '◎', label: 'Capturando', color: 'text-amber-500' };
+    default: return STATE_DISPLAY[computedState];
+  }
+}
+
 export function sortProjects(projects: Project[]): {
   active: Project[];
   concluded: Project[];
