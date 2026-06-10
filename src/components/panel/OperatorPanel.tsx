@@ -6,6 +6,7 @@ import { GuestStorage } from '@/lib/guestStorage';
 import { calculateIndex } from '@/engines/IndexCalculator';
 import { generatePatterns } from '@/engines/PatternEngine';
 import { updateProject } from '@/lib/projects';
+import { STATE_ORDER } from '@/lib/projectState';
 import { IndexRings } from './IndexRings';
 import { BaselineEvolution } from './BaselineEvolution';
 import { PatternCards } from './PatternCards';
@@ -47,7 +48,18 @@ export function OperatorPanel() {
 
   // Apenas projetos ativos no menu [•••] — PRD Seção 12.1
   const activeProjects = useMemo(
-    () => projects.filter((p) => p.state !== 'archived' && p.state !== 'concluded'),
+    () =>
+      projects
+        .filter((p) => p.state !== 'archived' && p.state !== 'concluded')
+        .sort((a, b) => {
+          const ia = STATE_ORDER.indexOf(a.state);
+          const ib = STATE_ORDER.indexOf(b.state);
+          if (ia !== ib) return ia - ib;
+          return (
+            new Date(b.last_entry_at ?? b.created_at).getTime() -
+            new Date(a.last_entry_at ?? a.created_at).getTime()
+          );
+        }),
     [projects],
   );
 
@@ -139,9 +151,9 @@ export function OperatorPanel() {
                     params={{ id: p.id }}
                     className="flex-1 p-3 hover:bg-accent min-w-0 space-y-1"
                   >
-                    <div className="flex items-center gap-2">
-                      <ProjectStateIcon state={p.state} />
-                      <span className="text-small text-foreground">{p.name}</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <ProjectStateIcon state={p.state} showLabel />
+                      <span className="text-small font-medium text-foreground">{p.name}</span>
                     </div>
                     {(p.scenario_type || p.current_layer) && (
                       <div className="flex gap-1 flex-wrap pl-5">
