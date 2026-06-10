@@ -38,15 +38,15 @@ const PHASE_LABEL_BOTTOM: Record<Format, string> = {
 };
 
 const PHASE_NAMES: Record<Format, string> = {
-  C: '[C]-Captura',
-  O: '[O]-Organização',
-  P: '[P]-Prova',
-  A: '[A]-Aferição',
+  C: '[C]-CAPTURA DIZ:',
+  O: '[O]-ORGANIZAÇÃO DIZ:',
+  P: '[P]-PROVA DIZ:',
+  A: '[A]-AFERIÇÃO DIZ:',
 };
 
 const PHASE_QUESTIONS: Record<Format, string> = {
   C: 'O QUE ESTÁ ACONTECENDO DE VERDADE?',
-  O: 'DO QUE EU TENHO AQUI, O QUE IMPORTA E COMO SE CONECTA?',
+  O: 'DOS RECURSOS QUE TENHO NO CENÁRIO, O QUE IMPORTA E COMO ELES SE CONECTAM?',
   P: 'QUAL É O MENOR TESTE QUE CONSIGO FAZER PARA CONFIRMAR SE ESTOU CERTO?',
   A: 'O QUE MUDOU, POR QUE MUDOU E O QUE EU FAÇO COM ISSO AGORA?',
 };
