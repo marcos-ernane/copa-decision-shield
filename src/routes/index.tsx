@@ -180,7 +180,7 @@ function Home() {
           <AlertDialogHeader>
             <AlertDialogTitle>Pausar projeto</AlertDialogTitle>
             <AlertDialogDescription>
-              Informe o motivo da pausa (opcional).
+              Informe o motivo da pausa. Ele ficará visível no projeto enquanto estiver pausado.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <input
@@ -193,7 +193,13 @@ function Home() {
             <AlertDialogCancel onClick={() => { setPausingId(null); setPauseReason(''); }}>
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => void handlePause()}>Confirmar pausa</AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => void handlePause()}
+              disabled={!pauseReason.trim()}
+              className="disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Confirmar pausa
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
