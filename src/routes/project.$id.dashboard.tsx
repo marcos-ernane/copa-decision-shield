@@ -85,26 +85,6 @@ function computeCopaProgress(entries: Entry[]): {
   };
 }
 
-// Retorna label/ícone/cor derivados do progresso COPA, sobrepondo o estado do banco.
-// Oportunidade 1: allDone → "Ciclo completo"
-// Oportunidade 2: fase mais avançada concluída determina o status
-function deriveCopaStatus(
-  allDone: boolean,
-  lastDone: string | null,
-  baseState: ProjectState,
-): { icon: string; label: string; color: string } {
-  if (allDone) {
-    return { icon: '◆', label: 'Ciclo completo', color: 'text-green-600' };
-  }
-  switch (lastDone) {
-    case 'A': return { icon: '◆', label: 'Aferindo', color: 'text-green-600' };
-    case 'P': return { icon: '▶', label: 'Em Prova', color: 'text-green-600' };
-    case 'O': return { icon: '◈', label: 'Organizando', color: 'text-amber-500' };
-    case 'C': return { icon: '◎', label: 'Capturando', color: 'text-amber-500' };
-    default:  return STATE_DISPLAY[baseState];
-  }
-}
-
 export const Route = createFileRoute('/project/$id/dashboard')({
   component: ProjectDashboard,
 });
@@ -242,29 +222,34 @@ function ProjectDashboard() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={() => navigate({ to: '/project/$id/edit', params: { id } })}>
-              Editar projeto
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate({ to: '/project/$id/pact', params: { id } })}>
-              Ativar Pacto
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate({ to: '/project/$id/sheet', params: { id } })}>
-              Criar Folha do Operador
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleToggleTreino}>
-              {project.is_treino_principal ? 'Desmarcar Treino Principal' : 'Marcar como Treino Principal'}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             {project.state === 'paused' ? (
-              <DropdownMenuItem onClick={() => void handleResume()}>Retomar projeto</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => void handleResume()}>
+                Retomar projeto
+              </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onClick={() => setIsPausing(true)}>Pausar projeto</DropdownMenuItem>
+              <>
+                <DropdownMenuItem onClick={() => navigate({ to: '/project/$id/edit', params: { id } })}>
+                  Editar projeto
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate({ to: '/project/$id/pact', params: { id } })}>
+                  Ativar Pacto
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate({ to: '/project/$id/sheet', params: { id } })}>
+                  Criar Folha do Operador
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleToggleTreino}>
+                  {project.is_treino_principal ? 'Desmarcar Treino Principal' : 'Marcar como Treino Principal'}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsPausing(true)}>Pausar projeto</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => navigate({ to: '/project/$id/conclude', params: { id } })}
+                >
+                  Concluir projeto
+                </DropdownMenuItem>
+              </>
             )}
-            <DropdownMenuItem
-              onClick={() => navigate({ to: '/project/$id/conclude', params: { id } })}
-            >
-              Concluir projeto
-            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={() => setIsArchiving(true)}>
               Arquivar
             </DropdownMenuItem>
@@ -303,12 +288,10 @@ function ProjectDashboard() {
 
         {/* Onde estou agora */}
         {(() => {
-          const { done, lastDone, nextPhase, allDone } = computeCopaProgress(entries);
+          const { done, nextPhase, allDone } = computeCopaProgress(entries);
           const isTerminal = currentState === 'paused' || currentState === 'concluded' || currentState === 'archived';
           const isBlocked = currentState === 'blocked';
           const showInteractive = !isTerminal;
-
-          const copaStatus = isBlocked ? STATE_DISPLAY[currentState] : deriveCopaStatus(allDone, lastDone, currentState);
 
           const handleStateClick = () => {
             if (isBlocked) {
@@ -326,8 +309,8 @@ function ProjectDashboard() {
             >
               <h2 className="text-label text-muted-foreground uppercase">Onde estou agora</h2>
               <div className="flex items-center justify-between">
-                <p className={`text-heading ${copaStatus.color}`}>
-                  {copaStatus.icon} {copaStatus.label}
+                <p className={`text-heading ${STATE_DISPLAY[currentState].color}`}>
+                  {STATE_DISPLAY[currentState].icon} {STATE_DISPLAY[currentState].label}
                 </p>
                 <ChevronRight className="size-4 text-muted-foreground shrink-0" />
               </div>
@@ -346,11 +329,20 @@ function ProjectDashboard() {
               )}
             </button>
           ) : (
-            <section className="rounded-md border border-border bg-card p-4 space-y-1">
+            <section className="rounded-md border border-border bg-card p-4 space-y-3">
               <h2 className="text-label text-muted-foreground uppercase">Onde estou agora</h2>
               <p className={`text-heading ${STATE_DISPLAY[currentState].color}`}>
                 {STATE_DISPLAY[currentState].icon} {STATE_DISPLAY[currentState].label}
               </p>
+              {currentState === 'paused' && (
+                <button
+                  type="button"
+                  onClick={() => void handleResume()}
+                  className="w-full rounded-md border border-border bg-background py-2.5 text-small font-medium text-foreground hover:bg-accent transition-colors"
+                >
+                  Retomar projeto
+                </button>
+              )}
             </section>
           );
         })()}
@@ -364,9 +356,10 @@ function ProjectDashboard() {
         )}
 
         {/* Semana do Operador */}
-        {project.pact_enabled ? (
+        {project.pact_enabled && project.state !== 'paused' && (
           <PactWeekView projectId={project.id} cycle={getCycle(project)} />
-        ) : (
+        )}
+        {!project.pact_enabled && project.state !== 'paused' && (
           <Link
             to="/project/$id/pact"
             params={{ id }}
@@ -444,24 +437,39 @@ function ProjectDashboard() {
           </section>
         )}
 
-        {/* Ações principais */}
-        <div className="flex gap-2 pt-2">
-          <Button
-            size="lg"
-            className="flex-1"
-            onClick={() => navigate({ to: '/register/structured', search: { projectId: id } as never })}
-          >
-            + REGISTRAR
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="flex-1"
-            onClick={() => navigate({ to: '/project/$id/diagnosis', params: { id } })}
-          >
-            ANALISAR
-          </Button>
-        </div>
+        {/* Ações principais — bloqueadas quando pausado */}
+        {project.state === 'paused' ? (
+          <div className="rounded-md border border-border bg-card p-4 text-center space-y-3">
+            <p className="text-small text-muted-foreground">
+              Projeto pausado — retome para registrar ou analisar.
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleResume()}
+              className="w-full rounded-md bg-foreground text-background py-2.5 text-small font-medium hover:opacity-90 transition-opacity"
+            >
+              Retomar projeto
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2 pt-2">
+            <Button
+              size="lg"
+              className="flex-1"
+              onClick={() => navigate({ to: '/register/structured', search: { projectId: id } as never })}
+            >
+              + REGISTRAR
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="flex-1"
+              onClick={() => navigate({ to: '/project/$id/diagnosis', params: { id } })}
+            >
+              ANALISAR
+            </Button>
+          </div>
+        )}
       </main>
       <PactReturnSheet
         open={returnSheet}
