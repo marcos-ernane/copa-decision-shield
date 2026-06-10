@@ -34,6 +34,8 @@ function Home() {
   const [communityLink, setCommunityLink] = useState<string | null>(null);
   const [showConcluded, setShowConcluded] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [pausingId, setPausingId] = useState<string | null>(null);
+  const [pauseReason, setPauseReason] = useState('');
 
   useEffect(() => {
     void (async () => {
@@ -90,6 +92,20 @@ function Home() {
     void load();
   }
 
+  async function handlePause() {
+    if (!pausingId) return;
+    const reason = pauseReason.trim() || 'Pausado';
+    await updateProject(pausingId, { state: 'paused', pause_reason: reason });
+    setPausingId(null);
+    setPauseReason('');
+    void load();
+  }
+
+  async function handleResume(id: string) {
+    await updateProject(id, { state: 'new', pause_reason: '' });
+    void load();
+  }
+
   if (!ready) return null;
 
   const { active, concluded } = sortProjects(projects);
@@ -124,6 +140,8 @@ function Home() {
             recallPrinciple={principles[p.id]}
             onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
             onArchive={() => setArchivingId(p.id)}
+            onPause={p.state !== 'paused' ? () => setPausingId(p.id) : undefined}
+            onResume={p.state === 'paused' ? () => void handleResume(p.id) : undefined}
           />
         ))}
 
@@ -155,6 +173,30 @@ function Home() {
 
         <CommunityLink url={communityLink} />
       </main>
+
+      {/* Dialog: Pausar projeto */}
+      <AlertDialog open={!!pausingId} onOpenChange={(v) => { if (!v) { setPausingId(null); setPauseReason(''); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pausar projeto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informe o motivo da pausa (opcional).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <input
+            value={pauseReason}
+            onChange={(e) => setPauseReason(e.target.value)}
+            placeholder="Ex: aguardando resultado externo"
+            className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setPausingId(null); setPauseReason(''); }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handlePause()}>Confirmar pausa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Dialog: Arquivar projeto — PRD Seção 12.1 */}
       <AlertDialog open={!!archivingId} onOpenChange={(v) => !v && setArchivingId(null)}>

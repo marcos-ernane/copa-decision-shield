@@ -38,11 +38,27 @@ export function OperatorPanel() {
   const navigate = useNavigate();
   const { projects, entries, principles, baselines, loading, refresh } = usePanelData();
   const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [pausingId, setPausingId] = useState<string | null>(null);
+  const [pauseReason, setPauseReason] = useState('');
 
   async function handleArchive() {
     if (!archivingId) return;
     await updateProject(archivingId, { archived_at: new Date().toISOString(), state: 'archived' });
     setArchivingId(null);
+    void refresh();
+  }
+
+  async function handlePause() {
+    if (!pausingId) return;
+    const reason = pauseReason.trim() || 'Pausado';
+    await updateProject(pausingId, { state: 'paused', pause_reason: reason });
+    setPausingId(null);
+    setPauseReason('');
+    void refresh();
+  }
+
+  async function handleResume(id: string) {
+    await updateProject(id, { state: 'new', pause_reason: '' });
     void refresh();
   }
 
@@ -178,6 +194,15 @@ export function OperatorPanel() {
                         Ver Dashboard
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
+                      {p.state === 'paused' ? (
+                        <DropdownMenuItem onClick={() => void handleResume(p.id)}>
+                          Retomar projeto
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => setPausingId(p.id)}>
+                          Pausar projeto
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         onClick={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
                       >
@@ -261,6 +286,30 @@ export function OperatorPanel() {
           </section>
         )}
       </div>
+
+      {/* Dialog: Pausar */}
+      <AlertDialog open={!!pausingId} onOpenChange={(v) => { if (!v) { setPausingId(null); setPauseReason(''); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pausar projeto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informe o motivo da pausa (opcional).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <input
+            value={pauseReason}
+            onChange={(e) => setPauseReason(e.target.value)}
+            placeholder="Ex: aguardando resultado externo"
+            className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setPausingId(null); setPauseReason(''); }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handlePause()}>Confirmar pausa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Dialog: Arquivar */}
       <AlertDialog open={!!archivingId} onOpenChange={(v) => !v && setArchivingId(null)}>

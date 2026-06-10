@@ -18,9 +18,11 @@ interface Props {
   /** Quando fornecido, exibe o botão [•••] no card (Seção 12.1 do PRD). */
   onConclude?: () => void;
   onArchive?: () => void;
+  onPause?: () => void;
+  onResume?: () => void;
 }
 
-export function ProjectCard({ project, recallPrinciple, onConclude, onArchive }: Props) {
+export function ProjectCard({ project, recallPrinciple, onConclude, onArchive, onPause, onResume }: Props) {
   const navigate = useNavigate();
   const entryType = determineEntryType(project);
   const days = daysSince(project.last_entry_at);
@@ -28,7 +30,7 @@ export function ProjectCard({ project, recallPrinciple, onConclude, onArchive }:
   const showRecall =
     recallPrinciple &&
     (project.state === 'blocked' || project.state === 'new');
-  const showMenu = !!(onConclude || onArchive);
+  const showMenu = !!(onConclude || onArchive || onPause || onResume);
 
   const cardTo =
     entryType === 'direct'
@@ -93,16 +95,22 @@ export function ProjectCard({ project, recallPrinciple, onConclude, onArchive }:
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                {onConclude && (
-                  <DropdownMenuItem onClick={onConclude}>
-                    Concluir projeto
-                  </DropdownMenuItem>
+                {onResume && (
+                  <DropdownMenuItem onClick={onResume}>Retomar projeto</DropdownMenuItem>
                 )}
-                {onConclude && onArchive && <DropdownMenuSeparator />}
+                {onPause && (
+                  <DropdownMenuItem onClick={onPause}>Pausar projeto</DropdownMenuItem>
+                )}
+                {onConclude && (
+                  <DropdownMenuItem onClick={onConclude}>Concluir projeto</DropdownMenuItem>
+                )}
                 {onArchive && (
-                  <DropdownMenuItem className="text-destructive" onClick={onArchive}>
-                    Arquivar
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive" onClick={onArchive}>
+                      Arquivar
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>

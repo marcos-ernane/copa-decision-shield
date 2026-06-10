@@ -169,10 +169,16 @@ function ProjectDashboard() {
   }
 
   async function handlePause() {
-    await updateProject(id, { pause_reason: pauseReason.trim() || 'Pausado' });
-    setProject((p) => (p ? { ...p, pause_reason: pauseReason.trim() || 'Pausado' } : p));
+    const reason = pauseReason.trim() || 'Pausado';
+    await updateProject(id, { state: 'paused', pause_reason: reason });
+    setProject((p) => (p ? { ...p, state: 'paused', pause_reason: reason } : p));
     setIsPausing(false);
     setPauseReason('');
+  }
+
+  async function handleResume() {
+    await updateProject(id, { state: 'new', pause_reason: '' });
+    setProject((p) => (p ? { ...p, state: 'new', pause_reason: '' } : p));
   }
 
   async function handleArchive() {
@@ -249,7 +255,11 @@ function ProjectDashboard() {
               {project.is_treino_principal ? 'Desmarcar Treino Principal' : 'Marcar como Treino Principal'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setIsPausing(true)}>Pausar</DropdownMenuItem>
+            {project.state === 'paused' ? (
+              <DropdownMenuItem onClick={() => void handleResume()}>Retomar projeto</DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={() => setIsPausing(true)}>Pausar projeto</DropdownMenuItem>
+            )}
             <DropdownMenuItem
               onClick={() => navigate({ to: '/project/$id/conclude', params: { id } })}
             >
