@@ -6,12 +6,11 @@ import { GuestStorage } from '@/lib/guestStorage';
 import { calculateIndex } from '@/engines/IndexCalculator';
 import { generatePatterns } from '@/engines/PatternEngine';
 import { updateProject } from '@/lib/projects';
-import { STATE_ORDER } from '@/lib/projectState';
+import { STATE_ORDER, deriveProjectStatus } from '@/lib/projectState';
 import { IndexRings } from './IndexRings';
 import { BaselineEvolution } from './BaselineEvolution';
 import { PatternCards } from './PatternCards';
 import { QualitativeEvolution } from './QualitativeEvolution';
-import { ProjectStateIcon } from '@/components/project/ProjectStateIcon';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import {
@@ -62,7 +61,7 @@ export function OperatorPanel() {
     void refresh();
   }
 
-  // Apenas projetos ativos no menu [•••] — PRD Seção 12.1
+  // Apenas projetos ativos, ordenados por prioridade de estado — PRD Seção 12.1
   const activeProjects = useMemo(
     () =>
       projects
@@ -160,64 +159,69 @@ export function OperatorPanel() {
             <p className="text-small text-muted-foreground">Nenhum projeto ativo.</p>
           ) : (
             <ul className="space-y-2">
-              {activeProjects.map((p) => (
-                <li key={p.id} className="flex items-stretch rounded-md border border-border bg-card overflow-hidden">
-                  <Link
-                    to="/project/$id/dashboard"
-                    params={{ id: p.id }}
-                    className="flex-1 p-3 hover:bg-accent min-w-0 space-y-1"
-                  >
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <ProjectStateIcon state={p.state} showLabel />
-                      <span className="text-small font-medium text-foreground">{p.name}</span>
-                    </div>
-                    {(p.scenario_type || p.current_layer) && (
-                      <div className="flex gap-1 flex-wrap pl-5">
-                        {p.scenario_type && <ScenarioTypeChip type={p.scenario_type} />}
-                        {p.current_layer && <LayerChip layer={p.current_layer} />}
+              {activeProjects.map((p) => {
+                const projectEntries = entries.filter((e) => e.project_id === p.id);
+                const status = deriveProjectStatus(p, projectEntries);
+                return (
+                  <li key={p.id} className="flex items-stretch rounded-md border border-border bg-card overflow-hidden">
+                    <Link
+                      to="/project/$id/dashboard"
+                      params={{ id: p.id }}
+                      className="flex-1 p-3 hover:bg-accent min-w-0 space-y-1"
+                    >
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-base leading-none ${status.color}`} aria-hidden>{status.icon}</span>
+                        <span className={`text-small font-medium ${status.color}`}>{status.label}</span>
+                        <span className="text-small text-foreground font-medium">{p.name}</span>
                       </div>
-                    )}
-                  </Link>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className="p-2 mr-1 rounded-md hover:bg-accent shrink-0"
-                        aria-label="Mais opções"
-                      >
-                        <MoreVertical className="size-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem
-                        onClick={() => navigate({ to: '/project/$id/dashboard', params: { id: p.id } })}
-                      >
-                        Ver Dashboard
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {p.state === 'paused' ? (
-                        <DropdownMenuItem onClick={() => void handleResume(p.id)}>
-                          Retomar projeto
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onClick={() => setPausingId(p.id)}>
-                          Pausar projeto
-                        </DropdownMenuItem>
+                      {(p.scenario_type || p.current_layer) && (
+                        <div className="flex gap-1 flex-wrap pl-5">
+                          {p.scenario_type && <ScenarioTypeChip type={p.scenario_type} />}
+                          {p.current_layer && <LayerChip layer={p.current_layer} />}
+                        </div>
                       )}
-                      <DropdownMenuItem
-                        onClick={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
-                      >
-                        Concluir projeto
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => setArchivingId(p.id)}
-                      >
-                        Arquivar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </li>
-              ))}
+                    </Link>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className="p-2 mr-1 rounded-md hover:bg-accent shrink-0"
+                          aria-label="Mais opções"
+                        >
+                          <MoreVertical className="size-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onClick={() => navigate({ to: '/project/$id/dashboard', params: { id: p.id } })}
+                        >
+                          Ver Dashboard
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {p.state === 'paused' ? (
+                          <DropdownMenuItem onClick={() => void handleResume(p.id)}>
+                            Retomar projeto
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => setPausingId(p.id)}>
+                            Pausar projeto
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          onClick={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
+                        >
+                          Concluir projeto
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => setArchivingId(p.id)}
+                        >
+                          Arquivar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </li>
+                );
+              })}
             </ul>
           )}
           {(scenarioCount.length > 0 || layerMode) && (
