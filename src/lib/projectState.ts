@@ -45,9 +45,14 @@ export function computeProjectState(
   );
 
   for (const e of sorted) {
+    // Ciclo completo — pronto para novo C
+    if (e.entry_type === 'structured_A' || e.entry_type === 'copa_session') return 'capturing';
+
     if (e.entry_type === 'structured_P') {
       const deadline = (e.content as { deadline?: string })?.deadline;
       if (deadline && new Date(deadline).getTime() > Date.now()) return 'proving';
+      // prazo vencido sem APA — volta a capturar
+      return 'capturing';
     }
     if (e.entry_type === 'structured_O') {
       const imv = (e.content as { imv?: string })?.imv;
@@ -57,9 +62,11 @@ export function computeProjectState(
       const imv = (e.content as { imv?: string })?.imv;
       if (!imv) return 'capturing';
     }
+    // Entradas auxiliares (corrective, pressure_session, protocol_5min, etc.)
+    // não definem fase — continua buscando a entrada relevante mais recente
   }
 
-  return project.state ?? 'capturing';
+  return 'capturing';
 }
 
 export type ProjectEntryType = 'direct' | 'calibrated' | 'new_cycle';

@@ -6,6 +6,7 @@ import { GuestStorage } from '@/lib/guestStorage';
 import { calculateIndex } from '@/engines/IndexCalculator';
 import { generatePatterns } from '@/engines/PatternEngine';
 import { updateProject } from '@/lib/projects';
+import { STATE_ORDER } from '@/lib/projectState';
 import { IndexRings } from './IndexRings';
 import { BaselineEvolution } from './BaselineEvolution';
 import { PatternCards } from './PatternCards';
@@ -37,6 +38,8 @@ export function OperatorPanel() {
   const navigate = useNavigate();
   const { projects, entries, principles, baselines, loading, refresh } = usePanelData();
   const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [pausingId, setPausingId] = useState<string | null>(null);
+  const [pauseReason, setPauseReason] = useState('');
 
   async function handleArchive() {
     if (!archivingId) return;
@@ -45,9 +48,34 @@ export function OperatorPanel() {
     void refresh();
   }
 
+  async function handlePause() {
+    if (!pausingId) return;
+    const reason = pauseReason.trim() || 'Pausado';
+    await updateProject(pausingId, { state: 'paused', pause_reason: reason });
+    setPausingId(null);
+    setPauseReason('');
+    void refresh();
+  }
+
+  async function handleResume(id: string) {
+    await updateProject(id, { state: 'new', pause_reason: '' });
+    void refresh();
+  }
+
   // Apenas projetos ativos no menu [•••] — PRD Seção 12.1
   const activeProjects = useMemo(
-    () => projects.filter((p) => p.state !== 'archived' && p.state !== 'concluded'),
+    () =>
+      projects
+        .filter((p) => p.state !== 'archived' && p.state !== 'concluded')
+        .sort((a, b) => {
+          const ia = STATE_ORDER.indexOf(a.state);
+          const ib = STATE_ORDER.indexOf(b.state);
+          if (ia !== ib) return ia - ib;
+          return (
+            new Date(b.last_entry_at ?? b.created_at).getTime() -
+            new Date(a.last_entry_at ?? a.created_at).getTime()
+          );
+        }),
     [projects],
   );
 
@@ -139,9 +167,9 @@ export function OperatorPanel() {
                     params={{ id: p.id }}
                     className="flex-1 p-3 hover:bg-accent min-w-0 space-y-1"
                   >
-                    <div className="flex items-center gap-2">
-                      <ProjectStateIcon state={p.state} />
-                      <span className="text-small text-foreground">{p.name}</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <ProjectStateIcon state={p.state} showLabel />
+                      <span className="text-small font-medium text-foreground">{p.name}</span>
                     </div>
                     {(p.scenario_type || p.current_layer) && (
                       <div className="flex gap-1 flex-wrap pl-5">
@@ -166,6 +194,15 @@ export function OperatorPanel() {
                         Ver Dashboard
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
+                      {p.state === 'paused' ? (
+                        <DropdownMenuItem onClick={() => void handleResume(p.id)}>
+                          Retomar projeto
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => setPausingId(p.id)}>
+                          Pausar projeto
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         onClick={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
                       >
@@ -249,6 +286,30 @@ export function OperatorPanel() {
           </section>
         )}
       </div>
+
+      {/* Dialog: Pausar */}
+      <AlertDialog open={!!pausingId} onOpenChange={(v) => { if (!v) { setPausingId(null); setPauseReason(''); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pausar projeto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informe o motivo da pausa (opcional).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <input
+            value={pauseReason}
+            onChange={(e) => setPauseReason(e.target.value)}
+            placeholder="Ex: aguardando resultado externo"
+            className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setPausingId(null); setPauseReason(''); }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handlePause()}>Confirmar pausa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Dialog: Arquivar */}
       <AlertDialog open={!!archivingId} onOpenChange={(v) => !v && setArchivingId(null)}>
