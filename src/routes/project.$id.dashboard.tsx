@@ -334,6 +334,9 @@ function ProjectDashboard() {
               <p className={`text-heading ${STATE_DISPLAY[currentState].color}`}>
                 {STATE_DISPLAY[currentState].icon} {STATE_DISPLAY[currentState].label}
               </p>
+              {currentState === 'paused' && project.pause_reason && (
+                <p className="text-small text-muted-foreground italic">"{project.pause_reason}"</p>
+              )}
               {currentState === 'paused' && (
                 <button
                   type="button"
@@ -485,7 +488,7 @@ function ProjectDashboard() {
           <AlertDialogHeader>
             <AlertDialogTitle>Pausar projeto</AlertDialogTitle>
             <AlertDialogDescription>
-              Informe o motivo da pausa (opcional).
+              Informe o motivo da pausa. Ele ficará visível no projeto enquanto estiver pausado.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
@@ -498,7 +501,13 @@ function ProjectDashboard() {
             <AlertDialogCancel onClick={() => { setIsPausing(false); setPauseReason(''); }}>
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handlePause}>Confirmar pausa</AlertDialogAction>
+            <AlertDialogAction
+              onClick={handlePause}
+              disabled={!pauseReason.trim()}
+              className="disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Confirmar pausa
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
