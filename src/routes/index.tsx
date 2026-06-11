@@ -128,8 +128,16 @@ function Home() {
       </header>
 
       <main className="px-6 space-y-3">
+        <Link
+          to="/project/new"
+          className="flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-card py-4 text-small text-muted-foreground hover:bg-accent transition-colors"
+        >
+          <Plus className="size-4" />
+          Novo projeto
+        </Link>
+
         {active.length === 0 && (
-          <p className="text-small text-muted-foreground py-12 text-center">
+          <p className="text-small text-muted-foreground py-8 text-center">
             Nenhum projeto em campo.
           </p>
         )}
@@ -144,14 +152,6 @@ function Home() {
             onResume={p.state === 'paused' ? () => void handleResume(p.id) : undefined}
           />
         ))}
-
-        <Link
-          to="/project/new"
-          className="flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-card py-4 text-small text-muted-foreground hover:bg-accent transition-colors"
-        >
-          <Plus className="size-4" />
-          Novo projeto
-        </Link>
 
         {concluded.length > 0 && (
           <div className="pt-4 space-y-2">
