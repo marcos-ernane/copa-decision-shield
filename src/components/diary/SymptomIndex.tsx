@@ -60,10 +60,26 @@ function score(text: string, terms: string[]): number {
 // diferentes tornem textos iguais parecidos únicos e escapem da deduplicação.
 const DATE_ISO_RE = /^\d{4}-\d{2}-\d{2}(T.*)?$/;
 
+// Campos de metadados internos que não são texto autoral do usuário.
+// Excluídos do entryText para não poluir busca e deduplicação com valores
+// de enumeração (camada, tipo de cenário, método de entrada, etc.).
+const EXCLUDED_CONTENT_FIELDS = new Set([
+  'layer', 'scenario_type', 'scenario_type_at_entry', 'layer_at_entry',
+  'input_method', 'via', 'entry_alignment_state', 'book_anchor_shown',
+  'classification', 'suggestion_state', 'used_suggestion',
+  'reality_check_used', 'kind', 'route', 'ai_assist_used', 'ai_assist_type',
+  'ms_since_last_entry', 'hour_local', 'weekday_local',
+]);
+
 function entryText(e: Entry): string {
   const c = e.content as Record<string, unknown>;
-  return Object.values(c)
-    .filter((v): v is string => typeof v === 'string' && !DATE_ISO_RE.test(v))
+  return Object.entries(c)
+    .filter(([key, v]) =>
+      typeof v === 'string' &&
+      !DATE_ISO_RE.test(v as string) &&
+      !EXCLUDED_CONTENT_FIELDS.has(key)
+    )
+    .map(([, v]) => v as string)
     .join(' ');
 }
 
