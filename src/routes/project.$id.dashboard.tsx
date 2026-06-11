@@ -169,6 +169,7 @@ function ProjectDashboard() {
   if (!project) return null;
 
   const currentState = computeProjectState(project, entries);
+  const copaProgress = computeCopaProgress(entries);
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
     structured: entries.filter((e) => e.entry_type !== 'pulse').length,
@@ -289,7 +290,7 @@ function ProjectDashboard() {
 
         {/* Onde estou agora */}
         {(() => {
-          const { done, nextPhase, allDone } = computeCopaProgress(entries);
+          const { done, nextPhase, allDone } = copaProgress;
           const isTerminal = currentState === 'paused' || currentState === 'concluded' || currentState === 'archived';
           const isBlocked = currentState === 'blocked';
           const showInteractive = !isTerminal;
@@ -421,12 +422,38 @@ function ProjectDashboard() {
         />
 
         {/* Alerta do motor */}
-        {sanitizeFieldReading(project.field_reading) && (
-          <section className="rounded-md border border-[var(--color-brand-amber)] bg-card p-4">
-            <h2 className="text-label text-muted-foreground uppercase">Alerta do motor</h2>
-            <p className="text-body text-foreground mt-1">"{sanitizeFieldReading(project.field_reading)}"</p>
-          </section>
-        )}
+        {sanitizeFieldReading(project.field_reading) && (() => {
+          const { nextPhase, allDone } = copaProgress;
+          const ctaLabel =
+            allDone || !nextPhase || nextPhase === 'C'
+              ? 'Abrir COPA de Bolso'
+              : nextPhase === 'O'
+              ? 'Registrar Organização (Formato O)'
+              : nextPhase === 'P'
+              ? 'Registrar Prova (Formato P)'
+              : 'Registrar APA (Formato A)';
+          const handleCta = () => {
+            if (allDone || !nextPhase || nextPhase === 'C') {
+              void navigate({ to: '/copa', search: { projectId: id } as never });
+            } else {
+              void navigate({ to: '/register/structured', search: { projectId: id } as never });
+            }
+          };
+          return (
+            <section className="rounded-md border border-[var(--color-brand-amber)] bg-card p-4 space-y-3">
+              <h2 className="text-label text-muted-foreground uppercase">Alerta do motor</h2>
+              <p className="text-body text-foreground">"{sanitizeFieldReading(project.field_reading)}"</p>
+              {project.calibrated_action && (
+                <div className="border-t border-border pt-3 space-y-2">
+                  <p className="text-small text-muted-foreground">{project.calibrated_action}</p>
+                  <Button size="sm" className="w-full" onClick={handleCta}>
+                    {ctaLabel}
+                  </Button>
+                </div>
+              )}
+            </section>
+          );
+        })()}
 
         {/* Principle recall */}
         {recall && (
