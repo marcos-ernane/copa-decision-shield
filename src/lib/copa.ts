@@ -26,7 +26,12 @@ export interface CopaSessionData {
   scenario_type: ScenarioType | null;
 }
 
-const INTERPRETATION_TERMS = ['acho que', 'parece', 'deve ser', 'imagino', 'talvez'];
+const INTERPRETATION_TERMS = [
+  'acho que', 'parece', 'deve ser', 'imagino', 'talvez',
+  'acredito que', 'penso que', 'creio que', 'suspeito', 'provavelmente',
+  'certamente', 'com certeza', 'tenho certeza', 'parece que', 'pode ser que',
+  'deve ter', 'possivelmente', 'aparentemente', 'ao que parece',
+];
 
 export function detectInterpretation(text: string): boolean {
   const t = text.toLowerCase();
@@ -138,8 +143,8 @@ export async function countCopaSessions(projectId: string): Promise<number> {
 export type SuggestionState = 'no_history' | 'partial_history' | 'rich_history';
 
 export function suggestionStateFor(count: number): SuggestionState {
-  if (count < 2) return 'no_history';
-  if (count < 5) return 'partial_history';
+  if (count < 1) return 'no_history';
+  if (count < 3) return 'partial_history';
   return 'rich_history';
 }
 

@@ -11,7 +11,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { getProject, listEntries, listPrinciples } from '@/lib/projects';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { getProject, listEntries, listPrinciples, updateProject } from '@/lib/projects';
 import { computeProjectState, STATE_DISPLAY } from '@/lib/projectState';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
@@ -37,6 +48,9 @@ function ProjectDashboard() {
   const [principles, setPrinciples] = useState<Principle[]>([]);
   const [northExpanded, setNorthExpanded] = useState(false);
   const [returnSheet, setReturnSheet] = useState(false);
+  const [isPausing, setIsPausing] = useState(false);
+  const [pauseReason, setPauseReason] = useState('');
+  const [isArchiving, setIsArchiving] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -55,6 +69,25 @@ function ProjectDashboard() {
       if (checkPactReturn(p)) setReturnSheet(true);
     })();
   }, [id, navigate]);
+
+  async function handleToggleTreino() {
+    if (!project) return;
+    const next = !project.is_treino_principal;
+    await updateProject(id, { is_treino_principal: next });
+    setProject((p) => (p ? { ...p, is_treino_principal: next } : p));
+  }
+
+  async function handlePause() {
+    await updateProject(id, { pause_reason: pauseReason.trim() || 'Pausado' });
+    setProject((p) => (p ? { ...p, pause_reason: pauseReason.trim() || 'Pausado' } : p));
+    setIsPausing(false);
+    setPauseReason('');
+  }
+
+  async function handleArchive() {
+    await updateProject(id, { archived_at: new Date().toISOString() });
+    navigate({ to: '/' });
+  }
 
   if (!project) return null;
 
@@ -119,15 +152,19 @@ function ProjectDashboard() {
             <DropdownMenuItem onClick={() => navigate({ to: '/project/$id/sheet', params: { id } })}>
               Criar Folha do Operador
             </DropdownMenuItem>
-            <DropdownMenuItem>Marcar como Treino Principal</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleToggleTreino}>
+              {project.is_treino_principal ? 'Desmarcar Treino Principal' : 'Marcar como Treino Principal'}
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Pausar</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsPausing(true)}>Pausar</DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => navigate({ to: '/project/$id/conclude', params: { id } })}
             >
               Concluir projeto
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">Arquivar</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onClick={() => setIsArchiving(true)}>
+              Arquivar
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </header>
@@ -204,6 +241,7 @@ function ProjectDashboard() {
 
         {/* Capacidade Acumulada */}
         <AccumulatedCapacityCard
+          projectId={id}
           imvs_tested={counts.imvs}
           valid_principles={counts.principles}
           discarded_patterns={0}
@@ -257,6 +295,52 @@ function ProjectDashboard() {
         lastCycleAt={project.pact_last_cycle_at}
         onClose={() => setReturnSheet(false)}
       />
+
+      {/* Dialog: Pausar */}
+      <AlertDialog open={isPausing} onOpenChange={setIsPausing}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pausar projeto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informe o motivo da pausa (opcional).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={pauseReason}
+            onChange={(e) => setPauseReason(e.target.value)}
+            placeholder="Ex: aguardando resultado externo"
+            className="mt-2"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setIsPausing(false); setPauseReason(''); }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handlePause}>Confirmar pausa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog: Arquivar */}
+      <AlertDialog open={isArchiving} onOpenChange={setIsArchiving}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Arquivar projeto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O projeto será arquivado e removido da lista principal. Esta ação pode ser revertida
+              manualmente no banco de dados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleArchive}
+            >
+              Arquivar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

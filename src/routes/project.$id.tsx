@@ -3,7 +3,7 @@
 // - calibrated (7-14 dias): CalibratedReturnScreen
 // - new_cycle (> 14 dias ou primeiro acesso): DiagnosisFlow
 
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, Outlet, useRouterState } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { CalibratedReturnScreen } from '@/components/diagnosis/CalibratedReturnScreen';
 import { getProject } from '@/lib/projects';
@@ -17,8 +17,12 @@ export const Route = createFileRoute('/project/$id')({
 function ProjectEntryRouter() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const { location } = useRouterState();
   const [project, setProject] = useState<Project | null>(null);
   const [showCalibrated, setShowCalibrated] = useState(false);
+
+  // True quando a URL é exatamente /project/:id sem rota filha (caso calibrated)
+  const isParentOnly = location.pathname === `/project/${id}`;
 
   useEffect(() => {
     void (async () => {
@@ -41,7 +45,18 @@ function ProjectEntryRouter() {
     })();
   }, [id, navigate]);
 
-  if (!showCalibrated || !project) return null;
+  if (!showCalibrated || !project) {
+    // Se está em /project/:id sem filho → spinner enquanto determina destino (caso calibrated)
+    // Se já tem rota filha → renderiza imediatamente sem flash de branco
+    if (isParentOnly) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <span className="text-muted-foreground text-small">Carregando…</span>
+        </div>
+      );
+    }
+    return <Outlet />;
+  }
 
   const days = daysSince(project.last_entry_at);
   return <CalibratedReturnScreen project={project} daysSinceLast={days} />;

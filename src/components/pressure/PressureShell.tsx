@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PressureRealityCheckScreen } from './PressureRealityCheckScreen';
 import { AbuseWarningScreen } from './AbuseWarningScreen';
@@ -111,7 +112,14 @@ export function PressureShell() {
 
   if (step === 'pick_project') {
     return (
-      <div className="space-y-4 p-4">
+      <div className="min-h-screen bg-background">
+        <header className="flex items-center gap-3 px-4 py-4 border-b border-border">
+          <button onClick={() => navigate({ to: '/' })} className="p-1 rounded-md hover:bg-accent" aria-label="Voltar">
+            <ArrowLeft className="size-5 text-muted-foreground" />
+          </button>
+          <h1 className="text-heading text-foreground">Modo Pressão</h1>
+        </header>
+        <div className="space-y-4 p-4">
         <h2 className="text-title">Para qual projeto?</h2>
         {projects.length === 0 && (
           <p className="text-small text-muted-foreground">
@@ -136,6 +144,7 @@ export function PressureShell() {
           >
             Novo projeto
           </Button>
+        </div>
         </div>
       </div>
     );

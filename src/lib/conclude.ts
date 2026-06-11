@@ -229,8 +229,8 @@ export async function concludeProject(
   let allPrinciples: Principle[] = [];
   if (session) {
     const [pr, pp] = await Promise.all([
-      supabase.from('projects').select('*'),
-      supabase.from('principles').select('*'),
+      supabase.from('projects').select('*').eq('user_id', session.user.id),
+      supabase.from('principles').select('*').eq('user_id', session.user.id),
     ]);
     allProjects = (pr.data ?? []) as Project[];
     allPrinciples = (pp.data ?? []) as Principle[];

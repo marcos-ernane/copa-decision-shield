@@ -28,6 +28,7 @@ export function PulseRegister() {
   const [classification, setClassification] = useState<PulseClassification | null>(null);
   const [inputMethod, setInputMethod] = useState<'text' | 'voice'>('text');
   const [reformulation, setReformulation] = useState<string | null>(null);
+  const [loadingReformulation, setLoadingReformulation] = useState(false);
   const [saving, setSaving] = useState(false);
   const valueBefore = useRef('');
 
@@ -50,8 +51,12 @@ export function PulseRegister() {
       return;
     }
     (async () => {
+      setLoadingReformulation(true);
       const r = await askFacilitator('COPA_CAPTURE_INTERPRETATION', { text });
-      if (!cancelled) setReformulation(r);
+      if (!cancelled) {
+        setLoadingReformulation(false);
+        setReformulation(r);
+      }
     })();
     return () => { cancelled = true; };
   }, [inconsistent, text]);
@@ -98,6 +103,10 @@ export function PulseRegister() {
         >
           Termo de interpretação detectado. Não bloqueia o registro.
         </div>
+      )}
+
+      {loadingReformulation && !reformulation && (
+        <p className="text-small text-muted-foreground">Facilitador analisando…</p>
       )}
 
       {reformulation && (

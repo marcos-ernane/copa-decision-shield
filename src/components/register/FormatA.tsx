@@ -23,6 +23,7 @@ export function FormatA({ projectId, onSaved }: Props) {
   const [cutNext, setCutNext] = useState('');
   const [nextBottleneck, setNextBottleneck] = useState('');
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [loadingAiSuggestion, setLoadingAiSuggestion] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nudge, setNudge] = useState(false);
 
@@ -32,8 +33,12 @@ export function FormatA({ projectId, onSaved }: Props) {
     if (wordCount === 0 || wordCount >= 5) { setAiSuggestion(null); return; }
     let cancelled = false;
     const t = setTimeout(async () => {
+      setLoadingAiSuggestion(true);
       const r = await askFacilitator('COPA_APA_PRINCIPLE_GENERIC', { principle, fact, interp });
-      if (!cancelled) setAiSuggestion(r);
+      if (!cancelled) {
+        setLoadingAiSuggestion(false);
+        setAiSuggestion(r);
+      }
     }, 800);
     return () => { cancelled = true; clearTimeout(t); };
   }, [principle, fact, interp]);
@@ -77,6 +82,9 @@ export function FormatA({ projectId, onSaved }: Props) {
           placeholder="Uma frase que você levaria para qualquer outro projeto."
           rows={2}
         />
+        {loadingAiSuggestion && !aiSuggestion && (
+          <p className="text-small text-muted-foreground">Facilitador analisando…</p>
+        )}
         {aiSuggestion && (
           <div className="rounded-md bg-muted p-2 text-small text-foreground">
             <p className="text-muted-foreground mb-1">Sugestão de reformulação (opcional):</p>

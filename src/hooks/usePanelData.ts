@@ -33,12 +33,13 @@ export function usePanelData(): PanelData {
       });
       return;
     }
+    const uid = session.user.id;
     const [projectsR, entriesR, principlesR, chaptersR, baselinesR] = await Promise.all([
-      supabase.from('projects').select('*'),
-      supabase.from('entries').select('*').order('created_at', { ascending: false }),
-      supabase.from('principles').select('*'),
-      supabase.from('chapters').select('*').order('created_at', { ascending: false }),
-      supabase.from('baseline_assessments').select('*').order('created_at', { ascending: true }),
+      supabase.from('projects').select('*').eq('user_id', uid),
+      supabase.from('entries').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+      supabase.from('principles').select('*').eq('user_id', uid),
+      supabase.from('chapters').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+      supabase.from('baseline_assessments').select('*').eq('user_id', uid).order('created_at', { ascending: true }),
     ]);
     setState({
       projects: (projectsR.data ?? []) as Project[],
