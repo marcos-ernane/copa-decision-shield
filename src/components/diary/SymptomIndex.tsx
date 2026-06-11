@@ -56,9 +56,15 @@ function score(text: string, terms: string[]): number {
   return hits;
 }
 
+// Exclui valores que são datas ISO (ex: "2026-06-10") para evitar que prazos
+// diferentes tornem textos iguais parecidos únicos e escapem da deduplicação.
+const DATE_ISO_RE = /^\d{4}-\d{2}-\d{2}(T.*)?$/;
+
 function entryText(e: Entry): string {
   const c = e.content as Record<string, unknown>;
-  return Object.values(c).filter((v) => typeof v === 'string').join(' ');
+  return Object.values(c)
+    .filter((v): v is string => typeof v === 'string' && !DATE_ISO_RE.test(v))
+    .join(' ');
 }
 
 function displayText(e: Entry, chip: FilterChip | null): string {
