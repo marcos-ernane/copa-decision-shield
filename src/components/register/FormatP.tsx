@@ -50,6 +50,18 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
   const [ethical, setEthical] = useState(initialData?.ethical_check ?? '');
   const [saving, setSaving] = useState(false);
 
+  const hasChanges =
+    action.trim() !== (initialData?.action ?? '') ||
+    reversible !== (initialData?.reversible ?? null) ||
+    cheap !== (initialData?.cheap ?? null) ||
+    specific !== (initialData?.specific ?? null) ||
+    measurable !== (initialData?.measurable ?? null) ||
+    metric.trim() !== (initialData?.metric ?? '') ||
+    (deadline || null) !== (initialData?.deadline ?? null) ||
+    cutRule.trim() !== (initialData?.cut_rule ?? '') ||
+    layer !== (initialData?.layer ?? null) ||
+    (ethical.trim() || null) !== (initialData?.ethical_check ?? null);
+
   async function save() {
     setSaving(true);
     await saveStructuredP(projectId, {
@@ -195,7 +207,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
 
       {isLastStep ? (
         <div className="space-y-2">
-          <Button className="w-full" disabled={!action.trim() || !metric.trim() || saving} onClick={save}>
+          <Button className="w-full" disabled={!action.trim() || !metric.trim() || saving || (isReviewing && !hasChanges)} onClick={save}>
             {saving ? 'Salvando…' : isReviewing ? 'Salvar nova versão' : 'Salvar'}
           </Button>
           {isReviewing && (
