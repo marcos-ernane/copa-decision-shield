@@ -171,7 +171,7 @@ function ProjectDashboard() {
   const currentState = computeProjectState(project, entries);
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
-    structured: entries.filter((e) => e.entry_type.startsWith('structured_')).length,
+    structured: entries.filter((e) => e.entry_type !== 'pulse').length,
     imvs: entries.filter((e) => e.entry_type === 'structured_P').length,
     apas: entries.filter((e) => e.entry_type === 'structured_A').length,
     principles: principles.length,
