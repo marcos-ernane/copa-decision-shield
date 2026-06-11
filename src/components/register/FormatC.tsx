@@ -27,6 +27,12 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [imv, setImv] = useState(initialData?.imv_possible ?? '');
   const [saving, setSaving] = useState(false);
 
+  const hasChanges =
+    fact.trim() !== (initialData?.fact_text ?? '') ||
+    interp.trim() !== (initialData?.interpretation_text ?? '') ||
+    hyp.trim() !== (initialData?.hypothesis_text ?? '') ||
+    imv.trim() !== (initialData?.imv_possible ?? '');
+
   async function save() {
     setSaving(true);
     await saveStructuredC(projectId, {
@@ -75,7 +81,7 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
 
       {isLastStep ? (
         <div className="space-y-2">
-          <Button className="w-full" disabled={!fact.trim() || saving} onClick={save}>
+          <Button className="w-full" disabled={!fact.trim() || saving || (isReviewing && !hasChanges)} onClick={save}>
             {saving ? 'Salvando…' : isReviewing ? 'Salvar nova versão' : 'Salvar'}
           </Button>
           {isReviewing && (

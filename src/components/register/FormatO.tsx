@@ -121,6 +121,11 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
   const frictionsFilled = frictionItems.some((s) => s.trim());
   const bottleneckFilled = bottleneckItems.some((s) => s.trim());
 
+  const hasChanges =
+    fromItems(resourceItems) !== (initialData?.resources ?? '') ||
+    fromItems(frictionItems) !== (initialData?.frictions ?? '') ||
+    fromItems(bottleneckItems) !== (initialData?.bottleneck ?? '');
+
   async function save() {
     setSaving(true);
     await saveStructuredO(projectId, {
@@ -191,7 +196,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
         <div className="space-y-2">
           <Button
             className="w-full"
-            disabled={!resourcesFilled || !frictionsFilled || !bottleneckFilled || saving}
+            disabled={!resourcesFilled || !frictionsFilled || !bottleneckFilled || saving || (isReviewing && !hasChanges)}
             onClick={save}
           >
             {saving ? 'Salvando…' : isReviewing ? 'Salvar nova versão' : 'Salvar'}
