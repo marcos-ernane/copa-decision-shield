@@ -172,6 +172,7 @@ function ProjectDashboard() {
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
     structured: entries.filter((e) => e.entry_type.startsWith('structured_')).length,
+    imvs: entries.filter((e) => e.entry_type === 'structured_P').length,
     apas: entries.filter((e) => e.entry_type === 'structured_A').length,
     principles: principles.length,
   };
@@ -413,7 +414,7 @@ function ProjectDashboard() {
         {/* Capacidade Acumulada */}
         <AccumulatedCapacityCard
           projectId={id}
-          imvs_tested={counts.structured}
+          imvs_tested={counts.imvs}
           valid_principles={counts.principles}
           discarded_patterns={0}
           evolved_bottleneck={project.current_bottleneck}
