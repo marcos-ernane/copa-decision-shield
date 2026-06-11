@@ -80,6 +80,7 @@ export function COPAShell() {
 
   const [nudge, setNudge] = useState(false);
   const [blockerHint, setBlockerHint] = useState<string | null>(null);
+  const [copaSubmitting, setCopaSubmitting] = useState(false);
 
   // Load profile prefs.
   useEffect(() => {
@@ -169,7 +170,8 @@ export function COPAShell() {
   }
 
   async function handleDone(assess: AssessData) {
-    if (!projectId || !captureData || !bottleneck || !proveData) return;
+    if (!projectId || !captureData || !bottleneck || !proveData || copaSubmitting) return;
+    setCopaSubmitting(true);
     setAssessData(assess);
     const payload: CopaSessionData = {
       capture: captureData,
@@ -178,13 +180,15 @@ export function COPAShell() {
       assess,
       scenario_type: scenario ?? null,
     };
-    const { isFirstApa } = await saveCopaSession(projectId, payload);
-    setStep('done');
-
-    if (project?.pact_enabled) void markAllPhasesComplete(projectId);
-
-    const { data: { session } } = await supabase.auth.getSession();
-    if (isFirstApa && !session) setNudge(true);
+    try {
+      const { isFirstApa } = await saveCopaSession(projectId, payload);
+      setStep('done');
+      if (project?.pact_enabled) void markAllPhasesComplete(projectId);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (isFirstApa && !session) setNudge(true);
+    } finally {
+      setCopaSubmitting(false);
+    }
   }
 
   const recallPrinciple = useMemo(() => {

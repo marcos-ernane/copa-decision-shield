@@ -21,7 +21,7 @@ interface AssessData {
 
 interface Props {
   historyCount: number;
-  onDone: (data: AssessData) => void;
+  onDone: (data: AssessData) => Promise<void>;
 }
 
 const ASSESS_SUGGESTIONS = [
@@ -39,8 +39,19 @@ export function COPAAssess({ historyCount, onDone }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
+  const [saving, setSaving] = useState(false);
   const state: SuggestionState = suggestionStateFor(historyCount);
   const canNext = d.success_signal.trim() && d.cut_rule.trim();
+
+  async function conclude() {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await onDone(d);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function openSuggestions() {
     setSheetOpen(true);
@@ -91,8 +102,8 @@ export function COPAAssess({ historyCount, onDone }: Props) {
         <Button variant="outline" onClick={openSuggestions}>
           Ver sugestões
         </Button>
-        <Button className="flex-1" disabled={!canNext} onClick={() => onDone(d)}>
-          Concluir COPA
+        <Button className="flex-1" disabled={!canNext || saving} onClick={() => void conclude()}>
+          {saving ? 'Salvando…' : 'Concluir COPA'}
         </Button>
       </div>
 
