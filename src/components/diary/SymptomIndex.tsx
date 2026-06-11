@@ -104,7 +104,7 @@ export function SymptomIndex() {
     const chip = FILTER_CHIPS.find((c) => c.key === activeChip) ?? null;
     const terms = tokenize(query);
     const hasFilter = chip !== null || terms.length > 0;
-    type Item = { projectId: string; kind: 'entry' | 'principle'; id: string; text: string; score: number };
+    type Item = { projectId: string; kind: 'entry' | 'principle'; id: string; text: string; score: number; createdAt: string };
     if (!hasFilter) return { groups: [] as Array<{ projectId: string; items: Item[] }> };
 
     const items: Item[] = [];
@@ -122,6 +122,7 @@ export function SymptomIndex() {
             id: e.id,
             text: displayText(e, chip),
             score: s,
+            createdAt: e.created_at,
           });
         }
       }
@@ -131,18 +132,34 @@ export function SymptomIndex() {
       for (const p of principles as Principle[]) {
         const s = terms.length > 0 ? score(p.content, terms) : 1;
         if (s > 0) {
-          items.push({ projectId: p.project_id, kind: 'principle', id: p.id, text: p.content, score: s });
+          items.push({ projectId: p.project_id, kind: 'principle', id: p.id, text: p.content, score: s, createdAt: p.created_at });
         }
       }
     }
 
-    items.sort((a, b) => b.score - a.score);
+    // Ordena por score DESC; dentro do mesmo score, mais recente primeiro.
+    // Assim a deduplicação sempre mantém o registro mais atualizado.
+    items.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return b.createdAt.localeCompare(a.createdAt);
+    });
 
-    // Deduplica por texto idêntico dentro do mesmo projeto — evita exibir duplicatas
-    // de entradas criadas antes das correções de persistência (PRs #69/#70).
+    // Chave normalizada: minúsculas + sem acentos + espaços colapsados.
+    // Garante que variações de capitalização ("O proprietário" vs "o proprietário")
+    // sejam tratadas como o mesmo texto.
+    function dedupeKey(it: Item): string {
+      const norm = it.text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      return `${it.projectId}::${it.kind}::${norm}`;
+    }
+
     const seenKeys = new Set<string>();
     const deduped = items.filter((it) => {
-      const key = `${it.projectId}::${it.kind}::${it.text.trim()}`;
+      const key = dedupeKey(it);
       if (seenKeys.has(key)) return false;
       seenKeys.add(key);
       return true;
