@@ -131,8 +131,19 @@ export function SymptomIndex() {
     }
 
     items.sort((a, b) => b.score - a.score);
+
+    // Deduplica por texto idêntico dentro do mesmo projeto — evita exibir duplicatas
+    // de entradas criadas antes das correções de persistência (PRs #69/#70).
+    const seenKeys = new Set<string>();
+    const deduped = items.filter((it) => {
+      const key = `${it.projectId}::${it.kind}::${it.text.trim()}`;
+      if (seenKeys.has(key)) return false;
+      seenKeys.add(key);
+      return true;
+    });
+
     const map = new Map<string, Item[]>();
-    for (const it of items) {
+    for (const it of deduped) {
       const arr = map.get(it.projectId) ?? [];
       arr.push(it);
       map.set(it.projectId, arr);
