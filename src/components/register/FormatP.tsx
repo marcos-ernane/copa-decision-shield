@@ -39,7 +39,14 @@ const LAYERS: { value: OperationalLayer; label: string }[] = [
 function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boolean) => void }) {
   return (
     <div className="flex gap-2">
-      <Button size="sm" variant={value === true ? 'default' : 'outline'} onClick={() => onChange(true)}>SIM</Button>
+      <Button
+        size="sm"
+        variant={value === true ? 'default' : 'outline'}
+        className={value !== true ? 'border-dashed' : ''}
+        onClick={() => onChange(true)}
+      >
+        SIM
+      </Button>
       <Button size="sm" variant={value === false ? 'default' : 'outline'} onClick={() => onChange(false)}>NÃO</Button>
     </div>
   );
@@ -115,7 +122,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
   const isLastStep = step === TOTAL_STEPS - 1;
   const nextDisabled =
     (step === 0 && !action.trim()) ||
-    (step === 2 && !metric.trim());
+    (step === 2 && (!metric.trim() || measurable === false));
 
   return (
     <>
@@ -169,7 +176,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
 
       {step === 1 && (
         <div className="space-y-3">
-          <p className="text-label text-muted-foreground uppercase tracking-wide">Critérios da IMV</p>
+          <p className="text-label text-muted-foreground uppercase tracking-wide">Definição dos Critérios da IMV (Intervenção Mínima Viável)</p>
           <div>
             <p className="text-small mb-0.5">Reversível</p>
             <p className="text-[11px] text-muted-foreground mb-1">Se não funcionar, você desfaz sem prejuízo grande.</p>
