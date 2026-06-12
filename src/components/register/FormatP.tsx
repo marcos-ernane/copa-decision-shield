@@ -10,7 +10,7 @@ import { StepDots } from './StepDots';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 
 const IMV_HELP_TEXT = [
-  'IMV - Intervenção Mínima Viável, é o menor ajuste prático capaz de testar uma hipótese no mundo real e gerar aprendizado confiável. Ela não existe para resolver todo o cenário de uma vez, mas para transformar suposições em evidências.',
+  'IMV é o menor ajuste prático capaz de testar uma hipótese no mundo real e gerar aprendizado confiável. Ela não existe para resolver todo o cenário de uma vez, mas para transformar suposições em evidências.',
   'Uma boa IMV é específica, simples, reversível, exige poucos recursos, apresenta baixo risco e possui uma forma clara de medir o resultado.',
   'O objetivo não é acertar de primeira, mas aprender rapidamente com a realidade para tomar decisões melhores.',
   'Pergunte-se: "Qual é a menor ação que posso executar agora para validar minha hipótese e gerar o máximo de aprendizado com o mínimo de risco?"',
