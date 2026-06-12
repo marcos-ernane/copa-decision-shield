@@ -115,7 +115,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
   const isLastStep = step === TOTAL_STEPS - 1;
   const nextDisabled =
     (step === 0 && !action.trim()) ||
-    (step === 2 && !metric.trim());
+    (step === 2 && (!metric.trim() || measurable === false));
 
   return (
     <>
