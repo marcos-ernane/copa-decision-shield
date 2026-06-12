@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { Plus, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredO, type StructuredOContent } from '@/lib/register';
 import { StepDots } from './StepDots';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
@@ -35,9 +36,10 @@ interface TopicListProps {
   items: string[];
   onChange: (items: string[]) => void;
   placeholder?: string;
+  addLabel?: string;
 }
 
-function TopicList({ items, onChange, placeholder }: TopicListProps) {
+function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar tópico' }: TopicListProps) {
   const [expandedIdx, setExpandedIdx] = useState(items.length - 1);
 
   function add() {
@@ -66,14 +68,14 @@ function TopicList({ items, onChange, placeholder }: TopicListProps) {
         return (
           <div key={i} className="flex items-start gap-2 px-3 py-2.5">
             {isExpanded ? (
-              <textarea
-                className="flex-1 text-sm bg-transparent resize-none outline-none leading-snug"
-                value={item}
-                onChange={(e) => update(i, e.target.value)}
-                placeholder={placeholder}
-                autoFocus
-                rows={2}
-              />
+              <div className="flex-1 min-w-0">
+                <VoiceInput
+                  value={item}
+                  onChange={(v) => update(i, v)}
+                  placeholder={placeholder}
+                  rows={2}
+                />
+              </div>
             ) : (
               <button
                 type="button"
@@ -105,7 +107,7 @@ function TopicList({ items, onChange, placeholder }: TopicListProps) {
         className="w-full flex items-center gap-1.5 px-3 py-2 text-small text-[color:var(--color-brand-blue)] hover:bg-accent transition-colors"
       >
         <Plus className="size-4" />
-        Adicionar tópico
+        {addLabel}
       </button>
     </div>
   );
@@ -159,11 +161,12 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
       {step === 0 && (
         <div>
           <p className="text-small font-medium mb-0.5">R1 — Recursos</p>
-          <p className="text-small text-muted-foreground mb-2">O que já existe sem precisar criar.</p>
+          <p className="text-small text-muted-foreground mb-2">Liste os recursos do cenário que forem possíveis. (Não invente nada)</p>
           <TopicList
             items={resourceItems}
             onChange={setResourceItems}
-            placeholder="Descreva um recurso disponível…"
+            placeholder="O que já existe sem precisar criar"
+            addLabel="Adicionar recursos"
           />
         </div>
       )}
@@ -215,3 +218,4 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
     </div>
   );
 }
+
