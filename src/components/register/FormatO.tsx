@@ -241,11 +241,11 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
               Ajuda
             </button>
           </div>
-          <p className="text-small text-muted-foreground mb-2">O que parece importante mas não muda o resultado — dispersa do objetivo.</p>
+          <p className="text-small text-muted-foreground mb-2">O que parece importante mas não muda o resultado.<br />O que existe disperso do objetivo.</p>
           <TopicList
             items={frictionItems}
             onChange={setFrictionItems}
-            placeholder="Descreva um ruído que dispersa…"
+            placeholder="Descreva os ruídos do cenário"
           />
         </div>
       )}
