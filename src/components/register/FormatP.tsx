@@ -169,6 +169,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
 
       {step === 1 && (
         <div className="space-y-3">
+          <p className="text-label text-muted-foreground uppercase tracking-wide">Critérios da IMV</p>
           <div>
             <p className="text-small mb-0.5">Reversível</p>
             <p className="text-[11px] text-muted-foreground mb-1">Se não funcionar, você desfaz sem prejuízo grande.</p>
