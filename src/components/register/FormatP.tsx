@@ -207,13 +207,31 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
 
       {step === 2 && (
         <div className="space-y-3">
+          {measurable === false && (
+            <div className="rounded-md border border-[var(--color-brand-amber)] bg-amber-50 dark:bg-amber-950/20 px-3 py-2.5 space-y-0.5">
+              <p className="text-small font-medium" style={{ color: '#d97706' }}>Métrica bloqueada.</p>
+              <p className="text-small text-muted-foreground">
+                Sem mensurabilidade confirmada, não é possível definir uma métrica válida. Volte ao passo anterior e marque <strong>SIM</strong> em Mensurável.
+              </p>
+            </div>
+          )}
           <div>
             <p className="text-small text-muted-foreground mb-1">Métrica planejada (obrigatório)</p>
-            <Input value={metric} onChange={(e) => setMetric(e.target.value)} placeholder="Um fator númerico para se medir" />
+            <Input
+              value={metric}
+              onChange={(e) => setMetric(e.target.value)}
+              placeholder="Um fator númerico para se medir"
+              disabled={measurable === false}
+            />
           </div>
           <div>
             <p className="text-small text-muted-foreground mb-1">Prazo limite da IMV em ação</p>
-            <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+            <Input
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              disabled={measurable === false}
+            />
           </div>
         </div>
       )}
