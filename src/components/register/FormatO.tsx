@@ -246,6 +246,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
             items={frictionItems}
             onChange={setFrictionItems}
             placeholder="Descreva os ruídos do cenário"
+            addLabel="Adicionar ruídos"
           />
         </div>
       )}
@@ -267,7 +268,8 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
           <TopicList
             items={bottleneckItems}
             onChange={setBottleneckItems}
-            placeholder="Descreva uma restrição atual…"
+            placeholder="Descreva as restrições reais"
+            addLabel="Adicionar restrições"
           />
         </div>
       )}
