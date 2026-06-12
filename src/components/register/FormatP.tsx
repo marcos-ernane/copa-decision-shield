@@ -16,6 +16,39 @@ const IMV_HELP_TEXT = [
   'Pergunte-se: "Qual é a menor ação que posso executar agora para validar minha hipótese e gerar o máximo de aprendizado com o mínimo de risco?"',
 ];
 
+type CriteriaHelpKey = 'reversivel' | 'barato' | 'especifico' | 'mensuravel';
+
+const CRITERIA_HELP: Record<CriteriaHelpKey, { title: string; paragraphs: string[] }> = {
+  reversivel: {
+    title: 'Reversível',
+    paragraphs: [
+      'A IMV deve permitir que você teste uma ideia sem comprometer sua capacidade de continuar operando. Se o resultado não for o esperado, você deve conseguir interromper, ajustar ou desfazer o teste sem causar danos relevantes ao seu tempo, dinheiro, reputação, relacionamentos ou funcionamento do sistema. Uma boa IMV ensina mesmo quando falha, porque o custo do aprendizado permanece controlado.',
+      'Pergunte-se: Se esta IMV falhar completamente, conseguirei interromper, ajustar ou desfazê-la sem comprometer algo importante e mantendo minha capacidade de continuar operando?',
+    ],
+  },
+  barato: {
+    title: 'Barato',
+    paragraphs: [
+      'A IMV deve exigir o mínimo possível de recursos para ser executada. Isso inclui dinheiro, tempo, energia, atenção, equipe, materiais e esforço operacional. O objetivo não é economizar a qualquer custo, mas aprender antes de investir mais e não se frustrar com perda grande se falhar. Uma boa IMV gera evidências sem exigir uma aposta significativa.',
+      'Pergunte-se: Estou testando esta ideia com o menor investimento necessário para obter aprendizado confiável?',
+    ],
+  },
+  especifico: {
+    title: 'Específico',
+    paragraphs: [
+      'A IMV deve testar apenas uma hipótese, fricção ou ponto de melhoria claramente definido. O objetivo não é resolver vários problemas ao mesmo tempo, mas compreender o efeito de uma única mudança. Quando muitas coisas são alteradas simultaneamente, a relação entre causa e efeito se perde, tornando difícil saber o que realmente funcionou. Quanto mais focado for o teste, mais confiável será o aprendizado obtido.',
+      'Pergunte-se: Se esta IMV gerar resultado, saberei exatamente qual mudança produziu esse efeito?',
+    ],
+  },
+  mensuravel: {
+    title: 'Mensurável',
+    paragraphs: [
+      'A IMV deve possuir uma forma clara e objetiva de verificar se houve resultado. Sem uma métrica definida, você terá apenas percepções, opiniões ou impressões pessoais. Uma boa IMV permite comparar o antes e o depois por meio de números, indicadores ou evidências observáveis. O objetivo é substituir o achismo por dados que mostrem se a intervenção realmente produziu o efeito esperado.',
+      'Pergunte-se: Como vou medir o resultado deste teste e saber, de forma objetiva, se houve melhora, piora ou nenhuma mudança?',
+    ],
+  },
+};
+
 interface Props {
   projectId: string;
   scenarioType?: ScenarioType | null;
@@ -65,6 +98,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
   const [ethical, setEthical] = useState(initialData?.ethical_check ?? '');
   const [saving, setSaving] = useState(false);
   const [imvHelp, setImvHelp] = useState(false);
+  const [criteriaHelp, setCriteriaHelp] = useState<CriteriaHelpKey | null>(null);
 
   const hasChanges =
     action.trim() !== (initialData?.action ?? '') ||
@@ -154,6 +188,34 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
         </div>
       )}
 
+      {/* Bottom sheet de ajuda dos critérios */}
+      {criteriaHelp && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50"
+          onClick={() => setCriteriaHelp(null)}
+        >
+          <div
+            className="w-full bg-background rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-heading font-semibold">{CRITERIA_HELP[criteriaHelp].title}</h3>
+              <button
+                type="button"
+                onClick={() => setCriteriaHelp(null)}
+                className="p-1 rounded-md hover:bg-accent"
+                aria-label="Fechar ajuda"
+              >
+                <X className="size-5 text-muted-foreground" />
+              </button>
+            </div>
+            {CRITERIA_HELP[criteriaHelp].paragraphs.map((para, i) => (
+              <p key={i} className="text-body text-foreground leading-relaxed">{para}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
     <div className="space-y-4">
       <StepDots current={step} total={TOTAL_STEPS} />
 
@@ -178,7 +240,17 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
         <div className="space-y-3">
           <p className="text-label text-muted-foreground uppercase tracking-wide">Definição dos Critérios da IMV (Intervenção Mínima Viável)</p>
           <div>
-            <p className="text-small mb-0.5">Reversível</p>
+            <div className="flex items-center justify-between mb-0.5">
+              <p className="text-small">Reversível</p>
+              <button
+                type="button"
+                onClick={() => setCriteriaHelp('reversivel')}
+                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <CircleHelp className="size-3.5" />
+                Ajuda
+              </button>
+            </div>
             <p className="text-[11px] text-muted-foreground mb-1">Se não funcionar, você desfaz sem prejuízo grande.</p>
             <YesNo value={reversible} onChange={setReversible} />
             {reversible === false && (
@@ -186,7 +258,17 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
             )}
           </div>
           <div>
-            <p className="text-small mb-0.5">Barato</p>
+            <div className="flex items-center justify-between mb-0.5">
+              <p className="text-small">Barato</p>
+              <button
+                type="button"
+                onClick={() => setCriteriaHelp('barato')}
+                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <CircleHelp className="size-3.5" />
+                Ajuda
+              </button>
+            </div>
             <p className="text-[11px] text-muted-foreground mb-1">Exige pouco investimento, tempo e esforço.</p>
             <YesNo value={cheap} onChange={setCheap} />
             {cheap === false && (
@@ -194,7 +276,17 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
             )}
           </div>
           <div>
-            <p className="text-small mb-0.5">Específico</p>
+            <div className="flex items-center justify-between mb-0.5">
+              <p className="text-small">Específico</p>
+              <button
+                type="button"
+                onClick={() => setCriteriaHelp('especifico')}
+                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <CircleHelp className="size-3.5" />
+                Ajuda
+              </button>
+            </div>
             <p className="text-[11px] text-muted-foreground mb-1">Atua na fricção principal, uma coisa por vez.</p>
             <YesNo value={specific} onChange={setSpecific} />
             {specific === false && (
@@ -202,7 +294,17 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
             )}
           </div>
           <div>
-            <p className="text-small mb-0.5">Mensurável</p>
+            <div className="flex items-center justify-between mb-0.5">
+              <p className="text-small">Mensurável</p>
+              <button
+                type="button"
+                onClick={() => setCriteriaHelp('mensuravel')}
+                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <CircleHelp className="size-3.5" />
+                Ajuda
+              </button>
+            </div>
             <p className="text-[11px] text-muted-foreground mb-1">Gera número como resultado para saber se melhorou ou não.</p>
             <YesNo value={measurable} onChange={setMeasurable} />
             {measurable === false && (
