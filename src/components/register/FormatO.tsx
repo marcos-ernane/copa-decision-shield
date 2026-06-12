@@ -2,7 +2,7 @@
 // Cada campo usa lista de tópicos: "+" adiciona item, item anterior comprime.
 
 import { useState } from 'react';
-import { Plus, X, ChevronDown } from 'lucide-react';
+import { Plus, X, ChevronDown, CircleHelp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredO, type StructuredOContent } from '@/lib/register';
@@ -21,6 +21,23 @@ interface Props {
 }
 
 const TOTAL_STEPS = 3;
+
+const HELP = {
+  R1: {
+    title: 'R1 — Recursos',
+    text: 'Recursos são tudo aquilo que já existe no cenário e pode ser utilizado para gerar valor ou melhorar resultados. Não pense apenas em dinheiro ou equipamentos. Considere pessoas, conhecimentos, tempo, espaço, materiais, processos, relacionamentos, informações, confiança, fluxo de clientes e outros elementos disponíveis que estejam subutilizados ou pouco percebidos.\n\nPergunte-se: "O que já está presente neste cenário e pode ser melhor aproveitado?"',
+  },
+  R2: {
+    title: 'R2 — Ruídos',
+    text: 'Ruídos são tudo aquilo que ocupa espaço no cenário sem contribuir para o resultado. Eles confundem a análise, desviam a atenção e dificultam enxergar as verdadeiras causas dos problemas. Registre informações, atividades, opiniões, preocupações ou movimentos que consomem tempo, energia ou foco, mas não produzem impacto relevante.\n\nPergunte-se: "O que está presente neste cenário, parece importante, mas não altera o resultado?"',
+  },
+  R3: {
+    title: 'R3 — Restrições',
+    text: 'Restrições são os pontos que mais limitam o desempenho do cenário. Identifique onde o sistema perde mais tempo, dinheiro, energia, atenção ou oportunidades. Procure atrasos, desperdícios, retrabalho, erros recorrentes ou qualquer obstáculo que reduza os resultados e alimente outros problemas.\n\nPergunte-se: "Qual é a principal causa que limita este cenário e que, se corrigida, produziria o maior impacto?"',
+  },
+} as const;
+
+type HelpKey = keyof typeof HELP;
 
 function toItems(value: string | undefined | null): string[] {
   if (!value?.trim()) return [''];
@@ -118,6 +135,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [frictionItems, setFrictionItems] = useState<string[]>(() => toItems(initialData?.frictions));
   const [bottleneckItems, setBottleneckItems] = useState<string[]>(() => toItems(initialData?.bottleneck));
   const [saving, setSaving] = useState(false);
+  const [helpKey, setHelpKey] = useState<HelpKey | null>(null);
 
   const resourcesFilled = resourceItems.some((s) => s.trim());
   const frictionsFilled = frictionItems.some((s) => s.trim());
@@ -149,6 +167,35 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
   const fromCopa = isReviewing && !initialData?.resources?.trim() && !initialData?.frictions?.trim();
 
   return (
+    <>
+    {/* Modal de ajuda — bottom sheet */}
+    {helpKey && (
+      <div
+        className="fixed inset-0 z-50 flex items-end bg-black/50"
+        onClick={() => setHelpKey(null)}
+      >
+        <div
+          className="w-full bg-background rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-heading font-semibold">{HELP[helpKey].title}</h3>
+            <button
+              type="button"
+              onClick={() => setHelpKey(null)}
+              className="p-1 rounded-md hover:bg-accent"
+              aria-label="Fechar ajuda"
+            >
+              <X className="size-5 text-muted-foreground" />
+            </button>
+          </div>
+          {HELP[helpKey].text.split('\n\n').map((para, i) => (
+            <p key={i} className="text-body text-foreground leading-relaxed">{para}</p>
+          ))}
+        </div>
+      </div>
+    )}
+
     <div className="space-y-4">
       <StepDots current={step} total={TOTAL_STEPS} />
 
@@ -160,7 +207,17 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
 
       {step === 0 && (
         <div>
-          <p className="text-small font-medium mb-0.5">R1 — Recursos</p>
+          <div className="flex items-center justify-between mb-0.5">
+            <p className="text-small font-medium">R1 — Recursos</p>
+            <button
+              type="button"
+              onClick={() => setHelpKey('R1')}
+              className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <CircleHelp className="size-3.5" />
+              Ajuda
+            </button>
+          </div>
           <p className="text-small text-muted-foreground mb-2">No cenário, liste todos recursos que forem possíveis. (Não invente nada)</p>
           <TopicList
             items={resourceItems}
@@ -173,7 +230,17 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
 
       {step === 1 && (
         <div>
-          <p className="text-small font-medium mb-0.5">R2 — Ruídos</p>
+          <div className="flex items-center justify-between mb-0.5">
+            <p className="text-small font-medium">R2 — Ruídos</p>
+            <button
+              type="button"
+              onClick={() => setHelpKey('R2')}
+              className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <CircleHelp className="size-3.5" />
+              Ajuda
+            </button>
+          </div>
           <p className="text-small text-muted-foreground mb-2">O que parece importante mas não muda o resultado — dispersa do objetivo.</p>
           <TopicList
             items={frictionItems}
@@ -185,7 +252,17 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
 
       {step === 2 && (
         <div>
-          <p className="text-small font-medium mb-0.5">R3 — Restrições</p>
+          <div className="flex items-center justify-between mb-0.5">
+            <p className="text-small font-medium">R3 — Restrições</p>
+            <button
+              type="button"
+              onClick={() => setHelpKey('R3')}
+              className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <CircleHelp className="size-3.5" />
+              Ajuda
+            </button>
+          </div>
           <p className="text-small text-muted-foreground mb-2">O que está limitando hoje para avançar.</p>
           <TopicList
             items={bottleneckItems}
@@ -216,6 +293,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
         </Button>
       )}
     </div>
+    </>
   );
 }
 
