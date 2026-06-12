@@ -161,7 +161,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
       {step === 0 && (
         <div>
           <p className="text-small font-medium mb-0.5">R1 — Recursos</p>
-          <p className="text-small text-muted-foreground mb-2">Liste os recursos do cenário que forem possíveis. (Não invente nada)</p>
+          <p className="text-small text-muted-foreground mb-2">No cenário, liste todos recursos que forem possíveis. (Não invente nada)</p>
           <TopicList
             items={resourceItems}
             onChange={setResourceItems}
