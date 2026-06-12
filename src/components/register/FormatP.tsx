@@ -1,12 +1,20 @@
 // Formato P — Definição de IMV. Métrica obrigatória. 4 passos sequenciais.
 
 import { useState } from 'react';
+import { X, CircleHelp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredP, type StructuredPContent } from '@/lib/register';
 import { StepDots } from './StepDots';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
+
+const IMV_HELP_TEXT = [
+  'IMV - Intervenção Mínima Viável, é o menor ajuste prático capaz de testar uma hipótese no mundo real e gerar aprendizado confiável. Ela não existe para resolver todo o cenário de uma vez, mas para transformar suposições em evidências.',
+  'Uma boa IMV é específica, simples, reversível, exige poucos recursos, apresenta baixo risco e possui uma forma clara de medir o resultado.',
+  'O objetivo não é acertar de primeira, mas aprender rapidamente com a realidade para tomar decisões melhores.',
+  'Pergunte-se: "Qual é a menor ação que posso executar agora para validar minha hipótese e gerar o máximo de aprendizado com o mínimo de risco?"',
+];
 
 interface Props {
   projectId: string;
@@ -49,6 +57,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
   const [layer, setLayer] = useState<OperationalLayer | null>(initialData?.layer ?? null);
   const [ethical, setEthical] = useState(initialData?.ethical_check ?? '');
   const [saving, setSaving] = useState(false);
+  const [imvHelp, setImvHelp] = useState(false);
 
   const hasChanges =
     action.trim() !== (initialData?.action ?? '') ||
@@ -109,12 +118,51 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
     (step === 2 && !metric.trim());
 
   return (
+    <>
+      {/* Bottom sheet de ajuda da IMV */}
+      {imvHelp && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50"
+          onClick={() => setImvHelp(false)}
+        >
+          <div
+            className="w-full bg-background rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-heading font-semibold">IMV — Intervenção Mínima Viável</h3>
+              <button
+                type="button"
+                onClick={() => setImvHelp(false)}
+                className="p-1 rounded-md hover:bg-accent"
+                aria-label="Fechar ajuda"
+              >
+                <X className="size-5 text-muted-foreground" />
+              </button>
+            </div>
+            {IMV_HELP_TEXT.map((para, i) => (
+              <p key={i} className="text-body text-foreground leading-relaxed">{para}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
     <div className="space-y-4">
       <StepDots current={step} total={TOTAL_STEPS} />
 
       {step === 0 && (
         <div>
-          <p className="text-small text-muted-foreground mb-1">IMV - Intervenção Mínima Viável _ Uma ação específica. Sem IMV o método não avança. (Obrigatório)</p>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-small text-muted-foreground">IMV - Intervenção Mínima Viável. Uma ação específica. Sem IMV o método não avança. (Obrigatório)</p>
+            <button
+              type="button"
+              onClick={() => setImvHelp(true)}
+              className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-2"
+            >
+              <CircleHelp className="size-3.5" />
+              Ajuda
+            </button>
+          </div>
           <VoiceInput value={action} onChange={setAction} placeholder="Teste pequeno para confirmar se sua leitura do cenário está certa." rows={2} />
         </div>
       )}
@@ -222,5 +270,6 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
         </Button>
       )}
     </div>
+    </>
   );
 }
