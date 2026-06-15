@@ -28,6 +28,11 @@ const CUT_RULE_HELP_TEXT = [
   'Pergunte-se: Qual sinal ou condição específica mostrará, de forma clara e objetiva, que esta IMV deve ser interrompida, ajustada ou reavaliada?',
 ];
 
+const DEADLINE_HELP_TEXT = [
+  'O prazo da IMV é o período definido para observar e medir os efeitos da intervenção antes de analisá-la. Um prazo muito curto pode não dar tempo suficiente para que os resultados apareçam. Um prazo muito longo pode atrasar aprendizados, consumir recursos desnecessariamente e dificultar ajustes rápidos. O ideal é definir um período compatível com o ritmo natural do cenário e com o tempo necessário para que a métrica apresente evidências confiáveis. O objetivo não é esperar indefinidamente por resultados, nem encerrar o teste antes que ele tenha a chance de demonstrar seu efeito.',
+  'Pergunte-se: Quanto tempo esta IMV precisa para gerar evidências suficientes que permitam avaliar, com confiança, se a intervenção funcionou, precisa ser ajustada ou deve ser descartada?',
+];
+
 const CRITERIA_HELP: Record<CriteriaHelpKey, { title: string; paragraphs: string[] }> = {
   reversivel: {
     title: 'Reversível',
@@ -111,6 +116,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
   const [criteriaHelp, setCriteriaHelp] = useState<CriteriaHelpKey | null>(null);
   const [metricHelp, setMetricHelp] = useState(false);
   const [cutRuleHelp, setCutRuleHelp] = useState(false);
+  const [deadlineHelp, setDeadlineHelp] = useState(false);
 
   const hasChanges =
     action.trim() !== (initialData?.action ?? '') ||
@@ -286,6 +292,34 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
         </div>
       )}
 
+      {/* Bottom sheet de ajuda do prazo */}
+      {deadlineHelp && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50"
+          onClick={() => setDeadlineHelp(false)}
+        >
+          <div
+            className="w-full bg-background rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-heading font-semibold">Prazo Limite da IMV</h3>
+              <button
+                type="button"
+                onClick={() => setDeadlineHelp(false)}
+                className="p-1 rounded-md hover:bg-accent"
+                aria-label="Fechar ajuda"
+              >
+                <X className="size-5 text-muted-foreground" />
+              </button>
+            </div>
+            {DEADLINE_HELP_TEXT.map((para, i) => (
+              <p key={i} className="text-body text-foreground leading-relaxed">{para}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
     <div className="space-y-4">
       <StepDots current={step} total={TOTAL_STEPS} />
 
@@ -414,7 +448,17 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
             />
           </div>
           <div>
-            <p className="text-small text-muted-foreground mb-1">Prazo limite da IMV em ação</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-small text-muted-foreground">Prazo limite da IMV em ação</p>
+              <button
+                type="button"
+                onClick={() => setDeadlineHelp(true)}
+                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-2"
+              >
+                <CircleHelp className="size-3.5" />
+                Ajuda
+              </button>
+            </div>
             <Input
               type="date"
               value={deadline}
