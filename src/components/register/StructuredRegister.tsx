@@ -220,7 +220,7 @@ export function StructuredRegister() {
       <div className="space-y-4 p-4">
         {/* Seletor de fases com status */}
         <div>
-          <p className="text-small text-muted-foreground mb-2">Formato:</p>
+          <p className="text-label text-muted-foreground uppercase tracking-wide mb-2">Etapas do projeto</p>
           <div className="grid grid-cols-2 gap-2">
             {PHASE_ORDER.map((k) => {
               const status = statuses[k];
