@@ -164,7 +164,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
     (step === 1 && !frictionsFilled)
   );
 
-  const fromCopa = isReviewing && !initialData?.resources?.trim() && !initialData?.frictions?.trim();
+  const missingResourcesAndFrictions = isReviewing && !initialData?.resources?.trim() && !initialData?.frictions?.trim();
 
   return (
     <>
@@ -199,9 +199,9 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
     <div className="space-y-4">
       <StepDots current={step} total={TOTAL_STEPS} />
 
-      {fromCopa && (
+      {missingResourcesAndFrictions && (
         <p className="text-small text-muted-foreground rounded-md bg-muted px-3 py-2">
-          R1 e R2 não foram coletados pelo COPA de Bolso. Preencha e salve para completar o Mapa 3R.
+          R1 e R2 não foram preenchidos. Complete o Mapa 3R para salvar uma nova versão.
         </p>
       )}
 
