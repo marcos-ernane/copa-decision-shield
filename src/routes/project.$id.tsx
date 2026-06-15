@@ -48,6 +48,11 @@ function ProjectEntryRouter() {
     })();
   }, [id, navigate, isParentOnly]);
 
+  if (isParentOnly && showCalibrated && project) {
+    const days = daysSince(project.last_entry_at);
+    return <CalibratedReturnScreen project={project} daysSinceLast={days} />;
+  }
+
   if (!showCalibrated || !project) {
     // Se está em /project/:id sem filho → spinner enquanto determina destino (caso calibrated)
     // Se já tem rota filha → renderiza imediatamente sem flash de branco
@@ -61,6 +66,5 @@ function ProjectEntryRouter() {
     return <Outlet />;
   }
 
-  const days = daysSince(project.last_entry_at);
-  return <CalibratedReturnScreen project={project} daysSinceLast={days} />;
+  return <Outlet />;
 }
