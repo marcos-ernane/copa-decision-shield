@@ -160,9 +160,11 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
   }
 
   const isLastStep = step === TOTAL_STEPS - 1;
+  const today = new Date().toISOString().split('T')[0];
+  const deadlineError = !!deadline && deadline < today;
   const nextDisabled =
     (step === 0 && !action.trim()) ||
-    (step === 2 && (!metric.trim() || measurable === false));
+    (step === 2 && (!metric.trim() || measurable === false || deadlineError));
 
   return (
     <>
@@ -382,9 +384,16 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
             <Input
               type="date"
               value={deadline}
+              min={today}
               onChange={(e) => setDeadline(e.target.value)}
               disabled={measurable === false}
+              className={deadlineError ? 'border-destructive focus-visible:ring-destructive' : ''}
             />
+            {deadlineError && (
+              <p className="text-small mt-1" style={{ color: '#dc2626' }}>
+                Prazo inválido. Uma IMV não pode ter data retroativa — ela precisa de tempo real para ser executada. Selecione uma data a partir de hoje.
+              </p>
+            )}
           </div>
         </div>
       )}
