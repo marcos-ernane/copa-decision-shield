@@ -6,7 +6,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredP, type StructuredPContent } from '@/lib/register';
+import { updateProject } from '@/lib/projects';
 import { StepDots } from './StepDots';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 
 const IMV_HELP_TEXT = [
@@ -67,6 +78,7 @@ const CRITERIA_HELP: Record<CriteriaHelpKey, { title: string; paragraphs: string
 interface Props {
   projectId: string;
   scenarioType?: ScenarioType | null;
+  currentProjectLayer?: OperationalLayer | null;
   onSaved: () => void;
   onNextStep: () => void;
   onAutoSaved?: () => Promise<void>;
@@ -100,7 +112,7 @@ function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boole
   );
 }
 
-export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSaved, initialData, step, isReviewing }: Props) {
+export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onAutoSaved, initialData, step, isReviewing }: Props) {
   const [action, setAction] = useState(initialData?.action ?? '');
   const [reversible, setReversible] = useState<boolean | null>(initialData?.reversible ?? null);
   const [cheap, setCheap] = useState<boolean | null>(initialData?.cheap ?? null);
@@ -109,10 +121,12 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
   const [metric, setMetric] = useState(initialData?.metric ?? '');
   const [deadline, setDeadline] = useState(initialData?.deadline ?? '');
   const [cutRule, setCutRule] = useState(initialData?.cut_rule ?? '');
-  const [layer, setLayer] = useState<OperationalLayer | null>(initialData?.layer ?? null);
+  const [layer, setLayer] = useState<OperationalLayer | null>(initialData?.layer ?? currentProjectLayer ?? null);
   const [ethical, setEthical] = useState(initialData?.ethical_check ?? '');
   const [saving, setSaving] = useState(false);
   const [imvHelp, setImvHelp] = useState(false);
+  const [showLayerConfirm, setShowLayerConfirm] = useState(false);
+  const [pendingSave, setPendingSave] = useState(false);
   const [criteriaHelp, setCriteriaHelp] = useState<CriteriaHelpKey | null>(null);
   const [metricHelp, setMetricHelp] = useState(false);
   const [cutRuleHelp, setCutRuleHelp] = useState(false);
@@ -130,7 +144,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
     layer !== (initialData?.layer ?? null) ||
     (ethical.trim() || null) !== (initialData?.ethical_check ?? null);
 
-  async function save() {
+  async function performSave(updateLayer: boolean) {
     setSaving(true);
     await saveStructuredP(projectId, {
       action: action.trim(),
@@ -144,8 +158,21 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
       layer,
       ethical_check: ethical.trim() || null,
     }, scenarioType);
+    if (updateLayer && layer) {
+      await updateProject(projectId, { current_layer: layer });
+    }
     setSaving(false);
     onSaved();
+  }
+
+  async function save() {
+    const layerChanged = currentProjectLayer && layer !== currentProjectLayer;
+    if (layerChanged) {
+      setPendingSave(true);
+      setShowLayerConfirm(true);
+    } else {
+      await performSave(false);
+    }
   }
 
   // No passo 2 (Métrica + Prazo) em modo revisão, salva silenciosamente antes de avançar
@@ -501,7 +528,17 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
             <VoiceInput value={cutRule} onChange={setCutRule} placeholder="Condição que se deve parar ou ajustar uma IMV ativa" rows={2} />
           </div>
           <div>
-            <p className="text-small text-muted-foreground mb-1">Camada que é afetada pelo corte ou ajuste</p>
+            {currentProjectLayer && layer === currentProjectLayer ? (
+              <p className="text-small text-muted-foreground mb-1">
+                Camada registrada no projeto — toque em outra para alterar
+              </p>
+            ) : currentProjectLayer && layer !== currentProjectLayer ? (
+              <p className="text-small mb-1" style={{ color: '#d97706' }}>
+                Camada alterada — salvar irá atualizar o projeto inteiro
+              </p>
+            ) : (
+              <p className="text-small text-muted-foreground mb-1">Camada que é afetada pelo corte ou ajuste</p>
+            )}
             <div className="flex flex-wrap gap-2">
               {LAYERS.map((l) => (
                 <Button
@@ -539,6 +576,25 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
         </Button>
       )}
     </div>
+
+    <AlertDialog open={showLayerConfirm} onOpenChange={(v) => { if (!v) { setShowLayerConfirm(false); setPendingSave(false); setLayer(currentProjectLayer ?? null); } }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Alterar camada do projeto?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você alterou a camada operacional. Esta mudança vai atualizar a camada em todo o projeto, mantendo a orientação única. Deseja confirmar?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => { setShowLayerConfirm(false); setPendingSave(false); setLayer(currentProjectLayer ?? null); }}>
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={() => { setShowLayerConfirm(false); setPendingSave(false); void performSave(true); }}>
+            Confirmar alteração
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }
