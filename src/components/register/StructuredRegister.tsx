@@ -324,6 +324,7 @@ export function StructuredRegister() {
             key={`P-${lastEntryDate(entries, 'structured_P') ?? 'empty'}`}
             projectId={projectId}
             scenarioType={scenarioType}
+            currentProjectLayer={currentLayer}
             onSaved={onSaved}
             onNextStep={handleNextStep}
             onAutoSaved={handleAutoSaved}
