@@ -18,6 +18,11 @@ const IMV_HELP_TEXT = [
 
 type CriteriaHelpKey = 'reversivel' | 'barato' | 'especifico' | 'mensuravel';
 
+const METRIC_HELP_TEXT = [
+  'A métrica é o indicador que permitirá avaliar, de forma objetiva, se a sua IMV produziu o efeito esperado. Ela deve medir exatamente o aspecto que a intervenção pretende influenciar e possibilitar a comparação entre o antes e o depois do teste, além de ter um prazo bem definido. Sempre que possível, utilize números, quantidades, tempos, taxas, valores ou ocorrências que possam ser observados e registrados. Quanto mais específica, clara e fácil de acompanhar, mais confiável será a análise e o aprendizado gerado pela realidade.',
+  'Pergunte-se: Qual indicador específico posso observar ou medir para saber, com clareza e objetividade, se esta intervenção funcionou?',
+];
+
 const CRITERIA_HELP: Record<CriteriaHelpKey, { title: string; paragraphs: string[] }> = {
   reversivel: {
     title: 'Reversível',
@@ -99,6 +104,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
   const [saving, setSaving] = useState(false);
   const [imvHelp, setImvHelp] = useState(false);
   const [criteriaHelp, setCriteriaHelp] = useState<CriteriaHelpKey | null>(null);
+  const [metricHelp, setMetricHelp] = useState(false);
 
   const hasChanges =
     action.trim() !== (initialData?.action ?? '') ||
@@ -216,6 +222,34 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
         </div>
       )}
 
+      {/* Bottom sheet de ajuda da métrica */}
+      {metricHelp && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50"
+          onClick={() => setMetricHelp(false)}
+        >
+          <div
+            className="w-full bg-background rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-heading font-semibold">Métrica Planejada</h3>
+              <button
+                type="button"
+                onClick={() => setMetricHelp(false)}
+                className="p-1 rounded-md hover:bg-accent"
+                aria-label="Fechar ajuda"
+              >
+                <X className="size-5 text-muted-foreground" />
+              </button>
+            </div>
+            {METRIC_HELP_TEXT.map((para, i) => (
+              <p key={i} className="text-body text-foreground leading-relaxed">{para}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
     <div className="space-y-4">
       <StepDots current={step} total={TOTAL_STEPS} />
 
@@ -325,7 +359,17 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
             </div>
           )}
           <div>
-            <p className="text-small text-muted-foreground mb-1">Métrica planejada (obrigatório)</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-small text-muted-foreground">Métrica planejada (obrigatório)</p>
+              <button
+                type="button"
+                onClick={() => setMetricHelp(true)}
+                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-2"
+              >
+                <CircleHelp className="size-3.5" />
+                Ajuda
+              </button>
+            </div>
             <Input
               value={metric}
               onChange={(e) => setMetric(e.target.value)}
