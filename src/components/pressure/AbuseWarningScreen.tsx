@@ -36,14 +36,14 @@ export function AbuseWarningScreen({ projectId, count, onProceed }: Props) {
         </p>
       )}
       <p className="text-body text-foreground">
-        O COPA de Bolso pode trazer mais clareza do que o próximo passo imediato.
+        O Registro Estruturado pode trazer mais clareza do que o próximo passo imediato.
       </p>
       <div className="space-y-2">
         <Button
           className="w-full"
-          onClick={() => navigate({ to: '/copa', search: { projectId } as never })}
+          onClick={() => navigate({ to: '/register/structured', search: { projectId } as never })}
         >
-          Ir para COPA de Bolso
+          Ir para Registro Estruturado
         </Button>
         <Button className="w-full" variant="outline" onClick={onProceed}>
           Entrar no Modo Pressão mesmo assim

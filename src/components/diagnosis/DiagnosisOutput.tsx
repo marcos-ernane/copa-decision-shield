@@ -199,7 +199,7 @@ export function DiagnosisOutput({
       </section>
 
       <div className="grid grid-cols-1 gap-2">
-        <Button onClick={() => confirmAnd(onStartCopa)}>Iniciar COPA</Button>
+        <Button onClick={() => confirmAnd(onStartCopa)}>Iniciar Registro Estruturado</Button>
         <Button variant="outline" onClick={() => confirmAnd(onRegisterNow)}>
           Registrar agora
         </Button>

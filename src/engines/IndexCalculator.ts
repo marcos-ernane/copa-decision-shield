@@ -194,7 +194,7 @@ export function calculateIndex(
   const pressure = pressureSessions.length === 0 ? 0 : Math.round((pressureClean.length / pressureSessions.length) * 5);
 
   // 7. Ética — % IMVs com ethical_check
-  const ethicalSources = [...pEntries, ...pressureSessions, ...entries.filter((e) => e.entry_type === 'copa_session')];
+  const ethicalSources = [...pEntries, ...pressureSessions];
   const ethicsFilled = ethicalSources.filter((e) => {
     const c = e.content as Record<string, unknown>;
     return typeof c.ethical_check === 'string' && (c.ethical_check as string).trim().length > 0;

@@ -46,7 +46,7 @@ export function computeProjectState(
 
   for (const e of sorted) {
     // Ciclo completo — pronto para novo C
-    if (e.entry_type === 'structured_A' || e.entry_type === 'copa_session') return 'capturing';
+    if (e.entry_type === 'structured_A') return 'capturing';
 
     if (e.entry_type === 'structured_P') {
       const deadline = (e.content as { deadline?: string })?.deadline;

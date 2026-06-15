@@ -2,7 +2,8 @@
 // Não decide nada — apenas oferece opções.
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { SUGGESTION_DISCLAIMER } from '@/lib/copa';
+
+const SUGGESTION_DISCLAIMER = 'Sugestões para ajudar seu raciocínio. A decisão final é sua.';
 
 interface Props {
   open: boolean;

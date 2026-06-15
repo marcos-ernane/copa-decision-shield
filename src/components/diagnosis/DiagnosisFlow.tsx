@@ -146,7 +146,7 @@ export function DiagnosisFlow({ projectId }: Props) {
                 current_layer: f.layer,
               });
             }}
-            onStartCopa={() => navigate({ to: '/copa', search: { projectId } as never })}
+            onStartCopa={() => navigate({ to: '/register/structured', search: { projectId } as never })}
             onRegisterNow={() => navigate({ to: '/register/pulse', search: { projectId } as never })}
             onViewProject={() =>
               navigate({ to: '/project/$id/dashboard', params: { id: projectId } })

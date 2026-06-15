@@ -7,7 +7,7 @@ import { getPlanLimits, useAuthState, type PlanFeature } from '@/lib/planLimits'
 import { UpgradeSheet } from './UpgradeSheet';
 import { Lock } from 'lucide-react';
 
-const ALWAYS_FREE_ROUTES = ['/copa', '/pressure', '/register/pulse'];
+const ALWAYS_FREE_ROUTES = ['/pressure', '/register/pulse', '/register/structured'];
 const ALWAYS_FREE_FEATURES: PlanFeature[] = [
   'copa_unlimited',
   'pressure_unlimited',

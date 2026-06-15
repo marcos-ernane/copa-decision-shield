@@ -58,17 +58,7 @@ export function CreativeDone({ baseSession, mode, onAdjust }: Props) {
       setSavedNoProject(true);
       return;
     }
-    // Navega direto para COPA com Tela 3 (prove) pré-preenchida.
-    navigate({
-      to: '/copa',
-      search: {
-        projectId,
-        from: 'creative',
-        action: action.trim(),
-        metric: metric.trim(),
-        deadline: deadline || undefined,
-      },
-    });
+    navigate({ to: '/register/structured', search: { projectId } as never });
   }
 
   if (savedNoProject) {

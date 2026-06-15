@@ -31,7 +31,6 @@ function entryLabel(type: string): string {
     structured_A: '[A]-Aferição',
     pulse: 'Pulso',
     corrective: 'Corretiva',
-    copa_session: 'COPA',
     pressure_session: 'Pressão',
     creative_session: 'Criatividade',
     simulation_session: 'Simulação',
@@ -69,7 +68,7 @@ export function AccumulatedCapacityScreen({ projectId }: Props) {
       );
 
       const copaCount = entries.filter(
-        (e) => e.entry_type === 'structured_C' || e.entry_type === 'copa_session',
+        (e) => e.entry_type === 'structured_C',
       ).length;
       const iMVCount = entries.filter((e) => e.entry_type === 'structured_P').length;
       const apaCount = entries.filter((e) => e.entry_type === 'structured_A').length;
@@ -83,7 +82,7 @@ export function AccumulatedCapacityScreen({ projectId }: Props) {
         : 0;
 
       const timeline = sorted
-        .filter((e) => ['structured_C', 'structured_P', 'structured_A', 'copa_session'].includes(e.entry_type))
+        .filter((e) => ['structured_C', 'structured_P', 'structured_A'].includes(e.entry_type))
         .slice(-20)
         .map((e) => ({
           date: new Date(e.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),

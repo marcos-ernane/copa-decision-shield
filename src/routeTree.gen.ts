@@ -17,7 +17,6 @@ import { Route as PanelRouteImport } from './routes/panel'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as DiaryRouteImport } from './routes/diary'
 import { Route as CreativeRouteImport } from './routes/creative'
-import { Route as CopaRouteImport } from './routes/copa'
 import { Route as ConcludedRouteImport } from './routes/concluded'
 import { Route as CompassRouteImport } from './routes/compass'
 import { Route as IndexRouteImport } from './routes/index'
@@ -34,10 +33,6 @@ import { Route as PanelTransferRouteImport } from './routes/panel.transfer'
 import { Route as PanelRubricRouteImport } from './routes/panel.rubric'
 import { Route as PanelBaselineRouteImport } from './routes/panel.baseline'
 import { Route as DiarySplatRouteImport } from './routes/diary.$'
-import { Route as CopaProveRouteImport } from './routes/copa.prove'
-import { Route as CopaOrganizeRouteImport } from './routes/copa.organize'
-import { Route as CopaCaptureRouteImport } from './routes/copa.capture'
-import { Route as CopaAssessRouteImport } from './routes/copa.assess'
 import { Route as CompassSimulationsRouteImport } from './routes/compass.simulations'
 import { Route as CompassSheetsRouteImport } from './routes/compass.sheets'
 import { Route as CompassSheetRouteImport } from './routes/compass.sheet'
@@ -94,11 +89,6 @@ const DiaryRoute = DiaryRouteImport.update({
 const CreativeRoute = CreativeRouteImport.update({
   id: '/creative',
   path: '/creative',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CopaRoute = CopaRouteImport.update({
-  id: '/copa',
-  path: '/copa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConcludedRoute = ConcludedRouteImport.update({
@@ -180,26 +170,6 @@ const DiarySplatRoute = DiarySplatRouteImport.update({
   id: '/$',
   path: '/$',
   getParentRoute: () => DiaryRoute,
-} as any)
-const CopaProveRoute = CopaProveRouteImport.update({
-  id: '/prove',
-  path: '/prove',
-  getParentRoute: () => CopaRoute,
-} as any)
-const CopaOrganizeRoute = CopaOrganizeRouteImport.update({
-  id: '/organize',
-  path: '/organize',
-  getParentRoute: () => CopaRoute,
-} as any)
-const CopaCaptureRoute = CopaCaptureRouteImport.update({
-  id: '/capture',
-  path: '/capture',
-  getParentRoute: () => CopaRoute,
-} as any)
-const CopaAssessRoute = CopaAssessRouteImport.update({
-  id: '/assess',
-  path: '/assess',
-  getParentRoute: () => CopaRoute,
 } as any)
 const CompassSimulationsRoute = CompassSimulationsRouteImport.update({
   id: '/simulations',
@@ -292,7 +262,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/compass': typeof CompassRouteWithChildren
   '/concluded': typeof ConcludedRoute
-  '/copa': typeof CopaRouteWithChildren
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
   '/onboarding': typeof OnboardingRoute
@@ -310,10 +279,6 @@ export interface FileRoutesByFullPath {
   '/compass/sheet': typeof CompassSheetRoute
   '/compass/sheets': typeof CompassSheetsRoute
   '/compass/simulations': typeof CompassSimulationsRoute
-  '/copa/assess': typeof CopaAssessRoute
-  '/copa/capture': typeof CopaCaptureRoute
-  '/copa/organize': typeof CopaOrganizeRoute
-  '/copa/prove': typeof CopaProveRoute
   '/diary/$': typeof DiarySplatRoute
   '/panel/baseline': typeof PanelBaselineRoute
   '/panel/rubric': typeof PanelRubricRoute
@@ -339,7 +304,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/concluded': typeof ConcludedRoute
-  '/copa': typeof CopaRouteWithChildren
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
   '/onboarding': typeof OnboardingRoute
@@ -355,10 +319,6 @@ export interface FileRoutesByTo {
   '/compass/sheet': typeof CompassSheetRoute
   '/compass/sheets': typeof CompassSheetsRoute
   '/compass/simulations': typeof CompassSimulationsRoute
-  '/copa/assess': typeof CopaAssessRoute
-  '/copa/capture': typeof CopaCaptureRoute
-  '/copa/organize': typeof CopaOrganizeRoute
-  '/copa/prove': typeof CopaProveRoute
   '/diary/$': typeof DiarySplatRoute
   '/panel/baseline': typeof PanelBaselineRoute
   '/panel/rubric': typeof PanelRubricRoute
@@ -386,7 +346,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/compass': typeof CompassRouteWithChildren
   '/concluded': typeof ConcludedRoute
-  '/copa': typeof CopaRouteWithChildren
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
   '/onboarding': typeof OnboardingRoute
@@ -404,10 +363,6 @@ export interface FileRoutesById {
   '/compass/sheet': typeof CompassSheetRoute
   '/compass/sheets': typeof CompassSheetsRoute
   '/compass/simulations': typeof CompassSimulationsRoute
-  '/copa/assess': typeof CopaAssessRoute
-  '/copa/capture': typeof CopaCaptureRoute
-  '/copa/organize': typeof CopaOrganizeRoute
-  '/copa/prove': typeof CopaProveRoute
   '/diary/$': typeof DiarySplatRoute
   '/panel/baseline': typeof PanelBaselineRoute
   '/panel/rubric': typeof PanelRubricRoute
@@ -436,7 +391,6 @@ export interface FileRouteTypes {
     | '/'
     | '/compass'
     | '/concluded'
-    | '/copa'
     | '/creative'
     | '/diary'
     | '/onboarding'
@@ -454,10 +408,6 @@ export interface FileRouteTypes {
     | '/compass/sheet'
     | '/compass/sheets'
     | '/compass/simulations'
-    | '/copa/assess'
-    | '/copa/capture'
-    | '/copa/organize'
-    | '/copa/prove'
     | '/diary/$'
     | '/panel/baseline'
     | '/panel/rubric'
@@ -483,7 +433,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/concluded'
-    | '/copa'
     | '/creative'
     | '/diary'
     | '/onboarding'
@@ -499,10 +448,6 @@ export interface FileRouteTypes {
     | '/compass/sheet'
     | '/compass/sheets'
     | '/compass/simulations'
-    | '/copa/assess'
-    | '/copa/capture'
-    | '/copa/organize'
-    | '/copa/prove'
     | '/diary/$'
     | '/panel/baseline'
     | '/panel/rubric'
@@ -529,7 +474,6 @@ export interface FileRouteTypes {
     | '/'
     | '/compass'
     | '/concluded'
-    | '/copa'
     | '/creative'
     | '/diary'
     | '/onboarding'
@@ -547,10 +491,6 @@ export interface FileRouteTypes {
     | '/compass/sheet'
     | '/compass/sheets'
     | '/compass/simulations'
-    | '/copa/assess'
-    | '/copa/capture'
-    | '/copa/organize'
-    | '/copa/prove'
     | '/diary/$'
     | '/panel/baseline'
     | '/panel/rubric'
@@ -578,7 +518,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CompassRoute: typeof CompassRouteWithChildren
   ConcludedRoute: typeof ConcludedRoute
-  CopaRoute: typeof CopaRouteWithChildren
   CreativeRoute: typeof CreativeRoute
   DiaryRoute: typeof DiaryRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
@@ -652,13 +591,6 @@ declare module '@tanstack/react-router' {
       path: '/creative'
       fullPath: '/creative'
       preLoaderRoute: typeof CreativeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/copa': {
-      id: '/copa'
-      path: '/copa'
-      fullPath: '/copa'
-      preLoaderRoute: typeof CopaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/concluded': {
@@ -772,34 +704,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/diary/$'
       preLoaderRoute: typeof DiarySplatRouteImport
       parentRoute: typeof DiaryRoute
-    }
-    '/copa/prove': {
-      id: '/copa/prove'
-      path: '/prove'
-      fullPath: '/copa/prove'
-      preLoaderRoute: typeof CopaProveRouteImport
-      parentRoute: typeof CopaRoute
-    }
-    '/copa/organize': {
-      id: '/copa/organize'
-      path: '/organize'
-      fullPath: '/copa/organize'
-      preLoaderRoute: typeof CopaOrganizeRouteImport
-      parentRoute: typeof CopaRoute
-    }
-    '/copa/capture': {
-      id: '/copa/capture'
-      path: '/capture'
-      fullPath: '/copa/capture'
-      preLoaderRoute: typeof CopaCaptureRouteImport
-      parentRoute: typeof CopaRoute
-    }
-    '/copa/assess': {
-      id: '/copa/assess'
-      path: '/assess'
-      fullPath: '/copa/assess'
-      preLoaderRoute: typeof CopaAssessRouteImport
-      parentRoute: typeof CopaRoute
     }
     '/compass/simulations': {
       id: '/compass/simulations'
@@ -948,22 +852,6 @@ const CompassRouteChildren: CompassRouteChildren = {
 const CompassRouteWithChildren =
   CompassRoute._addFileChildren(CompassRouteChildren)
 
-interface CopaRouteChildren {
-  CopaAssessRoute: typeof CopaAssessRoute
-  CopaCaptureRoute: typeof CopaCaptureRoute
-  CopaOrganizeRoute: typeof CopaOrganizeRoute
-  CopaProveRoute: typeof CopaProveRoute
-}
-
-const CopaRouteChildren: CopaRouteChildren = {
-  CopaAssessRoute: CopaAssessRoute,
-  CopaCaptureRoute: CopaCaptureRoute,
-  CopaOrganizeRoute: CopaOrganizeRoute,
-  CopaProveRoute: CopaProveRoute,
-}
-
-const CopaRouteWithChildren = CopaRoute._addFileChildren(CopaRouteChildren)
-
 interface DiaryRouteChildren {
   DiarySplatRoute: typeof DiarySplatRoute
 }
@@ -1044,7 +932,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CompassRoute: CompassRouteWithChildren,
   ConcludedRoute: ConcludedRoute,
-  CopaRoute: CopaRouteWithChildren,
   CreativeRoute: CreativeRoute,
   DiaryRoute: DiaryRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
@@ -1064,3 +951,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

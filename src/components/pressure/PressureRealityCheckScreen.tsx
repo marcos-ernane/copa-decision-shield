@@ -52,14 +52,14 @@ export function PressureRealityCheckScreen({ onSkip, onProceed }: Props) {
       <div className="space-y-5 p-4">
         <p className="text-body text-foreground">
           O que você descreveu parece mais uma pressão de percepção do que urgência real.
-          Você pode querer começar pelo COPA de Bolso — mais espaço para clareza.
+          Você pode querer começar pelo Registro Estruturado — mais espaço para clareza.
         </p>
         <div className="space-y-2">
           <Button
             className="w-full"
-            onClick={() => navigate({ to: '/copa' })}
+            onClick={() => navigate({ to: '/register/structured' })}
           >
-            Ir para COPA de Bolso
+            Ir para Registro Estruturado
           </Button>
           <Button
             className="w-full"

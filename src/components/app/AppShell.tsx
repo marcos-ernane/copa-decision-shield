@@ -14,7 +14,6 @@ const NO_SHELL_PREFIXES = [
 ];
 
 const NO_FABS_PREFIXES = [
-  '/copa',
   '/pressure',
   '/protocol5',
   '/register/',

@@ -427,18 +427,14 @@ function ProjectDashboard() {
           const { nextPhase, allDone } = copaProgress;
           const ctaLabel =
             allDone || !nextPhase || nextPhase === 'C'
-              ? 'Abrir COPA de Bolso'
+              ? 'Iniciar Registro Estruturado'
               : nextPhase === 'O'
               ? 'Registrar Organização (Formato O)'
               : nextPhase === 'P'
               ? 'Registrar Prova (Formato P)'
               : 'Registrar APA (Formato A)';
           const handleCta = () => {
-            if (allDone || !nextPhase || nextPhase === 'C') {
-              void navigate({ to: '/copa', search: { projectId: id } as never });
-            } else {
-              void navigate({ to: '/register/structured', search: { projectId: id } as never });
-            }
+            void navigate({ to: '/register/structured', search: { projectId: id } as never });
           };
           return (
             <section className="rounded-md border border-[var(--color-brand-amber)] bg-card p-4 space-y-3">

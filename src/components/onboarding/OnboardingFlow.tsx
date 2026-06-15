@@ -22,8 +22,7 @@ type Phase =
   | 'p2_contract'
   | 'p2_course_variant'
   | 'p3_project'
-  | 'p3_baseline_offer'
-  | 'p4_copa';
+  | 'p3_baseline_offer';
 
 interface Props {
   cameFrom: CameFrom | null;
@@ -103,22 +102,12 @@ export function OnboardingFlow({ cameFrom }: Props) {
       {phase === 'p3_baseline_offer' && (
         <BaselineOfferScreen
           onTake={() => {
-            // Diagnóstico real é construído num sprint posterior.
-            // Por ora, segue para COPA. O acesso permanente fica no Painel (Sprint futuro).
-            setPhase('p4_copa');
-          }}
-          onSkip={() => setPhase('p4_copa')}
-        />
-      )}
-      {phase === 'p4_copa' && (
-        <CopaPocketScreen
-          onComplete={() => {
             GuestStorage.setProfile({ onboarding_completed: true });
-            navigate({ to: '/' });
+            navigate({ to: '/register/structured' });
           }}
-          onLater={() => {
-            // Onboarding permanece incompleto até COPA ser executado
-            navigate({ to: '/' });
+          onSkip={() => {
+            GuestStorage.setProfile({ onboarding_completed: true });
+            navigate({ to: '/register/structured' });
           }}
         />
       )}
@@ -404,7 +393,7 @@ function BaselineOfferScreen({
           SIM — FAZER O DIAGNÓSTICO
         </Button>
         <Button size="lg" variant="outline" className="w-full" onClick={onSkip}>
-          PULAR — IR PARA O COPA
+          PULAR — IR PARA O REGISTRO
         </Button>
       </div>
     </div>
