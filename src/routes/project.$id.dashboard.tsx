@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { getProject, listEntries, listPrinciples, updateProject } from '@/lib/projects';
-import { computeProjectState, STATE_DISPLAY } from '@/lib/projectState';
+import { computeProjectState, deriveProjectStatus } from '@/lib/projectState';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import { IMVProgressBar } from '@/components/project/IMVProgressBar';
@@ -169,6 +169,7 @@ function ProjectDashboard() {
   if (!project) return null;
 
   const currentState = computeProjectState(project, entries);
+  const stateDisplay = deriveProjectStatus(project, entries);
   const copaProgress = computeCopaProgress(entries);
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
@@ -311,8 +312,8 @@ function ProjectDashboard() {
             >
               <h2 className="text-label text-muted-foreground uppercase">Onde estou agora</h2>
               <div className="flex items-center justify-between">
-                <p className={`text-heading ${STATE_DISPLAY[currentState].color}`}>
-                  {STATE_DISPLAY[currentState].icon} {STATE_DISPLAY[currentState].label}
+                <p className={`text-heading ${stateDisplay.color}`}>
+                  {stateDisplay.icon} {stateDisplay.label}
                 </p>
                 <ChevronRight className="size-4 text-muted-foreground shrink-0" />
               </div>
@@ -333,8 +334,8 @@ function ProjectDashboard() {
           ) : (
             <section className="rounded-md border border-border bg-card p-4 space-y-3">
               <h2 className="text-label text-muted-foreground uppercase">Onde estou agora</h2>
-              <p className={`text-heading ${STATE_DISPLAY[currentState].color}`}>
-                {STATE_DISPLAY[currentState].icon} {STATE_DISPLAY[currentState].label}
+              <p className={`text-heading ${stateDisplay.color}`}>
+                {stateDisplay.icon} {stateDisplay.label}
               </p>
               {currentState === 'paused' && project.pause_reason && (
                 <p className="text-small text-muted-foreground italic">"{project.pause_reason}"</p>
