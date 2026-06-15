@@ -6,19 +6,25 @@ import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { createProject } from '@/lib/projects';
-import type { ScenarioType } from '@/types/app';
+import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 export const Route = createFileRoute('/project/new')({
   component: NewProject,
 });
 
-const SCENARIOS: { value: ScenarioType | null; label: string }[] = [
-  { value: 'fluxo', label: 'Fluxo' },
-  { value: 'processo', label: 'Processo' },
-  { value: 'oferta', label: 'Oferta' },
-  { value: 'relacionamento', label: 'Relacionamento' },
-  { value: 'pressao', label: 'Pressão' },
-  { value: null, label: 'Definir depois' },
+const SCENARIOS: { value: ScenarioType; label: string; description: string }[] = [
+  { value: 'fluxo',          label: 'Fluxo',          description: 'Movimento de atenção ou demanda' },
+  { value: 'processo',       label: 'Processo',        description: 'Etapas em sequência' },
+  { value: 'oferta',         label: 'Oferta',          description: 'Produto, serviço ou decisão' },
+  { value: 'relacionamento', label: 'Relacionamento',  description: 'Interação entre pessoas' },
+  { value: 'pressao',        label: 'Pressão',         description: 'Urgência ou risco ativo' },
+];
+
+const LAYERS: { value: OperationalLayer; label: string; description: string }[] = [
+  { value: 'operabilidade', label: 'Operabilidade', description: 'O básico não funciona' },
+  { value: 'conversao',     label: 'Conversão',     description: 'Não vira resultado' },
+  { value: 'recorrencia',   label: 'Recorrência',   description: 'Não se repete' },
+  { value: 'escala',        label: 'Escala',        description: 'Não cresce' },
 ];
 
 function NewProject() {
@@ -27,12 +33,13 @@ function NewProject() {
   const [name, setName] = useState('');
   const [north, setNorth] = useState('');
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
+  const [layer, setLayer] = useState<OperationalLayer | null>(null);
   const [notifyAuto, setNotifyAuto] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const nameOk = name.trim().length >= 2 && name.trim().length <= 80;
   const northOk = north.trim().length >= 10 && north.trim().length <= 300;
-  const canSubmit = nameOk && northOk && !submitting;
+  const canSubmit = nameOk && northOk && scenario !== null && layer !== null && !submitting;
 
   async function submit() {
     if (!canSubmit) return;
@@ -42,8 +49,8 @@ function NewProject() {
         name,
         north,
         scenario_type: scenario,
+        current_layer: layer,
       });
-      // Notificação: persistir depois (Sprint de notificações). Hoje só registra preferência.
       void notifyAuto;
       navigate({ to: '/project/$id/dashboard', params: { id: project.id } });
     } finally {
@@ -86,12 +93,13 @@ function NewProject() {
 
         <div className="space-y-2">
           <label className="text-label text-muted-foreground uppercase">
-            Tipo de cenário (opcional)
+            Tipo de cenário <span className="text-destructive">*</span>
           </label>
+          <p className="text-label text-muted-foreground">Qual é a natureza do que você está enfrentando?</p>
           <div className="flex flex-wrap gap-2">
             {SCENARIOS.map((s) => (
               <button
-                key={s.label}
+                key={s.value}
                 onClick={() => setScenario(s.value)}
                 className={`rounded-full border px-3 py-1 text-small transition-colors ${
                   scenario === s.value
@@ -103,6 +111,38 @@ function NewProject() {
               </button>
             ))}
           </div>
+          {scenario && (
+            <p className="text-label text-muted-foreground">
+              {SCENARIOS.find((s) => s.value === scenario)?.description}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-label text-muted-foreground uppercase">
+            Camada operacional <span className="text-destructive">*</span>
+          </label>
+          <p className="text-label text-muted-foreground">Onde está o principal obstáculo agora?</p>
+          <div className="flex flex-wrap gap-2">
+            {LAYERS.map((l) => (
+              <button
+                key={l.value}
+                onClick={() => setLayer(l.value)}
+                className={`rounded-full border px-3 py-1 text-small transition-colors ${
+                  layer === l.value
+                    ? 'border-foreground bg-foreground text-background'
+                    : 'border-border bg-card text-foreground hover:bg-accent'
+                }`}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
+          {layer && (
+            <p className="text-label text-muted-foreground">
+              {LAYERS.find((l) => l.value === layer)?.description}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-3">
@@ -125,6 +165,12 @@ function NewProject() {
             />
           </button>
         </div>
+
+        {(!scenario || !layer) && nameOk && northOk && (
+          <p className="text-small text-muted-foreground text-center">
+            Selecione o tipo de cenário e a camada operacional para criar o projeto.
+          </p>
+        )}
 
         <Button size="lg" className="w-full" disabled={!canSubmit} onClick={submit}>
           CRIAR PROJETO

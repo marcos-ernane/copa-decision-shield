@@ -3,7 +3,7 @@
 import { GuestStorage, guestId } from './guestStorage';
 import { supabase } from './supabase';
 import type { Project, Entry, Principle } from '@/types/database';
-import type { ScenarioType, ProjectState } from '@/types/app';
+import type { ScenarioType, OperationalLayer, ProjectState } from '@/types/app';
 
 export async function listProjects(): Promise<Project[]> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -59,6 +59,7 @@ export interface NewProjectInput {
   name: string;
   north: string;
   scenario_type: ScenarioType | null;
+  current_layer: OperationalLayer | null;
 }
 
 export async function createProject(input: NewProjectInput): Promise<Project> {
@@ -77,7 +78,7 @@ export async function createProject(input: NewProjectInput): Promise<Project> {
     current_copa_phase: null,
     last_recalled_principle_id: null,
     scenario_type: input.scenario_type,
-    current_layer: null,
+    current_layer: input.current_layer,
     pact_enabled: false,
     pact_day_capture: 0,
     pact_day_organize: 0,
