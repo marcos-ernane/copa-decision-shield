@@ -16,13 +16,14 @@ interface Props {
   project: Project;
   recallPrinciple?: Principle | null;
   /** Quando fornecido, exibe o botão [•••] no card (Seção 12.1 do PRD). */
+  onEdit?: () => void;
   onConclude?: () => void;
   onArchive?: () => void;
   onPause?: () => void;
   onResume?: () => void;
 }
 
-export function ProjectCard({ project, recallPrinciple, onConclude, onArchive, onPause, onResume }: Props) {
+export function ProjectCard({ project, recallPrinciple, onEdit, onConclude, onArchive, onPause, onResume }: Props) {
   const navigate = useNavigate();
   const entryType = determineEntryType(project);
   const days = daysSince(project.last_entry_at);
@@ -30,7 +31,7 @@ export function ProjectCard({ project, recallPrinciple, onConclude, onArchive, o
   const showRecall =
     recallPrinciple &&
     (project.state === 'blocked' || project.state === 'new');
-  const showMenu = !!(onConclude || onArchive || onPause || onResume);
+  const showMenu = !!(onEdit || onConclude || onArchive || onPause || onResume);
 
   const cardTo =
     entryType === 'direct'
@@ -95,6 +96,12 @@ export function ProjectCard({ project, recallPrinciple, onConclude, onArchive, o
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                {onEdit && (
+                  <DropdownMenuItem onClick={onEdit}>Editar projeto</DropdownMenuItem>
+                )}
+                {(onEdit && (onResume || onPause || onConclude || onArchive)) && (
+                  <DropdownMenuSeparator />
+                )}
                 {onResume && (
                   <DropdownMenuItem onClick={onResume}>Retomar projeto</DropdownMenuItem>
                 )}
