@@ -41,26 +41,22 @@ export function SimulationApply({ simulation, onClose }: Props) {
     };
   }, []);
 
-  async function openCopaNew() {
+  async function openStructuredForProject(projectId: string) {
+    void insertSimulationEntry(projectId, simulation.id, simulation.title, simulation.type, simulation.layer).catch(() => {});
+    navigate({ to: '/register/structured', search: { projectId } as never });
+  }
+
+  async function openStructuredNew() {
     const all = await listProjects();
     const active = all.find(
       (p) => p.state !== 'concluded' && p.state !== 'archived' && p.state !== 'paused',
     );
     if (active) {
       void insertSimulationEntry(active.id, simulation.id, simulation.title, simulation.type, simulation.layer).catch(() => {});
+      navigate({ to: '/register/structured', search: { projectId: active.id } as never });
+    } else {
+      navigate({ to: '/register/structured' });
     }
-    navigate({
-      to: '/copa',
-      search: { type: simulation.type, layer: simulation.layer },
-    });
-  }
-
-  async function openCopaForProject(projectId: string) {
-    void insertSimulationEntry(projectId, simulation.id, simulation.title, simulation.type, simulation.layer).catch(() => {});
-    navigate({
-      to: '/copa',
-      search: { projectId, type: simulation.type, layer: simulation.layer },
-    });
   }
 
   return (
@@ -74,8 +70,8 @@ export function SimulationApply({ simulation, onClose }: Props) {
         </p>
       </div>
 
-      <Button className="w-full" onClick={() => void openCopaNew()}>
-        Abrir COPA com tipo e camada
+      <Button className="w-full" onClick={() => void openStructuredNew()}>
+        Abrir Registro Estruturado
       </Button>
 
       {projects.length > 0 && (
@@ -88,7 +84,7 @@ export function SimulationApply({ simulation, onClose }: Props) {
               <li key={p.id}>
                 <button
                   type="button"
-                  onClick={() => void openCopaForProject(p.id)}
+                  onClick={() => void openStructuredForProject(p.id)}
                   className="w-full text-left rounded-md border border-border bg-card p-3 hover:bg-accent/30"
                 >
                   <p className="text-body text-foreground">{p.name}</p>

@@ -57,7 +57,7 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
     if (cycle[phase].completed_this_week) {
       void navigate({ to: '/diary' });
     } else {
-      void navigate({ to: '/copa', search: { projectId } as never });
+      void navigate({ to: '/register/structured', search: { projectId } as never });
     }
   }
 

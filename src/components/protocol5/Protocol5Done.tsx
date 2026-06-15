@@ -35,10 +35,10 @@ export function Protocol5Done({ type, fact, friction, microAction, signal }: Pro
 
       <div className="flex flex-col gap-2">
         <Button
-          onClick={() => navigate({ to: '/copa', search: { type } })}
+          onClick={() => navigate({ to: '/register/structured' })}
           className="w-full"
         >
-          Abrir COPA completo
+          Abrir Registro Estruturado
         </Button>
         <Button
           variant="outline"

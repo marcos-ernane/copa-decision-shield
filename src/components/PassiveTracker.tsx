@@ -48,7 +48,7 @@ export function PassiveTracker() {
     });
 
     // Detecta abandono: se a rota anterior era de registro e não houve nova entry.
-    const REGISTER_PREFIXES = ['/copa', '/pressure', '/register'];
+    const REGISTER_PREFIXES = ['/pressure', '/register'];
     if (
       prevPath.current &&
       REGISTER_PREFIXES.some((p) => prevPath.current!.startsWith(p)) &&

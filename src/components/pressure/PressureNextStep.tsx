@@ -8,8 +8,19 @@ import { VoiceInput } from '@/components/copa/VoiceInput';
 import { BookAnchorHint } from '@/components/copa/BookAnchorHint';
 import { SuggestionSheet } from '@/components/copa/SuggestionSheet';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
-import { FIXED_SUGGESTIONS, suggestionStateFor } from '@/lib/copa';
 import type { PressureRisk } from '@/lib/pressure';
+
+const FIXED_SUGGESTIONS = [
+  'Identifique UMA pessoa que precisa ser avisada e avise agora.',
+  'Remova UMA coisa das próximas 2 horas para abrir espaço.',
+  'Separe 20 minutos e volte com mais clareza.',
+] as const;
+
+function suggestionStateFor(count: number): 'no_history' | 'partial_history' | 'rich_history' {
+  if (count < 1) return 'no_history';
+  if (count < 3) return 'partial_history';
+  return 'rich_history';
+}
 
 const DONT_KNOW_QUESTIONS = [
   'Qual é a menor coisa que você consegue confirmar agora?',

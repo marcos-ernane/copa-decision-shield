@@ -18,7 +18,6 @@ const ENTRY_TYPES = [
   { v: 'structured_P', label: 'IMV' },
   { v: 'structured_A', label: 'APA' },
   { v: 'corrective', label: 'Corretiva' },
-  { v: 'copa_session', label: 'COPA' },
   { v: 'pressure_session', label: 'Pressão' },
 ] as const;
 const PERIODS = [
@@ -29,13 +28,6 @@ const PERIODS = [
 
 function entryPreview(e: Entry): string {
   const c = e.content as Record<string, unknown>;
-
-  if (e.entry_type === 'copa_session') {
-    const capture = c.capture as Record<string, unknown> | undefined;
-    const prove = c.prove as Record<string, unknown> | undefined;
-    const text = (capture?.text as string) || (prove?.action as string) || '';
-    return text || '—';
-  }
 
   if (e.entry_type === 'pressure_session') {
     const fact = (c.fact as string) || '';
@@ -60,7 +52,6 @@ const TYPE_ICON: Record<string, string> = {
   structured_P: 'P',
   structured_A: 'A',
   corrective: '⟲',
-  copa_session: '◆',
   pressure_session: '⚡',
   passive: '·',
 };

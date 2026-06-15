@@ -45,7 +45,7 @@ const SCENARIO_LABEL: Record<ScenarioType, string> = {
 const LAYER_TOOL: Record<OperationalLayer, { label: string; route: string }> = {
   operabilidade: { label: 'Abrir Guia Diagnóstico', route: '/compass/guide' },
   conversao: { label: 'Abrir Tabela de Fricções', route: '/compass/friction' },
-  recorrencia: { label: 'Abrir COPA de Bolso', route: '/compass/pocket' },
+  recorrencia: { label: 'Abrir Protocolo de Bolso', route: '/compass/pocket' },
   escala: { label: 'Abrir Criatividade Funcional', route: '/creative' },
 };
 

@@ -274,15 +274,8 @@ function ConclusionScreen({
   const [savingNote, setSavingNote] = useState(false);
   const [noteSaved, setNoteSaved] = useState<null | 'ok' | 'no_project'>(null);
 
-  async function openCopa() {
-    navigate({
-      to: '/copa',
-      search: {
-        type: scenario,
-        ...(layer ? { layer } : {}),
-        action: imv,
-      },
-    });
+  function openCopa() {
+    navigate({ to: '/register/structured' });
   }
 
   function openSheet() {
@@ -354,7 +347,7 @@ function ConclusionScreen({
 
       <div className="space-y-2">
         <p className="text-small text-foreground">O que quer fazer com isso?</p>
-        <Button className="w-full" onClick={openCopa}>Criar IMV formal no COPA →</Button>
+        <Button className="w-full" onClick={openCopa}>Criar IMV no Registro Estruturado →</Button>
         <Button className="w-full" variant="outline" onClick={openSheet}>
           Salvar como Folha do Operador →
         </Button>

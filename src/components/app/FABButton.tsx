@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 export type FABColorScheme = 'primary' | 'pressure' | 'tertiary';
 
 interface Props {
-  to: '/copa' | '/pressure' | '/protocol5';
+  to: '/pressure' | '/protocol5';
   icon: LucideIcon;
   label: string;
   colorScheme: FABColorScheme;

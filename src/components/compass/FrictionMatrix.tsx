@@ -48,13 +48,7 @@ export function FrictionMatrix({
 
   function openCopa() {
     if (!type) return;
-    navigate({
-      to: '/copa',
-      search: {
-        type,
-        layer: selected?.layer,
-      },
-    });
+    navigate({ to: '/register/structured' });
   }
 
   return (
@@ -127,16 +121,10 @@ export function FrictionMatrix({
         </div>
       )}
 
-      {!hideCopaCta && type && (
+      {!hideCopaCta && type && selected && (
         <div className="pt-2 border-t border-border">
-          <Button
-            className="w-full"
-            onClick={openCopa}
-            disabled={!selected}
-          >
-            {selected
-              ? 'Abrir COPA com este contexto'
-              : 'Identificou uma fricção? Selecione para abrir o COPA'}
+          <Button className="w-full" onClick={openCopa}>
+            Identificou uma fricção? Abrir Registro Estruturado
           </Button>
         </div>
       )}

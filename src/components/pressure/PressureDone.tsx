@@ -22,9 +22,9 @@ export function PressureDone({ projectId, onClose }: Props) {
       <Button
         className="w-full"
         variant="outline"
-        onClick={() => navigate({ to: '/copa', search: { projectId } as never })}
+        onClick={() => navigate({ to: '/register/structured', search: { projectId } as never })}
       >
-        Abrir COPA completo
+        Abrir Registro Estruturado
       </Button>
       <Button className="w-full" variant="ghost" onClick={onClose}>
         Fechar
