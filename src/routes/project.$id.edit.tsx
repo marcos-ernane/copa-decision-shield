@@ -4,19 +4,25 @@ import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { getProject, updateProject } from '@/lib/projects';
-import type { ScenarioType } from '@/types/app';
+import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 export const Route = createFileRoute('/project/$id/edit')({
   component: EditProject,
 });
 
-const SCENARIOS: { value: ScenarioType | null; label: string }[] = [
-  { value: 'fluxo', label: 'Fluxo' },
-  { value: 'processo', label: 'Processo' },
-  { value: 'oferta', label: 'Oferta' },
+const SCENARIOS: { value: ScenarioType; label: string }[] = [
+  { value: 'fluxo',          label: 'Fluxo' },
+  { value: 'processo',       label: 'Processo' },
+  { value: 'oferta',         label: 'Oferta' },
   { value: 'relacionamento', label: 'Relacionamento' },
-  { value: 'pressao', label: 'Pressão' },
-  { value: null, label: 'Indefinido' },
+  { value: 'pressao',        label: 'Pressão' },
+];
+
+const LAYERS: { value: OperationalLayer; label: string }[] = [
+  { value: 'operabilidade', label: 'Operabilidade' },
+  { value: 'conversao',     label: 'Conversão' },
+  { value: 'recorrencia',   label: 'Recorrência' },
+  { value: 'escala',        label: 'Escala' },
 ];
 
 function EditProject() {
@@ -27,6 +33,7 @@ function EditProject() {
   const [name, setName] = useState('');
   const [north, setNorth] = useState('');
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
+  const [layer, setLayer] = useState<OperationalLayer | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -37,6 +44,7 @@ function EditProject() {
       setName(p.name);
       setNorth(p.north);
       setScenario(p.scenario_type);
+      setLayer(p.current_layer);
       setLoading(false);
     })();
   }, [id, navigate]);
@@ -49,7 +57,12 @@ function EditProject() {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      await updateProject(id, { name: name.trim(), north: north.trim(), scenario_type: scenario });
+      await updateProject(id, {
+        name: name.trim(),
+        north: north.trim(),
+        scenario_type: scenario,
+        current_layer: layer,
+      });
       navigate({ to: '/project/$id/dashboard', params: { id }, replace: true });
     } finally {
       setSubmitting(false);
@@ -94,13 +107,11 @@ function EditProject() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-label text-muted-foreground uppercase">
-            Tipo de cenário
-          </label>
+          <label className="text-label text-muted-foreground uppercase">Tipo de cenário</label>
           <div className="flex flex-wrap gap-2">
             {SCENARIOS.map((s) => (
               <button
-                key={s.label}
+                key={s.value}
                 onClick={() => setScenario(s.value)}
                 className={`rounded-full border px-3 py-1 text-small transition-colors ${
                   scenario === s.value
@@ -109,6 +120,25 @@ function EditProject() {
                 }`}
               >
                 {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-label text-muted-foreground uppercase">Camada operacional</label>
+          <div className="flex flex-wrap gap-2">
+            {LAYERS.map((l) => (
+              <button
+                key={l.value}
+                onClick={() => setLayer(l.value)}
+                className={`rounded-full border px-3 py-1 text-small transition-colors ${
+                  layer === l.value
+                    ? 'border-foreground bg-foreground text-background'
+                    : 'border-border bg-card text-foreground hover:bg-accent'
+                }`}
+              >
+                {l.label}
               </button>
             ))}
           </div>

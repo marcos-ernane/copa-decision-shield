@@ -146,6 +146,7 @@ function Home() {
             key={p.id}
             project={p}
             recallPrinciple={principles[p.id]}
+            onEdit={() => navigate({ to: '/project/$id/edit', params: { id: p.id } })}
             onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
             onArchive={() => setArchivingId(p.id)}
             onPause={p.state !== 'paused' ? () => setPausingId(p.id) : undefined}
