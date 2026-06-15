@@ -480,7 +480,7 @@ export function FormatP({ projectId, scenarioType, onSaved, onNextStep, onAutoSa
         <div className="space-y-3">
           {deadline && (
             <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2">
-              <span className="text-label text-muted-foreground uppercase tracking-wide">Prazo do IMV:</span>
+              <span className="text-label text-muted-foreground uppercase tracking-wide">Você definiu, prazo da IMV para:</span>
               <span className="text-small text-foreground font-medium">
                 {deadline.split('-').reverse().join('/')}
               </span>
