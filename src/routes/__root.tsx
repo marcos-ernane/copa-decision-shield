@@ -113,23 +113,49 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+const DARK_CSS = [
+  'html,body{background-color:#070C12!important;color:#F0F4F8!important;margin:0!important}',
+  ':root{color-scheme:dark;--background:#070C12;--foreground:#F0F4F8;--card:#0D1B2A;--card-foreground:#F0F4F8;--popover:#0D1B2A;--popover-foreground:#F0F4F8;--muted:#1B2A4A;--muted-foreground:#8899AA}',
+].join('');
+
+// Script executado antes de qualquer render do React. Aplica o fundo escuro
+// via inline style (setProperty com priority 'important') para que nenhum CSS
+// de folha de estilos consiga sobrescrever enquanto o app hidrata.
+const DARK_SCRIPT = `
+(function(){
+  var el=document.documentElement;
+  el.style.setProperty('background-color','#070C12','important');
+  el.style.setProperty('color','#F0F4F8','important');
+  // injeta <style> no início do <head> como fallback adicional
+  if(!document.getElementById('op-critical')){
+    var s=document.createElement('style');
+    s.id='op-critical';
+    s.textContent='html,body{background-color:#070C12!important;color:#F0F4F8!important;margin:0!important}';
+    document.head.insertBefore(s,document.head.firstChild);
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    if(document.body){
+      document.body.style.setProperty('background-color','#070C12','important');
+      document.body.style.setProperty('color','#F0F4F8','important');
+      document.body.style.setProperty('margin','0','important');
+    }
+  });
+})();
+`;
+
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" style={{ backgroundColor: '#070C12' }}>
       <head>
         <HeadContent />
-        <style>{`
-          html, body, #__app, [data-router] {
-            background-color: #070C12 !important;
-            color: #F0F4F8 !important;
-          }
-        `}</style>
-        <script dangerouslySetInnerHTML={{ __html: `
-          document.documentElement.style.setProperty('background-color','#070C12','important');
-          document.addEventListener('DOMContentLoaded',function(){
-            if(document.body) document.body.style.setProperty('background-color','#070C12','important');
-          });
-        ` }} />
+        {/*
+          dangerouslySetInnerHTML previne que o React 19 trate este <style> como
+          "hoistable" e o remova/mova durante a hidratação. Com string-child normal
+          (sem dangerouslySetInnerHTML), React 19 registra o <style> em seu sistema
+          de deduplicação e o retira do DOM temporariamente, causando o flash branco.
+        */}
+        <style dangerouslySetInnerHTML={{ __html: DARK_CSS }} />
+        <script dangerouslySetInnerHTML={{ __html: DARK_SCRIPT }} />
       </head>
       <body style={{ backgroundColor: '#070C12', color: '#F0F4F8', margin: 0 }}>
         {children}
