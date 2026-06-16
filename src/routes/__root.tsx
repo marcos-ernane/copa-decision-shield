@@ -15,6 +15,10 @@ import { AppShell } from "@/components/app/AppShell";
 import { PassiveTracker } from "@/components/PassiveTracker";
 
 import appCss from "../styles.css?url";
+// In Vite dev mode, ?url imports are served as JavaScript modules with wrong
+// Content-Type, so <link> tags fail silently. This direct import forces Vite
+// to inject the CSS as a <style> element via its module system.
+import "../styles.css";
 
 function NotFoundComponent() {
   return (
@@ -78,6 +82,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "color-scheme", content: "dark" },
       { title: "Operador de Precisão" },
       { name: "description", content: "Sistema de inteligência operacional pessoal baseado no Método COPA" },
       { name: "author", content: "Lovable" },
