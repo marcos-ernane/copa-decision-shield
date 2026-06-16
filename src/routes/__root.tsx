@@ -132,6 +132,16 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
+    // Force dark background on html/body — RootShell not used in Vite dev mode
+    const html = document.documentElement;
+    const body = document.body;
+    html.style.setProperty('background-color', '#070C12', 'important');
+    body.style.setProperty('background-color', '#070C12', 'important');
+    body.style.setProperty('color', '#F0F4F8', 'important');
+    body.style.setProperty('margin', '0', 'important');
+  }, []);
+
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_IN" && session?.user) {
