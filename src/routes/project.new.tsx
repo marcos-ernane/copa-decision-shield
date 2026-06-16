@@ -118,53 +118,53 @@ function NewProject() {
         </div>
       )}
 
-      <div className="min-h-screen bg-background flex flex-col">
-        <header className="flex items-center gap-2 px-4 py-3 border-b border-border">
+      <div className="min-h-screen bg-op-black flex flex-col">
+        <header className="flex items-center gap-2 px-4 py-3 border-b border-op-gray/20 bg-op-navy">
           <button
             onClick={() => router.history.back()}
-            className="p-2 -ml-2 rounded-md hover:bg-accent"
+            className="p-2 -ml-2 rounded-md hover:bg-op-navy-elevated"
             aria-label="Voltar"
           >
-            <ChevronLeft className="size-5" />
+            <ChevronLeft className="size-5 text-op-white" />
           </button>
-          <h1 className="text-heading text-foreground">Novo projeto</h1>
+          <h1 className="text-heading text-op-white">Novo projeto</h1>
         </header>
 
         <main className="flex-1 px-6 py-6 max-w-md mx-auto w-full space-y-6">
           <div className="space-y-2">
-            <label className="text-label text-muted-foreground uppercase">Nome do projeto</label>
+            <label className="text-label text-op-gray uppercase">Nome do projeto</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Agenda de clientes"
               maxLength={80}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-body focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-op-gray/20 bg-op-navy px-3 py-2 text-body text-op-white placeholder:text-op-gray focus:outline-none focus:ring-2 focus:ring-op-amber"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-label text-muted-foreground uppercase">
+            <label className="text-label text-op-gray uppercase">
               Vai estar melhor quando…
             </label>
             <VoiceInput value={north} onChange={setNorth} rows={4} />
-            <p className="text-label text-muted-foreground">{north.length}/300</p>
+            <p className="text-label text-op-gray">{north.length}/300</p>
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-label text-muted-foreground uppercase">
+              <label className="text-label text-op-gray uppercase">
                 Tipo de cenário <span className="text-destructive">*</span>
               </label>
               <button
                 type="button"
                 onClick={() => setHelpKey('scenario')}
-                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
               >
                 <CircleHelp className="size-3.5" />
                 Ajuda
               </button>
             </div>
-            <p className="text-label text-muted-foreground">Qual é a natureza do que você está enfrentando?</p>
+            <p className="text-label text-op-gray">Qual é a natureza do que você está enfrentando?</p>
             <div className="flex flex-wrap gap-2">
               {SCENARIOS.map((s) => (
                 <button
@@ -172,8 +172,8 @@ function NewProject() {
                   onClick={() => setScenario(s.value)}
                   className={`rounded-full border px-3 py-1 text-small transition-colors ${
                     scenario === s.value
-                      ? 'border-foreground bg-foreground text-background'
-                      : 'border-border bg-card text-foreground hover:bg-accent'
+                      ? 'border-op-amber bg-op-amber text-op-black font-semibold'
+                      : 'border-op-gray/20 bg-op-navy text-op-white hover:bg-op-navy-elevated'
                   }`}
                 >
                   {s.label}
@@ -181,7 +181,7 @@ function NewProject() {
               ))}
             </div>
             {scenario && (
-              <p className="text-label text-muted-foreground">
+              <p className="text-label text-op-gray">
                 {SCENARIOS.find((s) => s.value === scenario)?.description}
               </p>
             )}
@@ -189,19 +189,19 @@ function NewProject() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-label text-muted-foreground uppercase">
+              <label className="text-label text-op-gray uppercase">
                 Camada operacional <span className="text-destructive">*</span>
               </label>
               <button
                 type="button"
                 onClick={() => setHelpKey('layer')}
-                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
               >
                 <CircleHelp className="size-3.5" />
                 Ajuda
               </button>
             </div>
-            <p className="text-label text-muted-foreground">Onde está o principal obstáculo agora?</p>
+            <p className="text-label text-op-gray">Onde está o principal obstáculo agora?</p>
             <div className="flex flex-wrap gap-2">
               {LAYERS.map((l) => (
                 <button
@@ -209,8 +209,8 @@ function NewProject() {
                   onClick={() => setLayer(l.value)}
                   className={`rounded-full border px-3 py-1 text-small transition-colors ${
                     layer === l.value
-                      ? 'border-foreground bg-foreground text-background'
-                      : 'border-border bg-card text-foreground hover:bg-accent'
+                      ? 'border-op-amber bg-op-amber text-op-black font-semibold'
+                      : 'border-op-gray/20 bg-op-navy text-op-white hover:bg-op-navy-elevated'
                   }`}
                 >
                   {l.label}
@@ -218,27 +218,27 @@ function NewProject() {
               ))}
             </div>
             {layer && (
-              <p className="text-label text-muted-foreground">
+              <p className="text-label text-op-gray">
                 {LAYERS.find((l) => l.value === layer)?.description}
               </p>
             )}
           </div>
 
-          <div className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-3">
+          <div className="flex items-center justify-between rounded-md border border-op-gray/20 bg-op-navy px-3 py-3">
             <div>
-              <p className="text-small text-foreground">Notificação</p>
-              <p className="text-label text-muted-foreground">
+              <p className="text-small text-op-white">Notificação</p>
+              <p className="text-label text-op-gray">
                 {notifyAuto ? 'Deixa o app escolher' : 'Sem notificação'}
               </p>
             </div>
             <button
               onClick={() => setNotifyAuto((v) => !v)}
               className={`h-6 w-11 rounded-full transition-colors ${
-                notifyAuto ? 'bg-foreground' : 'bg-muted'
+                notifyAuto ? 'bg-op-amber' : 'bg-op-gray/30'
               } relative`}
             >
               <span
-                className={`absolute top-0.5 size-5 rounded-full bg-background transition-transform ${
+                className={`absolute top-0.5 size-5 rounded-full bg-op-white transition-transform ${
                   notifyAuto ? 'translate-x-5' : 'translate-x-0.5'
                 }`}
               />

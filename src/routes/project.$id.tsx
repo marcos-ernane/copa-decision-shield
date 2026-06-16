@@ -58,7 +58,7 @@ function ProjectEntryRouter() {
     // Se já tem rota filha → renderiza imediatamente sem flash de branco
     if (isParentOnly) {
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="min-h-screen bg-op-black flex items-center justify-center">
           <span className="text-muted-foreground text-small">Carregando…</span>
         </div>
       );

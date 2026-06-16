@@ -132,7 +132,7 @@ export function DiagnosisFlow({ projectId }: Props) {
 
   if (output) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-op-black">
         {pageHeader}
         <div className="px-6 py-8 max-w-md mx-auto w-full">
           <DiagnosisOutput
@@ -158,7 +158,7 @@ export function DiagnosisFlow({ projectId }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-op-black">
       {pageHeader}
       <div className="px-6 py-8 max-w-md mx-auto w-full space-y-6">
 

@@ -19,7 +19,7 @@ function Page() {
   const router = useRouter();
   const { type } = Route.useSearch();
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-op-black pb-24">
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
         <button
           onClick={() => router.history.back()}

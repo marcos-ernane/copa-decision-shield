@@ -50,7 +50,7 @@ export function CalibratedReturnScreen({ project, daysSinceLast }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-12">
+    <div className="min-h-screen bg-op-black flex flex-col items-center justify-center px-6 py-12">
       <div className="max-w-md w-full space-y-6">
         <div>
           <p className="text-label text-muted-foreground uppercase">Retorno calibrado</p>

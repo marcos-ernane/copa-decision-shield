@@ -8,7 +8,7 @@ export const Route = createFileRoute('/creative')({
 
 function CreativeRoute() {
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-op-black pb-24">
       <PaywallGate feature="creative_flow" reason="Criatividade Funcional">
         <CreativeShell />
       </PaywallGate>

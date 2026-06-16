@@ -11,7 +11,7 @@ interface Props {
 export function Placeholder({ title, note }: Props) {
   const router = useRouter();
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-op-black">
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border">
         <button
           onClick={() => router.history.back()}

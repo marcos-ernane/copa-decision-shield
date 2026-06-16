@@ -72,7 +72,7 @@ function EditProject() {
   if (loading) return null;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-op-black flex flex-col">
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border">
         <button
           onClick={() => router.history.back()}

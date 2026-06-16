@@ -49,7 +49,7 @@ export function TransferReport({
   };
 
   return (
-    <div className="min-h-screen bg-background px-6 py-8">
+    <div className="min-h-screen bg-op-black px-6 py-8">
       <div className="max-w-md mx-auto space-y-5">
         <h1 className="text-title text-foreground">Resultado da Prova de Transferência</h1>
 

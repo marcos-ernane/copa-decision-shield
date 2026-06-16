@@ -208,3 +208,10 @@
     color: #F0F4F8;
   }
 }
+
+/* Fora de qualquer @layer — prioridade máxima sobre Tailwind */
+html,
+body {
+  background-color: #070C12 !important;
+  color: #F0F4F8 !important;
+}
