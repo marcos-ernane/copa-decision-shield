@@ -79,7 +79,7 @@ export function ConcludeFlow({ projectId }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-op-black pb-24">
+    <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="sticky top-0 bg-op-navy border-b border-border z-10">
         <div className="flex items-center gap-2 px-4 py-3">
           <button

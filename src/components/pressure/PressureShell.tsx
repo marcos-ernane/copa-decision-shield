@@ -112,7 +112,7 @@ export function PressureShell() {
 
   if (step === 'pick_project') {
     return (
-      <div className="min-h-screen bg-op-black">
+      <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
         <header className="flex items-center gap-3 px-4 py-4 border-b border-border">
           <button onClick={() => navigate({ to: '/' })} className="p-1 rounded-md hover:bg-accent" aria-label="Voltar">
             <ArrowLeft className="size-5 text-muted-foreground" />

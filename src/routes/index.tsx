@@ -111,7 +111,7 @@ function Home() {
   const { active, concluded } = sortProjects(projects);
 
   return (
-    <div className="min-h-screen bg-op-black">
+    <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="px-6 pt-8 pb-4 flex items-start justify-between">
         <div>
           <p className="text-label text-op-gray uppercase">Operador</p>

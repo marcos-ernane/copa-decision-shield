@@ -118,7 +118,7 @@ function NewProject() {
         </div>
       )}
 
-      <div className="min-h-screen bg-op-black flex flex-col">
+      <div className="min-h-screen bg-op-black flex flex-col" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
         <header className="flex items-center gap-2 px-4 py-3 border-b border-op-gray/20 bg-op-navy">
           <button
             onClick={() => router.history.back()}

@@ -29,7 +29,7 @@ const SECTIONS = [
 
 export function CompassHome() {
   return (
-    <div className="min-h-screen bg-op-black pb-24">
+    <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="px-4 py-4 border-b border-border">
         <h1 className="text-title text-foreground">Bússola do Operador</h1>
         <p className="text-small text-muted-foreground">Conteúdo do método. Sempre disponível.</p>

@@ -74,7 +74,7 @@ export function PactSetupScreen({ projectId }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-op-black">
+    <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
         <button onClick={() => router.history.back()} className="p-2 -ml-2 rounded-md hover:bg-accent" aria-label="Voltar">
           <ChevronLeft className="size-5" />

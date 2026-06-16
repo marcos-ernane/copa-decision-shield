@@ -195,7 +195,7 @@ function TransferProofInner() {
 
   if (step === 'loading') {
     return (
-      <div className="min-h-screen bg-op-black flex items-center justify-center">
+      <div className="min-h-screen bg-op-black flex items-center justify-center" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
         <p className="text-small text-muted-foreground">Carregando…</p>
       </div>
     );
@@ -245,7 +245,7 @@ function TransferProofInner() {
 
   if (step === 'analyzing') {
     return (
-      <div className="min-h-screen bg-op-black flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-op-black flex flex-col items-center justify-center px-6" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
         <p className="text-body text-foreground">Analisando os 3 cenários…</p>
         <div className="mt-4 h-1 w-32 bg-border overflow-hidden rounded-full">
           <div className="h-full w-1/2 bg-primary animate-pulse" />

@@ -17,7 +17,7 @@ interface Props {
 export function Protocol5Done({ type, fact, friction, microAction, signal }: Props) {
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen bg-op-black px-4 py-8 max-w-md mx-auto space-y-6">
+    <div className="min-h-screen bg-op-black px-4 py-8 max-w-md mx-auto space-y-6" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="space-y-1">
         <p className="text-label uppercase tracking-wide text-muted-foreground">
           Concluído

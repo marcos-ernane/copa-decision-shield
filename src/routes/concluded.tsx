@@ -63,7 +63,7 @@ function ConcludedProjectsScreen() {
     iso ? new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
   return (
-    <div className="min-h-screen bg-op-black pb-24">
+    <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="sticky top-0 bg-background border-b border-border z-10">
         <div className="flex items-center gap-2 px-4 py-3">
           <button

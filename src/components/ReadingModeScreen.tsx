@@ -73,7 +73,7 @@ export function ReadingModeScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-op-black">
+    <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <main className="max-w-2xl mx-auto px-6 py-10 space-y-10">
         <header>
           <p className="text-label uppercase tracking-wide text-muted-foreground">

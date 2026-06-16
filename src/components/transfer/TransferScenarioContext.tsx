@@ -14,7 +14,7 @@ export function TransferScenarioContext({ scenarioIndex, initial, onContinue }: 
   const valid = isContextValid(text);
 
   return (
-    <div className="min-h-screen bg-op-black px-6 py-8">
+    <div className="min-h-screen bg-op-black px-6 py-8" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <div className="max-w-md mx-auto space-y-5">
         <p className="text-label text-muted-foreground uppercase tracking-wider">
           Cenário {scenarioIndex + 1} de 3

@@ -49,7 +49,7 @@ export function OnboardingFlow({ cameFrom }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-op-black flex flex-col">
+    <div className="min-h-screen bg-op-black flex flex-col" style={{ backgroundColor: '#070C12', minHeight: '100vh', color: '#F0F4F8' }}>
       {phase === 'p1_logo' && <LogoScreen onStart={() => setPhase('p1_mirror')} />}
       {phase === 'p1_mirror' && <MirrorScreen onContinue={() => setPhase('p1_diagnostic')} />}
       {phase === 'p1_diagnostic' && (

@@ -80,7 +80,7 @@ export function SettingsScreen() {
   const isPaid = authState === 'AUTHENTICATED_ANNUAL' || authState === 'AUTHENTICATED_LIFETIME' || authState === 'AUTHENTICATED_TRIAL';
 
   return (
-    <div className="min-h-screen bg-op-black">
+    <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <TrialEndingSheet />
       <header className="px-4 pt-8 pb-4">
         <h1 className="text-display">Configurações</h1>

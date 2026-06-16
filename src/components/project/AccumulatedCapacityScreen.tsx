@@ -105,7 +105,7 @@ export function AccumulatedCapacityScreen({ projectId }: Props) {
   }, [projectId]);
 
   return (
-    <div className="min-h-screen bg-op-black pb-24">
+    <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
         <button
           onClick={() => router.history.back()}

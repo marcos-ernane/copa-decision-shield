@@ -206,7 +206,7 @@ function ProjectDashboard() {
   const recall = recallResult?.principle ?? null;
 
   return (
-    <div className="min-h-screen bg-op-black">
+    <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center justify-between px-4 py-3 border-b border-border">
         <button
           onClick={() => router.history.back()}
