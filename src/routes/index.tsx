@@ -111,33 +111,33 @@ function Home() {
   const { active, concluded } = sortProjects(projects);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-op-black">
       <header className="px-6 pt-8 pb-4 flex items-start justify-between">
         <div>
-          <p className="text-label text-muted-foreground uppercase">Operador</p>
-          <h1 className="text-title text-foreground mt-1">{name || 'Operador'}</h1>
+          <p className="text-label text-op-gray uppercase">Operador</p>
+          <h1 className="text-title text-op-white mt-1">{name || 'Operador'}</h1>
         </div>
         <button
           type="button"
           onClick={() => navigate({ to: '/settings' })}
-          className="p-2 -mr-2 rounded-md hover:bg-accent"
+          className="p-2 -mr-2 rounded-md hover:bg-op-navy"
           aria-label="Configurações"
         >
-          <SettingsIcon className="size-5 text-muted-foreground" />
+          <SettingsIcon className="size-5 text-op-gray" />
         </button>
       </header>
 
       <main className="px-6 space-y-3">
         <Link
           to="/project/new"
-          className="flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-card py-4 text-small text-muted-foreground hover:bg-accent transition-colors"
+          className="flex items-center justify-center gap-2 rounded-md border border-dashed border-op-gray/20 bg-op-navy py-4 text-small text-op-gray hover:bg-op-navy-elevated transition-colors"
         >
           <Plus className="size-4" />
           Novo projeto
         </Link>
 
         {active.length === 0 && (
-          <p className="text-small text-muted-foreground py-8 text-center">
+          <p className="text-small text-op-gray py-8 text-center">
             Nenhum projeto em campo.
           </p>
         )}
@@ -158,7 +158,7 @@ function Home() {
           <div className="pt-4 space-y-2">
             <button
               onClick={() => setShowConcluded((s) => !s)}
-              className="w-full text-left text-label text-muted-foreground uppercase py-2"
+              className="w-full text-left text-label text-op-gray uppercase py-2"
             >
               Concluídos ({concluded.length}) {showConcluded ? '−' : '+'}
             </button>

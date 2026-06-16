@@ -13,7 +13,7 @@ const TABS: { to: '/' | '/panel' | '/compass' | '/diary'; label: string; icon: t
 export function BottomNav() {
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-30 h-16 bg-card border-t border-border flex items-stretch"
+      className="fixed bottom-0 inset-x-0 z-30 h-16 bg-op-navy border-t border-op-gray/20 flex items-stretch"
       aria-label="Navegação principal"
     >
       {TABS.map((t) => {
@@ -23,7 +23,7 @@ export function BottomNav() {
             key={t.to}
             to={t.to}
             activeOptions={{ exact: t.exact }}
-            className="flex-1 flex flex-col items-center justify-center gap-1 text-muted-foreground data-[status=active]:text-foreground"
+            className="flex-1 flex flex-col items-center justify-center gap-1 text-op-gray data-[status=active]:text-op-amber"
           >
             <Icon className="size-5" />
             <span className="text-label">{t.label}</span>

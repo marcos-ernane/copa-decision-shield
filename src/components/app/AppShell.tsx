@@ -38,7 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const hideFabs = readingMode || matchesPrefix(pathname, NO_FABS_PREFIXES);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-op-black">
       <div className={readingMode ? 'pb-24' : 'pb-16'}>{children}</div>
       {!hideFabs && <Fabs />}
       {readingMode && <ReadingModeBanner />}
