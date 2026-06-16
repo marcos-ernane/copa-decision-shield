@@ -96,6 +96,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       {
+        // Arquivo estático em public/ — servido como CSS real em dev e produção.
+        // Garante fundo escuro ANTES de qualquer JS carregar, sem flash branco.
+        rel: "stylesheet",
+        href: "/op-dark.css",
+      },
+      {
         rel: "stylesheet",
         href: appCss,
       },
@@ -181,16 +187,6 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Rendered in JSX so it applies before first paint, not after via useEffect */}
-      <style dangerouslySetInnerHTML={{ __html: [
-        'html,body{background-color:#070C12!important;color:#F0F4F8!important;margin:0!important}',
-        ':root{--background:#070C12!important;--foreground:#F0F4F8!important;--card:#0D1B2A!important;--card-foreground:#F0F4F8!important;--popover:#0D1B2A!important;--popover-foreground:#F0F4F8!important;--muted:#1B2A4A!important;--muted-foreground:#8899AA!important;--border:rgba(136,153,170,0.2)!important;--input:rgba(136,153,170,0.2)!important;--primary:#F5A623!important;--primary-foreground:#070C12!important}',
-        '.bg-background{background-color:#070C12!important}',
-        '.text-foreground{color:#F0F4F8!important}',
-        '.text-muted-foreground{color:#8899AA!important}',
-        '.bg-primary{background-color:#F5A623!important}',
-        '.text-primary-foreground{color:#070C12!important}',
-      ].join('\n') }} />
       <div style={{ backgroundColor: '#070C12', minHeight: '100vh', color: '#F0F4F8' }}>
         <PassiveTracker />
         <MigrationIndicator />

@@ -1,0 +1,27 @@
+/*
+ * Garante fundo escuro antes de qualquer JavaScript carregar.
+ * Servido como CSS real (public/) — funciona em dev e produção.
+ */
+html, body {
+  background-color: #070C12 !important;
+  color: #F0F4F8 !important;
+  margin: 0 !important;
+}
+
+:root {
+  color-scheme: dark;
+  --background: #070C12;
+  --foreground: #F0F4F8;
+  --card: #0D1B2A;
+  --card-foreground: #F0F4F8;
+  --popover: #0D1B2A;
+  --popover-foreground: #F0F4F8;
+  --muted: #1B2A4A;
+  --muted-foreground: #8899AA;
+  --border: rgba(136, 153, 170, 0.2);
+  --input: rgba(136, 153, 170, 0.2);
+}
+
+.bg-background { background-color: #070C12 !important; }
+.text-foreground { color: #F0F4F8 !important; }
+.text-muted-foreground { color: #8899AA !important; }
