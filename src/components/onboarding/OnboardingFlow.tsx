@@ -49,7 +49,7 @@ export function OnboardingFlow({ cameFrom }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-op-black flex flex-col">
       {phase === 'p1_logo' && <LogoScreen onStart={() => setPhase('p1_mirror')} />}
       {phase === 'p1_mirror' && <MirrorScreen onContinue={() => setPhase('p1_diagnostic')} />}
       {phase === 'p1_diagnostic' && (
@@ -123,12 +123,15 @@ function LogoScreen({ onStart }: { onStart: () => void }) {
     <div className="flex-1 flex flex-col items-center justify-center px-6 gap-12">
       <div
         aria-label="Logo"
-        className="text-display text-foreground tracking-tight"
-        style={{ color: 'var(--color-brand-navy)' }}
+        className="text-display text-op-white font-inter font-semibold tracking-tight"
       >
         OPERADOR
       </div>
-      <Button size="lg" className="w-full max-w-xs" onClick={onStart}>
+      <Button
+        size="lg"
+        className="w-full max-w-xs bg-op-amber text-op-black rounded-xl font-semibold hover:brightness-95"
+        onClick={onStart}
+      >
         COMEÇAR
       </Button>
     </div>
@@ -138,7 +141,7 @@ function LogoScreen({ onStart }: { onStart: () => void }) {
 function MirrorScreen({ onContinue }: { onContinue: () => void }) {
   return (
     <div className="flex-1 flex flex-col px-6 py-12 max-w-md mx-auto w-full gap-8">
-      <p className="text-body text-foreground whitespace-pre-line leading-relaxed">
+      <p className="text-body text-op-white font-dm whitespace-pre-line leading-relaxed">
 {`Você provavelmente chegou aqui porque
 já conhece essa sensação:
 
@@ -148,7 +151,11 @@ resolveu problema atrás de problema —
 e no fim do dia a sensação foi de que
 não avançou nada no que realmente importava.`}
       </p>
-      <Button size="lg" className="w-full" onClick={onContinue}>
+      <Button
+        size="lg"
+        className="w-full bg-op-amber text-op-black rounded-xl font-semibold hover:brightness-95"
+        onClick={onContinue}
+      >
         CONTINUAR
       </Button>
     </div>
@@ -169,17 +176,17 @@ const DIAGNOSTIC_OPTIONS: {
 function DiagnosticScreen({ onSelect }: { onSelect: (p: OnboardingProfile) => void }) {
   return (
     <div className="flex-1 flex flex-col px-6 py-12 max-w-md mx-auto w-full gap-6">
-      <h2 className="text-title text-foreground">O que mais te descreve agora?</h2>
+      <h2 className="text-title text-op-white font-inter font-semibold">O que mais te descreve agora?</h2>
       <div className="space-y-3">
         {DIAGNOSTIC_OPTIONS.map((opt) => (
           <button
             key={opt.key}
             onClick={() => onSelect(opt.key)}
-            className="w-full text-left rounded-md border border-border bg-card p-4 hover:bg-accent transition-colors"
+            className="w-full text-left rounded-xl border border-op-gray/20 bg-op-navy p-4 hover:bg-op-navy-elevated transition-colors"
           >
             <div className="flex gap-3">
-              <span className="text-label text-muted-foreground">{opt.label}</span>
-              <span className="text-body text-foreground">{opt.text}</span>
+              <span className="text-label text-op-gray">{opt.label}</span>
+              <span className="text-body text-op-white">{opt.text}</span>
             </div>
           </button>
         ))}
@@ -199,15 +206,20 @@ function NameScreen({
 }) {
   return (
     <div className="flex-1 flex flex-col px-6 py-12 max-w-md mx-auto w-full gap-6">
-      <h2 className="text-title text-foreground">Como posso te chamar?</h2>
+      <h2 className="text-title text-op-white font-inter font-semibold">Como posso te chamar?</h2>
       <input
         autoFocus
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-input bg-background px-3 py-3 text-body focus:outline-none focus:ring-2 focus:ring-ring"
+        className="w-full rounded-xl border border-op-gray/20 bg-op-navy px-3 py-3 text-body text-op-white placeholder:text-op-gray focus:outline-none focus:ring-2 focus:ring-op-amber"
         placeholder="Seu nome"
       />
-      <Button size="lg" className="w-full" disabled={!value.trim()} onClick={onContinue}>
+      <Button
+        size="lg"
+        className="w-full bg-op-amber text-op-black rounded-xl font-semibold hover:brightness-95"
+        disabled={!value.trim()}
+        onClick={onContinue}
+      >
         CONTINUAR
       </Button>
     </div>
@@ -221,27 +233,31 @@ function NameScreen({
 function ContractScreen({ onContinue }: { onContinue: () => void }) {
   return (
     <div className="flex-1 flex flex-col px-6 py-12 max-w-md mx-auto w-full gap-8">
-      <div className="space-y-6 text-body text-foreground">
+      <div className="space-y-6 text-body text-op-white">
         <div>
           <p className="font-semibold">✗ Cobrar streak de dias consecutivos</p>
-          <p className="text-muted-foreground">
+          <p className="text-op-gray">
             Se você sumir por uma semana, o app celebra sua volta — não te penaliza.
           </p>
         </div>
         <div>
           <p className="font-semibold">✗ Te empurrar com notificações</p>
-          <p className="text-muted-foreground">
+          <p className="text-op-gray">
             Você configura o que quer. O app convida — nunca cobra.
           </p>
         </div>
         <div>
           <p className="font-semibold">✗ Substituir seu julgamento</p>
-          <p className="text-muted-foreground">
+          <p className="text-op-gray">
             O app lê o campo com você. Quem decide é sempre você.
           </p>
         </div>
       </div>
-      <Button size="lg" className="w-full" onClick={onContinue}>
+      <Button
+        size="lg"
+        className="w-full bg-op-amber text-op-black rounded-xl font-semibold hover:brightness-95"
+        onClick={onContinue}
+      >
         ENTENDI — VAMOS CRIAR SEU PRIMEIRO PROJETO
       </Button>
     </div>
@@ -251,7 +267,7 @@ function ContractScreen({ onContinue }: { onContinue: () => void }) {
 function CourseVariantScreen({ name, onContinue }: { name: string; onContinue: () => void }) {
   return (
     <div className="flex-1 flex flex-col px-6 py-12 max-w-md mx-auto w-full gap-8">
-      <p className="text-body text-foreground whitespace-pre-line leading-relaxed">
+      <p className="text-body text-op-white font-dm whitespace-pre-line leading-relaxed">
 {`${name || 'Operador'}, você veio pelo curso.
 Isso significa que você já conhece o método.
 Este app é onde o método sai do caderno
@@ -261,7 +277,11 @@ O app acompanha sua progressão nos módulos —
 não pelo que você assistiu,
 mas pelo que você praticou.`}
       </p>
-      <Button size="lg" className="w-full" onClick={onContinue}>
+      <Button
+        size="lg"
+        className="w-full bg-op-amber text-op-black rounded-xl font-semibold hover:brightness-95"
+        onClick={onContinue}
+      >
         CONTINUAR
       </Button>
     </div>
@@ -326,28 +346,28 @@ function ProjectScreen({ onCreated }: { onCreated: (id: string) => void }) {
 
   return (
     <div className="flex-1 flex flex-col px-6 py-12 max-w-md mx-auto w-full gap-6">
-      <h2 className="text-title text-foreground">Seu primeiro projeto</h2>
+      <h2 className="text-title text-op-white font-inter font-semibold">Seu primeiro projeto</h2>
 
       <div className="space-y-2">
-        <label className="text-label text-muted-foreground uppercase">Nome do projeto</label>
+        <label className="text-label text-op-gray uppercase">Nome do projeto</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={80}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-body focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full rounded-xl border border-op-gray/20 bg-op-navy px-3 py-2 text-body text-op-white placeholder:text-op-gray focus:outline-none focus:ring-2 focus:ring-op-amber"
         />
       </div>
 
       <div className="space-y-2">
-        <label className="text-label text-muted-foreground uppercase">
+        <label className="text-label text-op-gray uppercase">
           Vai estar melhor quando…
         </label>
         <VoiceInput value={north} onChange={setNorth} rows={4} />
-        <p className="text-label text-muted-foreground">{north.length}/300</p>
+        <p className="text-label text-op-gray">{north.length}/300</p>
       </div>
 
       <div className="space-y-2">
-        <label className="text-label text-muted-foreground uppercase">
+        <label className="text-label text-op-gray uppercase">
           Tipo de cenário (opcional)
         </label>
         <div className="flex flex-wrap gap-2">
@@ -357,8 +377,8 @@ function ProjectScreen({ onCreated }: { onCreated: (id: string) => void }) {
               onClick={() => setScenario(s.value)}
               className={`rounded-full border px-3 py-1 text-small transition-colors ${
                 scenario === s.value
-                  ? 'border-foreground bg-foreground text-background'
-                  : 'border-border bg-card text-foreground hover:bg-accent'
+                  ? 'border-op-amber bg-op-amber text-op-black font-semibold'
+                  : 'border-op-gray/20 bg-op-navy text-op-white hover:bg-op-navy-elevated'
               }`}
             >
               {s.label}
@@ -367,7 +387,12 @@ function ProjectScreen({ onCreated }: { onCreated: (id: string) => void }) {
         </div>
       </div>
 
-      <Button size="lg" className="w-full mt-4" disabled={!canSubmit} onClick={submit}>
+      <Button
+        size="lg"
+        className="w-full mt-4 bg-op-amber text-op-black rounded-xl font-semibold hover:brightness-95"
+        disabled={!canSubmit}
+        onClick={submit}
+      >
         CRIAR PROJETO
       </Button>
     </div>
@@ -383,19 +408,27 @@ function BaselineOfferScreen({
 }) {
   return (
     <div className="flex-1 flex flex-col px-6 py-12 max-w-md mx-auto w-full gap-8">
-      <p className="text-body text-foreground">
+      <p className="text-body text-op-white">
         Antes de começar, quer fazer um diagnóstico de 12 minutos para registrar seu
         ponto de partida?
       </p>
       <div className="space-y-3">
-        <Button size="lg" className="w-full" onClick={onTake}>
+        <Button
+          size="lg"
+          className="w-full bg-op-amber text-op-black rounded-xl font-semibold hover:brightness-95"
+          onClick={onTake}
+        >
           SIM — FAZER O DIAGNÓSTICO
         </Button>
-        <Button size="lg" variant="outline" className="w-full" onClick={onSkip}>
+        <Button
+          size="lg"
+          variant="outline"
+          className="w-full rounded-xl border-op-gray/20 text-op-white hover:bg-op-navy hover:text-op-white"
+          onClick={onSkip}
+        >
           PULAR — IR PARA O REGISTRO
         </Button>
       </div>
     </div>
   );
 }
-
