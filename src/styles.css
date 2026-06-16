@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');
+
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
@@ -77,6 +79,19 @@
 
   --font-sans: Inter, "SF Pro Display", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Courier New", monospace;
+  --font-inter: Inter, sans-serif;
+  --font-dm: "DM Sans", sans-serif;
+
+  /* ===== Operador de Precisão — Extended Palette ===== */
+  --color-op-black: #070C12;
+  --color-op-navy: #0D1B2A;
+  --color-op-navy-elevated: #1A2535;
+  --color-op-amber: #F5A623;
+  --color-op-cyan: #22C5DA;
+  --color-op-white: #F0F4F8;
+  --color-op-gray: #5A6E84;
+  --color-op-success: #2ECC71;
+  --color-op-danger: #E74C3C;
 }
 
 /* ===== Escala tipográfica COPA ===== */
@@ -187,8 +202,9 @@
     border-color: var(--color-border);
   }
 
+  html,
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+    background-color: #070C12;
+    color: #F0F4F8;
   }
 }
