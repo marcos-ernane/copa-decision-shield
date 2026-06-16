@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { migrateGuestToCloud } from "@/lib/migrateGuest";
 import { MigrationIndicator } from "@/components/MigrationIndicator";
@@ -96,15 +96,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       {
-        // Arquivo estático em public/ — servido como CSS real em dev e produção.
+        // Arquivo estático em public/ — servido como CSS real (text/css) em dev e produção.
         // Garante fundo escuro ANTES de qualquer JS carregar, sem flash branco.
         rel: "stylesheet",
         href: "/op-dark.css",
       },
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      // Em dev, appCss (/src/styles.css) é servido como text/javascript pelo Vite —
+      // o React 19 gerencia esse link quebrado como stylesheet resource e pode causar
+      // comportamento inesperado. Só incluímos em produção, onde o bundle CSS é real.
+      ...(import.meta.env.PROD ? [{ rel: "stylesheet" as const, href: appCss }] : []),
     ],
   }),
   shellComponent: RootShell,
@@ -123,23 +123,33 @@ const DARK_CSS = [
 // de folha de estilos consiga sobrescrever enquanto o app hidrata.
 const DARK_SCRIPT = `
 (function(){
-  var el=document.documentElement;
-  el.style.setProperty('background-color','#070C12','important');
-  el.style.setProperty('color','#F0F4F8','important');
-  // injeta <style> no início do <head> como fallback adicional
+  var DARK='#070C12',LIGHT='#F0F4F8';
+  function applyDark(){
+    var h=document.documentElement,b=document.body;
+    h.style.setProperty('background-color',DARK,'important');
+    h.style.setProperty('color',LIGHT,'important');
+    if(b){
+      b.style.setProperty('background-color',DARK,'important');
+      b.style.setProperty('color',LIGHT,'important');
+      b.style.setProperty('margin','0','important');
+    }
+  }
+  // Aplica imediatamente
+  applyDark();
+  // Injeta <style> no início do <head> — garante fundo mesmo sem CSS externo
   if(!document.getElementById('op-critical')){
     var s=document.createElement('style');
     s.id='op-critical';
-    s.textContent='html,body{background-color:#070C12!important;color:#F0F4F8!important;margin:0!important}';
+    s.textContent='html,body{background-color:'+DARK+'!important;color:'+LIGHT+'!important;margin:0!important}';
     document.head.insertBefore(s,document.head.firstChild);
   }
-  document.addEventListener('DOMContentLoaded',function(){
-    if(document.body){
-      document.body.style.setProperty('background-color','#070C12','important');
-      document.body.style.setProperty('color','#F0F4F8','important');
-      document.body.style.setProperty('margin','0','important');
-    }
-  });
+  // Reaplicar em pontos-chave do ciclo de vida do browser/React
+  document.addEventListener('DOMContentLoaded',applyDark);
+  // Checkpoints para sobreviver à hidratação do React 19 (que pode remover inline styles)
+  setTimeout(applyDark,0);
+  setTimeout(applyDark,50);
+  setTimeout(applyDark,150);
+  setTimeout(applyDark,500);
 })();
 `;
 
@@ -168,10 +178,18 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
-  useEffect(() => {
-    // Inject a style tag that overrides CSS variables and bg-background class.
-    // We keep it at the END of <head> via MutationObserver so it always wins
-    // over any CSS Vite injects after React mounts.
+  // useLayoutEffect roda de forma SÍNCRONA após as mutações do DOM, ANTES do
+  // browser pintar. Isso elimina qualquer flash branco que useEffect (pós-paint)
+  // não consegue prevenir.
+  useLayoutEffect(() => {
+    const applyInline = () => {
+      document.documentElement.style.setProperty('background-color', '#070C12', 'important');
+      document.body?.style.setProperty('background-color', '#070C12', 'important');
+      document.body?.style.setProperty('color', '#F0F4F8', 'important');
+      document.body?.style.setProperty('margin', '0', 'important');
+    };
+    applyInline();
+
     const style = document.createElement('style');
     style.id = 'op-dark-override';
     style.textContent = [
@@ -188,14 +206,6 @@ function RootComponent() {
     };
     const observer = new MutationObserver(ensureLast);
     observer.observe(document.head, { childList: true });
-
-    const applyInline = () => {
-      document.documentElement.style.setProperty('background-color', '#070C12', 'important');
-      document.body.style.setProperty('background-color', '#070C12', 'important');
-      document.body.style.setProperty('color', '#F0F4F8', 'important');
-      document.body.style.setProperty('margin', '0', 'important');
-    };
-    applyInline();
 
     return () => { observer.disconnect(); };
   }, []);
