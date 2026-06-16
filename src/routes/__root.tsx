@@ -107,6 +107,18 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="en" style={{ backgroundColor: '#070C12' }}>
       <head>
         <HeadContent />
+        <style>{`
+          html, body, #__app, [data-router] {
+            background-color: #070C12 !important;
+            color: #F0F4F8 !important;
+          }
+        `}</style>
+        <script dangerouslySetInnerHTML={{ __html: `
+          document.documentElement.style.setProperty('background-color','#070C12','important');
+          document.addEventListener('DOMContentLoaded',function(){
+            if(document.body) document.body.style.setProperty('background-color','#070C12','important');
+          });
+        ` }} />
       </head>
       <body style={{ backgroundColor: '#070C12', color: '#F0F4F8', margin: 0 }}>
         {children}
