@@ -132,13 +132,35 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
-    // Force dark background on html/body — RootShell not used in Vite dev mode
-    const html = document.documentElement;
-    const body = document.body;
-    html.style.setProperty('background-color', '#070C12', 'important');
-    body.style.setProperty('background-color', '#070C12', 'important');
-    body.style.setProperty('color', '#F0F4F8', 'important');
-    body.style.setProperty('margin', '0', 'important');
+    // Inject a style tag that overrides CSS variables and bg-background class.
+    // We keep it at the END of <head> via MutationObserver so it always wins
+    // over any CSS Vite injects after React mounts.
+    const style = document.createElement('style');
+    style.id = 'op-dark-override';
+    style.textContent = [
+      'html,body{background-color:#070C12!important;color:#F0F4F8!important;margin:0!important}',
+      ':root{--background:#070C12!important;--foreground:#F0F4F8!important;--card:#0D1B2A!important;--card-foreground:#F0F4F8!important;--popover:#0D1B2A!important;--popover-foreground:#F0F4F8!important;--muted:#1B2A4A!important;--muted-foreground:#8899AA!important;--border:rgba(136,153,170,0.2)!important;--input:rgba(136,153,170,0.2)!important}',
+      '.bg-background{background-color:#070C12!important}',
+      '.text-foreground{color:#F0F4F8!important}',
+      '.text-muted-foreground{color:#8899AA!important}',
+    ].join('\n');
+    document.head.appendChild(style);
+
+    const ensureLast = () => {
+      if (document.head.lastChild !== style) document.head.appendChild(style);
+    };
+    const observer = new MutationObserver(ensureLast);
+    observer.observe(document.head, { childList: true });
+
+    const applyInline = () => {
+      document.documentElement.style.setProperty('background-color', '#070C12', 'important');
+      document.body.style.setProperty('background-color', '#070C12', 'important');
+      document.body.style.setProperty('color', '#F0F4F8', 'important');
+      document.body.style.setProperty('margin', '0', 'important');
+    };
+    applyInline();
+
+    return () => { observer.disconnect(); };
   }, []);
 
   useEffect(() => {
@@ -154,11 +176,13 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <PassiveTracker />
-      <MigrationIndicator />
-      <AppShell>
-        <Outlet />
-      </AppShell>
+      <div style={{ backgroundColor: '#070C12', minHeight: '100vh', color: '#F0F4F8' }}>
+        <PassiveTracker />
+        <MigrationIndicator />
+        <AppShell>
+          <Outlet />
+        </AppShell>
+      </div>
     </QueryClientProvider>
   );
 }
