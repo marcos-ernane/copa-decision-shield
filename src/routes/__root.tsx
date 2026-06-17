@@ -95,12 +95,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Sistema de inteligência operacional pessoal baseado no Método COPA" },
     ],
     links: [
-      {
-        // Arquivo estático em public/ — servido como CSS real (text/css) em dev e produção.
-        // Garante fundo escuro ANTES de qualquer JS carregar, sem flash branco.
-        rel: "stylesheet",
-        href: "/op-dark.css",
-      },
       // Em dev, appCss (/src/styles.css) é servido como text/javascript pelo Vite —
       // o React 19 gerencia esse link quebrado como stylesheet resource e pode causar
       // comportamento inesperado. Só incluímos em produção, onde o bundle CSS é real.
@@ -157,12 +151,17 @@ function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" style={{ backgroundColor: '#070C12' }}>
       <head>
+        {/*
+          <link> sem data-precedence: o React 19 NÃO intercepta nem carrega via
+          adoptedStyleSheets. O browser carrega esse arquivo diretamente como CSS real.
+          Isso garante que /op-dark.css seja SEMPRE aplicado, independente do
+          sistema de gestão de stylesheets do React 19.
+        */}
+        <link rel="stylesheet" href="/op-dark.css" data-op-critical="true" />
         <HeadContent />
         {/*
           dangerouslySetInnerHTML previne que o React 19 trate este <style> como
-          "hoistable" e o remova/mova durante a hidratação. Com string-child normal
-          (sem dangerouslySetInnerHTML), React 19 registra o <style> em seu sistema
-          de deduplicação e o retira do DOM temporariamente, causando o flash branco.
+          "hoistable" e o remova/mova durante a hidratação.
         */}
         <style dangerouslySetInnerHTML={{ __html: DARK_CSS }} />
         <script dangerouslySetInnerHTML={{ __html: DARK_SCRIPT }} />
