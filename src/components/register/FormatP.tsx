@@ -1,7 +1,7 @@
 // Formato P — Definição de IMV. Métrica obrigatória. 4 passos sequenciais.
 
 import { useState } from 'react';
-import { X, CircleHelp } from 'lucide-react';
+import { X, CircleHelp, Plus, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceInput } from '@/components/copa/VoiceInput';
@@ -89,6 +89,97 @@ interface Props {
 
 const TOTAL_STEPS = 4;
 
+function toItems(value: string | undefined | null): string[] {
+  if (!value?.trim()) return [''];
+  const items = value.split('\n').filter((s) => s.trim());
+  return items.length > 0 ? items : [''];
+}
+
+function fromItems(items: string[]): string {
+  return items.filter((s) => s.trim()).join('\n');
+}
+
+interface TopicListProps {
+  items: string[];
+  onChange: (items: string[]) => void;
+  placeholder?: string;
+  addLabel?: string;
+}
+
+function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item' }: TopicListProps) {
+  const [expandedIdx, setExpandedIdx] = useState(items.length - 1);
+
+  function add() {
+    const next = [...items, ''];
+    onChange(next);
+    setExpandedIdx(next.length - 1);
+  }
+
+  function update(i: number, val: string) {
+    const next = [...items];
+    next[i] = val;
+    onChange(next);
+  }
+
+  function remove(i: number) {
+    const next = items.filter((_, idx) => idx !== i);
+    const safe = next.length > 0 ? next : [''];
+    onChange(safe);
+    setExpandedIdx(Math.min(expandedIdx, safe.length - 1));
+  }
+
+  return (
+    <div className="rounded-md border border-op-gray/30 bg-op-navy overflow-hidden divide-y divide-op-gray/20">
+      {items.map((item, i) => {
+        const isExpanded = expandedIdx === i;
+        return (
+          <div key={i} className="flex items-start gap-2 px-3 py-2.5">
+            {isExpanded ? (
+              <div className="flex-1 min-w-0">
+                <VoiceInput
+                  value={item}
+                  onChange={(v) => update(i, v)}
+                  placeholder={placeholder}
+                  rows={2}
+                />
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="flex-1 flex items-center gap-1.5 text-left min-w-0"
+                onClick={() => setExpandedIdx(i)}
+              >
+                <span className="flex-1 text-sm text-op-white line-clamp-1 min-w-0">
+                  {item.trim() ? item : <span className="text-op-gray italic text-xs">toque para editar</span>}
+                </span>
+                <ChevronDown className="size-3.5 text-op-gray shrink-0" />
+              </button>
+            )}
+            {items.length > 1 && (
+              <button
+                type="button"
+                className="shrink-0 mt-0.5 text-op-gray hover:text-destructive transition-colors"
+                onClick={() => remove(i)}
+                aria-label="Remover item"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+        );
+      })}
+      <button
+        type="button"
+        onClick={add}
+        className="w-full flex items-center gap-1.5 px-3 py-2 text-small text-[color:var(--color-brand-blue)] hover:bg-accent transition-colors"
+      >
+        <Plus className="size-4" />
+        {addLabel}
+      </button>
+    </div>
+  );
+}
+
 const LAYERS: { value: OperationalLayer; label: string }[] = [
   { value: 'operabilidade', label: 'Operabilidade' },
   { value: 'conversao', label: 'Conversão' },
@@ -113,7 +204,8 @@ function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boole
 }
 
 export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onAutoSaved, initialData, step, isReviewing }: Props) {
-  const [action, setAction] = useState(initialData?.action ?? '');
+  const [actionItems, setActionItems] = useState<string[]>(() => toItems(initialData?.action));
+  const action = fromItems(actionItems);
   const [reversible, setReversible] = useState<boolean | null>(initialData?.reversible ?? null);
   const [cheap, setCheap] = useState<boolean | null>(initialData?.cheap ?? null);
   const [specific, setSpecific] = useState<boolean | null>(initialData?.specific ?? null);
@@ -363,7 +455,12 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               Ajuda
             </button>
           </div>
-          <VoiceInput value={action} onChange={setAction} placeholder="Teste pequeno para confirmar se sua leitura do cenário está certa." rows={2} />
+          <TopicList
+            items={actionItems}
+            onChange={setActionItems}
+            placeholder="Teste pequeno para confirmar se sua leitura do cenário está certa."
+            addLabel="+ Revisão da IMV anterior"
+          />
         </div>
       )}
 
