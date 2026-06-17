@@ -118,7 +118,7 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
           return (
             <li
               key={phase}
-              className={`rounded-md ${isToday && !done ? 'bg-[color:var(--color-surface-1)]' : ''}`}
+              className={`rounded-md ${isToday && !done ? 'bg-[color:var(--color-op-navy-elevated)]' : ''}`}
             >
               <div className="flex items-center gap-2 px-1">
                 {/* Linha clicável principal */}
