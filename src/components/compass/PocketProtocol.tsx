@@ -1,7 +1,7 @@
 // PocketProtocol — conteúdo 100% estático. Sem chamadas à API.
 
 import { useRouter } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 
 const STEPS = [
   { n: 1, t: 'NOMEIE O TIPO', d: 'Fluxo / Processo / Oferta / Relacionamento / Pressão' },
@@ -19,13 +19,10 @@ const CRITERIA = [
 ];
 
 export function PocketProtocol() {
-  const router = useRouter();
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-black z-10">
-        <button onClick={() => router.history.back()} className="p-2 -ml-2 rounded-md hover:bg-accent" aria-label="Voltar">
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <h1 className="text-heading text-foreground">Protocolo de Bolso</h1>
       </header>
       <main className="px-4 py-5 max-w-md mx-auto space-y-6">

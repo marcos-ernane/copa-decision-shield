@@ -2,8 +2,7 @@
 // Mostra ciclos COPA, princípios, evolução de fases e linha do tempo.
 
 import { useEffect, useState } from 'react';
-import { useRouter } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { getProject, listEntries, listPrinciples } from '@/lib/projects';
 import type { Entry, Principle, Project } from '@/types/database';
 
@@ -52,7 +51,6 @@ function entryPreview(e: Entry): string {
 }
 
 export function AccumulatedCapacityScreen({ projectId }: Props) {
-  const router = useRouter();
   const [cap, setCap] = useState<Capacity | null>(null);
 
   useEffect(() => {
@@ -107,13 +105,7 @@ export function AccumulatedCapacityScreen({ projectId }: Props) {
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
-        <button
-          onClick={() => router.history.back()}
-          className="p-2 -ml-2 rounded-md hover:bg-accent"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <div>
           <p className="text-label uppercase tracking-wide text-muted-foreground">Capacidade Acumulada</p>
           <p className="text-heading text-foreground">{cap?.project?.name ?? '…'}</p>

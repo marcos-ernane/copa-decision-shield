@@ -2,8 +2,8 @@
 // REQ-DIAG-01: ativado apenas em onboarding de projeto novo ou novo ciclo (tipo C).
 
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useRouter } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { DiagnosisQuestion } from './DiagnosisQuestion';
 import { LayerTriageFlow } from './LayerTriageFlow';
@@ -56,7 +56,6 @@ interface Props {
 
 export function DiagnosisFlow({ projectId }: Props) {
   const navigate = useNavigate();
-  const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [entries, setEntries] = useState<Awaited<ReturnType<typeof listEntries>>>([]);
   const [allProjects, setAllProjects] = useState<Project[]>([]);
@@ -116,13 +115,7 @@ export function DiagnosisFlow({ projectId }: Props) {
 
   const pageHeader = (
     <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-black z-10">
-      <button
-        onClick={() => router.history.back()}
-        className="p-2 -ml-2 rounded-md hover:bg-accent"
-        aria-label="Voltar"
-      >
-        <ChevronLeft className="size-5" />
-      </button>
+      <BackButton />
       <div>
         <p className="text-label uppercase tracking-wide text-muted-foreground">Diagnóstico</p>
         <h1 className="text-heading text-foreground">{project.name}</h1>

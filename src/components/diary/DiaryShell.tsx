@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import { useRouter, useNavigate, Link } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { useNavigate, Link } from '@tanstack/react-router';
+import { BackButton } from '@/components/app/BackButton';
 import { TimelineTab } from './TimelineTab';
 import { PrinciplesTab } from './PrinciplesTab';
 import { SymptomIndex } from './SymptomIndex';
@@ -24,7 +24,6 @@ const TABS: Array<{ id: DiaryTab; label: string; to: string }> = [
 ];
 
 export function DiaryShell({ active, children }: Props) {
-  const router = useRouter();
   const navigate = useNavigate();
   const [tab, setTab] = useState<DiaryTab>(active);
 
@@ -41,9 +40,7 @@ export function DiaryShell({ active, children }: Props) {
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="sticky top-0 bg-op-black z-10 border-b border-border">
         <div className="flex items-center gap-2 px-4 py-3">
-          <button onClick={() => router.history.back()} className="p-2 -ml-2 rounded-md hover:bg-accent" aria-label="Voltar">
-            <ChevronLeft className="size-5" />
-          </button>
+          <BackButton />
           <h1 className="text-heading text-foreground">Diário do operador</h1>
         </div>
         <nav className="flex overflow-x-auto px-2 gap-1 pb-2">

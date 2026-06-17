@@ -5,7 +5,8 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useRouter } from '@tanstack/react-router';
-import { ChevronLeft, CheckCircle2, Lock, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Lock, ArrowRight } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 
 // Total de passos por formato (passo final = índice TOTAL_STEPS - 1)
 const FORMAT_STEPS: Record<'C' | 'O' | 'P' | 'A', number> = { C: 4, O: 3, P: 4, A: 5 };
@@ -203,13 +204,7 @@ export function StructuredRegister() {
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
-        <button
-          onClick={handleBack}
-          className="p-2 -ml-2 rounded-md hover:bg-op-navy-elevated"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton onClick={handleBack} />
         <div>
           <p className="text-label uppercase tracking-wide text-op-gray">Registro estruturado</p>
           <p className="text-label text-op-gray uppercase tracking-wide">Nome</p>

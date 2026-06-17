@@ -1,7 +1,8 @@
 // SimulationDetail — orquestra as 4 telas de uma simulação.
 
 import { useState } from 'react';
-import { ChevronLeft, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { getSimulation } from '@/data/simulations';
 import { SimulationContext } from './SimulationContext';
 import { SimulationMethod } from './SimulationMethod';
@@ -41,13 +42,7 @@ export function SimulationDetail({ id, onClose }: Props) {
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
-        <button
-          onClick={back}
-          className="p-2 -ml-2 rounded-md hover:bg-accent"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton onClick={back} />
         <span className="text-label text-muted-foreground uppercase tracking-wide">
           {step} / 4
         </span>

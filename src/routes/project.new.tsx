@@ -1,8 +1,9 @@
 // NewProjectScreen — criação de projeto com state='new' (REQ-PROJ-01).
 
-import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { ChevronLeft, CircleHelp, X } from 'lucide-react';
+import { CircleHelp, X } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { createProject } from '@/lib/projects';
@@ -56,7 +57,6 @@ type HelpKey = 'scenario' | 'layer' | null;
 
 function NewProject() {
   const navigate = useNavigate();
-  const router = useRouter();
   const [name, setName] = useState('');
   const [north, setNorth] = useState('');
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
@@ -120,13 +120,7 @@ function NewProject() {
 
       <div className="min-h-screen bg-op-black flex flex-col" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
         <header className="flex items-center gap-2 px-4 py-3 border-b border-op-gray/20 bg-op-navy">
-          <button
-            onClick={() => router.history.back()}
-            className="p-2 -ml-2 rounded-md hover:bg-op-navy-elevated"
-            aria-label="Voltar"
-          >
-            <ChevronLeft className="size-5 text-op-white" />
-          </button>
+          <BackButton />
           <h1 className="text-heading text-op-white">Novo projeto</h1>
         </header>
 

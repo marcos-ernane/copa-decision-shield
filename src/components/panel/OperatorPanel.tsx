@@ -1,5 +1,6 @@
 import { Link, useNavigate, useRouter } from '@tanstack/react-router';
-import { ChevronLeft, MoreVertical } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { useMemo, useState } from 'react';
 import { usePanelData } from '@/hooks/usePanelData';
 import { GuestStorage } from '@/lib/guestStorage';
@@ -33,7 +34,6 @@ import {
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 
 export function OperatorPanel() {
-  const router = useRouter();
   const navigate = useNavigate();
   const { projects, entries, principles, baselines, loading, refresh } = usePanelData();
   const [archivingId, setArchivingId] = useState<string | null>(null);
@@ -114,13 +114,7 @@ export function OperatorPanel() {
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-black z-10">
-        <button
-          onClick={() => router.history.back()}
-          className="p-2 -ml-2 rounded-md hover:bg-accent"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <h1 className="text-heading text-foreground">Painel do operador</h1>
       </header>
 

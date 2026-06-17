@@ -1,13 +1,12 @@
 // /panel/baseline — histórico completo de avaliações de linha de base.
 
-import { createFileRoute, useRouter, Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { getBaselineHistory, SCORE_KEYS, SCORE_LABELS, parseScores } from '@/lib/baseline';
 import type { BaselineAssessment } from '@/types/database';
 
 function PanelBaselinePage() {
-  const router = useRouter();
   const [items, setItems] = useState<BaselineAssessment[] | null>(null);
 
   useEffect(() => {
@@ -17,9 +16,7 @@ function PanelBaselinePage() {
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
-        <button onClick={() => router.history.back()} className="p-2 -ml-2 rounded-md hover:bg-accent" aria-label="Voltar">
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <h1 className="text-heading text-foreground">Linha de base — histórico</h1>
       </header>
 

@@ -1,8 +1,8 @@
 // NotificationSettings — tela completa.
 
 import { useEffect, useState } from 'react';
-import { useNavigate, useRouter } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { BackButton } from '@/components/app/BackButton';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,7 +27,6 @@ const DAYS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 
 export function NotificationSettings() {
-  const router = useRouter();
   const navigate = useNavigate();
   const [cfg, setCfg] = useState<NotifConfig>(getNotifConfig());
   const [maint, setMaint] = useState<MaintenanceNotifPrefs>(getMaintenanceNotifPrefs());
@@ -98,13 +97,7 @@ export function NotificationSettings() {
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="sticky top-0 bg-op-navy border-b border-border z-10">
         <div className="flex items-center gap-2 px-4 py-3">
-          <button
-            onClick={() => router.history.back()}
-            className="p-2 -ml-2 rounded-md hover:bg-accent"
-            aria-label="Voltar"
-          >
-            <ChevronLeft className="size-5" />
-          </button>
+          <BackButton />
           <h1 className="text-heading text-foreground">Notificações</h1>
         </div>
       </header>

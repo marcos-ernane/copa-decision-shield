@@ -1,7 +1,7 @@
 // SimulationLibrary — lista das 5 simulações. Cards 3-5 bloqueados via PaywallGate.
 
 import { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { useRouter } from '@tanstack/react-router';
 import { SIMULATIONS } from '@/data/simulations';
 import { SimulationCard } from './SimulationCard';
@@ -9,7 +9,6 @@ import { SimulationDetail } from './SimulationDetail';
 import { PaywallGate } from '@/components/PaywallGate';
 
 export function SimulationLibrary() {
-  const router = useRouter();
   const [activeId, setActiveId] = useState<string | null>(null);
 
   if (activeId) {
@@ -19,13 +18,7 @@ export function SimulationLibrary() {
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
-        <button
-          onClick={() => router.history.back()}
-          className="p-2 -ml-2 rounded-md hover:bg-accent"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <h1 className="text-heading text-foreground">Simulações do Operador</h1>
       </header>
 

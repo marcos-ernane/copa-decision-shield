@@ -4,8 +4,9 @@
 // REQ-DIAGGUIDE-01..04.
 
 import { useEffect, useState } from 'react';
-import { useRouter, useNavigate } from '@tanstack/react-router';
-import { ChevronLeft, Check } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { Check } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
@@ -21,16 +22,13 @@ const INTERPRETIVE_TOKENS = ['acho que', 'parece', 'deve ser', 'sinto que', 'cre
 type Mode = 'guided' | 'reference';
 
 export function DiagnosticGuideScreen() {
-  const router = useRouter();
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('guided');
 
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-black z-10">
-        <button onClick={() => router.history.back()} className="p-2 -ml-2 rounded-md hover:bg-accent" aria-label="Voltar">
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <h1 className="text-heading text-foreground flex-1">Guia Diagnóstico</h1>
       </header>
 

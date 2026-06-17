@@ -1,8 +1,8 @@
 // PactSetupScreen — configuração do Pacto Semanal por projeto.
 
 import { useEffect, useState } from 'react';
-import { useNavigate, useRouter } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { BackButton } from '@/components/app/BackButton';
 import { getProject } from '@/lib/projects';
 import {
   activatePact, updatePactConfig, deactivatePact, getCycle, PHASES,
@@ -29,7 +29,6 @@ interface Props { projectId: string }
 
 export function PactSetupScreen({ projectId }: Props) {
   const navigate = useNavigate();
-  const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [cycle, setCycle] = useState<WeeklyCycle | null>(null);
   const [saving, setSaving] = useState(false);
@@ -76,9 +75,7 @@ export function PactSetupScreen({ projectId }: Props) {
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
-        <button onClick={() => router.history.back()} className="p-2 -ml-2 rounded-md hover:bg-accent" aria-label="Voltar">
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <div>
           <p className="text-label uppercase tracking-wide text-muted-foreground">Pacto Semanal</p>
           <h1 className="text-heading text-foreground">{project.name}</h1>

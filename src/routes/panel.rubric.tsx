@@ -1,6 +1,6 @@
-import { createFileRoute, useRouter, Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { usePanelData } from '@/hooks/usePanelData';
 import { calculateIndex, type RubricScores } from '@/engines/IndexCalculator';
 import { RubricDetail } from '@/components/panel/RubricDetail';
@@ -8,7 +8,6 @@ import { getLatestBaseline, parseScores } from '@/lib/baseline';
 import type { BaselineAssessment } from '@/types/database';
 
 function RubricPage() {
-  const router = useRouter();
   const { projects, entries, principles, loading } = usePanelData();
   const idx = useMemo(() => calculateIndex(entries, principles, projects), [entries, principles, projects]);
 
@@ -20,9 +19,7 @@ function RubricPage() {
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
-        <button onClick={() => router.history.back()} className="p-2 -ml-2 rounded-md hover:bg-accent" aria-label="Voltar">
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <h1 className="text-heading text-foreground">Rubrica do operador</h1>
       </header>
       <div className="px-4 py-4 space-y-6">

@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { getProject, updateProject } from '@/lib/projects';
@@ -28,7 +28,6 @@ const LAYERS: { value: OperationalLayer; label: string }[] = [
 function EditProject() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const router = useRouter();
 
   const [name, setName] = useState('');
   const [north, setNorth] = useState('');
@@ -74,13 +73,7 @@ function EditProject() {
   return (
     <div className="min-h-screen bg-op-black flex flex-col" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-op-gray/30">
-        <button
-          onClick={() => router.history.back()}
-          className="p-2 -ml-2 rounded-md hover:bg-op-navy-elevated"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <div>
           <p className="text-label uppercase tracking-wide text-op-gray">Editar projeto</p>
           <h1 className="text-heading text-op-white">{name}</h1>

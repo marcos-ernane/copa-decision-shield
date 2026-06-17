@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useNavigate } from '@tanstack/react-router';
-import { ChevronLeft, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
@@ -50,9 +51,7 @@ export function SheetHistoryScreen() {
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
-        <button onClick={() => router.history.back()} className="p-2 -ml-2 rounded-md hover:bg-accent" aria-label="Voltar">
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <h1 className="text-heading text-foreground flex-1">Folhas salvas</h1>
         <Button size="sm" onClick={() => navigate({ to: '/compass/sheet' })}>Nova</Button>
       </header>

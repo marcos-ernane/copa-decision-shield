@@ -1,8 +1,9 @@
 // Tela de Projetos Concluídos — listagem com busca e exclusão.
 
-import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronLeft, Search, Trash2 } from 'lucide-react';
+import { Search, Trash2 } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -25,7 +26,6 @@ export const Route = createFileRoute('/concluded')({
 });
 
 function ConcludedProjectsScreen() {
-  const router = useRouter();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [query, setQuery] = useState('');
@@ -66,13 +66,7 @@ function ConcludedProjectsScreen() {
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="sticky top-0 bg-background border-b border-border z-10">
         <div className="flex items-center gap-2 px-4 py-3">
-          <button
-            onClick={() => router.history.back()}
-            className="p-2 -ml-2 rounded-md hover:bg-accent"
-            aria-label="Voltar"
-          >
-            <ChevronLeft className="size-5" />
-          </button>
+          <BackButton />
           <h1 className="text-heading text-foreground flex-1">Projetos Concluídos</h1>
           <span className="text-small text-muted-foreground">{projects.length}</span>
         </div>

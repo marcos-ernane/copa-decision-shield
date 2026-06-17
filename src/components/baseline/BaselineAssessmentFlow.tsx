@@ -3,7 +3,7 @@
 
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import {
   SCORE_KEYS,
   SCORE_LABELS,
@@ -74,11 +74,7 @@ export function BaselineAssessmentFlow() {
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
-        {step < 7 && (
-          <button onClick={back} className="p-2 -ml-2 rounded-md hover:bg-accent" aria-label="Voltar">
-            <ChevronLeft className="size-5" />
-          </button>
-        )}
+        {step < 7 && <BackButton onClick={back} />}
         <div>
           <p className="text-label uppercase tracking-wide text-muted-foreground">Linha de Base</p>
           <h1 className="text-heading text-foreground">

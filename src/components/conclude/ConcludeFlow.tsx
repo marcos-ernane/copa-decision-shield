@@ -1,8 +1,7 @@
 // ConcludeFlow — orquestrador.
 
 import { useEffect, useState } from 'react';
-import { useRouter } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { getProject, listEntries, listPrinciples } from '@/lib/projects';
 import {
   runPreConcludeChecks,
@@ -23,7 +22,6 @@ type Step = 'checks' | 'north' | 'retro' | 'preview' | 'done';
 interface Props { projectId: string; }
 
 export function ConcludeFlow({ projectId }: Props) {
-  const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [principles, setPrinciples] = useState<Principle[]>([]);
@@ -82,13 +80,7 @@ export function ConcludeFlow({ projectId }: Props) {
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="sticky top-0 bg-op-navy border-b border-border z-10">
         <div className="flex items-center gap-2 px-4 py-3">
-          <button
-            onClick={() => router.history.back()}
-            className="p-2 -ml-2 rounded-md hover:bg-accent"
-            aria-label="Voltar"
-          >
-            <ChevronLeft className="size-5" />
-          </button>
+          <BackButton />
           <div>
             <p className="text-label uppercase tracking-wide text-muted-foreground">Concluir projeto</p>
             <h1 className="text-heading text-foreground">{project.name}</h1>

@@ -1,5 +1,5 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { createFileRoute } from '@tanstack/react-router';
+import { BackButton } from '@/components/app/BackButton';
 import { FrictionMatrix } from '@/components/compass/FrictionMatrix';
 import type { ScenarioType } from '@/types/app';
 
@@ -16,18 +16,11 @@ export const Route = createFileRoute('/compass/friction')({
 });
 
 function Page() {
-  const router = useRouter();
   const { type } = Route.useSearch();
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
-        <button
-          onClick={() => router.history.back()}
-          className="p-2 -ml-2 rounded-md hover:bg-accent"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <h1 className="text-heading text-foreground">Tabela de Fricções</h1>
       </header>
       <main className="px-4 py-4 max-w-md mx-auto">

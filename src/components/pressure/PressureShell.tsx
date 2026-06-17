@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
-import { ArrowLeft } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { PressureRealityCheckScreen } from './PressureRealityCheckScreen';
 import { AbuseWarningScreen } from './AbuseWarningScreen';
@@ -115,9 +115,7 @@ export function PressureShell() {
     return (
       <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
         <header className="flex items-center gap-3 px-4 py-4 border-b border-border">
-          <button onClick={() => router.history.back()} className="p-1 rounded-md hover:bg-accent" aria-label="Voltar">
-            <ArrowLeft className="size-5 text-muted-foreground" />
-          </button>
+          <BackButton />
           <h1 className="text-heading text-foreground">Modo Pressão</h1>
         </header>
         <div className="space-y-4 p-4">

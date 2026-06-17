@@ -1,7 +1,7 @@
 // Placeholder padronizado para telas que serão construídas em sprints futuros.
 
 import { useRouter } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 
 interface Props {
   title: string;
@@ -9,17 +9,10 @@ interface Props {
 }
 
 export function Placeholder({ title, note }: Props) {
-  const router = useRouter();
   return (
     <div className="min-h-screen flex flex-col bg-op-black">
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border">
-        <button
-          onClick={() => router.history.back()}
-          className="p-2 -ml-2 rounded-md hover:bg-accent"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <h1 className="text-heading text-foreground">{title}</h1>
       </header>
       <div className="flex-1 flex items-center justify-center px-6">

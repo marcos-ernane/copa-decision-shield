@@ -2,8 +2,9 @@
 // Atende REQ-SHEET-01..05. Offline-first via lib/sheet.
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter, useNavigate } from '@tanstack/react-router';
-import { ChevronLeft, Share2, Check } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { Share2, Check } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
@@ -33,7 +34,6 @@ export function OperatorSheetScreen({
   initialScenario = null,
   initialLayer = null,
 }: Props) {
-  const router = useRouter();
   const navigate = useNavigate();
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -97,9 +97,7 @@ export function OperatorSheetScreen({
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
-        <button onClick={() => router.history.back()} className="p-2 -ml-2 rounded-md hover:bg-accent" aria-label="Voltar">
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <div className="flex-1 min-w-0">
           <p className="text-label uppercase tracking-wide text-muted-foreground">Folha do Operador</p>
           {projectId && (

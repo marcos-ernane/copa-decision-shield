@@ -2,8 +2,8 @@
 // Texto + voz, classificação obrigatória, detecção suave de interpretação.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useRouter } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { ProjectPicker } from './ProjectPicker';
@@ -24,7 +24,6 @@ const OPTIONS: { value: PulseClassification; label: string }[] = [
 
 export function PulseRegister() {
   const navigate = useNavigate();
-  const router = useRouter();
   const { projectId, setProjectId, projects } = useProjectPicker();
   const [text, setText] = useState('');
   const [classification, setClassification] = useState<PulseClassification | null>(null);
@@ -91,13 +90,7 @@ export function PulseRegister() {
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
-        <button
-          onClick={() => router.history.back()}
-          className="p-2 -ml-2 rounded-md hover:bg-op-navy-elevated"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <div>
           <p className="text-label uppercase tracking-wide text-op-gray">Registro de Pulso</p>
           <p className="text-heading text-op-white">{currentProject?.name ?? '…'}</p>

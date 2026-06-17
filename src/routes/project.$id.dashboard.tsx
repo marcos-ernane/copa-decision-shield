@@ -1,8 +1,9 @@
 // ProjectDashboard — painel operacional do projeto (REQ-DASH-01..03).
 
-import { createFileRoute, useNavigate, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
+import { ChevronRight, MoreVertical } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -107,7 +108,6 @@ function sanitizeFieldReading(text: string | null | undefined): string | null {
 function ProjectDashboard() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [principles, setPrinciples] = useState<Principle[]>([]);
@@ -208,13 +208,7 @@ function ProjectDashboard() {
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <button
-          onClick={() => router.history.back()}
-          className="p-2 -ml-2 rounded-md hover:bg-op-navy-elevated"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
+        <BackButton />
         <div className="flex-1 min-w-0 px-2 text-center">
           <p className="text-label text-op-gray uppercase tracking-wide truncate">{project.name}</p>
         </div>
