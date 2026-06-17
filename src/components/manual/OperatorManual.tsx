@@ -75,7 +75,7 @@ export function OperatorManual() {
             const isConcluded = !project || project.state === 'concluded';
 
             return (
-              <li key={c.id} className="rounded-md border border-border bg-card overflow-hidden">
+              <li key={c.id} className="rounded-xl border border-op-gray/30 bg-op-navy overflow-hidden">
                 {/* Capítulo */}
                 <ChapterCard
                   chapter={c}
@@ -86,7 +86,7 @@ export function OperatorManual() {
                 {/* Ações do projeto */}
                 <div className="flex border-t border-border divide-x divide-border">
                   <button
-                    className="flex-1 py-2 text-label text-foreground hover:bg-accent transition-colors"
+                    className="flex-1 py-2 text-label text-op-white hover:opacity-80 transition-opacity"
                     onClick={() =>
                       project &&
                       navigate({ to: '/project/$id/dashboard', params: { id: project.id } })
@@ -95,14 +95,14 @@ export function OperatorManual() {
                     Ver projeto
                   </button>
                   <button
-                    className="flex-1 py-2 text-label text-foreground hover:bg-accent transition-colors disabled:opacity-40"
+                    className="flex-1 py-2 text-label text-op-white hover:opacity-80 transition-opacity disabled:opacity-40"
                     disabled={!isConcluded}
                     onClick={() => project && void handleReopen(project.id, c.id)}
                   >
                     Reabrir
                   </button>
                   <button
-                    className="flex-1 py-2 text-label text-destructive hover:bg-accent transition-colors"
+                    className="flex-1 py-2 text-label text-destructive hover:opacity-80 transition-opacity"
                     onClick={() => setDeletingProjectId(c.project_id)}
                   >
                     Excluir

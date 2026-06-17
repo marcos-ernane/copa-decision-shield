@@ -17,10 +17,10 @@ export function SimulationContext({ simulation, onContinue }: Props) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <span className="text-label px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
+        <span className="text-label px-2 py-1 rounded-full bg-op-navy border border-op-gray/30 text-op-gray">
           Tipo: {TYPE_LABEL[simulation.type]}
         </span>
-        <span className="text-label px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
+        <span className="text-label px-2 py-1 rounded-full bg-op-navy border border-op-gray/30 text-op-gray">
           Camada: {LAYER_LABEL[simulation.layer]}
         </span>
       </div>

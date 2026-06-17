@@ -32,7 +32,7 @@ export function CreativeFunction({ alternatives, initial, onContinue }: Props) {
       </p>
 
       {alternatives.map((alt, i) => (
-        <div key={i} className="rounded-md border border-border p-3 space-y-2">
+        <div key={i} className="rounded-xl border border-op-gray/30 bg-op-navy p-3 space-y-2">
           <p className="text-small font-medium">Alternativa {i + 1}</p>
           <p className="text-body" style={{ color: 'var(--color-text-primary)' }}>
             "{alt}"

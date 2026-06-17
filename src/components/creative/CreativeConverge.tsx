@@ -72,10 +72,10 @@ export function CreativeConverge({
             key={i}
             onClick={() => setManualChosen(i)}
             className={cn(
-              'w-full text-left rounded-lg border p-3 space-y-2 transition-colors',
+              'w-full text-left rounded-xl border p-3 space-y-2 transition-colors',
               isChosen
-                ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_oklab,var(--color-brand-blue)_8%,transparent)]'
-                : 'border-border bg-card',
+                ? 'border-op-amber bg-op-amber/10'
+                : 'border-op-gray/30 bg-op-navy hover:opacity-80',
             )}
             style={deprioritized ? { backgroundColor: 'var(--color-surface-3)' } : undefined}
           >

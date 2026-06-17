@@ -151,7 +151,7 @@ export function ReadingModeScreen() {
           <button
             type="button"
             onClick={() => void exit()}
-            className="w-full rounded-md border border-border bg-card py-3 text-body hover:bg-accent"
+            className="w-full rounded-xl border border-op-cyan bg-transparent text-op-cyan py-3 text-body font-semibold hover:opacity-80"
           >
             Sair do Modo Leitura
           </button>

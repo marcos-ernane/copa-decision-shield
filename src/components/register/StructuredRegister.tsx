@@ -234,12 +234,12 @@ export function StructuredRegister() {
                   className={[
                     'flex items-start gap-1.5 rounded-md border px-3 py-2.5 text-left transition-colors',
                     isActive
-                      ? 'border-foreground bg-foreground text-background'
+                      ? 'border-op-amber bg-op-amber text-op-black font-semibold'
                       : status === 'done'
-                      ? 'border-[color:var(--color-status-success,#16a34a)] bg-card text-foreground hover:bg-accent'
+                      ? 'border-[color:var(--color-status-success,#16a34a)] bg-op-navy text-op-white hover:opacity-80'
                       : status === 'next'
-                      ? 'border-border bg-card text-foreground hover:bg-accent'
-                      : 'border-border bg-card text-muted-foreground opacity-40 cursor-not-allowed',
+                      ? 'border-op-gray/30 bg-op-navy text-op-white hover:opacity-80'
+                      : 'border-op-gray/30 bg-op-navy text-op-gray opacity-40 cursor-not-allowed',
                   ].join(' ')}
                 >
                   <span className="mt-0.5 shrink-0">

@@ -14,7 +14,7 @@ export function SimulationCard({ simulation, onOpen, locked }: Props) {
     <button
       type="button"
       onClick={onOpen}
-      className="w-full text-left rounded-md border border-border bg-card p-4 hover:bg-accent/30 transition-colors"
+      className="w-full text-left rounded-xl border border-op-gray/30 bg-op-navy p-4 hover:opacity-80 transition-colors"
     >
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-heading text-foreground">{simulation.title}</h3>

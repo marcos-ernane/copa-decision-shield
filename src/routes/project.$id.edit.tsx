@@ -94,7 +94,7 @@ function EditProject() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={80}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-body focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-xl border border-op-gray/30 bg-op-navy text-op-white placeholder:text-op-gray px-3 py-2 text-body focus:outline-none focus:ring-2 focus:ring-op-amber"
           />
         </div>
 
@@ -115,8 +115,8 @@ function EditProject() {
                 onClick={() => setScenario(s.value)}
                 className={`rounded-full border px-3 py-1 text-small transition-colors ${
                   scenario === s.value
-                    ? 'border-foreground bg-foreground text-background'
-                    : 'border-border bg-card text-foreground hover:bg-accent'
+                    ? 'border-op-amber bg-op-amber text-op-black font-semibold'
+                    : 'border-op-gray/30 bg-op-navy text-op-gray hover:opacity-80'
                 }`}
               >
                 {s.label}
@@ -134,8 +134,8 @@ function EditProject() {
                 onClick={() => setLayer(l.value)}
                 className={`rounded-full border px-3 py-1 text-small transition-colors ${
                   layer === l.value
-                    ? 'border-foreground bg-foreground text-background'
-                    : 'border-border bg-card text-foreground hover:bg-accent'
+                    ? 'border-op-amber bg-op-amber text-op-black font-semibold'
+                    : 'border-op-gray/30 bg-op-navy text-op-gray hover:opacity-80'
                 }`}
               >
                 {l.label}

@@ -85,7 +85,7 @@ export function SimulationApply({ simulation, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => void openStructuredForProject(p.id)}
-                  className="w-full text-left rounded-md border border-border bg-card p-3 hover:bg-accent/30"
+                  className="w-full text-left rounded-xl border border-op-gray/30 bg-op-navy p-3 hover:opacity-80"
                 >
                   <p className="text-body text-foreground">{p.name}</p>
                 </button>

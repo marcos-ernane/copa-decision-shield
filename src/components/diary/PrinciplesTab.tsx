@@ -63,7 +63,7 @@ export function PrinciplesTab() {
         placeholder="Buscar princípios…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="w-full rounded-md border border-border bg-background text-small p-2"
+        className="w-full rounded-xl border border-op-gray/30 bg-op-navy text-op-white placeholder:text-op-gray text-small p-2"
       />
 
       {projectFilter && (
@@ -84,22 +84,22 @@ export function PrinciplesTab() {
       <div className="flex flex-wrap gap-1">
         <button
           onClick={() => { setScenario(null); setLayer(null); setMasterOnly(false); setProjectFilter(null); }}
-          className={`text-label px-2 py-0.5 rounded-full border ${noActiveFilters ? 'bg-foreground text-background border-foreground' : 'border-border'}`}
+          className={`text-label px-2 py-0.5 rounded-full border ${noActiveFilters ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}
         >Todos</button>
         {SCENARIOS.map((s) => (
           <button key={s} onClick={() => setScenario(scenario === s ? null : s)}
-            className={`text-label px-2 py-0.5 rounded-full border ${scenario === s ? 'bg-foreground text-background border-foreground' : 'border-border'}`}>
+            className={`text-label px-2 py-0.5 rounded-full border ${scenario === s ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}>
             {s}
           </button>
         ))}
         {LAYERS.map((l) => (
           <button key={l} onClick={() => setLayer(layer === l ? null : l)}
-            className={`text-label px-2 py-0.5 rounded-full border ${layer === l ? 'bg-foreground text-background border-foreground' : 'border-border'}`}>
+            className={`text-label px-2 py-0.5 rounded-full border ${layer === l ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}>
             {l}
           </button>
         ))}
         <button onClick={() => setMasterOnly((m) => !m)}
-          className={`text-label px-2 py-0.5 rounded-full border ${masterOnly ? 'bg-foreground text-background border-foreground' : 'border-border'}`}>
+          className={`text-label px-2 py-0.5 rounded-full border ${masterOnly ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}>
           ★ mestre
         </button>
       </div>

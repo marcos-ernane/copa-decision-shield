@@ -30,10 +30,10 @@ export function ConcludeNorth({ initialNorth, initialWhatHappened, onNext, onBac
           <button
             key={o.id}
             onClick={() => setNorth(o.id)}
-            className={`w-full text-left rounded-md border p-3 text-small ${
+            className={`w-full text-left rounded-xl border p-3 text-small ${
               north === o.id
-                ? 'border-[color:var(--color-brand-blue)] bg-card text-foreground'
-                : 'border-border bg-card text-foreground hover:bg-accent'
+                ? 'border-op-amber bg-op-amber text-op-black font-semibold'
+                : 'border-op-gray/30 bg-op-navy text-op-white hover:opacity-80'
             }`}
           >
             {o.label}

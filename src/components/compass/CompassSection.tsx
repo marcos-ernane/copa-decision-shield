@@ -16,7 +16,7 @@ export function CompassSection({ to, icon: Icon, title, description }: Props) {
       type="button"
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onClick={() => navigate({ to } as any)}
-      className="w-full flex items-center gap-3 px-4 py-3 rounded-md border border-border bg-card hover:bg-accent transition-colors text-left"
+      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-op-gray/30 bg-op-navy hover:opacity-80 transition-opacity text-left"
     >
       <Icon className="size-5 text-foreground shrink-0" />
       <div className="flex-1 min-w-0">

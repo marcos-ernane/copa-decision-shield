@@ -115,7 +115,7 @@ function PrimaryButton({ children, disabled, onClick }: { children: React.ReactN
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="w-full mt-6 rounded-md bg-foreground text-background py-3 text-body disabled:opacity-40 disabled:cursor-not-allowed"
+      className="w-full mt-6 rounded-xl bg-op-amber text-op-black font-semibold py-3 text-body disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {children}
     </button>
@@ -126,7 +126,7 @@ function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       {...props}
-      className="w-full rounded-md border border-border bg-card px-3 py-2 text-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/30 resize-none"
+      className="w-full rounded-xl border border-op-gray/30 bg-op-navy px-3 py-2 text-body text-op-white placeholder:text-op-gray focus:outline-none focus:ring-1 focus:ring-op-amber/50 resize-none"
     />
   );
 }
@@ -135,7 +135,7 @@ function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className="w-full rounded-md border border-border bg-card px-3 py-2 text-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/30"
+      className="w-full rounded-xl border border-op-gray/30 bg-op-navy px-3 py-2 text-body text-op-white placeholder:text-op-gray focus:outline-none focus:ring-1 focus:ring-op-amber/50"
     />
   );
 }
@@ -313,8 +313,8 @@ function Step6({ form, setForm, onSubmit, saving }: {
                       className={
                         'flex-1 py-2 rounded-md border text-body ' +
                         (active
-                          ? 'border-foreground bg-foreground text-background'
-                          : 'border-border bg-card text-foreground hover:bg-accent')
+                          ? 'border-op-amber bg-op-amber text-op-black font-semibold'
+                          : 'border-op-gray/30 bg-op-navy text-op-white hover:opacity-80')
                       }
                       aria-pressed={active}
                     >
@@ -389,14 +389,14 @@ function Step7({ scores, savedId, onRestart }: { scores: BaselineScores; savedId
         <button
           type="button"
           onClick={() => navigate({ to: '/' })}
-          className="w-full rounded-md bg-foreground text-background py-3 text-body"
+          className="w-full rounded-xl bg-op-amber text-op-black font-semibold py-3 text-body"
         >
           Ir para o app
         </button>
         <button
           type="button"
           onClick={onRestart}
-          className="w-full rounded-md border border-border bg-card py-3 text-body text-foreground hover:bg-accent"
+          className="w-full rounded-xl border border-op-cyan bg-transparent text-op-cyan py-3 text-body font-semibold hover:opacity-80"
         >
           Fazer nova avaliação futuramente
         </button>

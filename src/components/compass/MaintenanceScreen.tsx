@@ -49,7 +49,7 @@ export function MaintenanceScreen() {
         <div className="flex rounded-md border border-border overflow-hidden text-label w-full">
           {(['weekly', 'biweekly', 'monthly'] as Tab[]).map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 px-2 py-1.5 ${tab === t ? 'bg-foreground text-background' : 'text-muted-foreground'}`}>
+              className={`flex-1 px-2 py-1.5 ${tab === t ? 'bg-op-amber text-op-black font-semibold' : 'text-op-gray'}`}>
               {t === 'weekly' ? 'Semanal' : t === 'biweekly' ? 'Quinzenal' : 'Mensal'}
             </button>
           ))}

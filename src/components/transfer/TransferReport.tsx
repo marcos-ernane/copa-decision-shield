@@ -78,7 +78,7 @@ export function TransferReport({
             type="button"
             onClick={handleSave}
             disabled={saved}
-            className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-body disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-op-amber text-op-black font-semibold text-body disabled:opacity-50"
           >
             {saved ? 'Princípio salvo no Banco' : 'Salvar no Banco de Princípios'}
           </button>

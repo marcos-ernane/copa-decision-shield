@@ -344,7 +344,7 @@ function ProjectDashboard() {
                 <button
                   type="button"
                   onClick={() => void handleResume()}
-                  className="w-full rounded-md border border-border bg-background py-2.5 text-small font-medium text-foreground hover:bg-accent transition-colors"
+                  className="w-full rounded-xl border border-op-cyan bg-transparent text-op-cyan py-2.5 text-small font-semibold hover:opacity-80 transition-opacity"
                 >
                   Retomar projeto
                 </button>
@@ -474,7 +474,7 @@ function ProjectDashboard() {
             <button
               type="button"
               onClick={() => void handleResume()}
-              className="w-full rounded-md bg-foreground text-background py-2.5 text-small font-medium hover:opacity-90 transition-opacity"
+              className="w-full rounded-xl bg-op-amber text-op-black py-2.5 text-small font-semibold hover:brightness-95 transition-opacity"
             >
               Retomar projeto
             </button>

@@ -27,7 +27,7 @@ export function SimulationMethod({ simulation, onContinue }: Props) {
         </p>
       </div>
 
-      <div className="rounded-md border border-border p-3 space-y-3">
+      <div className="rounded-xl border border-op-gray/30 bg-op-navy p-3 space-y-3">
         <p className="text-label uppercase tracking-wide text-muted-foreground">
           Organização (Mapa 3R)
         </p>

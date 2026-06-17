@@ -111,13 +111,13 @@ export function OperatorSheetScreen({
         <div className="flex rounded-md border border-border overflow-hidden text-label">
           <button
             onClick={() => setMode('quick')}
-            className={`px-3 py-1.5 ${mode === 'quick' ? 'bg-foreground text-background' : 'text-muted-foreground'}`}
+            className={`px-3 py-1.5 ${mode === 'quick' ? 'bg-op-amber text-op-black font-semibold' : 'text-op-gray'}`}
           >
             Rápido
           </button>
           <button
             onClick={() => setMode('complete')}
-            className={`px-3 py-1.5 ${mode === 'complete' ? 'bg-foreground text-background' : 'text-muted-foreground'}`}
+            className={`px-3 py-1.5 ${mode === 'complete' ? 'bg-op-amber text-op-black font-semibold' : 'text-op-gray'}`}
           >
             Completo
           </button>
@@ -223,7 +223,7 @@ export function OperatorSheetScreen({
           <select
             value={projectId ?? ''}
             onChange={(e) => setProjectId(e.target.value || null)}
-            className="w-full h-9 px-3 rounded-md border border-input bg-transparent text-small"
+            className="w-full h-9 px-3 rounded-xl border border-op-gray/30 bg-op-navy text-op-white text-small"
           >
             <option value="">Sem projeto</option>
             {projects.map((p) => (

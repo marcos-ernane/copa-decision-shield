@@ -113,7 +113,7 @@ export function TimelineTab() {
         <select
           value={project}
           onChange={(e) => setProject(e.target.value)}
-          className="w-full rounded-md border border-border bg-background text-small p-2"
+          className="w-full rounded-xl border border-op-gray/30 bg-op-navy text-op-white text-small p-2"
         >
           <option value="all">Todos os projetos</option>
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -124,7 +124,7 @@ export function TimelineTab() {
             <button
               key={s}
               onClick={() => setScenario(scenario === s ? null : s)}
-              className={`text-label px-2 py-0.5 rounded-full border ${scenario === s ? 'bg-foreground text-background border-foreground' : 'border-border'}`}
+              className={`text-label px-2 py-0.5 rounded-full border ${scenario === s ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}
             >
               {s}
             </button>
@@ -135,7 +135,7 @@ export function TimelineTab() {
             <button
               key={l}
               onClick={() => setLayer(layer === l ? null : l)}
-              className={`text-label px-2 py-0.5 rounded-full border ${layer === l ? 'bg-foreground text-background border-foreground' : 'border-border'}`}
+              className={`text-label px-2 py-0.5 rounded-full border ${layer === l ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}
             >
               {l}
             </button>
@@ -146,7 +146,7 @@ export function TimelineTab() {
             <button
               key={t.v}
               onClick={() => setEtype(etype === t.v ? null : t.v)}
-              className={`text-label px-2 py-0.5 rounded-full border ${etype === t.v ? 'bg-foreground text-background border-foreground' : 'border-border'}`}
+              className={`text-label px-2 py-0.5 rounded-full border ${etype === t.v ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}
             >
               {t.label}
             </button>
@@ -157,7 +157,7 @@ export function TimelineTab() {
             <button
               key={p.v}
               onClick={() => setPeriod(p.v)}
-              className={`text-label px-2 py-0.5 rounded-full border ${period === p.v ? 'bg-foreground text-background border-foreground' : 'border-border'}`}
+              className={`text-label px-2 py-0.5 rounded-full border ${period === p.v ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}
             >
               {p.label}
             </button>

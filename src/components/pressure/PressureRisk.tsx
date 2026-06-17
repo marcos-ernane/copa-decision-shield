@@ -57,7 +57,7 @@ export function PressureRisk({ onSelect, onPerceptionCalibrate }: Props) {
             key={c.key}
             type="button"
             onClick={() => pick(c.key)}
-            className="w-full text-left rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
+            className="w-full text-left rounded-xl border border-op-gray/30 bg-op-navy p-4 transition-colors hover:opacity-80"
           >
             <p className="text-heading text-foreground">{c.title}</p>
             <p className="text-small text-muted-foreground mt-1">{c.body}</p>

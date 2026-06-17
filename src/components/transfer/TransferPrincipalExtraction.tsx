@@ -26,7 +26,7 @@ export function TransferPrincipalExtraction({ initial, onConclude }: Props) {
           type="button"
           disabled={!valid}
           onClick={() => onConclude(text.trim())}
-          className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-body disabled:opacity-40"
+          className="px-4 py-2 rounded-xl bg-op-amber text-op-black font-semibold text-body disabled:opacity-40"
         >
           Concluir prova
         </button>

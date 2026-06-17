@@ -91,8 +91,8 @@ export function Protocol5Shell() {
               className={cn(
                 'px-3 py-1.5 rounded-full text-small border transition-colors',
                 state.type === k
-                  ? 'bg-[var(--color-brand-navy)] text-white border-transparent'
-                  : 'border-border bg-card text-foreground hover:bg-accent',
+                  ? 'bg-op-amber text-op-black border-op-amber font-semibold'
+                  : 'border-op-gray/30 bg-op-navy text-op-white hover:opacity-80',
               )}
             >
               {SCENARIO_LABEL[k]}

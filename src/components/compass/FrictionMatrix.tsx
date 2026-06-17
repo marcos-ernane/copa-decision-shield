@@ -69,8 +69,8 @@ export function FrictionMatrix({
               className={cn(
                 'px-3 py-1.5 rounded-full text-small border transition-colors',
                 type === k
-                  ? 'bg-[var(--color-brand-navy)] text-white border-transparent'
-                  : 'border-border bg-card text-foreground hover:bg-accent',
+                  ? 'bg-op-amber text-op-black border-op-amber font-semibold'
+                  : 'border-op-gray/30 bg-op-navy text-op-white hover:opacity-80',
               )}
             >
               {SCENARIO_LABEL[k]}
@@ -106,8 +106,8 @@ export function FrictionMatrix({
                         className={cn(
                           'w-full text-left rounded-md border px-3 py-2 text-small transition-colors',
                           isSel
-                            ? 'border-[var(--color-brand-navy)] bg-[var(--color-surface-1)] text-foreground'
-                            : 'border-border bg-card text-foreground hover:bg-accent',
+                            ? 'border-op-amber bg-op-amber text-op-black font-semibold'
+                            : 'border-op-gray/30 bg-op-navy text-op-white hover:opacity-80',
                         )}
                       >
                         {friction}

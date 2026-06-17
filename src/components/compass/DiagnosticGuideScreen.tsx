@@ -37,11 +37,11 @@ export function DiagnosticGuideScreen() {
       <div className="px-4 py-3 border-b border-border max-w-md mx-auto">
         <div className="flex rounded-md border border-border overflow-hidden text-label w-full">
           <button onClick={() => setMode('guided')}
-            className={`flex-1 px-3 py-1.5 ${mode === 'guided' ? 'bg-foreground text-background' : 'text-muted-foreground'}`}>
+            className={`flex-1 px-3 py-1.5 ${mode === 'guided' ? 'bg-op-amber text-op-black font-semibold' : 'text-op-gray'}`}>
             Modo Guiado
           </button>
           <button onClick={() => setMode('reference')}
-            className={`flex-1 px-3 py-1.5 ${mode === 'reference' ? 'bg-foreground text-background' : 'text-muted-foreground'}`}>
+            className={`flex-1 px-3 py-1.5 ${mode === 'reference' ? 'bg-op-amber text-op-black font-semibold' : 'text-op-gray'}`}>
             Modo Referência
           </button>
         </div>
@@ -424,9 +424,9 @@ function ReferenceChecklist({ onUseGuided }: { onUseGuided: () => void }) {
           key={i.t}
           type="button"
           onClick={() => toggle(idx)}
-          className="w-full text-left rounded-md border border-border bg-card p-3 flex gap-3 items-start hover:bg-accent/30"
+          className="w-full text-left rounded-xl border border-op-gray/30 bg-op-navy p-3 flex gap-3 items-start hover:opacity-80"
         >
-          <span className={`mt-0.5 inline-flex items-center justify-center size-5 rounded border ${checked[idx] ? 'bg-foreground border-foreground text-background' : 'border-border'}`}>
+          <span className={`mt-0.5 inline-flex items-center justify-center size-5 rounded border ${checked[idx] ? 'bg-op-amber border-op-amber text-op-black' : 'border-op-gray/30'}`}>
             {checked[idx] && <Check className="size-3" />}
           </span>
           <span className="flex-1">

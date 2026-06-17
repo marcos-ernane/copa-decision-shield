@@ -7,10 +7,10 @@ export function StepDots({ current, total }: { current: number; total: number })
           className={[
             'rounded-full transition-all duration-150',
             i === current
-              ? 'size-2 bg-foreground'
+              ? 'size-2 bg-op-amber'
               : i < current
-              ? 'size-1.5 bg-foreground/40'
-              : 'size-1.5 bg-border',
+              ? 'size-1.5 bg-op-amber/40'
+              : 'size-1.5 bg-op-gray/30',
           ].join(' ')}
         />
       ))}

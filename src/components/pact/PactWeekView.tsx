@@ -139,7 +139,7 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
                         {PHASE_LABEL[phase]}
                       </span>
                       {isToday && !done && (
-                        <span className="text-label px-1.5 py-0.5 rounded bg-foreground text-background">
+                        <span className="text-label px-1.5 py-0.5 rounded bg-op-amber text-op-black font-semibold">
                           hoje
                         </span>
                       )}

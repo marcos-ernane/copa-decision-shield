@@ -185,17 +185,17 @@ export function SettingsScreen() {
         )}
 
         <Section title="Dados">
-          <div className="rounded-lg border border-border bg-card divide-y divide-border">
+          <div className="rounded-xl border border-op-gray/30 bg-op-navy divide-y divide-op-gray/20">
             <button
               type="button"
-              className="w-full text-left px-4 py-3 text-body hover:bg-accent"
+              className="w-full text-left px-4 py-3 text-body text-op-white hover:opacity-80 transition-opacity"
               onClick={exportData}
             >
               Exportar dados completos
             </button>
             <button
               type="button"
-              className="w-full text-left px-4 py-3 text-body text-destructive hover:bg-accent"
+              className="w-full text-left px-4 py-3 text-body text-destructive hover:opacity-80 transition-opacity"
               onClick={requestAccountDeletion}
             >
               Excluir conta
@@ -226,7 +226,7 @@ function LinkRow({ to, label }: { to: string; label: string }) {
   return (
     <Link
       to={to}
-      className="rounded-lg border border-border bg-card px-4 py-3 flex items-center justify-between hover:bg-accent"
+      className="rounded-xl border border-op-gray/30 bg-op-navy px-4 py-3 flex items-center justify-between hover:opacity-80 transition-opacity"
     >
       <span className="text-body">{label}</span>
       <ChevronRight className="size-4 text-muted-foreground" />

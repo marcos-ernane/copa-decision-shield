@@ -107,7 +107,7 @@ export function PactSetupScreen({ projectId }: Props) {
                   <select
                     value={c.day_of_week}
                     onChange={(e) => updatePhase(phase, { day_of_week: Number(e.target.value) })}
-                    className="rounded-md bg-background border border-border px-2 py-2 text-small text-foreground"
+                    className="rounded-xl bg-op-navy border border-op-gray/30 px-2 py-2 text-small text-op-white"
                     aria-label={`Dia de ${PHASE_LABELS[phase]}`}
                   >
                     {DAY_LABELS.map((label, i) => (
@@ -117,7 +117,7 @@ export function PactSetupScreen({ projectId }: Props) {
                   <select
                     value={c.time_hour}
                     onChange={(e) => updatePhase(phase, { time_hour: Number(e.target.value) })}
-                    className="rounded-md bg-background border border-border px-2 py-2 text-small text-foreground"
+                    className="rounded-xl bg-op-navy border border-op-gray/30 px-2 py-2 text-small text-op-white"
                     aria-label={`Horário de ${PHASE_LABELS[phase]}`}
                   >
                     {HOURS.map((h) => (
@@ -138,7 +138,7 @@ export function PactSetupScreen({ projectId }: Props) {
           type="button"
           disabled={saving}
           onClick={() => void commit()}
-          className="w-full rounded-md bg-foreground text-background py-3 text-body disabled:opacity-40"
+          className="w-full rounded-xl bg-op-amber text-op-black font-semibold py-3 text-body disabled:opacity-40"
         >
           {saving ? 'Salvando…' : isEditing ? 'Salvar alterações' : 'Ativar pacto'}
         </button>

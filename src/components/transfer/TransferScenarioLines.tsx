@@ -42,8 +42,8 @@ export function TransferScenarioLines({ scenarioIndex, context, initial, isLast,
       data-value={value}
       className={`px-3 py-1 rounded-full border text-small ${
         selected
-          ? 'border-primary bg-primary/15 text-foreground'
-          : 'border-border text-muted-foreground'
+          ? 'border-op-amber bg-op-amber text-op-black font-semibold'
+          : 'border-op-gray/30 bg-op-navy text-op-gray'
       }`}
     >
       {label}
@@ -116,7 +116,7 @@ export function TransferScenarioLines({ scenarioIndex, context, initial, isLast,
           type="button"
           disabled={!complete}
           onClick={() => onContinue(s)}
-          className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-body disabled:opacity-40"
+          className="px-4 py-2 rounded-xl bg-op-amber text-op-black font-semibold text-body disabled:opacity-40"
         >
           {isLast ? 'Concluir cenários →' : 'Próximo cenário →'}
         </button>
@@ -136,7 +136,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={hint}
-        className="w-full rounded-md border border-border bg-card p-2 text-body text-foreground"
+        className="w-full rounded-xl border border-op-gray/30 bg-op-navy p-2 text-body text-op-white placeholder:text-op-gray"
       />
     </div>
   );

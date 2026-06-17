@@ -218,7 +218,7 @@ export function SymptomIndex() {
         placeholder="Busque um sintoma, palavra, padrão…"
         value={query}
         onChange={(e) => { setQuery(e.target.value); setActiveChip(null); }}
-        className="w-full rounded-md border border-border bg-background text-small p-2"
+        className="w-full rounded-xl border border-op-gray/30 bg-op-navy text-op-white placeholder:text-op-gray text-small p-2"
       />
 
       {/* Atalhos por tipo */}
@@ -232,8 +232,8 @@ export function SymptomIndex() {
               onClick={() => selectChip(chip.key)}
               className={`rounded-full px-3 py-1 text-label border transition-colors ${
                 activeChip === chip.key
-                  ? 'bg-foreground text-background border-foreground'
-                  : 'bg-card text-foreground border-border hover:bg-accent'
+                  ? 'bg-op-amber text-op-black border-op-amber font-semibold'
+                  : 'bg-op-navy text-op-gray border-op-gray/30 hover:opacity-80'
               }`}
             >
               {chip.label}
@@ -254,7 +254,7 @@ export function SymptomIndex() {
                 key={term}
                 type="button"
                 onClick={() => selectTerm(term)}
-                className="rounded-full px-3 py-1 text-label bg-muted text-foreground border border-border hover:bg-accent transition-colors"
+                className="rounded-full px-3 py-1 text-label bg-op-navy text-op-gray border border-op-gray/30 hover:opacity-80 transition-colors"
               >
                 {term}
               </button>

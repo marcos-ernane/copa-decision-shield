@@ -51,7 +51,7 @@ export function DiaryShell({ active, children }: Props) {
             <button
               key={t.id}
               onClick={() => go(t.id)}
-              className={`text-small px-3 py-1.5 rounded-md whitespace-nowrap ${tab === t.id ? 'bg-foreground text-background' : 'text-foreground hover:bg-accent'}`}
+              className={`text-small px-3 py-1.5 rounded-md whitespace-nowrap ${tab === t.id ? 'bg-op-amber text-op-black font-semibold' : 'text-op-gray hover:opacity-80'}`}
             >
               {t.label}
             </button>

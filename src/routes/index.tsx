@@ -188,7 +188,7 @@ function Home() {
             value={pauseReason}
             onChange={(e) => setPauseReason(e.target.value)}
             placeholder="Ex: aguardando resultado externo"
-            className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="mt-2 w-full rounded-xl border border-op-gray/30 bg-op-navy text-op-white placeholder:text-op-gray px-3 py-2 text-sm"
           />
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => { setPausingId(null); setPauseReason(''); }}>

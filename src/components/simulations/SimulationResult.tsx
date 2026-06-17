@@ -26,7 +26,7 @@ export function SimulationResult({ simulation, onContinue }: Props) {
         <p className="text-body text-foreground">"{r.why}"</p>
       </div>
 
-      <div className="rounded-md border-2 border-foreground/80 p-4 space-y-2">
+      <div className="rounded-xl border-2 border-op-cyan p-4 space-y-2">
         <p className="text-label uppercase tracking-wide text-muted-foreground">
           Princípio extraído
         </p>

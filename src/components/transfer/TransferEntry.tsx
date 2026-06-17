@@ -27,7 +27,7 @@ export function TransferEntry({ inProgress, onStart, onContinue, onLater }: Prop
             <button
               type="button"
               onClick={onContinue}
-              className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-body"
+              className="px-4 py-2 rounded-xl bg-op-amber text-op-black font-semibold text-body"
             >
               Continuar prova
             </button>
@@ -35,7 +35,7 @@ export function TransferEntry({ inProgress, onStart, onContinue, onLater }: Prop
             <button
               type="button"
               onClick={onStart}
-              className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-body"
+              className="px-4 py-2 rounded-xl bg-op-amber text-op-black font-semibold text-body"
             >
               Começar
             </button>

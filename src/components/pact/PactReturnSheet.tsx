@@ -33,7 +33,7 @@ export function PactReturnSheet({ open, projectName, projectId, lastCycleAt, onC
           <button
             type="button"
             onClick={() => void handleContinue()}
-            className="w-full rounded-md bg-foreground text-background py-3 text-body"
+            className="w-full rounded-xl bg-op-amber text-op-black font-semibold py-3 text-body"
           >
             Continuar
           </button>

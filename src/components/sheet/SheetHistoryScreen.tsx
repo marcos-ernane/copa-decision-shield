@@ -61,7 +61,7 @@ export function SheetHistoryScreen() {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFilterScenario(null)}
-            className={`text-label px-2 py-0.5 rounded-full border ${!filterScenario ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'}`}
+            className={`text-label px-2 py-0.5 rounded-full border ${!filterScenario ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}
           >Todos os tipos</button>
           {SCENARIOS.map((s) => (
             <button key={s} onClick={() => setFilterScenario(filterScenario === s ? null : s)}
@@ -73,7 +73,7 @@ export function SheetHistoryScreen() {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFilterLayer(null)}
-            className={`text-label px-2 py-0.5 rounded-full border ${!filterLayer ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'}`}
+            className={`text-label px-2 py-0.5 rounded-full border ${!filterLayer ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}
           >Todas as camadas</button>
           {LAYERS.map((l) => (
             <button key={l} onClick={() => setFilterLayer(filterLayer === l ? null : l)}
@@ -85,7 +85,7 @@ export function SheetHistoryScreen() {
         <div className="flex gap-2 text-label">
           {(['all', 'with', 'without'] as const).map((v) => (
             <button key={v} onClick={() => setFilterProject(v)}
-              className={`px-2 py-0.5 rounded-full border ${filterProject === v ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'}`}>
+              className={`text-label px-2 py-0.5 rounded-full border ${filterProject === v ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}>
               {v === 'all' ? 'Todas' : v === 'with' ? 'Com projeto' : 'Sem projeto'}
             </button>
           ))}

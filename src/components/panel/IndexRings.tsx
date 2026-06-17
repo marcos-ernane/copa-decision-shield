@@ -154,7 +154,7 @@ export function IndexRings({ clarity, execution, learning, composite, level, cla
               <SheetClose asChild>
                 <button
                   type="button"
-                  className="mt-6 w-full rounded-md border border-border py-2.5 text-small text-foreground hover:bg-accent"
+                  className="mt-6 w-full rounded-xl border border-op-cyan bg-transparent py-2.5 text-small text-op-cyan font-semibold hover:opacity-80"
                 >
                   Entendi
                 </button>
