@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
-import { CheckCircle2, Lock, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Lock, ArrowRight, CircleHelp, X } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 
 // Total de passos por formato (passo final = índice TOTAL_STEPS - 1)
@@ -50,6 +50,25 @@ const PHASE_QUESTIONS: Record<Format, string> = {
   O: 'DOS RECURSOS QUE TENHO NO CENÁRIO, O QUE IMPORTA E COMO ELES SE CONECTAM?',
   P: 'QUAL É O MENOR TESTE QUE CONSIGO FAZER PARA CONFIRMAR SE ESTOU CERTO?',
   A: 'O QUE MUDOU, POR QUE MUDOU E O QUE EU FAÇO COM ISSO AGORA?',
+};
+
+const PHASE_HELP: Record<Format, { title: string; text: string }> = {
+  C: {
+    title: '[C] Captura',
+    text: 'A Captura é o processo de registrar a realidade antes de interpretá-la. Nesta etapa, observe o cenário com atenção e registre fatos, comportamentos, ocorrências, padrões e evidências que possam ser percebidos diretamente. Evite conclusões, julgamentos, explicações ou opiniões. O objetivo é construir uma base confiável de observações para que as etapas seguintes sejam guiadas pela realidade e não por suposições. Quanto melhor a captura, maior será a qualidade do diagnóstico, das decisões e das intervenções.\n\nPergunte-se: Estou registrando o que realmente observei ou aquilo que acredito estar acontecendo e sem julgamento?',
+  },
+  O: {
+    title: '[O] Organização',
+    text: 'A Organização é o processo de transformar observações dispersas em uma leitura estruturada do cenário. Nesta etapa, você separa o que pode ser aproveitado (Recursos), o que confunde ou desvia a atenção (Ruídos) e o que realmente limita os resultados (Restrições). O objetivo não é acumular informações, mas revelar a estrutura que está por trás dos acontecimentos. Uma boa organização reduz a complexidade, destaca o que é relevante e direciona sua atenção para os pontos que merecem intervenção.\n\nPergunte-se: Estou conseguindo distinguir o que gera valor, o que gera distração e o que realmente limita avançar neste cenário?',
+  },
+  P: {
+    title: '[P] Prova',
+    text: 'A Prova é o processo de testar, na realidade, se a sua leitura do cenário está correta. Nesta etapa, hipóteses deixam de ser opiniões e passam a ser verificadas por meio de uma Intervenção Mínima Viável (IMV) e de uma métrica claramente definida. O objetivo não é provar que você está certo, mas descobrir o que a realidade tem a mostrar. Uma boa prova gera evidências, reduz incertezas e transforma percepções em conhecimento confiável para orientar as próximas decisões e decidir escalar a solução.\n\nPergunte-se: Qual é o menor teste que posso executar para verificar se minha hipótese está correta e qual evidência mostrará o resultado?',
+  },
+  A: {
+    title: '[A] Aferição',
+    text: 'A Aferição é o processo de analisar os resultados da IMV para transformar experiência em aprendizado. Nesta etapa, você compara as evidências obtidas com a hipótese inicial que levantou, identifica o que funcionou, o que não funcionou e quais ajustes podem melhorar a próxima intervenção. O objetivo não é julgar o sucesso ou o fracasso do teste, mas extrair conhecimento confiável da realidade. Uma boa aferição fortalece o entendimento do cenário, melhora a qualidade das decisões futuras e evita repetir erros ou acertos sem compreender suas causas.\n\nPergunte-se: O que as evidências deste teste realmente revelam sobre o cenário, a hipótese e os próximos passos?',
+  },
 };
 
 const PHASE_ORDER: Format[] = ['C', 'O', 'P', 'A'];
@@ -117,6 +136,7 @@ export function StructuredRegister() {
   const [currentStep, setCurrentStep] = useState(0);
   const [projectData, setProjectData] = useState<Project | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [phaseHelp, setPhaseHelp] = useState<Format | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -209,6 +229,34 @@ export function StructuredRegister() {
   const lastDate = isReviewing ? lastEntryDate(entries, `structured_${format}`) : null;
 
   return (
+    <>
+    {/* Modal de ajuda da fase — bottom sheet */}
+    {phaseHelp && (
+      <div
+        className="fixed inset-0 z-50 flex items-end bg-black/50"
+        onClick={() => setPhaseHelp(null)}
+      >
+        <div
+          className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-heading font-semibold text-op-white">{PHASE_HELP[phaseHelp].title}</h3>
+            <button
+              type="button"
+              onClick={() => setPhaseHelp(null)}
+              className="p-1 rounded-md hover:bg-op-navy-elevated"
+              aria-label="Fechar ajuda"
+            >
+              <X className="size-5 text-op-gray" />
+            </button>
+          </div>
+          {PHASE_HELP[phaseHelp].text.split('\n\n').map((para, i) => (
+            <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
+          ))}
+        </div>
+      </div>
+    )}
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
         <BackButton onClick={handleBack} />
@@ -272,9 +320,19 @@ export function StructuredRegister() {
 
         {/* Fase atual + pergunta central */}
         <div className="rounded-md bg-op-navy-elevated px-4 py-3 space-y-1">
-          <p className="text-label font-semibold text-op-white uppercase tracking-wide">
-            {PHASE_NAMES[format]}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-label font-semibold text-op-white uppercase tracking-wide">
+              {PHASE_NAMES[format]}
+            </p>
+            <button
+              type="button"
+              onClick={() => setPhaseHelp(format)}
+              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+            >
+              <CircleHelp className="size-3.5" />
+              Ajuda
+            </button>
+          </div>
           <p className="text-small font-medium text-op-white">
             {PHASE_QUESTIONS[format]}
           </p>
@@ -350,5 +408,6 @@ export function StructuredRegister() {
         )}
       </div>
     </div>
+    </>
   );
 }
