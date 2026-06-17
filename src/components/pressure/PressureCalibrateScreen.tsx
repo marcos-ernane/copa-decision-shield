@@ -19,9 +19,9 @@ export function PressureCalibrateScreen({ onContinue, onCloseWithoutSaving }: Pr
   if (phase === 'decide') {
     return (
       <div className="space-y-4 p-4">
-        <div className="space-y-2 rounded-md border border-border bg-card p-4">
+        <div className="space-y-2 rounded-md border border-op-gray/30 bg-op-navy p-4">
           {facts.map((f, i) => (
-            <p key={i} className="text-body text-foreground">
+            <p key={i} className="text-body text-op-white">
               {i + 1}. {f.trim()}
             </p>
           ))}

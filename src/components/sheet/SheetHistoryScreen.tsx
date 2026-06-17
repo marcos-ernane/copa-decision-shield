@@ -106,35 +106,35 @@ export function SheetHistoryScreen() {
           return (
             <button key={s.id}
               onClick={() => setExpandedId(expanded ? null : s.id)}
-              className="w-full text-left rounded-md border border-border bg-card p-3 space-y-2">
+              className="w-full text-left rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2">
               <div className="flex items-center gap-2 flex-wrap">
                 {s.scenario_type && <ScenarioTypeChip type={s.scenario_type} />}
                 {s.layer && <LayerChip layer={s.layer} />}
-                <span className="text-label text-muted-foreground ml-auto">
+                <span className="text-label text-op-gray ml-auto">
                   {new Date(s.created_at).toLocaleDateString('pt-BR')}
                 </span>
               </div>
-              <p className="text-small text-foreground">
-                <span className="text-muted-foreground">Fato: </span>
+              <p className="text-small text-op-white">
+                <span className="text-op-gray">Fato: </span>
                 {truncate(s.fact)}
               </p>
-              <p className="text-small text-foreground">
-                <span className="text-muted-foreground">IMV: </span>
+              <p className="text-small text-op-white">
+                <span className="text-op-gray">IMV: </span>
                 {truncate(s.imv)}
               </p>
-              <p className="text-label text-muted-foreground">
+              <p className="text-label text-op-gray">
                 {s.project_id ? `Projeto: ${projectName(s.project_id) ?? '—'}` : 'Sem projeto'}
               </p>
               {expanded && (
-                <div className="pt-2 border-t border-border space-y-1.5 text-small">
-                  {s.friction && <p><span className="text-muted-foreground">Fricção: </span>{s.friction}</p>}
-                  {s.resource && <p><span className="text-muted-foreground">Recurso: </span>{s.resource}</p>}
-                  {s.metric && <p><span className="text-muted-foreground">Métrica: </span>{s.metric}</p>}
-                  {s.deadline && <p><span className="text-muted-foreground">Prazo: </span>{new Date(s.deadline).toLocaleDateString('pt-BR')}</p>}
-                  {s.cut_rule && <p><span className="text-muted-foreground">Corte: </span>{s.cut_rule}</p>}
-                  {s.principle && <p><span className="text-muted-foreground">Princípio: </span>{s.principle}</p>}
-                  {s.next_bottleneck && <p><span className="text-muted-foreground">Próx. gargalo: </span>{s.next_bottleneck}</p>}
-                  {s.next_action && <p><span className="text-muted-foreground">Próx. ação: </span>{s.next_action}</p>}
+                <div className="pt-2 border-t border-op-gray/30 space-y-1.5 text-small text-op-white">
+                  {s.friction && <p><span className="text-op-gray">Fricção: </span>{s.friction}</p>}
+                  {s.resource && <p><span className="text-op-gray">Recurso: </span>{s.resource}</p>}
+                  {s.metric && <p><span className="text-op-gray">Métrica: </span>{s.metric}</p>}
+                  {s.deadline && <p><span className="text-op-gray">Prazo: </span>{new Date(s.deadline).toLocaleDateString('pt-BR')}</p>}
+                  {s.cut_rule && <p><span className="text-op-gray">Corte: </span>{s.cut_rule}</p>}
+                  {s.principle && <p><span className="text-op-gray">Princípio: </span>{s.principle}</p>}
+                  {s.next_bottleneck && <p><span className="text-op-gray">Próx. gargalo: </span>{s.next_bottleneck}</p>}
+                  {s.next_action && <p><span className="text-op-gray">Próx. ação: </span>{s.next_action}</p>}
                 </div>
               )}
             </button>

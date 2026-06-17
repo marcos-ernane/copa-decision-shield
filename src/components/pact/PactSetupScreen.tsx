@@ -102,7 +102,7 @@ export function PactSetupScreen({ projectId }: Props) {
           {PHASES.map((phase) => {
             const c = cycle[phase];
             return (
-              <div key={phase} className="rounded-md border border-border bg-card p-3 space-y-2">
+              <div key={phase} className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2">
                 <div className="flex items-center gap-3">
                   <select
                     value={c.day_of_week}
@@ -128,7 +128,7 @@ export function PactSetupScreen({ projectId }: Props) {
                     {PHASE_LABELS[phase]}
                   </span>
                 </div>
-                <p className="text-[11px] text-muted-foreground">{PHASE_QUESTIONS[phase]}</p>
+                <p className="text-[11px] text-op-gray">{PHASE_QUESTIONS[phase]}</p>
               </div>
             );
           })}

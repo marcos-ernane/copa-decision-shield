@@ -21,8 +21,8 @@ export function AccumulatedCapacityCard({
   const navigate = useNavigate();
 
   return (
-    <section className="rounded-md border border-border bg-card p-4 space-y-3">
-      <h3 className="text-label text-muted-foreground uppercase">Capacidade Acumulada</h3>
+    <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
+      <h3 className="text-label text-op-gray uppercase">Capacidade Acumulada</h3>
       <div className="grid grid-cols-3 gap-3">
         <Stat
           label="IMVs testadas"
@@ -42,8 +42,8 @@ export function AccumulatedCapacityCard({
       </div>
       {evolved_bottleneck && (
         <div className="pt-2 border-t border-border">
-          <p className="text-label text-muted-foreground">Gargalo que evoluiu</p>
-          <p className="text-small text-foreground mt-1">{evolved_bottleneck}</p>
+          <p className="text-label text-op-gray">Gargalo que evoluiu</p>
+          <p className="text-small text-op-white mt-1">{evolved_bottleneck}</p>
         </div>
       )}
     </section>

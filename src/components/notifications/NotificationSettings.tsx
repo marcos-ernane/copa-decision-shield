@@ -113,18 +113,18 @@ export function NotificationSettings() {
         <SilenceModeIndicator onChange={() => setCfg(getNotifConfig())} />
 
         {/* Crítica */}
-        <section className="space-y-2 rounded-md border border-border bg-card p-4">
+        <section className="space-y-2 rounded-md border border-op-gray/30 bg-op-navy p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-heading text-foreground">Alertas de Momento Crítico</h2>
             <Switch checked disabled />
           </div>
-          <p className="text-small text-muted-foreground">
+          <p className="text-small text-op-gray">
             IMV vencendo, padrões de abandono, projeto inativo. Sempre ativos.
           </p>
         </section>
 
         {/* Pulso semanal */}
-        <section className="space-y-3 rounded-md border border-border bg-card p-4">
+        <section className="space-y-3 rounded-md border border-op-gray/30 bg-op-navy p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-heading text-foreground">Pulso Semanal</h2>
             <Switch checked={cfg.pulse.enabled} onCheckedChange={togglePulse} />
@@ -132,7 +132,7 @@ export function NotificationSettings() {
           {cfg.pulse.enabled && (
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label className="text-label text-muted-foreground uppercase">Dia</label>
+                <label className="text-label text-op-gray uppercase">Dia</label>
                 <Select value={String(cfg.pulse.day_of_week)} onValueChange={(v) => changePulseDay(Number(v))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -141,7 +141,7 @@ export function NotificationSettings() {
                 </Select>
               </div>
               <div className="space-y-1">
-                <label className="text-label text-muted-foreground uppercase">Horário</label>
+                <label className="text-label text-op-gray uppercase">Horário</label>
                 <Select value={String(cfg.pulse.time_hour)} onValueChange={(v) => changePulseHour(Number(v))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -154,17 +154,17 @@ export function NotificationSettings() {
         </section>
 
         {/* Lembrete de ausência de registros */}
-        <section className="space-y-3 rounded-md border border-border bg-card p-4">
+        <section className="space-y-3 rounded-md border border-op-gray/30 bg-op-navy p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-heading text-foreground">Lembrete - Ausências de Registros</h2>
             <Switch checked={cfg.invite.enabled} onCheckedChange={toggleInvite} />
           </div>
-          <p className="text-small text-muted-foreground">
+          <p className="text-small text-op-gray">
             Avisa quando um projeto fica sem registros por muito tempo.
           </p>
           {cfg.invite.enabled && (
             <div className="space-y-1">
-              <label className="text-label text-muted-foreground uppercase">Frequência</label>
+              <label className="text-label text-op-gray uppercase">Frequência</label>
               <Select value={String(cfg.invite.frequency_days)} onValueChange={changeInviteFreq}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -178,17 +178,17 @@ export function NotificationSettings() {
         </section>
 
         {/* Rotina de Manutenção */}
-        <section className="space-y-3 rounded-md border border-border bg-card p-4">
+        <section className="space-y-3 rounded-md border border-op-gray/30 bg-op-navy p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-heading text-foreground">Rotina de Manutenção</h2>
             <Switch checked={maint.enabled} onCheckedChange={toggleMaintenance} />
           </div>
-          <p className="text-small text-muted-foreground">
+          <p className="text-small text-op-gray">
             Lembretes de revisão semanal, quinzenal e mensal.
           </p>
           {maint.enabled && (
             <div className="space-y-1">
-              <label className="text-label text-muted-foreground uppercase">
+              <label className="text-label text-op-gray uppercase">
                 Horário preferido
               </label>
               <Select
@@ -224,7 +224,7 @@ export function NotificationSettings() {
         {/* Pacto */}
         <section className="space-y-2">
           <h2 className="text-heading text-foreground">Pacto de Execução</h2>
-          <p className="text-small text-muted-foreground">
+          <p className="text-small text-op-gray">
             Configurado por projeto em cada Dashboard.
           </p>
           <Button

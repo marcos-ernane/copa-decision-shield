@@ -127,16 +127,16 @@ export function DiagnosisOutput({
       )}
 
       {/* Card de contexto: fase + tipo + camada */}
-      <section className="space-y-2 rounded-md border border-border bg-card p-3">
+      <section className="space-y-2 rounded-md border border-op-gray/30 bg-op-navy p-3">
         <div className="flex items-center justify-between">
-          <p className="text-small text-muted-foreground">Fase sugerida</p>
-          <span className="text-small text-foreground">
+          <p className="text-small text-op-gray">Fase sugerida</p>
+          <span className="text-small text-op-white">
             {PHASE_LABEL[activePhase]}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
-          <p className="text-small text-muted-foreground">Tipo</p>
+          <p className="text-small text-op-gray">Tipo</p>
           <div className="flex items-center gap-2">
             <ScenarioTypeChip type={scenario} />
             <button
@@ -167,7 +167,7 @@ export function DiagnosisOutput({
         )}
 
         <div className="flex items-center justify-between">
-          <p className="text-small text-muted-foreground">Camada</p>
+          <p className="text-small text-op-gray">Camada</p>
           <div className="flex items-center gap-2">
             <LayerChip layer={layer} />
             <button

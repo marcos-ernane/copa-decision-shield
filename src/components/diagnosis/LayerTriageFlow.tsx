@@ -24,9 +24,9 @@ export function LayerTriageFlow({ onResolved, onCancel }: Props) {
   if (node.type === 'result') return null;
 
   return (
-    <div className="space-y-4 rounded-md border border-border bg-card p-4">
-      <p className="text-label text-muted-foreground uppercase">Triagem de camada</p>
-      <p className="text-body text-foreground">{node.text}</p>
+    <div className="space-y-4 rounded-md border border-op-gray/30 bg-op-navy p-4">
+      <p className="text-label text-op-gray uppercase">Triagem de camada</p>
+      <p className="text-body text-op-white">{node.text}</p>
       <div className="flex gap-2">
         <Button className="flex-1" onClick={() => answer(node.sim)}>
           Sim

@@ -89,8 +89,8 @@ export function PressureNextStep({ risk, fact, historyCount, onDefine }: Props) 
       <BookAnchorHint text="O próximo passo mínimo é o núcleo do método sob pressão — Módulo 6 do livro." />
 
       {risk === 'real' && (
-        <div className="space-y-2 rounded-md border border-border bg-card p-3">
-          <p className="text-small text-muted-foreground">
+        <div className="space-y-2 rounded-md border border-op-gray/30 bg-op-navy p-3">
+          <p className="text-small text-op-gray">
             A pressa aqui pode quebrar algo importante?
           </p>
           <VoiceInput value={ethical} onChange={setEthical} rows={2} placeholder="" />

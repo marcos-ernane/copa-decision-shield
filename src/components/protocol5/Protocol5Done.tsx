@@ -25,7 +25,7 @@ export function Protocol5Done({ type, fact, friction, microAction, signal }: Pro
         <h2 className="text-title text-foreground">Protocolo registrado.</h2>
       </header>
 
-      <dl className="space-y-3 rounded-lg border border-border bg-card p-4">
+      <dl className="space-y-3 rounded-lg border border-op-gray/30 bg-op-navy p-4">
         <Row label="Tipo" value={SCENARIO_LABEL[type]} />
         <Row label="Fato" value={`“${fact}”`} />
         <Row label="Fricção" value={`“${friction}”`} />
@@ -55,10 +55,10 @@ export function Protocol5Done({ type, fact, friction, microAction, signal }: Pro
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-0.5">
-      <dt className="text-label uppercase tracking-wide text-muted-foreground">
+      <dt className="text-label uppercase tracking-wide text-op-gray">
         {label}
       </dt>
-      <dd className="text-body text-foreground">{value}</dd>
+      <dd className="text-body text-op-white">{value}</dd>
     </div>
   );
 }

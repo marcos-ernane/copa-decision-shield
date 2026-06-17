@@ -284,8 +284,8 @@ export function SymptomIndex() {
           <h3 className="text-heading text-foreground">{pname(g.projectId)}</h3>
           <ul className="space-y-1">
             {g.items.slice(0, 8).map((it) => (
-              <li key={it.id} className="rounded-md border border-border bg-card p-2 text-small text-foreground">
-                <span className="text-label text-muted-foreground mr-2">
+              <li key={it.id} className="rounded-md border border-op-gray/30 bg-op-navy p-2 text-small text-op-white">
+                <span className="text-label text-op-gray mr-2">
                   {it.kind === 'principle' ? 'princípio' : 'registro'}
                 </span>
                 {it.text || <span className="text-muted-foreground italic">—</span>}

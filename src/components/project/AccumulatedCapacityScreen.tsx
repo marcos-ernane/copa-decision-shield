@@ -146,7 +146,7 @@ export function AccumulatedCapacityScreen({ projectId }: Props) {
               </h2>
               <ul className="space-y-2">
                 {cap.recentPrinciples.map((p) => (
-                  <li key={p.id} className="rounded-md border border-border bg-card p-3 text-small text-foreground">
+                  <li key={p.id} className="rounded-md border border-op-gray/30 bg-op-navy p-3 text-small text-op-white">
                     {p.content}
                   </li>
                 ))}
@@ -191,9 +191,9 @@ export function AccumulatedCapacityScreen({ projectId }: Props) {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md border border-border bg-card p-3 text-center">
-      <p className="text-title text-foreground">{value}</p>
-      <p className="text-label text-muted-foreground mt-0.5">{label}</p>
+    <div className="rounded-md border border-op-gray/30 bg-op-navy p-3 text-center">
+      <p className="text-title text-op-white">{value}</p>
+      <p className="text-label text-op-gray mt-0.5">{label}</p>
     </div>
   );
 }

@@ -13,12 +13,12 @@ export function PatternCards({ patterns }: { patterns: PatternCard[] }) {
   return (
     <div className="space-y-2">
       {patterns.map((p, i) => (
-        <div key={i} className="rounded-md border border-border bg-card p-4">
-          <div className="text-label text-muted-foreground uppercase tracking-wide">
+        <div key={i} className="rounded-md border border-op-gray/30 bg-op-navy p-4">
+          <div className="text-label text-op-gray uppercase tracking-wide">
             {KIND_LABEL[p.kind]}
           </div>
-          <h4 className="text-heading text-foreground mt-0.5">{p.title}</h4>
-          <p className="text-small text-foreground mt-1">{p.body}</p>
+          <h4 className="text-heading text-op-white mt-0.5">{p.title}</h4>
+          <p className="text-small text-op-white mt-1">{p.body}</p>
           {p.suggestion && (
             <Link
               to={p.suggestion.route}

@@ -36,7 +36,7 @@ export function PreConcludeChecks({ projectId, checks, onContinue }: Props) {
         {checks.map((c) => (
           <li
             key={c.id}
-            className="flex items-start gap-3 rounded-md border border-border bg-card p-3"
+            className="flex items-start gap-3 rounded-md border border-op-gray/30 bg-op-navy p-3"
           >
             {c.passed ? (
               <Check className="size-5 text-[var(--color-brand-green)] shrink-0 mt-0.5" />
@@ -44,10 +44,10 @@ export function PreConcludeChecks({ projectId, checks, onContinue }: Props) {
               <AlertTriangle className="size-5 text-[var(--color-brand-amber)] shrink-0 mt-0.5" />
             )}
             <div className="flex-1 space-y-1">
-              <p className="text-small text-foreground">{c.label}</p>
+              <p className="text-small text-op-white">{c.label}</p>
               {!c.passed && (
                 <>
-                  <p className="text-label text-muted-foreground">{c.pendingAction}</p>
+                  <p className="text-label text-op-gray">{c.pendingAction}</p>
                   {(c.id === 'imv_without_apa' ||
                     c.id === 'apa_without_principle' ||
                     c.id === 'no_scenario_type') && (

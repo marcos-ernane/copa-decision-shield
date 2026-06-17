@@ -25,7 +25,7 @@ export function SuggestionSheet({ open, onClose, title, suggestions, footerHint 
           {suggestions.map((s, i) => (
             <li
               key={i}
-              className="rounded-md border border-border bg-card p-3 text-body text-foreground"
+              className="rounded-md border border-op-gray/30 bg-op-navy p-3 text-body text-op-white"
             >
               {s}
             </li>

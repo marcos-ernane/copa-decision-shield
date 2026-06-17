@@ -328,9 +328,9 @@ function Step6({ form, setForm, onSubmit, saving }: {
         })}
       </div>
 
-      <div className="rounded-md border border-border bg-card px-4 py-3 flex items-center justify-between">
-        <span className="text-small text-muted-foreground uppercase tracking-wide">Total</span>
-        <span className="text-title text-foreground">{Math.max(0, total)}/35</span>
+      <div className="rounded-md border border-op-gray/30 bg-op-navy px-4 py-3 flex items-center justify-between">
+        <span className="text-small text-op-gray uppercase tracking-wide">Total</span>
+        <span className="text-title text-op-white">{Math.max(0, total)}/35</span>
       </div>
 
       <PrimaryButton disabled={!allFilled || saving} onClick={onSubmit}>

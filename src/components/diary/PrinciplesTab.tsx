@@ -105,12 +105,12 @@ export function PrinciplesTab() {
       </div>
 
       {recall && !projectFilter && (
-        <div className="rounded-md border border-[color:var(--color-brand-blue)] bg-card p-3">
-          <div className="text-label text-muted-foreground uppercase tracking-wide">
+        <div className="rounded-md border border-[color:var(--color-brand-blue)] bg-op-navy p-3">
+          <div className="text-label text-op-gray uppercase tracking-wide">
             Princípio relevante para {activeProject?.name}
           </div>
-          <p className="text-small text-foreground mt-1">{recall.principle.content}</p>
-          <div className="text-label text-muted-foreground mt-1">
+          <p className="text-small text-op-white mt-1">{recall.principle.content}</p>
+          <div className="text-label text-op-gray mt-1">
             Relevância {(recall.relevance * 100).toFixed(0)}%
           </div>
         </div>

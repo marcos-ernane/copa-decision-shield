@@ -21,13 +21,13 @@ export function MigrationIndicator() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed top-3 left-1/2 -translate-x-1/2 z-50 rounded-md border border-border bg-card px-4 py-2 shadow-sm"
+      className="fixed top-3 left-1/2 -translate-x-1/2 z-50 rounded-md border border-op-gray/30 bg-op-navy px-4 py-2 shadow-sm"
     >
       {status.state === 'running' && (
-        <p className="text-small text-foreground">{status.step}…</p>
+        <p className="text-small text-op-white">{status.step}…</p>
       )}
       {status.state === 'done' && (
-        <p className="text-small text-foreground">
+        <p className="text-small text-op-white">
           Sincronizado: {status.counts.projects} projetos, {status.counts.entries}{' '}
           registros, {status.counts.principles} princípios.
         </p>

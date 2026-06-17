@@ -129,9 +129,9 @@ export function ReadingModeScreen() {
                 {recent.map((p) => (
                   <div
                     key={p.id}
-                    className="rounded-lg border border-border bg-card p-4"
+                    className="rounded-lg border border-op-gray/30 bg-op-navy p-4"
                   >
-                    <p className="text-body whitespace-pre-line">{p.content}</p>
+                    <p className="text-body text-op-white whitespace-pre-line">{p.content}</p>
                   </div>
                 ))}
               </div>

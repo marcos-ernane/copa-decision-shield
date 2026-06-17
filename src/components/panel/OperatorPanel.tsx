@@ -113,7 +113,7 @@ export function OperatorPanel() {
 
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
-      <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
+      <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-black z-10">
         <button
           onClick={() => router.history.back()}
           className="p-2 -ml-2 rounded-md hover:bg-accent"
@@ -131,10 +131,10 @@ export function OperatorPanel() {
         <section>
           <IndexRings {...idx} />
           {baselineCompleted ? (
-            <Link to="/panel/rubric" className="mt-4 block rounded-md border border-border bg-card p-3">
+            <Link to="/panel/rubric" className="mt-4 block rounded-md border border-op-gray/30 bg-op-navy p-3">
               <div className="flex justify-between text-small">
-                <span className="text-foreground">Treinamento do operador</span>
-                <span className="text-muted-foreground">{idx.rubricTotal}/35 pontos →</span>
+                <span className="text-op-white">Treinamento do operador</span>
+                <span className="text-op-gray">{idx.rubricTotal}/35 pontos →</span>
               </div>
               <div className="h-2 mt-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
                 <div className="h-full" style={{ width: `${(idx.rubricTotal / 35) * 100}%`, backgroundColor: '#22C5DA' }} />
@@ -163,7 +163,7 @@ export function OperatorPanel() {
                 const projectEntries = entries.filter((e) => e.project_id === p.id);
                 const status = deriveProjectStatus(p, projectEntries);
                 return (
-                  <li key={p.id} className="flex items-stretch rounded-md border border-border bg-card overflow-hidden">
+                  <li key={p.id} className="flex items-stretch rounded-md border border-op-gray/30 bg-op-navy overflow-hidden">
                     <Link
                       to="/project/$id/dashboard"
                       params={{ id: p.id }}
@@ -244,7 +244,7 @@ export function OperatorPanel() {
           ) : (
             <ul className="space-y-2">
               {lastPrinciples.map((p) => (
-                <li key={p.id} className="rounded-md border border-border bg-card p-3 text-small text-foreground">
+                <li key={p.id} className="rounded-md border border-op-gray/30 bg-op-navy p-3 text-small text-op-white">
                   {p.content}
                 </li>
               ))}
@@ -268,21 +268,21 @@ export function OperatorPanel() {
 
         {/* Seção 7 — Prova de Transferência (placeholder) */}
         {showTransfer && (
-          <section className="rounded-md border border-border bg-card p-4 space-y-2">
-            <h2 className="text-heading text-foreground">Prova de transferência</h2>
-            <p className="text-small text-muted-foreground">
+          <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-2">
+            <h2 className="text-heading text-op-white">Prova de transferência</h2>
+            <p className="text-small text-op-gray">
               Você consegue aplicar o método em cenários completamente diferentes?
             </p>
             <div className="flex gap-2">
               <Link
                 to="/panel/transfer"
-                className="px-3 py-1.5 rounded-md border border-border text-small text-foreground"
+                className="px-3 py-1.5 rounded-md border border-op-gray/30 text-small text-op-white"
               >
                 Iniciar prova
               </Link>
               <Link
                 to="/panel/transfer"
-                className="px-3 py-1.5 rounded-md border border-border text-small text-foreground"
+                className="px-3 py-1.5 rounded-md border border-op-gray/30 text-small text-op-white"
               >
                 Ver resultado
               </Link>

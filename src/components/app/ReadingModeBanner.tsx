@@ -5,7 +5,7 @@ import { setReadingMode } from '@/hooks/useReadingMode';
 
 export function ReadingModeBanner() {
   return (
-    <div className="fixed bottom-16 inset-x-0 z-30 bg-card border-t border-border px-4 py-2 flex items-center justify-between">
+    <div className="fixed bottom-16 inset-x-0 z-30 bg-op-navy border-t border-op-gray/30 px-4 py-2 flex items-center justify-between">
       <span className="text-small text-muted-foreground">Modo Leitura ativo</span>
       <button
         type="button"

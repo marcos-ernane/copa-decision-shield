@@ -32,11 +32,11 @@ export function WeeklyReport() {
   }, [entries, principles, projects]);
 
   return (
-    <div className="rounded-md border border-border bg-card p-4 space-y-3">
-      <div className="text-label text-muted-foreground uppercase tracking-wide">
+    <div className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
+      <div className="text-label text-op-gray uppercase tracking-wide">
         Semana de {data.start} a {data.end}
       </div>
-      <div className="text-small text-foreground space-y-1">
+      <div className="text-small text-op-white space-y-1">
         <div>{data.count} registros</div>
         <div>{data.principles} princípios extraídos</div>
         <div>{data.imvs} IMVs definidas</div>
@@ -44,8 +44,8 @@ export function WeeklyReport() {
       </div>
       {data.question && (
         <div className="pt-2 border-t border-border">
-          <div className="text-label text-muted-foreground uppercase tracking-wide">Pergunta calibrada</div>
-          <p className="text-body text-foreground mt-1">{data.question}</p>
+          <div className="text-label text-op-gray uppercase tracking-wide">Pergunta calibrada</div>
+          <p className="text-body text-op-white mt-1">{data.question}</p>
         </div>
       )}
     </div>

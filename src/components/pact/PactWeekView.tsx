@@ -62,12 +62,12 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
   }
 
   return (
-    <section className="rounded-md border border-border bg-card p-4 space-y-3">
+    <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
       {/* Cabeçalho com progresso */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-label text-muted-foreground uppercase">Semana do Operador</h2>
-          <p className="text-small text-foreground mt-0.5">
+          <h2 className="text-label text-op-gray uppercase">Semana do Operador</h2>
+          <p className="text-small text-op-white mt-0.5">
             {allDone
               ? 'Semana completa!'
               : doneCount === 0
@@ -144,7 +144,7 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
                         </span>
                       )}
                     </div>
-                    <p className="text-label text-muted-foreground">
+                    <p className="text-label text-op-gray">
                       {DAY_FULL[day.day_of_week]} · {PHASE_DESC[phase]}
                     </p>
                   </div>
@@ -171,7 +171,7 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
       </ul>
 
       {allDone && (
-        <p className="text-label text-center text-muted-foreground pt-1">
+        <p className="text-label text-center text-op-gray pt-1">
           Pacto da semana cumprido
         </p>
       )}

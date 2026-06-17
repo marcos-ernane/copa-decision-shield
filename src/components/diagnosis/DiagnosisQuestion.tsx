@@ -35,8 +35,8 @@ export function DiagnosisQuestion<T extends string>({
         {options.map((o) => (
           <label
             key={o.value}
-            className={`flex items-start gap-3 cursor-pointer rounded-md border bg-card p-3 transition-colors ${
-              value === o.value ? 'border-foreground' : 'border-border'
+            className={`flex items-start gap-3 cursor-pointer rounded-md border bg-op-navy p-3 transition-colors ${
+              value === o.value ? 'border-op-white' : 'border-op-gray/30'
             }`}
           >
             <input
@@ -46,9 +46,9 @@ export function DiagnosisQuestion<T extends string>({
               onChange={() => onChange(o.value)}
             />
             <div>
-              <p className="text-body text-foreground">{o.label}</p>
+              <p className="text-body text-op-white">{o.label}</p>
               {o.hint && (
-                <p className="text-small text-muted-foreground mt-1">{o.hint}</p>
+                <p className="text-small text-op-gray mt-1">{o.hint}</p>
               )}
             </div>
           </label>

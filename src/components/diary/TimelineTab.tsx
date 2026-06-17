@@ -170,20 +170,20 @@ export function TimelineTab() {
         {filtered.map((e) => (
           <li
             key={e.id}
-            className="rounded-md border border-border bg-card p-3"
+            className="rounded-md border border-op-gray/30 bg-op-navy p-3"
           >
             <div
               className="cursor-pointer"
               onClick={() => setExpanded(expanded === e.id ? null : e.id)}
             >
-              <div className="flex items-center gap-2 text-label text-muted-foreground">
+              <div className="flex items-center gap-2 text-label text-op-gray">
                 <span className="font-mono">{TYPE_ICON[e.entry_type] ?? '?'}</span>
                 {e.entry_type === 'corrective' && <span className="text-[color:var(--color-brand-amber)]">[C]</span>}
                 <span>{new Date(e.created_at).toLocaleDateString('pt-BR')}</span>
                 <span>·</span>
                 <span className="truncate">{projectName(e.project_id)}</span>
               </div>
-              <p className={`text-small text-foreground mt-1 ${expanded === e.id ? '' : 'line-clamp-2'}`}>
+              <p className={`text-small text-op-white mt-1 ${expanded === e.id ? '' : 'line-clamp-2'}`}>
                 {entryPreview(e)}
               </p>
               <div className="flex gap-1 mt-1 flex-wrap">

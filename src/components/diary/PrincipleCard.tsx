@@ -33,11 +33,11 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
   }
 
   return (
-    <div className="rounded-md border border-border bg-card p-3 space-y-2">
+    <div className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2">
       {editing ? (
         <VoiceInput value={text} onChange={setText} rows={3} />
       ) : (
-        <p className="text-small text-foreground">
+        <p className="text-small text-op-white">
           {principle.is_master_principle && <span className="text-[color:var(--color-brand-amber)] mr-1">★</span>}
           {principle.content}
         </p>
