@@ -128,8 +128,8 @@ export function PulseRegister() {
       )}
 
       {reformulation && (
-        <div className="rounded-md border border-border bg-card p-3 text-body text-foreground">
-          <p className="text-small text-muted-foreground mb-1">Sugestão de reformulação:</p>
+        <div className="rounded-md border border-op-gray/30 bg-op-navy p-3 text-body text-op-white">
+          <p className="text-small text-op-gray mb-1">Sugestão de reformulação:</p>
           {reformulation}
         </div>
       )}
@@ -139,7 +139,7 @@ export function PulseRegister() {
         {OPTIONS.map((o) => (
           <label
             key={o.value}
-            className="flex items-center gap-3 cursor-pointer rounded-md border border-border bg-card p-3"
+            className="flex items-center gap-3 cursor-pointer rounded-md border border-op-gray/30 bg-op-navy p-3"
           >
             <input
               type="radio"

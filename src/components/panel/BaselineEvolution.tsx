@@ -15,7 +15,7 @@ export function BaselineEvolution({ baselines, baselineCompleted }: Props) {
         </p>
         <Link
           to="/baseline/new"
-          className="inline-flex items-center text-small text-[color:var(--color-brand-blue)] hover:underline"
+          className="inline-flex items-center text-small text-op-cyan hover:underline"
         >
           Fazer diagnóstico de 12 minutos →
         </Link>
@@ -37,10 +37,10 @@ export function BaselineEvolution({ baselines, baselineCompleted }: Props) {
         <div>Evolução: <span className="text-muted-foreground">{delta >= 0 ? '+' : ''}{delta} pontos ({pct >= 0 ? '+' : ''}{pct}%)</span></div>
       </div>
       <div className="flex gap-3 pt-1">
-        <Link to="/panel/baseline" className="text-small text-[color:var(--color-brand-blue)] hover:underline">
+        <Link to="/panel/baseline" className="text-small text-op-cyan hover:underline">
           Ver histórico
         </Link>
-        <Link to="/baseline/new" className="text-small text-[color:var(--color-brand-blue)] hover:underline">
+        <Link to="/baseline/new" className="text-small text-op-cyan hover:underline">
           Nova avaliação
         </Link>
       </div>

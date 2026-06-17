@@ -79,7 +79,7 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar tópico
   }
 
   return (
-    <div className="rounded-md border border-border bg-card overflow-hidden divide-y divide-border">
+    <div className="rounded-md border border-op-gray/30 bg-op-navy overflow-hidden divide-y divide-op-gray/20">
       {items.map((item, i) => {
         const isExpanded = expandedIdx === i;
         return (

@@ -137,11 +137,11 @@ export function OperatorPanel() {
                 <span className="text-muted-foreground">{idx.rubricTotal}/35 pontos →</span>
               </div>
               <div className="h-2 mt-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
-                <div className="h-full bg-[var(--color-brand-blue)]" style={{ width: `${(idx.rubricTotal / 35) * 100}%` }} />
+                <div className="h-full" style={{ width: `${(idx.rubricTotal / 35) * 100}%`, backgroundColor: '#22C5DA' }} />
               </div>
             </Link>
           ) : (
-            <Link to="/baseline/new" className="mt-4 inline-flex text-small text-[color:var(--color-brand-blue)] hover:underline">
+            <Link to="/baseline/new" className="mt-4 inline-flex text-small text-op-cyan hover:underline">
               Fazer diagnóstico de 12 minutos →
             </Link>
           )}
@@ -250,7 +250,7 @@ export function OperatorPanel() {
               ))}
             </ul>
           )}
-          <Link to="/diary/$" params={{ _splat: 'principles' }} className="inline-flex text-small text-[color:var(--color-brand-blue)] hover:underline">
+          <Link to="/diary/$" params={{ _splat: 'principles' }} className="inline-flex text-small text-op-cyan hover:underline">
             Ver banco completo →
           </Link>
         </section>

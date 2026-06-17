@@ -506,7 +506,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
       {step === 3 && (
         <div className="space-y-3">
           {deadline && (
-            <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2">
+            <div className="flex items-center gap-2 rounded-md bg-op-navy border border-op-gray/30 px-3 py-2">
               <span className="text-label text-muted-foreground uppercase tracking-wide">Você definiu, prazo da IMV para:</span>
               <span className="text-small text-foreground font-medium">
                 {deadline.split('-').reverse().join('/')}
@@ -552,8 +552,8 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               ))}
             </div>
           </div>
-          <div className="rounded-md border border-border bg-card p-3 space-y-2">
-            <p className="text-small text-muted-foreground">Se houver, de quem é o custo oculto desta ação? (opcional)</p>
+          <div className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2">
+            <p className="text-small text-op-gray">Se houver, de quem é o custo oculto desta ação? (opcional)</p>
             <VoiceInput value={ethical} onChange={setEthical} placeholder="" rows={2} />
           </div>
         </div>

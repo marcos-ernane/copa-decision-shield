@@ -62,7 +62,7 @@ function Ring({ value, label, caption, onClick }: RingProps) {
           <circle cx={48} cy={48} r={r} stroke="var(--color-surface-2)" strokeWidth={8} fill="none" />
           <circle
             cx={48} cy={48} r={r}
-            stroke="var(--color-brand-blue)"
+            stroke="#22C5DA"
             strokeWidth={8}
             fill="none"
             strokeDasharray={`${dash} ${c - dash}`}
@@ -128,8 +128,8 @@ export function IndexRings({ clarity, execution, learning, composite, level, cla
                     </div>
                     <div className="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
                       <div
-                        className="h-full bg-[var(--color-brand-blue)] transition-all"
-                        style={{ width: `${values[openRing]}%` }}
+                        className="h-full transition-all"
+                        style={{ width: `${values[openRing]}%`, backgroundColor: '#22C5DA' }}
                       />
                     </div>
                   </div>

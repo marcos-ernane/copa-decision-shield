@@ -25,8 +25,8 @@ function Bar({ value }: { value: number }) {
   return (
     <div className="h-2 mt-1 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
       <div
-        className="h-full bg-[var(--color-brand-blue)]"
-        style={{ width: `${(Math.max(0, Math.min(5, value)) / 5) * 100}%` }}
+        className="h-full"
+        style={{ width: `${(Math.max(0, Math.min(5, value)) / 5) * 100}%`, backgroundColor: '#22C5DA' }}
       />
     </div>
   );

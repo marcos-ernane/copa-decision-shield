@@ -116,8 +116,8 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
             <p className="text-small text-muted-foreground">Facilitador analisando…</p>
           )}
           {aiSuggestion && (
-            <div className="rounded-md bg-muted p-2 text-small text-foreground">
-              <p className="text-muted-foreground mb-1">Sugestão de reformulação (opcional):</p>
+            <div className="rounded-md bg-op-navy border border-op-gray/30 p-2 text-small text-op-white">
+              <p className="text-op-gray mb-1">Sugestão de reformulação (opcional):</p>
               {aiSuggestion}
               <div className="mt-2 flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => setPrinciple(aiSuggestion)}>

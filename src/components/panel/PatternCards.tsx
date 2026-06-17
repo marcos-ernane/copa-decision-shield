@@ -22,7 +22,7 @@ export function PatternCards({ patterns }: { patterns: PatternCard[] }) {
           {p.suggestion && (
             <Link
               to={p.suggestion.route}
-              className="inline-flex items-center mt-2 text-small text-[color:var(--color-brand-blue)] hover:underline"
+              className="inline-flex items-center mt-2 text-small text-op-cyan hover:underline"
             >
               {p.suggestion.label} →
             </Link>
