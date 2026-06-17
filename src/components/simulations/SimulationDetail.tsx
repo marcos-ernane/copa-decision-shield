@@ -21,7 +21,7 @@ export function SimulationDetail({ id, onClose }: Props) {
 
   if (!sim) {
     return (
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-op-black p-6" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
         <p className="text-body text-muted-foreground">Simulação não encontrada.</p>
         <button onClick={onClose} className="text-small text-foreground underline mt-2">
           Voltar
@@ -39,8 +39,8 @@ export function SimulationDetail({ id, onClose }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <header className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
+    <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
+      <header className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
         <button
           onClick={back}
           className="p-2 -ml-2 rounded-md hover:bg-accent"

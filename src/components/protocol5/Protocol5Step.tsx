@@ -27,7 +27,7 @@ export function Protocol5Step({
   nextLabel = 'Próximo →',
 }: Props) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="px-4 py-3 border-b border-border">
         <p className="text-label uppercase tracking-wide text-muted-foreground">
           Etapa {step} de {total}

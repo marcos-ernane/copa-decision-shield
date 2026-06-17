@@ -10,7 +10,7 @@ interface Props {
 
 export function TransferEntry({ inProgress, onStart, onContinue, onLater }: Props) {
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-12">
+    <div className="min-h-screen bg-op-black flex flex-col items-center justify-center px-6 py-12" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <div className="max-w-md w-full space-y-6">
         <h1 className="text-display text-foreground">Prova de Transferência</h1>
         <p className="text-body text-foreground">

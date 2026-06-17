@@ -46,15 +46,15 @@ export function ProjectCard({ project, recallPrinciple, onEdit, onConclude, onAr
         <div className="flex items-start gap-3 min-w-0 flex-1">
           <ProjectStateIcon state={project.state} className="mt-0.5" />
           <div className="min-w-0 flex-1">
-            <h3 className="text-heading text-foreground truncate">{project.name}</h3>
-            <p className="text-small text-muted-foreground line-clamp-1 mt-0.5">
+            <h3 className="text-heading text-op-white truncate">{project.name}</h3>
+            <p className="text-small text-op-gray line-clamp-1 mt-0.5">
               {project.north}
             </p>
           </div>
         </div>
       </div>
       <div className="flex items-center gap-2 mt-3 flex-wrap">
-        <span className="text-label text-muted-foreground">
+        <span className="text-label text-op-gray">
           {STATE_DISPLAY[project.state].label}
         </span>
         {project.scenario_type && (
@@ -66,7 +66,7 @@ export function ProjectCard({ project, recallPrinciple, onEdit, onConclude, onAr
           />
         )}
         {showStale && (
-          <span className="text-label text-muted-foreground">· {days}d sem registro</span>
+          <span className="text-label text-op-gray">· {days}d sem registro</span>
         )}
       </div>
     </>
@@ -80,7 +80,7 @@ export function ProjectCard({ project, recallPrinciple, onEdit, onConclude, onAr
           <Link
             to={cardTo}
             params={{ id: project.id }}
-            className="block rounded-md border border-border bg-card p-4 pr-10 hover:bg-accent transition-colors"
+            className="block rounded-md border border-op-gray/20 bg-op-navy p-4 pr-10 hover:bg-op-navy-elevated transition-colors"
           >
             {cardContent}
           </Link>
@@ -88,11 +88,11 @@ export function ProjectCard({ project, recallPrinciple, onEdit, onConclude, onAr
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="p-1.5 rounded-md hover:bg-accent"
+                  className="p-1.5 rounded-md hover:bg-op-navy-elevated"
                   aria-label="Mais opções"
                   onClick={(e) => e.preventDefault()}
                 >
-                  <MoreVertical className="size-4 text-muted-foreground" />
+                  <MoreVertical className="size-4 text-op-gray" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -128,7 +128,7 @@ export function ProjectCard({ project, recallPrinciple, onEdit, onConclude, onAr
         <Link
           to={cardTo}
           params={{ id: project.id }}
-          className="block rounded-md border border-border bg-card p-4 hover:bg-accent transition-colors"
+          className="block rounded-md border border-op-gray/20 bg-op-navy p-4 hover:bg-op-navy-elevated transition-colors"
         >
           {cardContent}
         </Link>
@@ -136,13 +136,13 @@ export function ProjectCard({ project, recallPrinciple, onEdit, onConclude, onAr
 
       {showRecall && (
         <div className="px-2">
-          <p className="text-label text-muted-foreground text-center">
+          <p className="text-label text-op-gray text-center">
             ── Um princípio seu pode ajudar aqui. ──
           </p>
-          <p className="text-small text-foreground italic mt-1">"{recallPrinciple.content}"</p>
+          <p className="text-small text-op-white italic mt-1">"{recallPrinciple.content}"</p>
           <button
             onClick={() => navigate({ to: '/diary' })}
-            className="text-label text-muted-foreground underline mt-1"
+            className="text-label text-op-gray underline mt-1"
           >
             ver no banco
           </button>
