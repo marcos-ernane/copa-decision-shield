@@ -2,7 +2,7 @@
 // reality_check → abuse_warning? → activation → fact → risk → calibrate? → next_step → done
 
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PressureRealityCheckScreen } from './PressureRealityCheckScreen';
@@ -36,6 +36,7 @@ type Step =
 
 export function PressureShell() {
   const navigate = useNavigate();
+  const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const search = useSearch({ strict: false }) as { projectId?: string };
   const initialProjectId = search.projectId ?? null;
@@ -114,7 +115,7 @@ export function PressureShell() {
     return (
       <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
         <header className="flex items-center gap-3 px-4 py-4 border-b border-border">
-          <button onClick={() => navigate({ to: '/' })} className="p-1 rounded-md hover:bg-accent" aria-label="Voltar">
+          <button onClick={() => router.history.back()} className="p-1 rounded-md hover:bg-accent" aria-label="Voltar">
             <ArrowLeft className="size-5 text-muted-foreground" />
           </button>
           <h1 className="text-heading text-foreground">Modo Pressão</h1>
@@ -206,7 +207,7 @@ export function PressureShell() {
           setCalibrateFacts(facts);
           setStep('next_step');
         }}
-        onCloseWithoutSaving={() => navigate({ to: '/' })}
+        onCloseWithoutSaving={() => router.history.back()}
       />
     );
   }
@@ -223,7 +224,7 @@ export function PressureShell() {
   }
 
   if (step === 'done' && projectId) {
-    return <PressureDone projectId={projectId} onClose={() => navigate({ to: '/' })} />;
+    return <PressureDone projectId={projectId} onClose={() => router.history.back()} />;
   }
 
   return null;

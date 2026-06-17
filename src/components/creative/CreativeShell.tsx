@@ -1,6 +1,8 @@
 // CreativeShell — orquestra as 3 etapas + tela final.
 
 import { useState } from 'react';
+import { useRouter } from '@tanstack/react-router';
+import { ChevronLeft } from 'lucide-react';
 import { CreativeDiverge } from './CreativeDiverge';
 import { CreativeFunction } from './CreativeFunction';
 import { CreativeConverge } from './CreativeConverge';
@@ -13,7 +15,15 @@ import {
 
 type Step = 'diverge' | 'function' | 'converge' | 'done';
 
+const STEP_LABELS: Record<Step, string> = {
+  diverge: 'Divergir',
+  function: 'Função antes da Forma',
+  converge: 'Convergir com Critério',
+  done: 'Conclusão',
+};
+
 export function CreativeShell() {
+  const router = useRouter();
   const [step, setStep] = useState<Step>('diverge');
   const [fn, setFn] = useState('');
   const [alternatives, setAlternatives] = useState<string[]>([]);
@@ -22,8 +32,22 @@ export function CreativeShell() {
   const [chosenIdx, setChosenIdx] = useState<number>(0);
   const [doneMode, setDoneMode] = useState<'convert' | 'save_only'>('convert');
 
+  function handleBack() {
+    if (step === 'diverge') { router.history.back(); return; }
+    if (step === 'function') { setStep('diverge'); return; }
+    if (step === 'converge') { setStep('function'); return; }
+    router.history.back();
+  }
+
   if (step === 'diverge') {
     return (
+      <div>
+        <header className="flex items-center gap-2 px-4 py-3 border-b border-op-gray/30 sticky top-0 bg-op-black z-10">
+          <button onClick={handleBack} className="p-2 -ml-2 rounded-md hover:bg-accent text-op-white" aria-label="Voltar">
+            <ChevronLeft className="size-5" />
+          </button>
+          <p className="text-label uppercase tracking-wide text-op-gray">{STEP_LABELS[step]}</p>
+        </header>
       <CreativeDiverge
         initialFunction={fn}
         initialAlternatives={alternatives}
@@ -36,11 +60,19 @@ export function CreativeShell() {
           setStep('function');
         }}
       />
+      </div>
     );
   }
 
   if (step === 'function') {
     return (
+      <div>
+        <header className="flex items-center gap-2 px-4 py-3 border-b border-op-gray/30 sticky top-0 bg-op-black z-10">
+          <button onClick={handleBack} className="p-2 -ml-2 rounded-md hover:bg-accent text-op-white" aria-label="Voltar">
+            <ChevronLeft className="size-5" />
+          </button>
+          <p className="text-label uppercase tracking-wide text-op-gray">{STEP_LABELS[step]}</p>
+        </header>
       <CreativeFunction
         alternatives={alternatives}
         initial={checks}
@@ -49,11 +81,19 @@ export function CreativeShell() {
           setStep('converge');
         }}
       />
+      </div>
     );
   }
 
   if (step === 'converge') {
     return (
+      <div>
+        <header className="flex items-center gap-2 px-4 py-3 border-b border-op-gray/30 sticky top-0 bg-op-black z-10">
+          <button onClick={handleBack} className="p-2 -ml-2 rounded-md hover:bg-accent text-op-white" aria-label="Voltar">
+            <ChevronLeft className="size-5" />
+          </button>
+          <p className="text-label uppercase tracking-wide text-op-gray">{STEP_LABELS[step]}</p>
+        </header>
       <CreativeConverge
         alternatives={alternatives}
         functionCheck={checks}
@@ -72,6 +112,7 @@ export function CreativeShell() {
           setStep('done');
         }}
       />
+      </div>
     );
   }
 

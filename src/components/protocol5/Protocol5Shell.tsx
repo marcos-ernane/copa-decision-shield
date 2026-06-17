@@ -2,6 +2,7 @@
 // REQ-LOWENERGY-01..04. Funciona 100% offline. Não substitui o COPA.
 
 import { useState } from 'react';
+import { useRouter } from '@tanstack/react-router';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
@@ -26,6 +27,7 @@ interface State {
 const TOTAL = 5;
 
 export function Protocol5Shell() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [done, setDone] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -80,6 +82,7 @@ export function Protocol5Shell() {
         total={TOTAL}
         title="Qual tipo de cenário você está operando agora?"
         onNext={() => setStep(2)}
+        onExit={() => router.history.back()}
         canNext={state.type !== null}
       >
         <div className="flex flex-wrap gap-2">
