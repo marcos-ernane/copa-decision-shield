@@ -83,16 +83,16 @@ export function SettingsScreen() {
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <TrialEndingSheet />
       <header className="px-4 pt-8 pb-4">
-        <h1 className="text-display">Configurações</h1>
+        <h1 className="text-display text-op-white">Configurações</h1>
       </header>
 
       <main className="px-4 pb-12 space-y-6">
         <Section title="Conta">
-          <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+          <div className="rounded-lg border border-op-gray/30 bg-op-navy p-4 space-y-2">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-body">{profile?.display_name ?? '—'}</p>
-                <p className="text-small text-muted-foreground">{email ?? 'Convidado'}</p>
+                <p className="text-body text-op-white">{profile?.display_name ?? '—'}</p>
+                <p className="text-small text-op-gray">{email ?? 'Convidado'}</p>
               </div>
               <PlanBadge />
             </div>
@@ -115,10 +115,10 @@ export function SettingsScreen() {
         </Section>
 
         <Section title="Preferências">
-          <div className="rounded-lg border border-border bg-card divide-y divide-border">
+          <div className="rounded-lg border border-op-gray/30 bg-op-navy divide-y divide-op-gray/20">
             {PREFS.map((p) => (
               <div key={p.key} className="flex items-center justify-between px-4 py-3">
-                <span className="text-body">{p.label}</span>
+                <span className="text-body text-op-white">{p.label}</span>
                 <Switch
                   checked={Boolean(profile?.[p.key])}
                   onCheckedChange={(v) => void togglePref(p.key, v)}
@@ -127,8 +127,8 @@ export function SettingsScreen() {
             ))}
             <div className="flex items-center justify-between px-4 py-3 gap-4">
               <div>
-                <p className="text-body">Pacto Global</p>
-                <p className="text-small text-muted-foreground">
+                <p className="text-body text-op-white">Pacto Global</p>
+                <p className="text-small text-op-gray">
                   Ativar pacto semanal em todos os projetos ativos.
                 </p>
               </div>
@@ -142,8 +142,8 @@ export function SettingsScreen() {
             </div>
             <div className="flex items-center justify-between px-4 py-3 gap-4">
               <div>
-                <p className="text-body">Botão Protocolo 5 Min na Home</p>
-                <p className="text-small text-muted-foreground">
+                <p className="text-body text-op-white">Botão Protocolo 5 Min na Home</p>
+                <p className="text-small text-op-gray">
                   Adiciona um terceiro botão flutuante de acesso rápido.
                 </p>
               </div>
@@ -165,9 +165,9 @@ export function SettingsScreen() {
 
         {profile?.community_link && (
           <Section title="Comunidade">
-            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-              <p className="text-body">Comunidade do Operador</p>
-              <p className="text-small text-muted-foreground">
+            <div className="rounded-lg border border-op-gray/30 bg-op-navy p-4 space-y-3">
+              <p className="text-body text-op-white">Comunidade do Operador</p>
+              <p className="text-small text-op-gray">
                 Espaço opcional para troca entre operadores.
                 <br />
                 O uso é voluntário e externo ao app.
@@ -176,7 +176,7 @@ export function SettingsScreen() {
                 href={profile.community_link}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center text-small text-foreground hover:underline underline-offset-4"
+                className="inline-flex items-center text-small text-op-white hover:underline underline-offset-4"
               >
                 Acessar →
               </a>
@@ -203,7 +203,7 @@ export function SettingsScreen() {
           </div>
         </Section>
 
-        <p className="text-small text-muted-foreground text-center pt-4">
+        <p className="text-small text-op-gray text-center pt-4">
           App Operador de Precisão v3.0
         </p>
       </main>
@@ -216,7 +216,7 @@ export function SettingsScreen() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-2">
-      <h2 className="text-label uppercase tracking-wide text-muted-foreground px-1">{title}</h2>
+      <h2 className="text-label uppercase tracking-wide text-op-gray px-1">{title}</h2>
       {children}
     </section>
   );
@@ -228,8 +228,8 @@ function LinkRow({ to, label }: { to: string; label: string }) {
       to={to}
       className="rounded-xl border border-op-gray/30 bg-op-navy px-4 py-3 flex items-center justify-between hover:opacity-80 transition-opacity"
     >
-      <span className="text-body">{label}</span>
-      <ChevronRight className="size-4 text-muted-foreground" />
+      <span className="text-body text-op-white">{label}</span>
+      <ChevronRight className="size-4 text-op-gray" />
     </Link>
   );
 }

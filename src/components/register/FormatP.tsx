@@ -214,22 +214,22 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           onClick={() => setImvHelp(false)}
         >
           <div
-            className="w-full bg-background rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-heading font-semibold">IMV — Intervenção Mínima Viável</h3>
+              <h3 className="text-heading font-semibold text-op-white">IMV — Intervenção Mínima Viável</h3>
               <button
                 type="button"
                 onClick={() => setImvHelp(false)}
-                className="p-1 rounded-md hover:bg-accent"
+                className="p-1 rounded-md hover:bg-op-navy-elevated"
                 aria-label="Fechar ajuda"
               >
-                <X className="size-5 text-muted-foreground" />
+                <X className="size-5 text-op-gray" />
               </button>
             </div>
             {IMV_HELP_TEXT.map((para, i) => (
-              <p key={i} className="text-body text-foreground leading-relaxed">{para}</p>
+              <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
             ))}
           </div>
         </div>
@@ -242,22 +242,22 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           onClick={() => setCriteriaHelp(null)}
         >
           <div
-            className="w-full bg-background rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-heading font-semibold">{CRITERIA_HELP[criteriaHelp].title}</h3>
+              <h3 className="text-heading font-semibold text-op-white">{CRITERIA_HELP[criteriaHelp].title}</h3>
               <button
                 type="button"
                 onClick={() => setCriteriaHelp(null)}
-                className="p-1 rounded-md hover:bg-accent"
+                className="p-1 rounded-md hover:bg-op-navy-elevated"
                 aria-label="Fechar ajuda"
               >
-                <X className="size-5 text-muted-foreground" />
+                <X className="size-5 text-op-gray" />
               </button>
             </div>
             {CRITERIA_HELP[criteriaHelp].paragraphs.map((para, i) => (
-              <p key={i} className="text-body text-foreground leading-relaxed">{para}</p>
+              <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
             ))}
           </div>
         </div>
@@ -270,22 +270,22 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           onClick={() => setMetricHelp(false)}
         >
           <div
-            className="w-full bg-background rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-heading font-semibold">Métrica Planejada</h3>
+              <h3 className="text-heading font-semibold text-op-white">Métrica Planejada</h3>
               <button
                 type="button"
                 onClick={() => setMetricHelp(false)}
-                className="p-1 rounded-md hover:bg-accent"
+                className="p-1 rounded-md hover:bg-op-navy-elevated"
                 aria-label="Fechar ajuda"
               >
-                <X className="size-5 text-muted-foreground" />
+                <X className="size-5 text-op-gray" />
               </button>
             </div>
             {METRIC_HELP_TEXT.map((para, i) => (
-              <p key={i} className="text-body text-foreground leading-relaxed">{para}</p>
+              <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
             ))}
           </div>
         </div>
@@ -298,22 +298,22 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           onClick={() => setCutRuleHelp(false)}
         >
           <div
-            className="w-full bg-background rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-heading font-semibold">Regra de Corte Condicional</h3>
+              <h3 className="text-heading font-semibold text-op-white">Regra de Corte Condicional</h3>
               <button
                 type="button"
                 onClick={() => setCutRuleHelp(false)}
-                className="p-1 rounded-md hover:bg-accent"
+                className="p-1 rounded-md hover:bg-op-navy-elevated"
                 aria-label="Fechar ajuda"
               >
-                <X className="size-5 text-muted-foreground" />
+                <X className="size-5 text-op-gray" />
               </button>
             </div>
             {CUT_RULE_HELP_TEXT.map((para, i) => (
-              <p key={i} className="text-body text-foreground leading-relaxed">{para}</p>
+              <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
             ))}
           </div>
         </div>
@@ -326,22 +326,22 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           onClick={() => setDeadlineHelp(false)}
         >
           <div
-            className="w-full bg-background rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-heading font-semibold">Prazo Limite da IMV</h3>
+              <h3 className="text-heading font-semibold text-op-white">Prazo Limite da IMV</h3>
               <button
                 type="button"
                 onClick={() => setDeadlineHelp(false)}
-                className="p-1 rounded-md hover:bg-accent"
+                className="p-1 rounded-md hover:bg-op-navy-elevated"
                 aria-label="Fechar ajuda"
               >
-                <X className="size-5 text-muted-foreground" />
+                <X className="size-5 text-op-gray" />
               </button>
             </div>
             {DEADLINE_HELP_TEXT.map((para, i) => (
-              <p key={i} className="text-body text-foreground leading-relaxed">{para}</p>
+              <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
             ))}
           </div>
         </div>
@@ -353,11 +353,11 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
       {step === 0 && (
         <div>
           <div className="flex items-center justify-between mb-1">
-            <p className="text-small text-muted-foreground">IMV - Intervenção Mínima Viável. Uma ação específica. Sem IMV o método não avança. (Obrigatório)</p>
+            <p className="text-small text-op-gray">IMV - Intervenção Mínima Viável. Uma ação específica. Sem IMV o método não avança. (Obrigatório)</p>
             <button
               type="button"
               onClick={() => setImvHelp(true)}
-              className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-2"
+              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors shrink-0 ml-2"
             >
               <CircleHelp className="size-3.5" />
               Ajuda
@@ -369,20 +369,20 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
 
       {step === 1 && (
         <div className="space-y-3">
-          <p className="text-label text-muted-foreground uppercase tracking-wide">Definição dos Critérios da IMV (Intervenção Mínima Viável)</p>
+          <p className="text-label text-op-gray uppercase tracking-wide">Definição dos Critérios da IMV (Intervenção Mínima Viável)</p>
           <div>
             <div className="flex items-center justify-between mb-0.5">
-              <p className="text-small">Reversível</p>
+              <p className="text-small text-op-white">Reversível</p>
               <button
                 type="button"
                 onClick={() => setCriteriaHelp('reversivel')}
-                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
               >
                 <CircleHelp className="size-3.5" />
                 Ajuda
               </button>
             </div>
-            <p className="text-[11px] text-muted-foreground mb-1">Se não funcionar, você desfaz sem prejuízo grande.</p>
+            <p className="text-[11px] text-op-gray mb-1">Se não funcionar, você desfaz sem prejuízo grande.</p>
             <YesNo value={reversible} onChange={setReversible} />
             {reversible === false && (
               <p className="text-small mt-1" style={{ color: '#f97316' }}>Atenção: ação irreversível</p>
@@ -390,17 +390,17 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           </div>
           <div>
             <div className="flex items-center justify-between mb-0.5">
-              <p className="text-small">Barato</p>
+              <p className="text-small text-op-white">Barato</p>
               <button
                 type="button"
                 onClick={() => setCriteriaHelp('barato')}
-                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
               >
                 <CircleHelp className="size-3.5" />
                 Ajuda
               </button>
             </div>
-            <p className="text-[11px] text-muted-foreground mb-1">Exige pouco investimento, tempo e esforço.</p>
+            <p className="text-[11px] text-op-gray mb-1">Exige pouco investimento, tempo e esforço.</p>
             <YesNo value={cheap} onChange={setCheap} />
             {cheap === false && (
               <p className="text-small mt-1" style={{ color: '#f97316' }}>Tem custo relevante sendo assumido aqui.</p>
@@ -408,17 +408,17 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           </div>
           <div>
             <div className="flex items-center justify-between mb-0.5">
-              <p className="text-small">Específico</p>
+              <p className="text-small text-op-white">Específico</p>
               <button
                 type="button"
                 onClick={() => setCriteriaHelp('especifico')}
-                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
               >
                 <CircleHelp className="size-3.5" />
                 Ajuda
               </button>
             </div>
-            <p className="text-[11px] text-muted-foreground mb-1">Atua na fricção principal, uma coisa por vez.</p>
+            <p className="text-[11px] text-op-gray mb-1">Atua na fricção principal, uma coisa por vez.</p>
             <YesNo value={specific} onChange={setSpecific} />
             {specific === false && (
               <p className="text-small mt-1" style={{ color: '#eab308' }}>Defina melhor antes de executar</p>
@@ -426,17 +426,17 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           </div>
           <div>
             <div className="flex items-center justify-between mb-0.5">
-              <p className="text-small">Mensurável</p>
+              <p className="text-small text-op-white">Mensurável</p>
               <button
                 type="button"
                 onClick={() => setCriteriaHelp('mensuravel')}
-                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
               >
                 <CircleHelp className="size-3.5" />
                 Ajuda
               </button>
             </div>
-            <p className="text-[11px] text-muted-foreground mb-1">Gera número como resultado para saber se melhorou ou não.</p>
+            <p className="text-[11px] text-op-gray mb-1">Gera número como resultado para saber se melhorou ou não.</p>
             <YesNo value={measurable} onChange={setMeasurable} />
             {measurable === false && (
               <p className="text-small mt-1" style={{ color: '#eab308' }}>Sem medir a IMV não é teste completo, revise-a.</p>
@@ -448,20 +448,20 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
       {step === 2 && (
         <div className="space-y-3">
           {measurable === false && (
-            <div className="rounded-md border border-[var(--color-brand-amber)] bg-amber-50 dark:bg-amber-950/20 px-3 py-2.5 space-y-0.5">
+            <div className="rounded-md border border-op-amber/40 bg-op-navy-elevated px-3 py-2.5 space-y-0.5">
               <p className="text-small font-medium" style={{ color: '#d97706' }}>Métrica bloqueada.</p>
-              <p className="text-small text-muted-foreground">
+              <p className="text-small text-op-gray">
                 Sem mensurabilidade confirmada, não é possível definir uma métrica válida. Volte ao passo anterior e marque <strong>SIM</strong> em Mensurável.
               </p>
             </div>
           )}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <p className="text-small text-muted-foreground">Métrica planejada (obrigatório)</p>
+              <p className="text-small text-op-gray">Métrica planejada (obrigatório)</p>
               <button
                 type="button"
                 onClick={() => setMetricHelp(true)}
-                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-2"
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors shrink-0 ml-2"
               >
                 <CircleHelp className="size-3.5" />
                 Ajuda
@@ -476,11 +476,11 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <p className="text-small text-muted-foreground">Prazo limite da IMV em ação</p>
+              <p className="text-small text-op-gray">Prazo limite da IMV em ação</p>
               <button
                 type="button"
                 onClick={() => setDeadlineHelp(true)}
-                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-2"
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors shrink-0 ml-2"
               >
                 <CircleHelp className="size-3.5" />
                 Ajuda
@@ -507,19 +507,19 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
         <div className="space-y-3">
           {deadline && (
             <div className="flex items-center gap-2 rounded-md bg-op-navy border border-op-gray/30 px-3 py-2">
-              <span className="text-label text-muted-foreground uppercase tracking-wide">Você definiu, prazo da IMV para:</span>
-              <span className="text-small text-foreground font-medium">
+              <span className="text-label text-op-gray uppercase tracking-wide">Você definiu, prazo da IMV para:</span>
+              <span className="text-small text-op-white font-medium">
                 {deadline.split('-').reverse().join('/')}
               </span>
             </div>
           )}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <p className="text-small text-muted-foreground">Regra de corte condicional</p>
+              <p className="text-small text-op-gray">Regra de corte condicional</p>
               <button
                 type="button"
                 onClick={() => setCutRuleHelp(true)}
-                className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-2"
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors shrink-0 ml-2"
               >
                 <CircleHelp className="size-3.5" />
                 Ajuda
@@ -529,7 +529,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           </div>
           <div>
             {currentProjectLayer && layer === currentProjectLayer ? (
-              <p className="text-small text-muted-foreground mb-1">
+              <p className="text-small text-op-gray mb-1">
                 Camada registrada no projeto — toque em outra para alterar
               </p>
             ) : currentProjectLayer && layer !== currentProjectLayer ? (
@@ -537,7 +537,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
                 Camada alterada — salvar irá atualizar o projeto inteiro
               </p>
             ) : (
-              <p className="text-small text-muted-foreground mb-1">Camada que é afetada pelo corte ou ajuste</p>
+              <p className="text-small text-op-gray mb-1">Camada que é afetada pelo corte ou ajuste</p>
             )}
             <div className="flex flex-wrap gap-2">
               {LAYERS.map((l) => (

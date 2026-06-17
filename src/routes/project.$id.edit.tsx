@@ -73,23 +73,23 @@ function EditProject() {
 
   return (
     <div className="min-h-screen bg-op-black flex flex-col" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
-      <header className="flex items-center gap-2 px-4 py-3 border-b border-border">
+      <header className="flex items-center gap-2 px-4 py-3 border-b border-op-gray/30">
         <button
           onClick={() => router.history.back()}
-          className="p-2 -ml-2 rounded-md hover:bg-accent"
+          className="p-2 -ml-2 rounded-md hover:bg-op-navy-elevated"
           aria-label="Voltar"
         >
           <ChevronLeft className="size-5" />
         </button>
         <div>
-          <p className="text-label uppercase tracking-wide text-muted-foreground">Editar projeto</p>
-          <h1 className="text-heading text-foreground">{name}</h1>
+          <p className="text-label uppercase tracking-wide text-op-gray">Editar projeto</p>
+          <h1 className="text-heading text-op-white">{name}</h1>
         </div>
       </header>
 
       <main className="flex-1 px-6 py-6 max-w-md mx-auto w-full space-y-6">
         <div className="space-y-2">
-          <label className="text-label text-muted-foreground uppercase">Nome do projeto</label>
+          <label className="text-label text-op-gray uppercase">Nome do projeto</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -99,15 +99,15 @@ function EditProject() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-label text-muted-foreground uppercase">
+          <label className="text-label text-op-gray uppercase">
             Vai estar melhor quando…
           </label>
           <VoiceInput value={north} onChange={setNorth} rows={4} />
-          <p className="text-label text-muted-foreground">{north.length}/300</p>
+          <p className="text-label text-op-gray">{north.length}/300</p>
         </div>
 
         <div className="space-y-2">
-          <label className="text-label text-muted-foreground uppercase">Tipo de cenário</label>
+          <label className="text-label text-op-gray uppercase">Tipo de cenário</label>
           <div className="flex flex-wrap gap-2">
             {SCENARIOS.map((s) => (
               <button
@@ -126,7 +126,7 @@ function EditProject() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-label text-muted-foreground uppercase">Camada operacional</label>
+          <label className="text-label text-op-gray uppercase">Camada operacional</label>
           <div className="flex flex-wrap gap-2">
             {LAYERS.map((l) => (
               <button

@@ -93,14 +93,14 @@ export function PulseRegister() {
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
         <button
           onClick={() => router.history.back()}
-          className="p-2 -ml-2 rounded-md hover:bg-accent"
+          className="p-2 -ml-2 rounded-md hover:bg-op-navy-elevated"
           aria-label="Voltar"
         >
           <ChevronLeft className="size-5" />
         </button>
         <div>
-          <p className="text-label uppercase tracking-wide text-muted-foreground">Registro de Pulso</p>
-          <p className="text-heading text-foreground">{currentProject?.name ?? '…'}</p>
+          <p className="text-label uppercase tracking-wide text-op-gray">Registro de Pulso</p>
+          <p className="text-heading text-op-white">{currentProject?.name ?? '…'}</p>
         </div>
       </header>
       <div className="space-y-4 p-4">
@@ -116,7 +116,7 @@ export function PulseRegister() {
           className="rounded-md p-2 text-small"
           style={{
             backgroundColor: 'color-mix(in oklab, #facc15 18%, transparent)',
-            color: 'var(--color-text-secondary, inherit)',
+            color: '#F0F4F8',
           }}
         >
           Termo de interpretação detectado. Não bloqueia o registro.
@@ -124,7 +124,7 @@ export function PulseRegister() {
       )}
 
       {loadingReformulation && !reformulation && (
-        <p className="text-small text-muted-foreground">Facilitador analisando…</p>
+        <p className="text-small text-op-gray">Facilitador analisando…</p>
       )}
 
       {reformulation && (
@@ -135,7 +135,7 @@ export function PulseRegister() {
       )}
 
       <div className="space-y-2">
-        <p className="text-small text-muted-foreground">Classifique (obrigatório):</p>
+        <p className="text-small text-op-gray">Classifique (obrigatório):</p>
         {OPTIONS.map((o) => (
           <label
             key={o.value}
@@ -147,7 +147,7 @@ export function PulseRegister() {
               checked={classification === o.value}
               onChange={() => setClassification(o.value)}
             />
-            <span className="text-body text-foreground">{o.label}</span>
+            <span className="text-body text-op-white">{o.label}</span>
           </label>
         ))}
       </div>

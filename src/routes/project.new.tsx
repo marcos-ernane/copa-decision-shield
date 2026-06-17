@@ -97,22 +97,22 @@ function NewProject() {
           onClick={() => setHelpKey(null)}
         >
           <div
-            className="w-full bg-background rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-heading font-semibold">{helpContent.title}</h3>
+              <h3 className="text-heading font-semibold text-op-white">{helpContent.title}</h3>
               <button
                 type="button"
                 onClick={() => setHelpKey(null)}
-                className="p-1 rounded-md hover:bg-accent"
+                className="p-1 rounded-md hover:bg-op-navy-elevated"
                 aria-label="Fechar ajuda"
               >
-                <X className="size-5 text-muted-foreground" />
+                <X className="size-5 text-op-gray" />
               </button>
             </div>
             {helpContent.paragraphs.map((para, i) => (
-              <p key={i} className="text-body text-foreground leading-relaxed">{para}</p>
+              <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
             ))}
           </div>
         </div>
@@ -246,7 +246,7 @@ function NewProject() {
           </div>
 
           {(!scenario || !layer) && nameOk && northOk && (
-            <p className="text-small text-muted-foreground text-center">
+            <p className="text-small text-op-gray text-center">
               Selecione o tipo de cenário e a camada operacional para criar o projeto.
             </p>
           )}

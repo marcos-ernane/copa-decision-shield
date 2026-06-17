@@ -50,13 +50,13 @@ function CopaStepsRow({ done, next, allDone }: { done: string[]; next: string | 
         const isNext = ph === next && !allDone;
         return (
           <span key={ph} className="flex items-center">
-            {i > 0 && <span className="mx-1.5 text-muted-foreground">·</span>}
+            {i > 0 && <span className="mx-1.5 text-op-gray">·</span>}
             <span className={
               isDone
-                ? 'text-muted-foreground line-through'
+                ? 'text-op-gray line-through'
                 : isNext
-                ? 'text-foreground font-medium'
-                : 'text-muted-foreground/50'
+                ? 'text-op-white font-medium'
+                : 'text-op-gray/50'
             }>
               [{ph}]-{COPA_STEP_NAMES[ph]}
             </span>
@@ -210,17 +210,17 @@ function ProjectDashboard() {
       <header className="flex items-center justify-between px-4 py-3 border-b border-border">
         <button
           onClick={() => router.history.back()}
-          className="p-2 -ml-2 rounded-md hover:bg-accent"
+          className="p-2 -ml-2 rounded-md hover:bg-op-navy-elevated"
           aria-label="Voltar"
         >
           <ChevronLeft className="size-5" />
         </button>
         <div className="flex-1 min-w-0 px-2 text-center">
-          <p className="text-label text-muted-foreground uppercase tracking-wide truncate">{project.name}</p>
+          <p className="text-label text-op-gray uppercase tracking-wide truncate">{project.name}</p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-2 -mr-2 rounded-md hover:bg-accent" aria-label="Mais opções">
+            <button className="p-2 -mr-2 rounded-md hover:bg-op-navy-elevated" aria-label="Mais opções">
               <MoreVertical className="size-5" />
             </button>
           </DropdownMenuTrigger>
@@ -264,19 +264,19 @@ function ProjectDashboard() {
         {/* Cabeçalho */}
         <section className="space-y-2">
           <div>
-            <p className="text-label text-muted-foreground uppercase tracking-wide">Nome</p>
+            <p className="text-label text-op-gray uppercase tracking-wide">Nome</p>
             <div className="flex items-center gap-2 mt-0.5">
               <ProjectStateIcon state={currentState} />
-              <h1 className="text-title text-foreground">{project.name}</h1>
+              <h1 className="text-title text-op-white">{project.name}</h1>
             </div>
           </div>
           <button
             onClick={() => setNorthExpanded((v) => !v)}
             className="text-left w-full"
           >
-            <p className="text-label text-muted-foreground uppercase">Norte/Objetivo</p>
+            <p className="text-label text-op-gray uppercase">Norte/Objetivo</p>
             <p
-              className={`text-small text-foreground ${
+              className={`text-small text-op-white ${
                 northExpanded ? '' : 'line-clamp-2'
               }`}
             >
@@ -308,22 +308,22 @@ function ProjectDashboard() {
             <button
               type="button"
               onClick={handleStateClick}
-              className="w-full text-left rounded-md border border-border bg-card p-4 space-y-1 hover:bg-accent transition-colors"
+              className="w-full text-left rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-1 hover:bg-op-navy-elevated transition-colors"
             >
-              <h2 className="text-label text-muted-foreground uppercase">Onde estou agora</h2>
+              <h2 className="text-label text-op-gray uppercase">Onde estou agora</h2>
               <div className="flex items-center justify-between">
                 <p className={`text-heading ${stateDisplay.color}`}>
                   {stateDisplay.icon} {stateDisplay.label}
                 </p>
-                <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                <ChevronRight className="size-4 text-op-gray shrink-0" />
               </div>
               {isBlocked ? (
-                <p className="text-small text-muted-foreground">Execute um diagnóstico para destravar</p>
+                <p className="text-small text-op-gray">Execute um diagnóstico para destravar</p>
               ) : (
                 <CopaStepsRow done={done} next={nextPhase} allDone={allDone} />
               )}
               {!isBlocked && allDone && (
-                <p className="text-small text-muted-foreground mt-1">Ciclo completo — revise ou inicie novo ciclo</p>
+                <p className="text-small text-op-gray mt-1">Ciclo completo — revise ou inicie novo ciclo</p>
               )}
               {currentState === 'proving' && totalDays > 0 && (
                 <div className="pt-1">
@@ -332,13 +332,13 @@ function ProjectDashboard() {
               )}
             </button>
           ) : (
-            <section className="rounded-md border border-border bg-card p-4 space-y-3">
-              <h2 className="text-label text-muted-foreground uppercase">Onde estou agora</h2>
+            <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
+              <h2 className="text-label text-op-gray uppercase">Onde estou agora</h2>
               <p className={`text-heading ${stateDisplay.color}`}>
                 {stateDisplay.icon} {stateDisplay.label}
               </p>
               {currentState === 'paused' && project.pause_reason && (
-                <p className="text-small text-muted-foreground italic">"{project.pause_reason}"</p>
+                <p className="text-small text-op-gray italic">"{project.pause_reason}"</p>
               )}
               {currentState === 'paused' && (
                 <button
@@ -356,8 +356,8 @@ function ProjectDashboard() {
         {/* O que está governando */}
         {project.current_bottleneck && (
           <section className="space-y-1">
-            <h2 className="text-label text-muted-foreground uppercase">O que está governando</h2>
-            <p className="text-body text-foreground italic">"{project.current_bottleneck}"</p>
+            <h2 className="text-label text-op-gray uppercase">O que está governando</h2>
+            <p className="text-body text-op-white italic">"{project.current_bottleneck}"</p>
           </section>
         )}
 
@@ -369,44 +369,44 @@ function ProjectDashboard() {
           <Link
             to="/project/$id/pact"
             params={{ id }}
-            className="block text-small text-muted-foreground underline"
+            className="block text-small text-op-gray underline"
           >
             Ativar Pacto Semanal
           </Link>
         )}
 
         {/* Meu histórico */}
-        <section className="rounded-md border border-border bg-card p-4 space-y-2">
-          <h2 className="text-label text-muted-foreground uppercase">Meu histórico</h2>
+        <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-2">
+          <h2 className="text-label text-op-gray uppercase">Meu histórico</h2>
           <div className="flex gap-3 text-small flex-wrap">
             <button
               type="button"
               onClick={() => void navigate({ to: '/diary', search: { projectId: id, type: 'pulse' } as never })}
-              className="text-[color:var(--color-brand-blue)] hover:underline"
+              className="text-op-cyan hover:underline"
             >
               {counts.pulse} pulsos
             </button>
-            <span className="text-muted-foreground">·</span>
+            <span className="text-op-gray">·</span>
             <button
               type="button"
               onClick={() => void navigate({ to: '/diary', search: { projectId: id } as never })}
-              className="text-[color:var(--color-brand-blue)] hover:underline"
+              className="text-op-cyan hover:underline"
             >
               {counts.structured} análises
             </button>
-            <span className="text-muted-foreground">·</span>
+            <span className="text-op-gray">·</span>
             <button
               type="button"
               onClick={() => void navigate({ to: '/diary', search: { projectId: id, type: 'structured_A' } as never })}
-              className="text-[color:var(--color-brand-blue)] hover:underline"
+              className="text-op-cyan hover:underline"
             >
               {counts.apas} APAs
             </button>
-            <span className="text-muted-foreground">·</span>
+            <span className="text-op-gray">·</span>
             <button
               type="button"
               onClick={() => void navigate({ to: '/diary/$', params: { _splat: 'principles' }, search: { projectId: id } as never })}
-              className="text-[color:var(--color-brand-blue)] hover:underline"
+              className="text-op-cyan hover:underline"
             >
               {counts.principles} princípios
             </button>
@@ -437,12 +437,12 @@ function ProjectDashboard() {
             void navigate({ to: '/register/structured', search: { projectId: id } as never });
           };
           return (
-            <section className="rounded-md border border-[var(--color-brand-amber)] bg-card p-4 space-y-3">
-              <h2 className="text-label text-muted-foreground uppercase">Alerta do motor</h2>
-              <p className="text-body text-foreground">"{sanitizeFieldReading(project.field_reading)}"</p>
+            <section className="rounded-md border border-op-amber/40 bg-op-navy p-4 space-y-3">
+              <h2 className="text-label text-op-gray uppercase">Alerta do motor</h2>
+              <p className="text-body text-op-white">"{sanitizeFieldReading(project.field_reading)}"</p>
               {project.calibrated_action && (
-                <div className="border-t border-border pt-3 space-y-2">
-                  <p className="text-small text-muted-foreground">{project.calibrated_action}</p>
+                <div className="border-t border-op-gray/30 pt-3 space-y-2">
+                  <p className="text-small text-op-gray">{project.calibrated_action}</p>
                   <Button size="sm" className="w-full" onClick={handleCta}>
                     {ctaLabel}
                   </Button>
@@ -455,11 +455,11 @@ function ProjectDashboard() {
         {/* Principle recall */}
         {recall && (
           <section className="space-y-1">
-            <p className="text-label text-muted-foreground text-center">
+            <p className="text-label text-op-gray text-center">
               ── Um princípio seu pode ajudar aqui. ──
             </p>
-            <p className="text-small text-foreground italic">"{recall.content}"</p>
-            <Link to="/diary" className="text-label text-muted-foreground underline">
+            <p className="text-small text-op-white italic">"{recall.content}"</p>
+            <Link to="/diary" className="text-label text-op-gray underline">
               ver no banco
             </Link>
           </section>
@@ -467,8 +467,8 @@ function ProjectDashboard() {
 
         {/* Ações principais — bloqueadas quando pausado */}
         {project.state === 'paused' ? (
-          <div className="rounded-md border border-border bg-card p-4 text-center space-y-3">
-            <p className="text-small text-muted-foreground">
+          <div className="rounded-md border border-op-gray/30 bg-op-navy p-4 text-center space-y-3">
+            <p className="text-small text-op-gray">
               Projeto pausado — retome para registrar ou analisar.
             </p>
             <button

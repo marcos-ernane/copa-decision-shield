@@ -205,22 +205,22 @@ export function StructuredRegister() {
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
         <button
           onClick={handleBack}
-          className="p-2 -ml-2 rounded-md hover:bg-accent"
+          className="p-2 -ml-2 rounded-md hover:bg-op-navy-elevated"
           aria-label="Voltar"
         >
           <ChevronLeft className="size-5" />
         </button>
         <div>
-          <p className="text-label uppercase tracking-wide text-muted-foreground">Registro estruturado</p>
-          <p className="text-label text-muted-foreground uppercase tracking-wide">Nome</p>
-          <p className="text-heading text-foreground">{projectData?.name ?? '…'}</p>
+          <p className="text-label uppercase tracking-wide text-op-gray">Registro estruturado</p>
+          <p className="text-label text-op-gray uppercase tracking-wide">Nome</p>
+          <p className="text-heading text-op-white">{projectData?.name ?? '…'}</p>
         </div>
       </header>
 
       <div className="space-y-4 p-4">
         {/* Seletor de fases com status */}
         <div>
-          <p className="text-label text-muted-foreground uppercase tracking-wide mb-2">Etapas do projeto</p>
+          <p className="text-label text-op-gray uppercase tracking-wide mb-2">Etapas do projeto</p>
           <div className="grid grid-cols-2 gap-2">
             {PHASE_ORDER.map((k) => {
               const status = statuses[k];
@@ -269,26 +269,26 @@ export function StructuredRegister() {
         </div>
 
         {/* Fase atual + pergunta central */}
-        <div className="rounded-md bg-[color:var(--color-surface-1)] px-4 py-3 space-y-1">
-          <p className="text-label font-semibold text-foreground uppercase tracking-wide">
+        <div className="rounded-md bg-op-navy-elevated px-4 py-3 space-y-1">
+          <p className="text-label font-semibold text-op-white uppercase tracking-wide">
             {PHASE_NAMES[format]}
           </p>
-          <p className="text-small font-medium text-foreground">
+          <p className="text-small font-medium text-op-white">
             {PHASE_QUESTIONS[format]}
           </p>
         </div>
 
         {/* Indicador de revisão */}
         {isReviewing && lastDate && (
-          <p className="text-label text-muted-foreground">
+          <p className="text-label text-op-gray">
             Último registro: {fmtDate(lastDate)} — edite os campos para salvar uma nova versão.
           </p>
         )}
 
         {/* Banner ciclo completo */}
         {allDone && isReviewing && (
-          <div className="rounded-md bg-[color:var(--color-surface-1)] px-3 py-2">
-            <p className="text-small text-foreground">Ciclo COPA completo. Consulte ou atualize qualquer fase.</p>
+          <div className="rounded-md bg-op-navy-elevated px-3 py-2">
+            <p className="text-small text-op-white">Ciclo COPA completo. Consulte ou atualize qualquer fase.</p>
           </div>
         )}
 

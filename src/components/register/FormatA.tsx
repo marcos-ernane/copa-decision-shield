@@ -92,14 +92,14 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
 
       {step === 0 && (
         <div>
-          <p className="text-small text-muted-foreground mb-1">O que aconteceu</p>
+          <p className="text-small text-op-gray mb-1">O que aconteceu</p>
           <VoiceInput value={fact} onChange={setFact} placeholder="" rows={3} />
         </div>
       )}
 
       {step === 1 && (
         <div>
-          <p className="text-small text-muted-foreground mb-1">Por que aconteceu</p>
+          <p className="text-small text-op-gray mb-1">Por que aconteceu</p>
           <VoiceInput value={interp} onChange={setInterp} placeholder="" rows={3} />
         </div>
       )}
@@ -113,7 +113,7 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
             rows={2}
           />
           {loadingAiSuggestion && !aiSuggestion && (
-            <p className="text-small text-muted-foreground">Facilitador analisando…</p>
+            <p className="text-small text-op-gray">Facilitador analisando…</p>
           )}
           {aiSuggestion && (
             <div className="rounded-md bg-op-navy border border-op-gray/30 p-2 text-small text-op-white">
@@ -135,11 +135,11 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
       {step === 3 && (
         <div className="space-y-3">
           <div>
-            <p className="text-small text-muted-foreground mb-1">Decisão a partir deste resultado</p>
+            <p className="text-small text-op-gray mb-1">Decisão a partir deste resultado</p>
             <VoiceInput value={decision} onChange={setDecision} placeholder="" rows={2} />
           </div>
           <div>
-            <p className="text-small text-muted-foreground mb-1">Custo oculto percebido</p>
+            <p className="text-small text-op-gray mb-1">Custo oculto percebido</p>
             <VoiceInput
               value={hiddenCost}
               onChange={setHiddenCost}
@@ -154,19 +154,19 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
       {step === 4 && (
         <div className="space-y-3">
           <div>
-            <p className="text-small text-muted-foreground mb-1">O que funcionou sem criar dano</p>
+            <p className="text-small text-op-gray mb-1">O que funcionou sem criar dano</p>
             <VoiceInput value={worked} onChange={setWorked} placeholder="" rows={2} />
           </div>
           <div>
-            <p className="text-small text-muted-foreground mb-1">O que vou repetir</p>
+            <p className="text-small text-op-gray mb-1">O que vou repetir</p>
             <VoiceInput value={repeatRule} onChange={setRepeatRule} placeholder="" rows={2} />
           </div>
           <div>
-            <p className="text-small text-muted-foreground mb-1">O que vou cortar</p>
+            <p className="text-small text-op-gray mb-1">O que vou cortar</p>
             <VoiceInput value={cutNext} onChange={setCutNext} placeholder="" rows={2} />
           </div>
           <div>
-            <p className="text-small text-muted-foreground mb-1">Próximo gargalo</p>
+            <p className="text-small text-op-gray mb-1">Próximo gargalo</p>
             <VoiceInput value={nextBottleneck} onChange={setNextBottleneck} placeholder="" rows={2} />
           </div>
         </div>

@@ -99,16 +99,16 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar tópico
                 className="flex-1 flex items-center gap-1.5 text-left min-w-0"
                 onClick={() => setExpandedIdx(i)}
               >
-                <span className="flex-1 text-sm text-foreground line-clamp-1 min-w-0">
-                  {item.trim() ? item : <span className="text-muted-foreground italic text-xs">toque para editar</span>}
+                <span className="flex-1 text-sm text-op-white line-clamp-1 min-w-0">
+                  {item.trim() ? item : <span className="text-op-gray italic text-xs">toque para editar</span>}
                 </span>
-                <ChevronDown className="size-3.5 text-muted-foreground shrink-0" />
+                <ChevronDown className="size-3.5 text-op-gray shrink-0" />
               </button>
             )}
             {items.length > 1 && (
               <button
                 type="button"
-                className="shrink-0 mt-0.5 text-muted-foreground hover:text-destructive transition-colors"
+                className="shrink-0 mt-0.5 text-op-gray hover:text-destructive transition-colors"
                 onClick={() => remove(i)}
                 aria-label="Remover tópico"
               >
@@ -175,22 +175,22 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
         onClick={() => setHelpKey(null)}
       >
         <div
-          className="w-full bg-background rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+          className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between">
-            <h3 className="text-heading font-semibold">{HELP[helpKey].title}</h3>
+            <h3 className="text-heading font-semibold text-op-white">{HELP[helpKey].title}</h3>
             <button
               type="button"
               onClick={() => setHelpKey(null)}
-              className="p-1 rounded-md hover:bg-accent"
+              className="p-1 rounded-md hover:bg-op-navy-elevated"
               aria-label="Fechar ajuda"
             >
-              <X className="size-5 text-muted-foreground" />
+              <X className="size-5 text-op-gray" />
             </button>
           </div>
           {HELP[helpKey].text.split('\n\n').map((para, i) => (
-            <p key={i} className="text-body text-foreground leading-relaxed">{para}</p>
+            <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
           ))}
         </div>
       </div>
@@ -200,7 +200,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
       <StepDots current={step} total={TOTAL_STEPS} />
 
       {missingResourcesAndFrictions && (
-        <p className="text-small text-muted-foreground rounded-md bg-muted px-3 py-2">
+        <p className="text-small text-op-gray rounded-md bg-op-navy-elevated px-3 py-2">
           R1 e R2 não foram preenchidos. Complete o Mapa 3R para salvar uma nova versão.
         </p>
       )}
@@ -212,7 +212,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
             <button
               type="button"
               onClick={() => setHelpKey('R1')}
-              className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
             >
               <CircleHelp className="size-3.5" />
               Ajuda
@@ -235,7 +235,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
             <button
               type="button"
               onClick={() => setHelpKey('R2')}
-              className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
             >
               <CircleHelp className="size-3.5" />
               Ajuda
@@ -258,7 +258,7 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
             <button
               type="button"
               onClick={() => setHelpKey('R3')}
-              className="flex items-center gap-1 text-label text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
             >
               <CircleHelp className="size-3.5" />
               Ajuda
