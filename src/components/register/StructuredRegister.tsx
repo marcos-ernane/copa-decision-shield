@@ -4,7 +4,7 @@
 // Navegação em dois níveis: voltar retroage campo a campo, depois tela a tela.
 
 import { useEffect, useState } from 'react';
-import { useNavigate, useRouter } from '@tanstack/react-router';
+import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
 import { CheckCircle2, Lock, ArrowRight } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 
@@ -112,6 +112,7 @@ export function StructuredRegister() {
   const navigate = useNavigate();
   const router = useRouter();
   const { projectId, setProjectId, projects } = useProjectPicker();
+  const search = useSearch({ strict: false }) as { format?: 'C' | 'O' | 'P' | 'A' };
   const [format, setFormat] = useState<Format>('C');
   const [currentStep, setCurrentStep] = useState(0);
   const [projectData, setProjectData] = useState<Project | null>(null);
@@ -123,12 +124,18 @@ export function StructuredRegister() {
       const [p, es] = await Promise.all([getProject(projectId), listEntries(projectId)]);
       setProjectData(p ?? null);
       setEntries(es);
-      const statuses = computeStatuses(es);
-      const next = PHASE_ORDER.find((ph) => statuses[ph] === 'next') ?? 'C';
-      setFormat(next);
+      // Se um formato foi solicitado via URL (ex: Pacto da semana), usa ele.
+      // Caso contrário, auto-detecta a próxima fase pendente.
+      if (search.format) {
+        setFormat(search.format);
+      } else {
+        const statuses = computeStatuses(es);
+        const next = PHASE_ORDER.find((ph) => statuses[ph] === 'next') ?? 'C';
+        setFormat(next);
+      }
       setCurrentStep(0);
     })();
-  }, [projectId]);
+  }, [projectId, search.format]);
 
   if (!projectId) {
     return <ProjectPicker projects={projects} onPick={setProjectId} />;

@@ -9,6 +9,13 @@ import type { WeeklyCycle, PactPhase } from '@/types/app';
 
 const DAY_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
+const PHASE_TO_FORMAT: Record<PactPhase, 'C' | 'O' | 'P' | 'A'> = {
+  capture: 'C',
+  organize: 'O',
+  prove: 'P',
+  assess: 'A',
+};
+
 const PHASE_LABEL: Record<PactPhase, string> = {
   capture: 'Captura', organize: 'Organização', prove: 'Prova', assess: 'Aferição',
 };
@@ -57,7 +64,10 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
     if (cycle[phase].completed_this_week) {
       void navigate({ to: '/diary' });
     } else {
-      void navigate({ to: '/register/structured', search: { projectId } as never });
+      void navigate({
+        to: '/register/structured',
+        search: { projectId, format: PHASE_TO_FORMAT[phase] } as never,
+      });
     }
   }
 
