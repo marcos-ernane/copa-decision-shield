@@ -44,7 +44,7 @@ export interface StructuredCContent {
   fact_text: string;
   interpretation_text: string;
   hypothesis_text: string;
-  imv_possible: string;
+  imv_possible?: string;
 }
 
 export interface StructuredOContent {

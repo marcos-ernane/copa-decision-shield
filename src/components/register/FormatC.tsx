@@ -1,5 +1,4 @@
-// Formato C — Análise de Situação. 4 quadros em passos sequenciais.
-// Quadros 1-3 suportam múltiplos itens (TopicList). Quadro 4 (IMV) é campo simples.
+// Formato C — Análise de Situação. 3 quadros em passos sequenciais.
 
 import { useState } from 'react';
 import { Plus, X, ChevronDown } from 'lucide-react';
@@ -20,7 +19,7 @@ interface Props {
   isReviewing?: boolean;
 }
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 3;
 
 function toItems(value: string | undefined | null): string[] {
   if (!value?.trim()) return [''];
@@ -117,19 +116,16 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [factItems, setFactItems] = useState<string[]>(() => toItems(initialData?.fact_text));
   const [interpItems, setInterpItems] = useState<string[]>(() => toItems(initialData?.interpretation_text));
   const [hypItems, setHypItems] = useState<string[]>(() => toItems(initialData?.hypothesis_text));
-  const [imvItems, setImvItems] = useState<string[]>(() => toItems(initialData?.imv_possible));
   const [saving, setSaving] = useState(false);
 
   const fact = fromItems(factItems);
   const interp = fromItems(interpItems);
   const hyp = fromItems(hypItems);
-  const imv = fromItems(imvItems);
 
   const hasChanges =
     fact !== (initialData?.fact_text ?? '') ||
     interp !== (initialData?.interpretation_text ?? '') ||
-    hyp !== (initialData?.hypothesis_text ?? '') ||
-    imv !== (initialData?.imv_possible ?? '');
+    hyp !== (initialData?.hypothesis_text ?? '');
 
   async function save() {
     setSaving(true);
@@ -137,7 +133,6 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
       fact_text: fact,
       interpretation_text: interp,
       hypothesis_text: hyp,
-      imv_possible: imv,
     }, scenarioType, currentLayer);
     setSaving(false);
     onSaved();
@@ -181,18 +176,6 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
             onChange={setHypItems}
             placeholder="O que poderia ser verdade e precisa mexer para o fato mudar."
             addLabel="+ Adicionar Hipóteses"
-          />
-        </div>
-      )}
-
-      {step === 3 && (
-        <div>
-          <p className="text-small text-op-gray mb-2">Quadro 4 (Opcional) — IMV_Intervenção Mínima Viável</p>
-          <TopicList
-            items={imvItems}
-            onChange={setImvItems}
-            placeholder="A menor intervenção que já caberia pensar fazer aqui."
-            addLabel="+ Revisão da IMV anterior"
           />
         </div>
       )}
