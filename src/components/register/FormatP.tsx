@@ -187,7 +187,7 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', 
       {blocked ? (
         <div className="px-3 py-2.5">
           <p className="text-small text-red-400">
-            Este projeto atingiu o limite de 4 IMVs. Para continuar testando hipóteses inicie um novo projeto.
+            Este projeto atingiu o limite de 4 IMVs. Para continuar testando hipóteses certifique-se de ter concluído este projeto na etapa [A] Aferição, registre o aprendizado e inicie um novo projeto.
           </p>
         </div>
       ) : (
