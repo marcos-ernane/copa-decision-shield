@@ -108,14 +108,14 @@ interface TopicListProps {
   addLabel?: string;
   lockedCount?: number;
   maxItems?: number;
+  blocked?: boolean;
 }
 
-function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', lockedCount = 0, maxItems }: TopicListProps) {
+function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', lockedCount = 0, maxItems, blocked = false }: TopicListProps) {
   const [expandedIdx, setExpandedIdx] = useState(items.length - 1);
 
   const filledCount = items.filter((s) => s.trim()).length;
-  const atLimit = maxItems !== undefined && filledCount >= maxItems;
-  const nearLimit = maxItems !== undefined && filledCount === maxItems - 1;
+  const nearLimit = !blocked && maxItems !== undefined && filledCount === maxItems - 1;
 
   function add() {
     const next = [...items, ''];
@@ -184,10 +184,10 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', 
           </div>
         );
       })}
-      {atLimit ? (
-        <div className="px-3 py-2.5 space-y-1">
+      {blocked ? (
+        <div className="px-3 py-2.5">
           <p className="text-small text-red-400">
-            Este projeto atingiu o limite de 4 IMVs. Para continuar testando hipóteses, conclua este projeto na etapa [A] Aferição, registre o aprendizado e inicie um novo projeto.
+            Este projeto atingiu o limite de 4 IMVs. Para continuar testando hipóteses inicie um novo projeto.
           </p>
         </div>
       ) : (
@@ -325,6 +325,8 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   // Derivado dos dados — não depende de estado local, sobrevive a remontagem do componente.
   const imvAdjustMode = isReviewing === true && isDeadlineExpired;
   const imvLockedCount = imvAdjustMode ? toItems(initialData?.action).length : 0;
+  const savedImvCount = toItems(initialData?.action ?? '').filter((s) => s.trim()).length;
+  const imvBlocked = savedImvCount >= 4;
 
   function handleAjustarIMV() {
     setActionItems((prev) => [...prev, '']);
@@ -530,6 +532,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             addLabel="Ajustar a IMV anterior"
             lockedCount={imvLockedCount}
             maxItems={4}
+            blocked={imvBlocked}
           />
           {imvAdjustMode && !imvEditActive && (
             <div className="space-y-2">
