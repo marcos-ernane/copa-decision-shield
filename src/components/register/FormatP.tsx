@@ -336,8 +336,10 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
     void navigate({ to: '/project/$id/conclude', params: { id: projectId } });
   }
 
+  const hasNewImv = actionItems.slice(imvLockedCount).some((s) => s.trim());
   const nextDisabled =
     (step === 0 && !action.trim()) ||
+    (step === 0 && imvAdjustMode && imvEditActive && !hasNewImv) ||
     (step === 2 && (!metric.trim() || measurable === false));
 
   return (
