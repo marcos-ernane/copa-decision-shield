@@ -142,6 +142,7 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', 
           <div key={i} className="flex items-start gap-2 px-3 py-2.5">
             {isLocked ? (
               <span className="flex-1 text-sm text-op-gray line-clamp-2 min-w-0 italic opacity-60">
+                <span className="not-italic font-semibold opacity-80">IMV-{String(i + 1).padStart(2, '0')}:</span>{' '}
                 {item.trim() || '—'}
               </span>
             ) : isExpanded ? (
@@ -503,7 +504,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           <TopicList
             items={actionItems}
             onChange={setActionItems}
-            placeholder="Teste pequeno para confirmar se sua leitura do cenário está certa."
+            placeholder="Descreva a IMV para confirmar se sua leitura do cenário está certa."
             addLabel="Ajustar a IMV anterior"
             lockedCount={imvLockedCount}
           />
