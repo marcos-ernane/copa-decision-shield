@@ -626,7 +626,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             {saving ? 'Salvando…' : isReviewing ? 'Salvar nova versão' : 'Salvar'}
           </Button>
           {isReviewing && (
-            <Button variant="outline" className="w-full" onClick={onNextStep}>
+            <Button variant="outline" className="w-full" disabled={hasChanges} onClick={onNextStep}>
               Avançar sem salvar →
             </Button>
           )}
