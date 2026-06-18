@@ -331,7 +331,8 @@ export interface PassiveEvent {
     | 'route_visit'
     | 'register_abandoned'
     | 'register_completed'
-    | 'time_between_registers';
+    | 'time_between_registers'
+    | 'p_imv_interrupted';
   route?: string;
   entry_type?: string;
   ms_since_last_entry?: number;

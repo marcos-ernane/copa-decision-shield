@@ -1,13 +1,24 @@
 // Formato P — Definição de IMV. Métrica obrigatória. 4 passos sequenciais.
 
 import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { X, CircleHelp, Plus, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceInput } from '@/components/copa/VoiceInput';
-import { saveStructuredP, type StructuredPContent } from '@/lib/register';
+import { saveStructuredP, savePassive, type StructuredPContent } from '@/lib/register';
 import { updateProject } from '@/lib/projects';
 import { StepDots } from './StepDots';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 
 const IMV_HELP_TEXT = [
@@ -213,9 +224,15 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const [deadline, setDeadline] = useState(initialData?.deadline ?? '');
   const [cutRule, setCutRule] = useState(initialData?.cut_rule ?? '');
   const [layer, setLayer] = useState<OperationalLayer | null>(initialData?.layer ?? currentProjectLayer ?? null);
+  const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [imvEditActive, setImvEditActive] = useState(false);
   const [imvHelp, setImvHelp] = useState(false);
+  const [showInterruptMenu, setShowInterruptMenu] = useState(false);
+  const [isPausing, setIsPausing] = useState(false);
+  const [pauseReason, setPauseReason] = useState('');
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [interruptSaving, setInterruptSaving] = useState(false);
   const [criteriaHelp, setCriteriaHelp] = useState<CriteriaHelpKey | null>(null);
   const [metricHelp, setMetricHelp] = useState(false);
   const [cutRuleHelp, setCutRuleHelp] = useState(false);
@@ -290,6 +307,33 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
     setActionItems((prev) => [...prev, '']);
     setImvEditActive(true);
     onGoToStep?.(0);
+  }
+
+  async function saveInterruptionMarker() {
+    await savePassive(projectId, { kind: 'p_imv_interrupted' });
+  }
+
+  async function handlePauseConfirm() {
+    setInterruptSaving(true);
+    await saveInterruptionMarker();
+    await updateProject(projectId, { state: 'paused', pause_reason: pauseReason.trim() || 'Pausado' });
+    setInterruptSaving(false);
+    setIsPausing(false);
+    void navigate({ to: '/' });
+  }
+
+  async function handleArchiveConfirm() {
+    setInterruptSaving(true);
+    await saveInterruptionMarker();
+    await updateProject(projectId, { state: 'archived', archived_at: new Date().toISOString() });
+    setInterruptSaving(false);
+    setIsArchiving(false);
+    void navigate({ to: '/' });
+  }
+
+  async function handleConclude() {
+    await saveInterruptionMarker();
+    void navigate({ to: '/project/$id/conclude', params: { id: projectId } });
   }
 
   const nextDisabled =
@@ -624,14 +668,19 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             </div>
           )}
           {isDeadlineExpired && (
+            <div className="rounded-md border border-red-800/50 bg-red-950/30 px-3 py-2.5">
+              <p className="text-small text-red-400">
+                O prazo desta IMV venceu em {deadline.split('-').reverse().join('/')}. O teste já deveria ter sido executado — escolha uma ação abaixo para prosseguir.
+              </p>
+            </div>
+          )}
+          {isReviewing && deadline && (
             <div className="space-y-2">
-              <div className="rounded-md border border-red-800/50 bg-red-950/30 px-3 py-2.5">
-                <p className="text-small text-red-400">
-                  O prazo desta IMV venceu em {deadline.split('-').reverse().join('/')}. O teste já deveria ter sido executado — escolha uma ação abaixo para prosseguir.
-                </p>
-              </div>
-              <Button variant="outline" className="w-full" onClick={handleAjustarIMV}>
+              <Button variant="outline" className="w-full" disabled={!isDeadlineExpired} onClick={handleAjustarIMV}>
                 Ajustar a IMV
+              </Button>
+              <Button variant="outline" className="w-full" disabled={!isDeadlineExpired} onClick={() => setShowInterruptMenu(true)}>
+                Interromper Projeto
               </Button>
             </div>
           )}
@@ -686,6 +735,90 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
         </Button>
       )}
     </div>
+
+    {/* Bottom sheet — Interromper Projeto */}
+    {showInterruptMenu && (
+      <div
+        className="fixed inset-0 z-50 flex items-end bg-black/50"
+        onClick={() => setShowInterruptMenu(false)}
+      >
+        <div
+          className="w-full bg-op-navy rounded-t-2xl p-6 space-y-3"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="text-heading font-semibold text-op-white">Interromper Projeto</h3>
+          <p className="text-small text-op-gray">
+            O projeto será interrompido e poderá ser retomado a partir deste ponto, com a IMV vencida aguardando ação.
+          </p>
+          <Button variant="outline" className="w-full" onClick={() => { setShowInterruptMenu(false); setIsPausing(true); }}>
+            Pausar projeto
+          </Button>
+          <Button variant="outline" className="w-full" onClick={() => { setShowInterruptMenu(false); void handleConclude(); }}>
+            Concluir projeto
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full border-destructive/50 text-destructive hover:bg-destructive/10"
+            onClick={() => { setShowInterruptMenu(false); setIsArchiving(true); }}
+          >
+            Arquivar
+          </Button>
+          <Button variant="ghost" className="w-full" onClick={() => setShowInterruptMenu(false)}>
+            Cancelar
+          </Button>
+        </div>
+      </div>
+    )}
+
+    {/* Diálogo de confirmação — Pausar */}
+    <AlertDialog open={isPausing} onOpenChange={(v) => { if (!v) { setIsPausing(false); setPauseReason(''); } }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Pausar projeto</AlertDialogTitle>
+          <AlertDialogDescription>
+            O projeto ficará pausado. Ao retomá-lo, você voltará direto para este ponto da IMV vencida.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="px-1 pb-2">
+          <Input
+            placeholder="Motivo da pausa (obrigatório)"
+            value={pauseReason}
+            onChange={(e) => setPauseReason(e.target.value)}
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => { setIsPausing(false); setPauseReason(''); }}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={!pauseReason.trim() || interruptSaving}
+            onClick={() => void handlePauseConfirm()}
+          >
+            {interruptSaving ? 'Salvando…' : 'Confirmar pausa'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Diálogo de confirmação — Arquivar */}
+    <AlertDialog open={isArchiving} onOpenChange={(v) => { if (!v) setIsArchiving(false); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Arquivar projeto?</AlertDialogTitle>
+          <AlertDialogDescription>
+            O projeto será arquivado. Ao reativá-lo manualmente, você voltará direto para este ponto da IMV vencida.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setIsArchiving(false)}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={interruptSaving}
+            className="bg-destructive hover:bg-destructive/90"
+            onClick={() => void handleArchiveConfirm()}
+          >
+            {interruptSaving ? 'Arquivando…' : 'Arquivar'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
 
 </>
   );

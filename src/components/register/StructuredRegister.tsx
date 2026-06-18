@@ -75,14 +75,15 @@ const PHASE_ORDER: Format[] = ['C', 'O', 'P', 'A'];
 
 function computeStatuses(entries: Entry[]): Record<Format, PhaseStatus> {
   const aLockedUntil = getALockedUntil(entries);
+  const aInterrupted = isAInterrupted(entries);
   const statuses: Record<Format, PhaseStatus> = { C: 'locked', O: 'locked', P: 'locked', A: 'locked' };
   let foundNext = false;
   for (const phase of PHASE_ORDER) {
     if (entries.some((e) => e.entry_type === `structured_${phase}`)) {
       statuses[phase] = 'done';
     } else if (!foundNext) {
-      if (phase === 'A' && aLockedUntil) {
-        // A bloqueada pelo prazo do IMV — mantém 'locked' até a data ser atingida
+      if (phase === 'A' && (aLockedUntil || aInterrupted)) {
+        // A bloqueada pelo prazo do IMV ou por interrupção em [P] — mantém 'locked'
         foundNext = true;
       } else {
         statuses[phase] = 'next';
@@ -91,6 +92,19 @@ function computeStatuses(entries: Entry[]): Record<Format, PhaseStatus> {
     }
   }
   return statuses;
+}
+
+// Detecta se o projeto foi interrompido em [P] com prazo vencido e ainda não retomado.
+function isAInterrupted(entries: Entry[]): boolean {
+  const lastInterruption = [...entries]
+    .filter((e) => e.entry_type === 'passive' && (e.content as { kind?: string })?.kind === 'p_imv_interrupted')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+  if (!lastInterruption) return false;
+  const lastAction = [...entries]
+    .filter((e) => e.entry_type === 'structured_P' || e.entry_type === 'structured_A')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+  if (!lastAction) return true;
+  return new Date(lastInterruption.created_at) > new Date(lastAction.created_at);
 }
 
 // Retorna o prazo (YYYY-MM-DD) do último entry structured_P se ainda estiver no futuro; null caso contrário.
@@ -150,8 +164,13 @@ export function StructuredRegister() {
         setFormat(search.format);
       } else {
         const statuses = computeStatuses(es);
-        const next = PHASE_ORDER.find((ph) => statuses[ph] === 'next') ?? 'C';
-        setFormat(next);
+        const interrupted = isAInterrupted(es);
+        if (interrupted) {
+          setFormat('P');
+        } else {
+          const next = PHASE_ORDER.find((ph) => statuses[ph] === 'next') ?? 'C';
+          setFormat(next);
+        }
       }
       setCurrentStep(0);
     })();
@@ -163,6 +182,7 @@ export function StructuredRegister() {
 
   const statuses = computeStatuses(entries);
   const aLockedUntil = getALockedUntil(entries);
+  const aInterrupted = isAInterrupted(entries);
   const allDone = PHASE_ORDER.every((p) => statuses[p] === 'done');
   const scenarioType: ScenarioType | null = projectData?.scenario_type ?? null;
   const currentLayer: OperationalLayer | null = projectData?.current_layer ?? null;
@@ -309,6 +329,11 @@ export function StructuredRegister() {
                     {k === 'A' && status === 'locked' && aLockedUntil && (
                       <span className="block text-[10px] leading-tight mt-1 opacity-60">
                         a partir de {fmtDeadline(aLockedUntil)}
+                      </span>
+                    )}
+                    {k === 'A' && status === 'locked' && aInterrupted && !aLockedUntil && (
+                      <span className="block text-[10px] leading-tight mt-1 opacity-60">
+                        aguardando ajuste em [P]
                       </span>
                     )}
                   </div>
