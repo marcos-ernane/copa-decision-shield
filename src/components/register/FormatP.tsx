@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { X, CircleHelp, Plus, ChevronDown } from 'lucide-react';
+import { X, CircleHelp, Plus, ChevronDown, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceInput } from '@/components/copa/VoiceInput';
@@ -560,6 +560,23 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
 
       {step === 1 && (
         <div className="space-y-3">
+          {action.trim() && (
+            <div className="flex items-start justify-between gap-2 rounded-md border border-op-gray/20 bg-op-navy-elevated px-3 py-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-op-gray uppercase tracking-wide mb-0.5">IMV em avaliação</p>
+                <p className="text-small text-op-white line-clamp-2">{action.trim().split('\n').filter(Boolean).at(-1)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onGoToStep?.(0)}
+                className="shrink-0 flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:opacity-80 transition-opacity mt-0.5"
+                aria-label="Ver todas as IMVs"
+              >
+                <ListChecks className="size-3.5" />
+                <span>Ver IMVs</span>
+              </button>
+            </div>
+          )}
           <p className="text-label text-op-gray uppercase tracking-wide">Definição dos Critérios da IMV (Intervenção Mínima Viável)</p>
           <div>
             <div className="flex items-center justify-between mb-0.5">
@@ -638,6 +655,23 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
 
       {step === 2 && (
         <div className="space-y-3">
+          {action.trim() && (
+            <div className="flex items-start justify-between gap-2 rounded-md border border-op-gray/20 bg-op-navy-elevated px-3 py-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-op-gray uppercase tracking-wide mb-0.5">IMV em avaliação</p>
+                <p className="text-small text-op-white line-clamp-2">{action.trim().split('\n').filter(Boolean).at(-1)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onGoToStep?.(0)}
+                className="shrink-0 flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:opacity-80 transition-opacity mt-0.5"
+                aria-label="Ver todas as IMVs"
+              >
+                <ListChecks className="size-3.5" />
+                <span>Ver IMVs</span>
+              </button>
+            </div>
+          )}
           {measurable === false && (
             <div className="rounded-md border border-op-amber/40 bg-op-navy-elevated px-3 py-2.5 space-y-0.5">
               <p className="text-small font-medium" style={{ color: '#d97706' }}>Métrica bloqueada.</p>
