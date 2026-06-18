@@ -680,7 +680,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             </Button>
           )}
         </div>
-      ) : imvAdjustMode && step === 0 ? null : (
+      ) : (imvAdjustMode && step === 0 && !imvEditActive) ? null : (
         <Button className="w-full" disabled={nextDisabled || saving} onClick={() => void handleProximo()}>
           Próximo
         </Button>
