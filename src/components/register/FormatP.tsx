@@ -113,9 +113,16 @@ interface TopicListProps {
 
 function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', lockedCount = 0, maxItems, blocked = false }: TopicListProps) {
   const [expandedIdx, setExpandedIdx] = useState(items.length - 1);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
 
   const filledCount = items.filter((s) => s.trim()).length;
   const nearLimit = !blocked && maxItems !== undefined && filledCount === maxItems - 1;
+
+  // Locked count efetivo: quando blocked, todos os itens preenchidos são tratados como bloqueados.
+  const effectiveLockedCount = blocked ? items.filter((s) => s.trim()).length : lockedCount;
+  // Histórico colapsável: itens bloqueados exceto o último (que fica sempre visível).
+  const hasCollapsibleHistory = effectiveLockedCount > 1;
+  const lastLockedIdx = effectiveLockedCount - 1;
 
   function add() {
     const next = [...items, ''];
@@ -140,9 +147,22 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', 
 
   return (
     <div className="rounded-md border border-op-gray/30 bg-op-navy overflow-hidden divide-y divide-op-gray/20">
+      {/* Botão de expandir histórico — só aparece se há mais de 1 item bloqueado */}
+      {hasCollapsibleHistory && (
+        <button
+          type="button"
+          onClick={() => setHistoryExpanded((v) => !v)}
+          className="w-full flex items-center justify-between px-3 py-2 text-label text-op-gray hover:bg-op-navy-elevated transition-colors"
+        >
+          <span>{historyExpanded ? 'Recolher IMVs anteriores' : `Ver IMVs anteriores (${effectiveLockedCount - 1})`}</span>
+          <ChevronDown className={`size-3.5 transition-transform ${historyExpanded ? 'rotate-180' : ''}`} />
+        </button>
+      )}
       {items.map((item, i) => {
         const isLocked = i < lockedCount || blocked;
         if (blocked && !item.trim()) return null;
+        // Oculta itens do histórico colapsável (todos os bloqueados exceto o último)
+        if (isLocked && i < lastLockedIdx && !historyExpanded) return null;
         const isExpanded = !isLocked && expandedIdx === i;
         return (
           <div key={i} className="flex items-start gap-2 px-3 py-2.5">
