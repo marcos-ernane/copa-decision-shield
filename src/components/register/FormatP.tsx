@@ -566,12 +566,8 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
               disabled={measurable === false}
+              min={today}
             />
-            {false && (
-              <p className="text-small mt-1" style={{ color: '#dc2626' }}>
-                Prazo inválido.
-              </p>
-            )}
           </div>
         </div>
       )}
