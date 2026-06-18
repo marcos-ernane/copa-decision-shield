@@ -107,10 +107,15 @@ interface TopicListProps {
   placeholder?: string;
   addLabel?: string;
   lockedCount?: number;
+  maxItems?: number;
 }
 
-function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', lockedCount = 0 }: TopicListProps) {
+function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', lockedCount = 0, maxItems }: TopicListProps) {
   const [expandedIdx, setExpandedIdx] = useState(items.length - 1);
+
+  const filledCount = items.filter((s) => s.trim()).length;
+  const atLimit = maxItems !== undefined && filledCount >= maxItems;
+  const nearLimit = maxItems !== undefined && filledCount === maxItems - 1;
 
   function add() {
     const next = [...items, ''];
@@ -179,14 +184,31 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', 
           </div>
         );
       })}
-      <button
-        type="button"
-        onClick={add}
-        className="w-full flex items-center gap-1.5 px-3 py-2 text-small text-[color:var(--color-brand-blue)] hover:bg-accent transition-colors"
-      >
-        <Plus className="size-4" />
-        {addLabel}
-      </button>
+      {atLimit ? (
+        <div className="px-3 py-2.5 space-y-1">
+          <p className="text-small text-red-400">
+            Este projeto atingiu o limite de 4 IMVs. Para continuar testando hipóteses, conclua este projeto na etapa [A] Aferição, registre o aprendizado e inicie um novo projeto.
+          </p>
+        </div>
+      ) : (
+        <>
+          {nearLimit && (
+            <div className="px-3 py-2 border-b border-op-gray/20">
+              <p className="text-small text-op-amber">
+                Última IMV disponível para este projeto. O limite máximo é 4 — use-a com cuidado.
+              </p>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={add}
+            className="w-full flex items-center gap-1.5 px-3 py-2 text-small text-[color:var(--color-brand-blue)] hover:bg-accent transition-colors"
+          >
+            <Plus className="size-4" />
+            {addLabel}
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -507,6 +529,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             placeholder="Descreva a IMV para confirmar se sua leitura do cenário está certa."
             addLabel="Ajustar a IMV anterior"
             lockedCount={imvLockedCount}
+            maxItems={4}
           />
           {imvAdjustMode && !imvEditActive && (
             <div className="space-y-2">
