@@ -214,7 +214,6 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const [cutRule, setCutRule] = useState(initialData?.cut_rule ?? '');
   const [layer, setLayer] = useState<OperationalLayer | null>(initialData?.layer ?? currentProjectLayer ?? null);
   const [saving, setSaving] = useState(false);
-  const [imvAdjustMode, setImvAdjustMode] = useState(false);
   const [imvHelp, setImvHelp] = useState(false);
   const [criteriaHelp, setCriteriaHelp] = useState<CriteriaHelpKey | null>(null);
   const [metricHelp, setMetricHelp] = useState(false);
@@ -282,10 +281,12 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const isLastStep = step === TOTAL_STEPS - 1;
   const today = new Date().toISOString().split('T')[0];
   const isDeadlineExpired = !!deadline && deadline < today;
+  // Derivado dos dados — não depende de estado local, sobrevive a remontagem do componente.
+  const imvAdjustMode = isReviewing === true && isDeadlineExpired;
+  const imvLockedCount = imvAdjustMode ? toItems(initialData?.action).length : 0;
 
   function handleAjustarIMV() {
     setActionItems((prev) => [...prev, '']);
-    setImvAdjustMode(true);
     onGoToStep?.(0);
   }
 
@@ -452,12 +453,11 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             </button>
           </div>
           <TopicList
-            key={imvAdjustMode ? `adjust-${actionItems.length}` : 'normal'}
             items={actionItems}
             onChange={setActionItems}
             placeholder="Teste pequeno para confirmar se sua leitura do cenário está certa."
             addLabel="Ajustar a IMV anterior"
-            lockedCount={imvAdjustMode ? actionItems.length - 1 : 0}
+            lockedCount={imvLockedCount}
           />
         </div>
       )}
