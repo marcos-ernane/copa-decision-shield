@@ -8,16 +8,6 @@ import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredP, type StructuredPContent } from '@/lib/register';
 import { updateProject } from '@/lib/projects';
 import { StepDots } from './StepDots';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 
 const IMV_HELP_TEXT = [
@@ -216,8 +206,6 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const [layer, setLayer] = useState<OperationalLayer | null>(initialData?.layer ?? currentProjectLayer ?? null);
   const [saving, setSaving] = useState(false);
   const [imvHelp, setImvHelp] = useState(false);
-  const [showLayerConfirm, setShowLayerConfirm] = useState(false);
-  const [pendingSave, setPendingSave] = useState(false);
   const [criteriaHelp, setCriteriaHelp] = useState<CriteriaHelpKey | null>(null);
   const [metricHelp, setMetricHelp] = useState(false);
   const [cutRuleHelp, setCutRuleHelp] = useState(false);
@@ -255,13 +243,8 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   }
 
   async function save() {
-    const layerChanged = currentProjectLayer && layer !== currentProjectLayer;
-    if (layerChanged) {
-      setPendingSave(true);
-      setShowLayerConfirm(true);
-    } else {
-      await performSave(false);
-    }
+    const layerChanged = layer !== (initialData?.layer ?? currentProjectLayer ?? null);
+    await performSave(layerChanged);
   }
 
   // No passo 2 (Métrica + Prazo) em modo revisão, salva silenciosamente antes de avançar
@@ -618,17 +601,9 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             <VoiceInput value={cutRule} onChange={setCutRule} placeholder="Condição que se deve parar ou ajustar uma IMV ativa" rows={2} />
           </div>
           <div>
-            {currentProjectLayer && layer === currentProjectLayer ? (
-              <p className="text-small text-op-gray mb-1">
-                Camada registrada no projeto — toque em outra para alterar
-              </p>
-            ) : currentProjectLayer && layer !== currentProjectLayer ? (
-              <p className="text-small mb-1" style={{ color: '#d97706' }}>
-                Camada alterada — salvar irá atualizar o projeto inteiro
-              </p>
-            ) : (
-              <p className="text-small text-op-gray mb-1">Camada que é afetada pelo corte ou ajuste</p>
-            )}
+            <p className="text-small text-op-gray mb-1">
+              Camada atual do projeto - Toque para manter ou alterar
+            </p>
             <div className="flex flex-wrap gap-2">
               {LAYERS.map((l) => (
                 <Button
@@ -663,24 +638,6 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
       )}
     </div>
 
-    <AlertDialog open={showLayerConfirm} onOpenChange={(v) => { if (!v) { setShowLayerConfirm(false); setPendingSave(false); setLayer(currentProjectLayer ?? null); } }}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Alterar camada do projeto?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Você alterou a camada operacional. Esta mudança vai atualizar a camada em todo o projeto, mantendo a orientação única. Deseja confirmar?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => { setShowLayerConfirm(false); setPendingSave(false); setLayer(currentProjectLayer ?? null); }}>
-            Cancelar
-          </AlertDialogCancel>
-          <AlertDialogAction onClick={() => { setShowLayerConfirm(false); setPendingSave(false); void performSave(true); }}>
-            Confirmar alteração
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-    </>
+</>
   );
 }
