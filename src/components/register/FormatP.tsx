@@ -459,7 +459,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             items={actionItems}
             onChange={setActionItems}
             placeholder="Teste pequeno para confirmar se sua leitura do cenário está certa."
-            addLabel="+ Revisão da IMV anterior"
+            addLabel="Ajustar a IMV anterior"
           />
         </div>
       )}
