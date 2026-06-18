@@ -41,6 +41,17 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [saving, setSaving] = useState(false);
   const [nudge, setNudge] = useState(false);
 
+  const hasChanges =
+    fact !== (initialData?.fact_text ?? '') ||
+    interp !== (initialData?.interpretation_text ?? '') ||
+    principle !== (initialData?.principle_text ?? '') ||
+    decision !== (initialData?.decision ?? '') ||
+    hiddenCost !== (initialData?.hidden_cost ?? '') ||
+    worked !== (initialData?.what_worked ?? '') ||
+    repeatRule !== (initialData?.repeat_rule ?? '') ||
+    cutNext !== (initialData?.cut_rule_next ?? '') ||
+    nextBottleneck !== (initialData?.next_bottleneck ?? '');
+
   // Detecta princípio vago (<5 palavras). Consulta IA — nunca substitui.
   useEffect(() => {
     if (step !== 2) return;

@@ -72,6 +72,7 @@ interface Props {
   onSaved: () => void;
   onNextStep: () => void;
   onAutoSaved?: () => Promise<void>;
+  onGoToStep?: (step: number) => void;
   initialData?: StructuredPContent | null;
   step: number;
   isReviewing?: boolean;
@@ -94,9 +95,10 @@ interface TopicListProps {
   onChange: (items: string[]) => void;
   placeholder?: string;
   addLabel?: string;
+  lockedCount?: number;
 }
 
-function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item' }: TopicListProps) {
+function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', lockedCount = 0 }: TopicListProps) {
   const [expandedIdx, setExpandedIdx] = useState(items.length - 1);
 
   function add() {
@@ -118,13 +120,20 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item' }
     setExpandedIdx(Math.min(expandedIdx, safe.length - 1));
   }
 
+  const editableCount = items.length - lockedCount;
+
   return (
     <div className="rounded-md border border-op-gray/30 bg-op-navy overflow-hidden divide-y divide-op-gray/20">
       {items.map((item, i) => {
-        const isExpanded = expandedIdx === i;
+        const isLocked = i < lockedCount;
+        const isExpanded = !isLocked && expandedIdx === i;
         return (
           <div key={i} className="flex items-start gap-2 px-3 py-2.5">
-            {isExpanded ? (
+            {isLocked ? (
+              <span className="flex-1 text-sm text-op-gray line-clamp-2 min-w-0 italic opacity-60">
+                {item.trim() || '—'}
+              </span>
+            ) : isExpanded ? (
               <div className="flex-1 min-w-0">
                 <VoiceInput
                   value={item}
@@ -145,7 +154,7 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item' }
                 <ChevronDown className="size-3.5 text-op-gray shrink-0" />
               </button>
             )}
-            {items.length > 1 && (
+            {!isLocked && editableCount > 1 && (
               <button
                 type="button"
                 className="shrink-0 mt-0.5 text-op-gray hover:text-destructive transition-colors"
@@ -193,7 +202,7 @@ function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boole
   );
 }
 
-export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onAutoSaved, initialData, step, isReviewing }: Props) {
+export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onAutoSaved, onGoToStep, initialData, step, isReviewing }: Props) {
   const [actionItems, setActionItems] = useState<string[]>(() => toItems(initialData?.action));
   const action = fromItems(actionItems);
   const [reversible, setReversible] = useState<boolean | null>(initialData?.reversible ?? null);
@@ -205,6 +214,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const [cutRule, setCutRule] = useState(initialData?.cut_rule ?? '');
   const [layer, setLayer] = useState<OperationalLayer | null>(initialData?.layer ?? currentProjectLayer ?? null);
   const [saving, setSaving] = useState(false);
+  const [imvAdjustMode, setImvAdjustMode] = useState(false);
   const [imvHelp, setImvHelp] = useState(false);
   const [criteriaHelp, setCriteriaHelp] = useState<CriteriaHelpKey | null>(null);
   const [metricHelp, setMetricHelp] = useState(false);
@@ -271,6 +281,14 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
 
   const isLastStep = step === TOTAL_STEPS - 1;
   const today = new Date().toISOString().split('T')[0];
+  const isDeadlineExpired = !!deadline && deadline < today;
+
+  function handleAjustarIMV() {
+    setActionItems((prev) => [...prev, '']);
+    setImvAdjustMode(true);
+    onGoToStep?.(0);
+  }
+
   const nextDisabled =
     (step === 0 && !action.trim()) ||
     (step === 2 && (!metric.trim() || measurable === false));
@@ -434,10 +452,12 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             </button>
           </div>
           <TopicList
+            key={imvAdjustMode ? `adjust-${actionItems.length}` : 'normal'}
             items={actionItems}
             onChange={setActionItems}
             placeholder="Teste pequeno para confirmar se sua leitura do cenário está certa."
             addLabel="Ajustar a IMV anterior"
+            lockedCount={imvAdjustMode ? actionItems.length - 1 : 0}
           />
         </div>
       )}
@@ -580,6 +600,18 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               <span className="text-small text-op-white font-medium">
                 {deadline.split('-').reverse().join('/')}
               </span>
+            </div>
+          )}
+          {isDeadlineExpired && (
+            <div className="space-y-2">
+              <div className="rounded-md border border-red-800/50 bg-red-950/30 px-3 py-2.5">
+                <p className="text-small text-red-400">
+                  O prazo desta IMV venceu em {deadline.split('-').reverse().join('/')}. O teste já deveria ter sido executado — escolha uma ação abaixo para prosseguir.
+                </p>
+              </div>
+              <Button variant="outline" className="w-full" onClick={handleAjustarIMV}>
+                Ajustar a IMV
+              </Button>
             </div>
           )}
           <div>

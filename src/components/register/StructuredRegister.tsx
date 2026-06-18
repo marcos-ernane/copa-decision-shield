@@ -388,6 +388,7 @@ export function StructuredRegister() {
             onSaved={onSaved}
             onNextStep={handleNextStep}
             onAutoSaved={handleAutoSaved}
+            onGoToStep={setCurrentStep}
             step={currentStep}
             isReviewing={isReviewing}
             initialData={statuses['P'] === 'done' ? lastContent<StructuredPContent>(entries, 'structured_P') : null}

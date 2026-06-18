@@ -63,7 +63,7 @@ export interface StructuredPContent {
   deadline: string | null;
   cut_rule: string;
   layer: OperationalLayer | null;
-  ethical_check: string | null;
+  ethical_check?: string | null;
 }
 
 export interface StructuredAContent {
