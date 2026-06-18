@@ -142,6 +142,7 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', 
     <div className="rounded-md border border-op-gray/30 bg-op-navy overflow-hidden divide-y divide-op-gray/20">
       {items.map((item, i) => {
         const isLocked = i < lockedCount;
+        if (!isLocked && blocked) return null;
         const isExpanded = !isLocked && expandedIdx === i;
         return (
           <div key={i} className="flex items-start gap-2 px-3 py-2.5">
@@ -329,6 +330,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const imvBlocked = savedImvCount >= 4;
 
   function handleAjustarIMV() {
+    if (imvBlocked) return;
     setActionItems((prev) => [...prev, '']);
     setImvEditActive(true);
     onGoToStep?.(0);
@@ -704,9 +706,11 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           )}
           {isReviewing && deadline && isDeadlineExpired && (
             <div className="space-y-2">
-              <Button variant="outline" className="w-full" onClick={handleAjustarIMV}>
-                Ajustar a IMV
-              </Button>
+              {!imvBlocked && (
+                <Button variant="outline" className="w-full" onClick={handleAjustarIMV}>
+                  Ajustar a IMV
+                </Button>
+              )}
               <Button variant="outline" className="w-full" onClick={() => setShowInterruptMenu(true)}>
                 Interromper Projeto
               </Button>
