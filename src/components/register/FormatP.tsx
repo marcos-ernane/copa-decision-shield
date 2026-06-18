@@ -459,6 +459,18 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             addLabel="Ajustar a IMV anterior"
             lockedCount={imvLockedCount}
           />
+          {imvAdjustMode && (
+            <div className="space-y-2">
+              <div className="rounded-md border border-red-800/50 bg-red-950/30 px-3 py-2.5">
+                <p className="text-small text-red-400">
+                  O prazo desta IMV venceu em {deadline.split('-').reverse().join('/')}. O teste já deveria ter sido executado — avance para tomar uma ação.
+                </p>
+              </div>
+              <Button className="w-full" onClick={() => onGoToStep?.(3)}>
+                Ir para Regra de Corte →
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -659,7 +671,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             </Button>
           )}
         </div>
-      ) : (
+      ) : imvAdjustMode && step === 0 ? null : (
         <Button className="w-full" disabled={nextDisabled || saving} onClick={() => void handleProximo()}>
           Próximo
         </Button>
