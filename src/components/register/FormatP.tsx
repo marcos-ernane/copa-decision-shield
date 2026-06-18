@@ -723,6 +723,23 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
 
       {step === 3 && (
         <div className="space-y-3">
+          {action.trim() && (
+            <div className="flex items-start justify-between gap-2 rounded-md border border-op-gray/20 bg-op-navy-elevated px-3 py-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-op-gray uppercase tracking-wide mb-0.5">IMV em avaliação</p>
+                <p className="text-small text-op-white line-clamp-2">{action.trim().split('\n').filter(Boolean).at(-1)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onGoToStep?.(0)}
+                className="shrink-0 flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:opacity-80 transition-opacity mt-0.5"
+                aria-label="Ver todas as IMVs"
+              >
+                <ListChecks className="size-3.5" />
+                <span>Ver IMVs</span>
+              </button>
+            </div>
+          )}
           {deadline && (
             <div className="flex items-center gap-2 rounded-md bg-op-navy border border-op-gray/30 px-3 py-2">
               <span className="text-label text-op-gray uppercase tracking-wide">Você definiu, prazo da IMV para:</span>
