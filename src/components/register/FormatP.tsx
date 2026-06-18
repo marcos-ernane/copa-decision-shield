@@ -674,12 +674,12 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               </p>
             </div>
           )}
-          {isReviewing && deadline && (
+          {isReviewing && deadline && isDeadlineExpired && (
             <div className="space-y-2">
-              <Button variant="outline" className="w-full" disabled={!isDeadlineExpired} onClick={handleAjustarIMV}>
+              <Button variant="outline" className="w-full" onClick={handleAjustarIMV}>
                 Ajustar a IMV
               </Button>
-              <Button variant="outline" className="w-full" disabled={!isDeadlineExpired} onClick={() => setShowInterruptMenu(true)}>
+              <Button variant="outline" className="w-full" onClick={() => setShowInterruptMenu(true)}>
                 Interromper Projeto
               </Button>
             </div>
