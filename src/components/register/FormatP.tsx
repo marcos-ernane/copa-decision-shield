@@ -651,7 +651,6 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
               disabled={measurable === false}
-              {/* min={today} — removido temporariamente para testes de prazo vencido */}
             />
           </div>
         </div>
