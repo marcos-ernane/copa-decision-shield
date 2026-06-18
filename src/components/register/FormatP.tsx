@@ -214,7 +214,6 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const [deadline, setDeadline] = useState(initialData?.deadline ?? '');
   const [cutRule, setCutRule] = useState(initialData?.cut_rule ?? '');
   const [layer, setLayer] = useState<OperationalLayer | null>(initialData?.layer ?? currentProjectLayer ?? null);
-  const [ethical, setEthical] = useState(initialData?.ethical_check ?? '');
   const [saving, setSaving] = useState(false);
   const [imvHelp, setImvHelp] = useState(false);
   const [showLayerConfirm, setShowLayerConfirm] = useState(false);
@@ -233,8 +232,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
     metric.trim() !== (initialData?.metric ?? '') ||
     (deadline || null) !== (initialData?.deadline ?? null) ||
     cutRule.trim() !== (initialData?.cut_rule ?? '') ||
-    layer !== (initialData?.layer ?? null) ||
-    (ethical.trim() || null) !== (initialData?.ethical_check ?? null);
+    layer !== (initialData?.layer ?? null);
 
   async function performSave(updateLayer: boolean) {
     setSaving(true);
@@ -248,7 +246,6 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
       deadline: deadline || null,
       cut_rule: cutRule.trim(),
       layer,
-      ethical_check: ethical.trim() || null,
     }, scenarioType);
     if (updateLayer && layer) {
       await updateProject(projectId, { current_layer: layer });
@@ -282,8 +279,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
         deadline: deadline || null,
         cut_rule: cutRule.trim(),
         layer,
-        ethical_check: ethical.trim() || null,
-      }, scenarioType);
+        }, scenarioType);
       await onAutoSaved();
       setSaving(false);
     }
@@ -645,10 +641,6 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
                 </Button>
               ))}
             </div>
-          </div>
-          <div className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2">
-            <p className="text-small text-op-gray">Se houver, de quem é o custo oculto desta ação? (opcional)</p>
-            <VoiceInput value={ethical} onChange={setEthical} placeholder="" rows={2} />
           </div>
         </div>
       )}
