@@ -141,8 +141,8 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar item', 
   return (
     <div className="rounded-md border border-op-gray/30 bg-op-navy overflow-hidden divide-y divide-op-gray/20">
       {items.map((item, i) => {
-        const isLocked = i < lockedCount;
-        if (!isLocked && blocked) return null;
+        const isLocked = i < lockedCount || blocked;
+        if (blocked && !item.trim()) return null;
         const isExpanded = !isLocked && expandedIdx === i;
         return (
           <div key={i} className="flex items-start gap-2 px-3 py-2.5">
