@@ -214,6 +214,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const [cutRule, setCutRule] = useState(initialData?.cut_rule ?? '');
   const [layer, setLayer] = useState<OperationalLayer | null>(initialData?.layer ?? currentProjectLayer ?? null);
   const [saving, setSaving] = useState(false);
+  const [imvEditActive, setImvEditActive] = useState(false);
   const [imvHelp, setImvHelp] = useState(false);
   const [criteriaHelp, setCriteriaHelp] = useState<CriteriaHelpKey | null>(null);
   const [metricHelp, setMetricHelp] = useState(false);
@@ -287,6 +288,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
 
   function handleAjustarIMV() {
     setActionItems((prev) => [...prev, '']);
+    setImvEditActive(true);
     onGoToStep?.(0);
   }
 
@@ -459,7 +461,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             addLabel="Ajustar a IMV anterior"
             lockedCount={imvLockedCount}
           />
-          {imvAdjustMode && (
+          {imvAdjustMode && !imvEditActive && (
             <div className="space-y-2">
               <div className="rounded-md border border-red-800/50 bg-red-950/30 px-3 py-2.5">
                 <p className="text-small text-red-400">
@@ -469,6 +471,13 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               <Button className="w-full" onClick={() => onGoToStep?.(3)}>
                 Ir para Regra de Corte →
               </Button>
+            </div>
+          )}
+          {imvAdjustMode && imvEditActive && (
+            <div className="rounded-md border border-op-gray/30 bg-op-navy-elevated px-3 py-2.5">
+              <p className="text-small text-op-gray">
+                Descreva acima a IMV ajustada. As IMVs anteriores estão preservadas como histórico.
+              </p>
             </div>
           )}
         </div>
