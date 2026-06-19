@@ -35,7 +35,6 @@ import { PactReturnSheet } from '@/components/pact/PactReturnSheet';
 import { checkPactReturn, getCycle } from '@/lib/pact';
 import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
 import type { Project, Entry, Principle } from '@/types/database';
-import type { ProjectState } from '@/types/app';
 
 const COPA_PHASE_ORDER = ['C', 'O', 'P', 'A'] as const;
 
@@ -105,6 +104,11 @@ function sanitizeFieldReading(text: string | null | undefined): string | null {
   return clean || null;
 }
 
+function fmtDeadlineDDMM(ymd: string): string {
+  const [, m, d] = ymd.split('-');
+  return `${d}/${m}`;
+}
+
 function ProjectDashboard() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -171,6 +175,17 @@ function ProjectDashboard() {
   const currentState = computeProjectState(project, entries);
   const stateDisplay = deriveProjectStatus(project, entries);
   const copaProgress = computeCopaProgress(entries);
+
+  // Derivado de copaProgress.done para garantir consistência com "Onde Estou Agora".
+  // Não usa weekly-reset do localStorage — reflete apenas registros reais no DB.
+  const phasesWithEntries = {
+    capture: copaProgress.done.includes('C'),
+    organize: copaProgress.done.includes('O'),
+    prove: copaProgress.done.includes('P'),
+    assess: copaProgress.done.includes('A'),
+  };
+  const allPhasesHaveEntries = copaProgress.allDone;
+
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
     structured: entries.filter((e) => e.entry_type !== 'pulse').length,
@@ -204,6 +219,18 @@ function ProjectDashboard() {
       ? suggestPrincipleForProject(project, principles)
       : null;
   const recall = recallResult?.principle ?? null;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const latestPEntry = [...entries]
+    .filter((e) => e.entry_type === 'structured_P' && (e.content as { deadline?: string })?.deadline)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+  const pDeadline = (latestPEntry?.content as { deadline?: string } | undefined)?.deadline ?? null;
+  const imvDeadlineStatus: 'expired' | 'today' | null = (() => {
+    if (!pDeadline || !copaProgress.done.includes('P') || copaProgress.done.includes('A')) return null;
+    if (pDeadline < todayStr) return 'expired';
+    if (pDeadline === todayStr) return 'today';
+    return null;
+  })();
 
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
@@ -324,6 +351,16 @@ function ProjectDashboard() {
                   <IMVProgressBar current_day={currentDay} total_days={totalDays} />
                 </div>
               )}
+              {!isBlocked && imvDeadlineStatus === 'expired' && pDeadline && (
+                <p className="text-small mt-1" style={{ color: '#dc2626' }}>
+                  IMV vencida em {fmtDeadlineDDMM(pDeadline)} — Verifique.
+                </p>
+              )}
+              {!isBlocked && imvDeadlineStatus === 'today' && pDeadline && (
+                <p className="text-small mt-1" style={{ color: '#b45309' }}>
+                  Atenção: IMV vence hoje {fmtDeadlineDDMM(pDeadline)}.
+                </p>
+              )}
             </button>
           ) : (
             <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
@@ -355,9 +392,9 @@ function ProjectDashboard() {
           </section>
         )}
 
-        {/* Semana do Operador */}
-        {project.pact_enabled && project.state !== 'paused' && (
-          <PactWeekView projectId={project.id} cycle={getCycle(project)} />
+        {/* Semana do Operador — oculto quando todas as 4 fases têm registros reais */}
+        {project.pact_enabled && project.state !== 'paused' && !allPhasesHaveEntries && (
+          <PactWeekView projectId={project.id} cycle={getCycle(project)} entryPhases={phasesWithEntries} />
         )}
         {!project.pact_enabled && project.state !== 'paused' && (
           <Link
