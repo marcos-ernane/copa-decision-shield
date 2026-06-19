@@ -3,6 +3,7 @@
 // 5 passos sequenciais.
 
 import { useEffect, useState } from 'react';
+import { X, CircleHelp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { BookAnchorHint } from '@/components/copa/BookAnchorHint';
@@ -26,6 +27,30 @@ interface Props {
 
 const TOTAL_STEPS = 5;
 
+const WHAT_HAPPENED_HELP = `Como preencher este campo?
+
+Registre os resultados observados após a execução da IMV. Descreva o que realmente aconteceu no cenário utilizando fatos, evidências e resultados percebidos durante o teste. Sempre que possível, inclua números, comportamentos observados, mudanças ocorridas e informações relacionadas à métrica definida. Evite explicar causas, justificar resultados ou tirar conclusões neste momento. O objetivo é registrar a realidade da forma mais fiel possível antes de interpretá-la.
+
+Exemplos:
+"Os kits foram comprados por 12 clientes em 5 dias."
+"O tempo médio de atendimento caiu de 8 para 6 minutos."
+"Nenhuma mudança relevante foi observada durante o período do teste."
+"As reclamações diminuíram de 9 para 4 ocorrências na semana."
+
+Pergunte-se: Estou descrevendo o que realmente aconteceu ou já estou tentando explicar por que aconteceu?
+
+Essa pergunta final é extremamente importante porque forma uma das competências centrais do livro:
+A realidade deve ser registrada antes de ser interpretada.
+Na prática, esse campo funciona como uma segunda etapa da Captura, agora aplicada aos resultados da IMV.
+O Operador de Precisão maduro não escreve:
+
+"A estratégia funcionou porque os clientes gostaram mais."
+
+Ele escreve:
+"A taxa de conversão aumentou de 12% para 18% durante o teste."
+Somente depois ele investiga as possíveis causas.
+É exatamente essa disciplina que transforma experiência em inteligência operacional.`;
+
 export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing }: Props) {
   const [fact, setFact] = useState(initialData?.fact_text ?? '');
   const [interp, setInterp] = useState(initialData?.interpretation_text ?? '');
@@ -40,6 +65,7 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [loadingAiSuggestion, setLoadingAiSuggestion] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nudge, setNudge] = useState(false);
+  const [showWhatHappenedHelp, setShowWhatHappenedHelp] = useState(false);
 
   const hasChanges =
     fact !== (initialData?.fact_text ?? '') ||
@@ -98,12 +124,49 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
     (step === 3 && !decision.trim());
 
   return (
+    <>
+    {showWhatHappenedHelp && (
+      <div
+        className="fixed inset-0 z-50 flex items-end bg-black/50"
+        onClick={() => setShowWhatHappenedHelp(false)}
+      >
+        <div
+          className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-heading font-semibold text-op-white">O que aconteceu</h3>
+            <button
+              type="button"
+              onClick={() => setShowWhatHappenedHelp(false)}
+              className="p-1 rounded-md hover:bg-op-navy-elevated"
+              aria-label="Fechar ajuda"
+            >
+              <X className="size-5 text-op-gray" />
+            </button>
+          </div>
+          {WHAT_HAPPENED_HELP.split('\n\n').map((para, i) => (
+            <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
+          ))}
+        </div>
+      </div>
+    )}
     <div className="space-y-4">
       <StepDots current={step} total={TOTAL_STEPS} />
 
       {step === 0 && (
         <div>
-          <p className="text-small font-medium text-op-white mb-1">O que aconteceu</p>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-small font-medium text-op-white">O que aconteceu</p>
+            <button
+              type="button"
+              onClick={() => setShowWhatHappenedHelp(true)}
+              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+            >
+              <CircleHelp className="size-3.5" />
+              Ajuda
+            </button>
+          </div>
           <VoiceInput value={fact} onChange={setFact} placeholder="" rows={3} />
         </div>
       )}
@@ -206,5 +269,6 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
 
       <RegistrationNudge open={nudge} moment={1} onDismiss={() => { setNudge(false); onSaved(); }} />
     </div>
+    </>
   );
 }
