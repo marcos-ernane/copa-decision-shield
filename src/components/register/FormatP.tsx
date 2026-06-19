@@ -702,7 +702,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           )}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <p className="text-small text-op-gray">Métrica planejada (obrigatório)</p>
+              <p className="text-small font-medium text-op-white">Métrica planejada (obrigatório)</p>
               <button
                 type="button"
                 onClick={() => setMetricHelp(true)}
@@ -721,7 +721,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <p className="text-small text-op-gray">Prazo limite da IMV em ação</p>
+              <p className="text-small font-medium text-op-white">Prazo limite da IMV em ação</p>
               <button
                 type="button"
                 onClick={() => setDeadlineHelp(true)}
@@ -796,7 +796,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           )}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <p className="text-small text-op-gray">Regra de corte condicional</p>
+              <p className="text-small font-medium text-op-white">Regra de corte condicional</p>
               <button
                 type="button"
                 onClick={() => setCutRuleHelp(true)}
@@ -809,7 +809,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             <VoiceInput value={cutRule} onChange={setCutRule} placeholder="Condição que se deve parar ou ajustar uma IMV ativa" rows={2} />
           </div>
           <div>
-            <p className="text-small text-op-gray mb-1">
+            <p className="text-small font-medium text-op-white mb-1">
               Camada atual do projeto - Toque para manter ou alterar
             </p>
             <div className="flex flex-wrap gap-2">

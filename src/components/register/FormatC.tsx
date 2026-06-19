@@ -311,7 +311,7 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
       {step === 0 && (
         <div>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-small text-op-gray">Quadro 1 — Fatos observados</p>
+            <p className="text-small font-semibold text-op-white">Quadro 1 — Fatos observados</p>
             <button
               type="button"
               onClick={() => setShowFactsHelp(true)}
@@ -333,7 +333,7 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
       {step === 1 && (
         <div>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-small text-op-gray">Quadro 2 — Interpretações</p>
+            <p className="text-small font-semibold text-op-white">Quadro 2 — Interpretações</p>
             <button
               type="button"
               onClick={() => setShowInterpHelp(true)}
@@ -355,7 +355,7 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
       {step === 2 && (
         <div>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-small text-op-gray">Quadro 3 — Hipóteses testáveis</p>
+            <p className="text-small font-semibold text-op-white">Quadro 3 — Hipóteses testáveis</p>
             <button
               type="button"
               onClick={() => setShowHypsHelp(true)}
