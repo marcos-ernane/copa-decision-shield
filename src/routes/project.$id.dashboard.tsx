@@ -2,7 +2,7 @@
 
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronRight, MoreVertical } from 'lucide-react';
+import { ChevronRight, MoreVertical, Info } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import {
@@ -109,6 +109,37 @@ function fmtDeadlineDDMM(ymd: string): string {
   return `${d}/${m}`;
 }
 
+function computeCycleVelocity(entries: Entry[]): {
+  cToO: number | null;
+  oToP: number | null;
+  pToA: number | null;
+  total: number | null;
+  dates: { c: string | null; o: string | null; p: string | null; a: string | null };
+} {
+  const firstDate = (type: string): Date | null => {
+    const e = [...entries]
+      .filter((x) => x.entry_type === type)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
+    return e ? new Date(e.created_at) : null;
+  };
+  const daysBetween = (a: Date | null, b: Date | null): number | null =>
+    a && b ? Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000)) : null;
+  const fmt = (d: Date | null): string | null =>
+    d ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}` : null;
+
+  const cDate = firstDate('structured_C');
+  const oDate = firstDate('structured_O');
+  const pDate = firstDate('structured_P');
+  const aDate = firstDate('structured_A');
+
+  const cToO = daysBetween(cDate, oDate);
+  const oToP = daysBetween(oDate, pDate);
+  const pToA = daysBetween(pDate, aDate);
+  const total = cToO !== null && oToP !== null && pToA !== null ? cToO + oToP + pToA : null;
+
+  return { cToO, oToP, pToA, total, dates: { c: fmt(cDate), o: fmt(oDate), p: fmt(pDate), a: fmt(aDate) } };
+}
+
 function ProjectDashboard() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -120,6 +151,7 @@ function ProjectDashboard() {
   const [isPausing, setIsPausing] = useState(false);
   const [pauseReason, setPauseReason] = useState('');
   const [isArchiving, setIsArchiving] = useState(false);
+  const [showVelocitySheet, setShowVelocitySheet] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -185,6 +217,8 @@ function ProjectDashboard() {
     assess: copaProgress.done.includes('A'),
   };
   const allPhasesHaveEntries = copaProgress.allDone;
+  const cycleVelocity = computeCycleVelocity(entries);
+  const hasAnyCycleData = cycleVelocity.cToO !== null || cycleVelocity.oToP !== null || cycleVelocity.pToA !== null;
 
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
@@ -441,6 +475,123 @@ function ProjectDashboard() {
             </section>
           );
         })()}
+
+        {/* Velocidade do Ciclo COPA */}
+        {hasAnyCycleData && (
+          <section className="rounded-md border border-op-gray/30 bg-op-navy p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-label text-op-gray uppercase">Velocidade do Ciclo</h2>
+              <button
+                type="button"
+                onClick={() => setShowVelocitySheet(true)}
+                className="text-op-gray hover:text-op-white transition-colors"
+                aria-label="Como é calculado"
+              >
+                <Info className="size-4" />
+              </button>
+            </div>
+            <div className="flex items-end gap-4">
+              {cycleVelocity.cToO !== null && (
+                <div className="text-center">
+                  <p className="text-label text-op-gray mb-0.5">C→O</p>
+                  <p className="text-heading text-op-white font-semibold">{cycleVelocity.cToO}d</p>
+                </div>
+              )}
+              {cycleVelocity.oToP !== null && (
+                <div className="text-center">
+                  <p className="text-label text-op-gray mb-0.5">O→P</p>
+                  <p className="text-heading text-op-white font-semibold">{cycleVelocity.oToP}d</p>
+                </div>
+              )}
+              {cycleVelocity.pToA !== null && (
+                <div className="text-center">
+                  <p className="text-label text-op-gray mb-0.5">P→A</p>
+                  <p className="text-heading text-op-white font-semibold">{cycleVelocity.pToA}d</p>
+                </div>
+              )}
+              {cycleVelocity.total !== null && (
+                <div className="text-center ml-auto">
+                  <p className="text-label text-op-gray mb-0.5">Total</p>
+                  <p className="text-heading font-semibold" style={{ color: '#0EA5E9' }}>{cycleVelocity.total}d</p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Sheet explicativo — Velocidade do Ciclo */}
+        {showVelocitySheet && (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center"
+            onClick={() => setShowVelocitySheet(false)}
+          >
+            <div
+              className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+              <h3 className="text-heading text-op-white font-semibold">Velocidade do Ciclo</h3>
+
+              <div className="space-y-2">
+                <p className="text-label text-op-cyan uppercase">O que significa</p>
+                <p className="text-body text-op-white">
+                  Mostra quantos dias você levou para passar de uma fase COPA para a próxima neste projeto.
+                  Quanto menor o tempo, mais ágil foi sua operação naquela transição.
+                  Transições longas indicam onde você tende a travar ou perder foco.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
+                <div className="space-y-2 text-small">
+                  {cycleVelocity.dates.c && cycleVelocity.dates.o && cycleVelocity.cToO !== null && (
+                    <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                      <span className="text-op-gray">Captura → Organização</span>
+                      <span className="text-op-white">
+                        {cycleVelocity.dates.c} até {cycleVelocity.dates.o} = <strong>{cycleVelocity.cToO} dia{cycleVelocity.cToO !== 1 ? 's' : ''}</strong>
+                      </span>
+                    </div>
+                  )}
+                  {cycleVelocity.dates.o && cycleVelocity.dates.p && cycleVelocity.oToP !== null && (
+                    <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                      <span className="text-op-gray">Organização → Prova</span>
+                      <span className="text-op-white">
+                        {cycleVelocity.dates.o} até {cycleVelocity.dates.p} = <strong>{cycleVelocity.oToP} dia{cycleVelocity.oToP !== 1 ? 's' : ''}</strong>
+                      </span>
+                    </div>
+                  )}
+                  {cycleVelocity.dates.p && cycleVelocity.dates.a && cycleVelocity.pToA !== null && (
+                    <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                      <span className="text-op-gray">Prova → Aferição</span>
+                      <span className="text-op-white">
+                        {cycleVelocity.dates.p} até {cycleVelocity.dates.a} = <strong>{cycleVelocity.pToA} dia{cycleVelocity.pToA !== 1 ? 's' : ''}</strong>
+                      </span>
+                    </div>
+                  )}
+                  {cycleVelocity.total !== null && (
+                    <div className="flex justify-between pt-1">
+                      <span className="text-op-gray font-semibold">Ciclo completo</span>
+                      <span style={{ color: '#0EA5E9' }} className="font-semibold">{cycleVelocity.total} dias no total</span>
+                    </div>
+                  )}
+                  {(cycleVelocity.cToO === null || cycleVelocity.oToP === null || cycleVelocity.pToA === null) && (
+                    <p className="text-op-gray italic">
+                      Transições pendentes aparecerão aqui conforme você avança nas fases.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowVelocitySheet(false)}
+                className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* O que está governando */}
         {project.current_bottleneck && (
