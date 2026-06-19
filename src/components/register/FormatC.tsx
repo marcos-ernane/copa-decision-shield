@@ -112,6 +112,34 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar tópico
   );
 }
 
+const HYPS_HELP = `Hipóteses testáveis são explicações provisórias sobre um fato, padrão ou problema observado que podem ser verificadas pela realidade. Elas representam uma possibilidade, não uma certeza. Uma boa hipótese conecta uma possível causa a um possível efeito e pode ser confirmada, ajustada ou rejeitada por meio de uma IMV e de uma métrica adequada. O objetivo não é adivinhar a resposta correta, mas criar uma explicação clara que possa ser colocada à prova.
+
+Exemplos de hipóteses testáveis:
+
+"Os clientes estão saindo sem comprar porque não conseguem identificar rapidamente os produtos mais adequados para sua necessidade."
+"As paradas na produção ocorrem porque os insumos críticos não possuem reposição visual."
+"A baixa adesão ao serviço acontece porque a proposta de valor não está clara para o cliente."
+
+Não são hipóteses testáveis:
+
+"O negócio não tem jeito."
+"Os clientes não valorizam qualidade."
+"A equipe não se importa."
+
+Essas afirmações são vagas, difíceis de verificar e não indicam claramente o que deve ser testado.
+
+Por que isso é importante?
+
+Uma hipótese bem formulada direciona a construção da IMV, da métrica e da análise posterior. Quando a hipótese é clara e testável, a realidade consegue responder se ela faz sentido ou não. Quando é vaga ou genérica, o aprendizado se torna confuso e pouco confiável.
+
+Pergunte-se: Minha hipótese descreve uma possível causa que pode ser colocada à prova e confirmada ou rejeitada por evidências?
+
+Esta definição está profundamente alinhada ao Operador de Precisão porque reforça um dos princípios centrais do método:
+
+O operador não age porque acredita. Ele age para descobrir se aquilo em que acredita corresponde à realidade.
+
+A hipótese é a ponte entre a observação e a prova. Ela transforma interpretações em algo que pode ser investigado, testado e aprendido. Sem hipóteses testáveis, a ação vira tentativa. Com hipóteses testáveis, a ação se transforma em investigação estruturada da realidade.`;
+
 const INTERP_HELP = `Interpretações são explicações, conclusões, opiniões ou significados que atribuímos aos fatos observados. Elas representam a forma como entendemos a realidade, mas não necessariamente a realidade em si. Durante a Captura, as interpretações não devem ser descartadas, mas precisam ser claramente separadas dos fatos para evitar que suposições sejam confundidas com evidências. Uma boa interpretação nasce de fatos consistentes e permanece aberta à confirmação ou correção pela realidade.
 
 Exemplos de interpretações:
@@ -173,6 +201,7 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [saving, setSaving] = useState(false);
   const [showFactsHelp, setShowFactsHelp] = useState(false);
   const [showInterpHelp, setShowInterpHelp] = useState(false);
+  const [showHypsHelp, setShowHypsHelp] = useState(false);
 
   const fact = fromItems(factItems);
   const interp = fromItems(interpItems);
@@ -250,6 +279,32 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
         </div>
       </div>
     )}
+    {showHypsHelp && (
+      <div
+        className="fixed inset-0 z-50 flex items-end bg-black/50"
+        onClick={() => setShowHypsHelp(false)}
+      >
+        <div
+          className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-heading font-semibold text-op-white">Quadro 3 — Hipóteses testáveis</h3>
+            <button
+              type="button"
+              onClick={() => setShowHypsHelp(false)}
+              className="p-1 rounded-md hover:bg-op-navy-elevated"
+              aria-label="Fechar ajuda"
+            >
+              <X className="size-5 text-op-gray" />
+            </button>
+          </div>
+          {HYPS_HELP.split('\n\n').map((para, i) => (
+            <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
+          ))}
+        </div>
+      </div>
+    )}
     <div className="space-y-4">
       <StepDots current={step} total={TOTAL_STEPS} />
 
@@ -299,7 +354,17 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
 
       {step === 2 && (
         <div>
-          <p className="text-small text-op-gray mb-2">Quadro 3 — Hipóteses testáveis</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-small text-op-gray">Quadro 3 — Hipóteses testáveis</p>
+            <button
+              type="button"
+              onClick={() => setShowHypsHelp(true)}
+              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+            >
+              <CircleHelp className="size-3.5" />
+              Ajuda
+            </button>
+          </div>
           <TopicList
             items={hypItems}
             onChange={setHypItems}
