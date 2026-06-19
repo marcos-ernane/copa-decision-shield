@@ -104,6 +104,11 @@ function sanitizeFieldReading(text: string | null | undefined): string | null {
   return clean || null;
 }
 
+function fmtDeadlineDDMM(ymd: string): string {
+  const [, m, d] = ymd.split('-');
+  return `${d}/${m}`;
+}
+
 function ProjectDashboard() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -214,6 +219,18 @@ function ProjectDashboard() {
       ? suggestPrincipleForProject(project, principles)
       : null;
   const recall = recallResult?.principle ?? null;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const latestPEntry = [...entries]
+    .filter((e) => e.entry_type === 'structured_P' && (e.content as { deadline?: string })?.deadline)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+  const pDeadline = (latestPEntry?.content as { deadline?: string } | undefined)?.deadline ?? null;
+  const imvDeadlineStatus: 'expired' | 'today' | null = (() => {
+    if (!pDeadline || !copaProgress.done.includes('P') || copaProgress.done.includes('A')) return null;
+    if (pDeadline < todayStr) return 'expired';
+    if (pDeadline === todayStr) return 'today';
+    return null;
+  })();
 
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
@@ -333,6 +350,16 @@ function ProjectDashboard() {
                 <div className="pt-1">
                   <IMVProgressBar current_day={currentDay} total_days={totalDays} />
                 </div>
+              )}
+              {!isBlocked && imvDeadlineStatus === 'expired' && pDeadline && (
+                <p className="text-small mt-1" style={{ color: '#dc2626' }}>
+                  IMV vencida em {fmtDeadlineDDMM(pDeadline)} — Verifique.
+                </p>
+              )}
+              {!isBlocked && imvDeadlineStatus === 'today' && pDeadline && (
+                <p className="text-small mt-1" style={{ color: '#b45309' }}>
+                  Atenção: IMV vence hoje {fmtDeadlineDDMM(pDeadline)}.
+                </p>
               )}
             </button>
           ) : (
