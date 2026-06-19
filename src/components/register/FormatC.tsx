@@ -1,7 +1,7 @@
 // Formato C — Análise de Situação. 3 quadros em passos sequenciais.
 
 import { useState } from 'react';
-import { Plus, X, ChevronDown } from 'lucide-react';
+import { Plus, X, ChevronDown, CircleHelp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredC, type StructuredCContent } from '@/lib/register';
@@ -112,11 +112,36 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar tópico
   );
 }
 
+const FACTS_HELP = `Fatos são acontecimentos, comportamentos, condições ou evidências que podem ser observados diretamente, sem interpretação, opinião ou julgamento. Eles descrevem o que realmente está acontecendo no cenário, e não o que você acredita, imagina ou conclui sobre ele. Uma boa captura começa pelos fatos, porque decisões de qualidade dependem de uma compreensão fiel da realidade. Quanto mais objetiva for a observação, maior será a confiabilidade das etapas seguintes do método.
+
+Exemplos de fatos:
+
+"Cinco clientes entraram na loja e saíram sem comprar."
+"O processo parou três vezes por falta de material."
+"O tempo médio de atendimento foi de oito minutos."
+
+Não são fatos:
+
+"Os clientes não se interessaram pelos produtos."
+"A equipe é desorganizada."
+"O atendimento é ruim."
+
+Essas frases já são interpretações e precisam ser investigadas, não registradas como fatos.
+
+Pergunte-se: Estou registrando algo que observei diretamente ou uma conclusão que tirei a partir do que observei?
+
+Esta formulação é particularmente importante para a formação do Operador de Precisão, porque ensina uma das habilidades mais valiosas do livro:
+
+Separar observação de interpretação.
+
+Essa capacidade é o fundamento de todo o COPA. Se os fatos forem capturados de forma imprecisa, os recursos, ruídos, restrições, hipóteses, IMVs e aferições serão construídos sobre uma percepção distorcida da realidade. Por isso, a qualidade da captura começa pela qualidade dos fatos registrados.`;
+
 export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing }: Props) {
   const [factItems, setFactItems] = useState<string[]>(() => toItems(initialData?.fact_text));
   const [interpItems, setInterpItems] = useState<string[]>(() => toItems(initialData?.interpretation_text));
   const [hypItems, setHypItems] = useState<string[]>(() => toItems(initialData?.hypothesis_text));
   const [saving, setSaving] = useState(false);
+  const [showFactsHelp, setShowFactsHelp] = useState(false);
 
   const fact = fromItems(factItems);
   const interp = fromItems(interpItems);
@@ -141,12 +166,49 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   const isLastStep = step === TOTAL_STEPS - 1;
 
   return (
+    <>
+    {showFactsHelp && (
+      <div
+        className="fixed inset-0 z-50 flex items-end bg-black/50"
+        onClick={() => setShowFactsHelp(false)}
+      >
+        <div
+          className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-heading font-semibold text-op-white">Quadro 1 — Fatos observados</h3>
+            <button
+              type="button"
+              onClick={() => setShowFactsHelp(false)}
+              className="p-1 rounded-md hover:bg-op-navy-elevated"
+              aria-label="Fechar ajuda"
+            >
+              <X className="size-5 text-op-gray" />
+            </button>
+          </div>
+          {FACTS_HELP.split('\n\n').map((para, i) => (
+            <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
+          ))}
+        </div>
+      </div>
+    )}
     <div className="space-y-4">
       <StepDots current={step} total={TOTAL_STEPS} />
 
       {step === 0 && (
         <div>
-          <p className="text-small text-op-gray mb-2">Quadro 1 — Fatos observados</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-small text-op-gray">Quadro 1 — Fatos observados</p>
+            <button
+              type="button"
+              onClick={() => setShowFactsHelp(true)}
+              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+            >
+              <CircleHelp className="size-3.5" />
+              Ajuda
+            </button>
+          </div>
           <TopicList
             items={factItems}
             onChange={setFactItems}
@@ -201,5 +263,6 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
         </Button>
       )}
     </div>
+    </>
   );
 }
