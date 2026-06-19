@@ -27,24 +27,32 @@ const PHASE_DESC: Record<PactPhase, string> = {
   assess: 'O que o teste revelou',
 };
 
+export type EntryPhases = { capture: boolean; organize: boolean; prove: boolean; assess: boolean };
+
 interface Props {
   projectId: string;
   cycle: WeeklyCycle;
+  entryPhases?: EntryPhases;
 }
 
-export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
+export function PactWeekView({ projectId, cycle: initialCycle, entryPhases }: Props) {
   const navigate = useNavigate();
   const [cycle, setCycle] = useState(initialCycle);
   const phases: PactPhase[] = ['capture', 'organize', 'prove', 'assess'];
   const today = new Date().getDay();
 
-  const doneCount = phases.filter((p) => cycle[p].completed_this_week).length;
+  function isDone(phase: PactPhase) {
+    return cycle[phase].completed_this_week || (entryPhases?.[phase] ?? false);
+  }
+
+  const doneCount = phases.filter(isDone).length;
   const allDone = doneCount === phases.length;
 
   async function handleToggle(phase: PactPhase, e: React.MouseEvent) {
     e.stopPropagation();
-    const isDone = cycle[phase].completed_this_week;
-    if (isDone) {
+    if (entryPhases?.[phase]) return; // fase concluída por registro real — não alterável manualmente
+    const done = cycle[phase].completed_this_week;
+    if (done) {
       setCycle((prev) => ({
         ...prev,
         [phase]: { ...prev[phase], completed_this_week: false, last_completed_at: null },
@@ -61,7 +69,7 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
   }
 
   function handlePhaseClick(phase: PactPhase) {
-    if (cycle[phase].completed_this_week) {
+    if (isDone(phase)) {
       void navigate({ to: '/diary' });
     } else {
       void navigate({
@@ -100,7 +108,7 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
           <div
             key={phase}
             className={`h-1 flex-1 rounded-full transition-colors ${
-              cycle[phase].completed_this_week
+              isDone(phase)
                 ? 'bg-[color:var(--color-status-success,#16a34a)]'
                 : 'bg-border'
             }`}
@@ -112,7 +120,8 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
       <ul className="space-y-0.5">
         {phases.map((phase) => {
           const day = cycle[phase];
-          const done = day.completed_this_week;
+          const done = isDone(phase);
+          const hasRealEntry = entryPhases?.[phase] ?? false;
           const isToday = day.day_of_week === today;
 
           return (
@@ -160,20 +169,22 @@ export function PactWeekView({ projectId, cycle: initialCycle }: Props) {
                   </div>
                 </button>
 
-                {/* Botão marcar/desmarcar — sempre visível */}
-                <button
-                  type="button"
-                  onClick={(e) => void handleToggle(phase, e)}
-                  className={`p-1.5 rounded-md transition-colors ${
-                    done
-                      ? 'text-[color:var(--color-status-success,#16a34a)] hover:text-destructive hover:bg-accent'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                  }`}
-                  aria-label={done ? `Desmarcar ${PHASE_LABEL[phase]}` : `Marcar ${PHASE_LABEL[phase]} como feita`}
-                  title={done ? 'Desmarcar' : 'Marcar como feita'}
-                >
-                  <Check className="size-4" />
-                </button>
+                {/* Botão marcar/desmarcar — oculto quando fase já tem registro real */}
+                {!hasRealEntry && (
+                  <button
+                    type="button"
+                    onClick={(e) => void handleToggle(phase, e)}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      done
+                        ? 'text-[color:var(--color-status-success,#16a34a)] hover:text-destructive hover:bg-accent'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                    }`}
+                    aria-label={done ? `Desmarcar ${PHASE_LABEL[phase]}` : `Marcar ${PHASE_LABEL[phase]} como feita`}
+                    title={done ? 'Desmarcar' : 'Marcar como feita'}
+                  >
+                    <Check className="size-4" />
+                  </button>
+                )}
               </div>
             </li>
           );

@@ -171,6 +171,15 @@ function ProjectDashboard() {
   const currentState = computeProjectState(project, entries);
   const stateDisplay = deriveProjectStatus(project, entries);
   const copaProgress = computeCopaProgress(entries);
+
+  const phasesWithEntries = {
+    capture: entries.some((e) => e.entry_type === 'structured_C'),
+    organize: entries.some((e) => e.entry_type === 'structured_O'),
+    prove: entries.some((e) => e.entry_type === 'structured_P'),
+    assess: entries.some((e) => e.entry_type === 'structured_A'),
+  };
+  const allPhasesHaveEntries = Object.values(phasesWithEntries).every(Boolean);
+
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
     structured: entries.filter((e) => e.entry_type !== 'pulse').length,
@@ -355,9 +364,9 @@ function ProjectDashboard() {
           </section>
         )}
 
-        {/* Semana do Operador */}
-        {project.pact_enabled && project.state !== 'paused' && (
-          <PactWeekView projectId={project.id} cycle={getCycle(project)} />
+        {/* Semana do Operador — oculto quando todas as 4 fases têm registros reais */}
+        {project.pact_enabled && project.state !== 'paused' && !allPhasesHaveEntries && (
+          <PactWeekView projectId={project.id} cycle={getCycle(project)} entryPhases={phasesWithEntries} />
         )}
         {!project.pact_enabled && project.state !== 'paused' && (
           <Link
