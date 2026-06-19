@@ -94,6 +94,24 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar informa
   );
 }
 
+const WHY_HAPPENED_HELP = `Como preencher este campo?
+
+Analise os fatos registrados e identifique as causas mais prováveis que contribuíram para o resultado observado. Utilize as evidências da execução, os recursos, ruídos e restrições identificados anteriormente para construir sua explicação. Evite justificativas emocionais, opiniões sem fundamento ou conclusões absolutas. O objetivo não é encontrar uma verdade definitiva, mas desenvolver uma interpretação coerente e sustentada pelos sinais que a realidade apresentou durante o teste.
+
+Exemplos:
+"A conversão aumentou porque os clientes passaram a visualizar mais rapidamente a oferta principal."
+"O tempo de atendimento diminuiu porque parte das dúvidas recorrentes foi respondida antecipadamente."
+"A intervenção não gerou resultado porque a restrição principal identificada não foi afetada pela IMV."
+"A adesão permaneceu baixa porque a mudança aplicada teve pouco impacto na decisão do cliente."
+
+Pergunte-se: Minha explicação está baseada nos fatos e evidências observados ou apenas em suposições que ainda não foram verificadas?
+
+Esta orientação é especialmente importante porque ensina uma habilidade central do Operador de Precisão:
+
+Os fatos mostram o que aconteceu. As interpretações procuram explicar por que aconteceu.
+
+A qualidade da Aferição não depende de encontrar uma explicação perfeita, mas de construir explicações cada vez mais próximas da realidade. Quanto mais a interpretação estiver apoiada em evidências observadas durante a IMV, maior será a qualidade do aprendizado e das decisões futuras.`;
+
 const WHAT_HAPPENED_HELP = `Como preencher este campo?
 
 Registre os resultados observados após a execução da IMV. Descreva o que realmente aconteceu no cenário utilizando fatos, evidências e resultados percebidos durante o teste. Sempre que possível, inclua números, comportamentos observados, mudanças ocorridas e informações relacionadas à métrica definida. Evite explicar causas, justificar resultados ou tirar conclusões neste momento. O objetivo é registrar a realidade da forma mais fiel possível antes de interpretá-la.
@@ -135,6 +153,7 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [saving, setSaving] = useState(false);
   const [nudge, setNudge] = useState(false);
   const [showWhatHappenedHelp, setShowWhatHappenedHelp] = useState(false);
+  const [showWhyHappenedHelp, setShowWhyHappenedHelp] = useState(false);
 
   const hasChanges =
     fact !== (initialData?.fact_text ?? '') ||
@@ -194,6 +213,32 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
 
   return (
     <>
+    {showWhyHappenedHelp && (
+      <div
+        className="fixed inset-0 z-50 flex items-end bg-black/50"
+        onClick={() => setShowWhyHappenedHelp(false)}
+      >
+        <div
+          className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-heading font-semibold text-op-white">Por que aconteceu</h3>
+            <button
+              type="button"
+              onClick={() => setShowWhyHappenedHelp(false)}
+              className="p-1 rounded-md hover:bg-op-navy-elevated"
+              aria-label="Fechar ajuda"
+            >
+              <X className="size-5 text-op-gray" />
+            </button>
+          </div>
+          {WHY_HAPPENED_HELP.split('\n\n').map((para, i) => (
+            <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
+          ))}
+        </div>
+      </div>
+    )}
     {showWhatHappenedHelp && (
       <div
         className="fixed inset-0 z-50 flex items-end bg-black/50"
@@ -247,7 +292,17 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
 
       {step === 1 && (
         <div>
-          <p className="text-small font-medium text-op-white mb-2">Por que aconteceu</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-small font-medium text-op-white">Por que aconteceu</p>
+            <button
+              type="button"
+              onClick={() => setShowWhyHappenedHelp(true)}
+              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+            >
+              <CircleHelp className="size-3.5" />
+              Ajuda
+            </button>
+          </div>
           <TopicList
             items={interpItems}
             onChange={setInterpItems}
