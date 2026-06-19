@@ -42,7 +42,11 @@ export function PactWeekView({ projectId, cycle: initialCycle, entryPhases }: Pr
   const today = new Date().getDay();
 
   function isDone(phase: PactPhase) {
-    return cycle[phase].completed_this_week || (entryPhases?.[phase] ?? false);
+    return (
+      cycle[phase].completed_this_week ||
+      cycle[phase].last_completed_at !== null ||
+      (entryPhases?.[phase] ?? false)
+    );
   }
 
   const doneCount = phases.filter(isDone).length;
