@@ -1,10 +1,8 @@
 // PactWeekView — semana do operador.
-// Mostra progresso semanal, destaca fase do dia e permite marcar/desmarcar cada fase.
+// Progresso determinado exclusivamente por registros reais no banco — sem intervenção manual.
 
-import { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Check } from 'lucide-react';
-import { markPhaseComplete, markPhaseIncomplete } from '@/lib/pact';
 import type { WeeklyCycle, PactPhase } from '@/types/app';
 
 const DAY_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -35,42 +33,17 @@ interface Props {
   entryPhases?: EntryPhases;
 }
 
-export function PactWeekView({ projectId, cycle: initialCycle, entryPhases }: Props) {
+export function PactWeekView({ projectId, cycle, entryPhases }: Props) {
   const navigate = useNavigate();
-  const [cycle, setCycle] = useState(initialCycle);
   const phases: PactPhase[] = ['capture', 'organize', 'prove', 'assess'];
   const today = new Date().getDay();
 
   function isDone(phase: PactPhase) {
-    return (
-      cycle[phase].completed_this_week ||
-      cycle[phase].last_completed_at !== null ||
-      (entryPhases?.[phase] ?? false)
-    );
+    return entryPhases?.[phase] ?? false;
   }
 
   const doneCount = phases.filter(isDone).length;
   const allDone = doneCount === phases.length;
-
-  async function handleToggle(phase: PactPhase, e: React.MouseEvent) {
-    e.stopPropagation();
-    if (entryPhases?.[phase]) return; // fase concluída por registro real — não alterável manualmente
-    const done = cycle[phase].completed_this_week;
-    if (done) {
-      setCycle((prev) => ({
-        ...prev,
-        [phase]: { ...prev[phase], completed_this_week: false, last_completed_at: null },
-      }));
-      await markPhaseIncomplete(projectId, phase);
-    } else {
-      const now = new Date().toISOString();
-      setCycle((prev) => ({
-        ...prev,
-        [phase]: { ...prev[phase], completed_this_week: true, last_completed_at: now },
-      }));
-      await markPhaseComplete(projectId, phase);
-    }
-  }
 
   function handlePhaseClick(phase: PactPhase) {
     if (isDone(phase)) {
@@ -125,7 +98,6 @@ export function PactWeekView({ projectId, cycle: initialCycle, entryPhases }: Pr
         {phases.map((phase) => {
           const day = cycle[phase];
           const done = isDone(phase);
-          const hasRealEntry = entryPhases?.[phase] ?? false;
           const isToday = day.day_of_week === today;
 
           return (
@@ -133,63 +105,43 @@ export function PactWeekView({ projectId, cycle: initialCycle, entryPhases }: Pr
               key={phase}
               className={`rounded-md ${isToday && !done ? 'bg-[color:var(--color-op-navy-elevated)]' : ''}`}
             >
-              <div className="flex items-center gap-2 px-1">
-                {/* Linha clicável principal */}
-                <button
-                  type="button"
-                  onClick={() => handlePhaseClick(phase)}
-                  className="flex-1 flex items-center gap-3 py-2.5 text-left"
-                  aria-label={`${PHASE_LABEL[phase]}: ${done ? 'concluído' : 'pendente'}`}
+              <button
+                type="button"
+                onClick={() => handlePhaseClick(phase)}
+                className="w-full flex items-center gap-3 px-1 py-2.5 text-left"
+                aria-label={`${PHASE_LABEL[phase]}: ${done ? 'concluído' : 'pendente'}`}
+              >
+                {/* Indicador de status */}
+                <span
+                  className={
+                    'inline-flex items-center justify-center size-5 rounded-full flex-shrink-0 transition-colors ' +
+                    (done
+                      ? 'bg-[color:var(--color-status-success,#16a34a)] text-white'
+                      : isToday
+                      ? 'border-2 border-foreground'
+                      : 'border border-border')
+                  }
                 >
-                  {/* Indicador de status */}
-                  <span
-                    className={
-                      'inline-flex items-center justify-center size-5 rounded-full flex-shrink-0 transition-colors ' +
-                      (done
-                        ? 'bg-[color:var(--color-status-success,#16a34a)] text-white'
-                        : isToday
-                        ? 'border-2 border-foreground'
-                        : 'border border-border')
-                    }
-                  >
-                    {done && <Check className="size-3" strokeWidth={3} />}
-                  </span>
+                  {done && <Check className="size-3" strokeWidth={3} />}
+                </span>
 
-                  {/* Dia + label + descrição */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-small font-medium ${done ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                        {PHASE_LABEL[phase]}
+                {/* Dia + label + descrição */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-small font-medium ${done ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                      {PHASE_LABEL[phase]}
+                    </span>
+                    {isToday && !done && (
+                      <span className="text-label px-1.5 py-0.5 rounded bg-op-amber text-op-black font-semibold">
+                        hoje
                       </span>
-                      {isToday && !done && (
-                        <span className="text-label px-1.5 py-0.5 rounded bg-op-amber text-op-black font-semibold">
-                          hoje
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-label text-op-gray">
-                      {DAY_FULL[day.day_of_week]} · {PHASE_DESC[phase]}
-                    </p>
+                    )}
                   </div>
-                </button>
-
-                {/* Botão marcar/desmarcar — oculto quando fase já tem registro real */}
-                {!hasRealEntry && (
-                  <button
-                    type="button"
-                    onClick={(e) => void handleToggle(phase, e)}
-                    className={`p-1.5 rounded-md transition-colors ${
-                      done
-                        ? 'text-[color:var(--color-status-success,#16a34a)] hover:text-destructive hover:bg-accent'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                    }`}
-                    aria-label={done ? `Desmarcar ${PHASE_LABEL[phase]}` : `Marcar ${PHASE_LABEL[phase]} como feita`}
-                    title={done ? 'Desmarcar' : 'Marcar como feita'}
-                  >
-                    <Check className="size-4" />
-                  </button>
-                )}
-              </div>
+                  <p className="text-label text-op-gray">
+                    {DAY_FULL[day.day_of_week]} · {PHASE_DESC[phase]}
+                  </p>
+                </div>
+              </button>
             </li>
           );
         })}
