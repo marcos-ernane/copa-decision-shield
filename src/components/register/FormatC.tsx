@@ -112,6 +112,36 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar tópico
   );
 }
 
+const INTERP_HELP = `Interpretações são explicações, conclusões, opiniões ou significados que atribuímos aos fatos observados. Elas representam a forma como entendemos a realidade, mas não necessariamente a realidade em si. Durante a Captura, as interpretações não devem ser descartadas, mas precisam ser claramente separadas dos fatos para evitar que suposições sejam confundidas com evidências. Uma boa interpretação nasce de fatos consistentes e permanece aberta à confirmação ou correção pela realidade.
+
+Exemplos de interpretações:
+
+"Os clientes não estão encontrando o que procuram."
+"A equipe está com dificuldade de seguir o processo."
+"O atendimento está influenciando a queda nas vendas."
+
+Essas afirmações podem ser verdadeiras, mas ainda precisam ser verificadas.
+
+Não são interpretações:
+
+"Sete clientes saíram sem comprar."
+"O processo parou três vezes hoje."
+"O tempo médio de atendimento foi de oito minutos."
+
+Essas afirmações descrevem fatos observáveis.
+
+Por que isso é importante?
+
+Quando fatos e interpretações se misturam, o operador corre o risco de agir sobre conclusões incorretas. Quando são separados, as interpretações se transformam em hipóteses que podem ser investigadas, testadas e confirmadas pela realidade.
+
+Pergunte-se: Estou registrando algo que observei diretamente ou uma explicação que estou atribuindo ao que observei?
+
+Esta definição está profundamente alinhada ao Operador de Precisão porque ensina uma disciplina central da obra:
+
+Fatos mostram o que aconteceu. Interpretações tentam explicar por que aconteceu.
+
+A maturidade perceptiva não consiste em eliminar interpretações, mas em impedir que elas se disfarcem de fatos. É essa separação que permite diagnósticos mais precisos, hipóteses melhores e intervenções mais eficazes.`;
+
 const FACTS_HELP = `Fatos são acontecimentos, comportamentos, condições ou evidências que podem ser observados diretamente, sem interpretação, opinião ou julgamento. Eles descrevem o que realmente está acontecendo no cenário, e não o que você acredita, imagina ou conclui sobre ele. Uma boa captura começa pelos fatos, porque decisões de qualidade dependem de uma compreensão fiel da realidade. Quanto mais objetiva for a observação, maior será a confiabilidade das etapas seguintes do método.
 
 Exemplos de fatos:
@@ -142,6 +172,7 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [hypItems, setHypItems] = useState<string[]>(() => toItems(initialData?.hypothesis_text));
   const [saving, setSaving] = useState(false);
   const [showFactsHelp, setShowFactsHelp] = useState(false);
+  const [showInterpHelp, setShowInterpHelp] = useState(false);
 
   const fact = fromItems(factItems);
   const interp = fromItems(interpItems);
@@ -193,6 +224,32 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
         </div>
       </div>
     )}
+    {showInterpHelp && (
+      <div
+        className="fixed inset-0 z-50 flex items-end bg-black/50"
+        onClick={() => setShowInterpHelp(false)}
+      >
+        <div
+          className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-heading font-semibold text-op-white">Quadro 2 — Interpretações</h3>
+            <button
+              type="button"
+              onClick={() => setShowInterpHelp(false)}
+              className="p-1 rounded-md hover:bg-op-navy-elevated"
+              aria-label="Fechar ajuda"
+            >
+              <X className="size-5 text-op-gray" />
+            </button>
+          </div>
+          {INTERP_HELP.split('\n\n').map((para, i) => (
+            <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
+          ))}
+        </div>
+      </div>
+    )}
     <div className="space-y-4">
       <StepDots current={step} total={TOTAL_STEPS} />
 
@@ -220,7 +277,17 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
 
       {step === 1 && (
         <div>
-          <p className="text-small text-op-gray mb-2">Quadro 2 — Interpretações</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-small text-op-gray">Quadro 2 — Interpretações</p>
+            <button
+              type="button"
+              onClick={() => setShowInterpHelp(true)}
+              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+            >
+              <CircleHelp className="size-3.5" />
+              Ajuda
+            </button>
+          </div>
           <TopicList
             items={interpItems}
             onChange={setInterpItems}
