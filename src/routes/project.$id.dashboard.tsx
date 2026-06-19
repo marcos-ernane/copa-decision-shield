@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { getProject, listEntries, listPrinciples, updateProject } from '@/lib/projects';
-import { computeProjectState, deriveProjectStatus } from '@/lib/projectState';
+import { computeProjectState, deriveProjectStatus, daysSince } from '@/lib/projectState';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import { IMVProgressBar } from '@/components/project/IMVProgressBar';
@@ -229,6 +229,58 @@ function ProjectDashboard() {
     if (!pDeadline || !copaProgress.done.includes('P') || copaProgress.done.includes('A')) return null;
     if (pDeadline < todayStr) return 'expired';
     if (pDeadline === todayStr) return 'today';
+    return null;
+  })();
+
+  const motorAlert: { message: string; cta?: { label: string; onClick: () => void } } | null = (() => {
+    const isTerminal = currentState === 'paused' || currentState === 'concluded' || currentState === 'archived';
+    if (copaProgress.allDone || isTerminal) return null;
+
+    const { done } = copaProgress;
+
+    if (currentState === 'blocked') {
+      const days = Math.floor(daysSince(project.last_entry_at));
+      return {
+        message: `Sem registros há ${days} dias. Execute um diagnóstico para retomar.`,
+        cta: { label: 'Analisar', onClick: () => void navigate({ to: '/project/$id/diagnosis', params: { id } }) },
+      };
+    }
+
+    if (!done.includes('C')) {
+      return {
+        message: 'Registre fatos observáveis do cenário antes de interpretar ou agir.',
+        cta: { label: 'Iniciar Captura [C]', onClick: () => void navigate({ to: '/register/structured', search: { projectId: id, format: 'C' } as never }) },
+      };
+    }
+
+    if (!done.includes('O')) {
+      return {
+        message: 'Organize recursos, ruídos e restrições identificados na Captura.',
+        cta: { label: 'Registrar Organização [O]', onClick: () => void navigate({ to: '/register/structured', search: { projectId: id, format: 'O' } as never }) },
+      };
+    }
+
+    if (!done.includes('P')) {
+      return {
+        message: 'Defina a IMV — a menor ação testável com métrica e prazo claros.',
+        cta: { label: 'Definir Prova [P]', onClick: () => void navigate({ to: '/register/structured', search: { projectId: id, format: 'P' } as never }) },
+      };
+    }
+
+    if (!done.includes('A')) {
+      if (imvDeadlineStatus === 'expired' || imvDeadlineStatus === 'today') {
+        return {
+          message: 'Registre a Aferição — o que o teste revelou? Extraia o princípio.',
+          cta: { label: 'Registrar Aferição [A]', onClick: () => void navigate({ to: '/register/structured', search: { projectId: id, format: 'A' } as never }) },
+        };
+      }
+      const metric = (provingEntry?.content as { metric?: string })?.metric;
+      if (metric) {
+        return { message: `IMV em andamento. Acompanhe a métrica: "${metric}"` };
+      }
+      return null;
+    }
+
     return null;
   })();
 
@@ -454,34 +506,17 @@ function ProjectDashboard() {
         />
 
         {/* Alerta do motor */}
-        {sanitizeFieldReading(project.field_reading) && (() => {
-          const { nextPhase, allDone } = copaProgress;
-          const ctaLabel =
-            allDone || !nextPhase || nextPhase === 'C'
-              ? 'Iniciar Registro Estruturado'
-              : nextPhase === 'O'
-              ? 'Registrar Organização (Formato O)'
-              : nextPhase === 'P'
-              ? 'Registrar Prova (Formato P)'
-              : 'Registrar APA (Formato A)';
-          const handleCta = () => {
-            void navigate({ to: '/register/structured', search: { projectId: id } as never });
-          };
-          return (
-            <section className="rounded-md border border-op-amber/40 bg-op-navy p-4 space-y-3">
-              <h2 className="text-label text-op-gray uppercase">Alerta do motor</h2>
-              <p className="text-body text-op-white">"{sanitizeFieldReading(project.field_reading)}"</p>
-              {project.calibrated_action && (
-                <div className="border-t border-op-gray/30 pt-3 space-y-2">
-                  <p className="text-small text-op-gray">{project.calibrated_action}</p>
-                  <Button size="sm" className="w-full" onClick={handleCta}>
-                    {ctaLabel}
-                  </Button>
-                </div>
-              )}
-            </section>
-          );
-        })()}
+        {motorAlert && (
+          <section className="rounded-md border border-op-amber/40 bg-op-navy p-4 space-y-3">
+            <h2 className="text-label text-op-gray uppercase">Alerta do motor</h2>
+            <p className="text-body text-op-white">{motorAlert.message}</p>
+            {motorAlert.cta && (
+              <Button size="sm" className="w-full" onClick={motorAlert.cta.onClick}>
+                {motorAlert.cta.label}
+              </Button>
+            )}
+          </section>
+        )}
 
         {/* Principle recall */}
         {recall && (
