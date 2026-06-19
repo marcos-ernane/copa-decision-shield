@@ -140,6 +140,45 @@ function computeCycleVelocity(entries: Entry[]): {
   return { cToO, oToP, pToA, total, dates: { c: fmt(cDate), o: fmt(oDate), p: fmt(pDate), a: fmt(aDate) } };
 }
 
+type VelocityColumn = { label: string; days: number | null; isGroup: boolean };
+
+function buildVelocityColumns(v: { cToO: number | null; oToP: number | null; pToA: number | null }): VelocityColumn[] {
+  const raw = [
+    { from: 'C', to: 'O', days: v.cToO },
+    { from: 'O', to: 'P', days: v.oToP },
+    { from: 'P', to: 'A', days: v.pToA },
+  ];
+
+  const result: VelocityColumn[] = [];
+  let i = 0;
+
+  while (i < raw.length) {
+    const curr = raw[i];
+    // Agrupa transições consecutivas com 0 dias (mesmo dia, com dados)
+    if (curr.days === 0) {
+      const nodes = [curr.from, curr.to];
+      let j = i + 1;
+      while (j < raw.length && raw[j].days === 0) {
+        nodes.push(raw[j].to);
+        j++;
+      }
+      if (nodes.length > 2) {
+        // 2+ transições consecutivas no mesmo dia → agrupa com colchetes
+        result.push({ label: `[${nodes.join('→')}]`, days: 0, isGroup: true });
+        i = j;
+      } else {
+        result.push({ label: `${curr.from}→${curr.to}`, days: 0, isGroup: false });
+        i++;
+      }
+    } else {
+      result.push({ label: `${curr.from}→${curr.to}`, days: curr.days, isGroup: false });
+      i++;
+    }
+  }
+
+  return result;
+}
+
 function ProjectDashboard() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -218,7 +257,8 @@ function ProjectDashboard() {
   };
   const allPhasesHaveEntries = copaProgress.allDone;
   const cycleVelocity = computeCycleVelocity(entries);
-  const hasAnyCycleData = cycleVelocity.cToO !== null || cycleVelocity.oToP !== null || cycleVelocity.pToA !== null;
+  const velocityColumns = buildVelocityColumns(cycleVelocity);
+  const showVelocityCard = entries.some((e) => e.entry_type === 'structured_C');
 
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
@@ -476,43 +516,39 @@ function ProjectDashboard() {
           );
         })()}
 
-        {/* Velocidade do Ciclo COPA */}
-        {hasAnyCycleData && (
+        {/* Velocidade — Transição entre as fases */}
+        {showVelocityCard && (
           <section className="rounded-md border border-op-gray/30 bg-op-navy p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-label text-op-gray uppercase">Velocidade do Ciclo</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-label text-op-gray uppercase">
+                Velocidade — Transição entre as fases [C→ O→ P→ A]
+              </h2>
               <button
                 type="button"
                 onClick={() => setShowVelocitySheet(true)}
-                className="text-op-gray hover:text-op-white transition-colors"
+                className="text-op-gray hover:text-op-white transition-colors ml-2 shrink-0"
                 aria-label="Como é calculado"
               >
                 <Info className="size-4" />
               </button>
             </div>
             <div className="flex items-end gap-4">
-              {cycleVelocity.cToO !== null && (
-                <div className="text-center">
-                  <p className="text-label text-op-gray mb-0.5">C→O</p>
-                  <p className="text-heading text-op-white font-semibold">{cycleVelocity.cToO}d</p>
+              {velocityColumns.map((col) => (
+                <div key={col.label} className="text-center">
+                  <p className={`text-label mb-0.5 ${col.isGroup ? 'text-op-cyan' : 'text-op-gray'}`}>
+                    {col.label}
+                  </p>
+                  <p className="text-heading text-op-white font-semibold">
+                    {col.days !== null ? `${col.days}d` : ''}
+                  </p>
                 </div>
-              )}
-              {cycleVelocity.oToP !== null && (
-                <div className="text-center">
-                  <p className="text-label text-op-gray mb-0.5">O→P</p>
-                  <p className="text-heading text-op-white font-semibold">{cycleVelocity.oToP}d</p>
-                </div>
-              )}
-              {cycleVelocity.pToA !== null && (
-                <div className="text-center">
-                  <p className="text-label text-op-gray mb-0.5">P→A</p>
-                  <p className="text-heading text-op-white font-semibold">{cycleVelocity.pToA}d</p>
-                </div>
-              )}
+              ))}
               {cycleVelocity.total !== null && (
                 <div className="text-center ml-auto">
                   <p className="text-label text-op-gray mb-0.5">Total</p>
-                  <p className="text-heading font-semibold" style={{ color: '#0EA5E9' }}>{cycleVelocity.total}d</p>
+                  <p className="text-heading font-semibold" style={{ color: '#0EA5E9' }}>
+                    {cycleVelocity.total}d
+                  </p>
                 </div>
               )}
             </div>
@@ -530,14 +566,17 @@ function ProjectDashboard() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
-              <h3 className="text-heading text-op-white font-semibold">Velocidade do Ciclo</h3>
+              <h3 className="text-heading text-op-white font-semibold">
+                Velocidade — Transição entre as fases
+              </h3>
 
               <div className="space-y-2">
                 <p className="text-label text-op-cyan uppercase">O que significa</p>
                 <p className="text-body text-op-white">
                   Mostra quantos dias você levou para passar de uma fase COPA para a próxima neste projeto.
-                  Quanto menor o tempo, mais ágil foi sua operação naquela transição.
                   Transições longas indicam onde você tende a travar ou perder foco.
+                  Quando duas ou mais fases foram registradas no mesmo dia, elas aparecem agrupadas
+                  entre colchetes — ex: <span className="text-op-cyan font-mono">[C→O→P]</span> — com 0 dias entre elas.
                 </p>
               </div>
 
@@ -552,12 +591,24 @@ function ProjectDashboard() {
                       </span>
                     </div>
                   )}
+                  {!cycleVelocity.dates.o && (
+                    <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                      <span className="text-op-gray">Captura → Organização</span>
+                      <span className="text-op-gray italic">pendente</span>
+                    </div>
+                  )}
                   {cycleVelocity.dates.o && cycleVelocity.dates.p && cycleVelocity.oToP !== null && (
                     <div className="flex justify-between border-b border-op-gray/20 pb-1">
                       <span className="text-op-gray">Organização → Prova</span>
                       <span className="text-op-white">
                         {cycleVelocity.dates.o} até {cycleVelocity.dates.p} = <strong>{cycleVelocity.oToP} dia{cycleVelocity.oToP !== 1 ? 's' : ''}</strong>
                       </span>
+                    </div>
+                  )}
+                  {cycleVelocity.dates.o && !cycleVelocity.dates.p && (
+                    <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                      <span className="text-op-gray">Organização → Prova</span>
+                      <span className="text-op-gray italic">pendente</span>
                     </div>
                   )}
                   {cycleVelocity.dates.p && cycleVelocity.dates.a && cycleVelocity.pToA !== null && (
@@ -568,16 +619,19 @@ function ProjectDashboard() {
                       </span>
                     </div>
                   )}
+                  {cycleVelocity.dates.p && !cycleVelocity.dates.a && (
+                    <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                      <span className="text-op-gray">Prova → Aferição</span>
+                      <span className="text-op-gray italic">pendente</span>
+                    </div>
+                  )}
                   {cycleVelocity.total !== null && (
                     <div className="flex justify-between pt-1">
                       <span className="text-op-gray font-semibold">Ciclo completo</span>
-                      <span style={{ color: '#0EA5E9' }} className="font-semibold">{cycleVelocity.total} dias no total</span>
+                      <span style={{ color: '#0EA5E9' }} className="font-semibold">
+                        {cycleVelocity.total} dia{cycleVelocity.total !== 1 ? 's' : ''} no total
+                      </span>
                     </div>
-                  )}
-                  {(cycleVelocity.cToO === null || cycleVelocity.oToP === null || cycleVelocity.pToA === null) && (
-                    <p className="text-op-gray italic">
-                      Transições pendentes aparecerão aqui conforme você avança nas fases.
-                    </p>
                   )}
                 </div>
               </div>
