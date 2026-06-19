@@ -172,13 +172,15 @@ function ProjectDashboard() {
   const stateDisplay = deriveProjectStatus(project, entries);
   const copaProgress = computeCopaProgress(entries);
 
+  // Derivado de copaProgress.done para garantir consistência com "Onde Estou Agora".
+  // Não usa weekly-reset do localStorage — reflete apenas registros reais no DB.
   const phasesWithEntries = {
-    capture: entries.some((e) => e.entry_type === 'structured_C'),
-    organize: entries.some((e) => e.entry_type === 'structured_O'),
-    prove: entries.some((e) => e.entry_type === 'structured_P'),
-    assess: entries.some((e) => e.entry_type === 'structured_A'),
+    capture: copaProgress.done.includes('C'),
+    organize: copaProgress.done.includes('O'),
+    prove: copaProgress.done.includes('P'),
+    assess: copaProgress.done.includes('A'),
   };
-  const allPhasesHaveEntries = Object.values(phasesWithEntries).every(Boolean);
+  const allPhasesHaveEntries = copaProgress.allDone;
 
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
