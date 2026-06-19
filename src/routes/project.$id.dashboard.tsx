@@ -2,7 +2,7 @@
 
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronRight, ChevronDown, MoreVertical } from 'lucide-react';
+import { ChevronRight, MoreVertical } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import {
@@ -120,7 +120,6 @@ function ProjectDashboard() {
   const [isPausing, setIsPausing] = useState(false);
   const [pauseReason, setPauseReason] = useState('');
   const [isArchiving, setIsArchiving] = useState(false);
-  const [showLastEntry, setShowLastEntry] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -186,21 +185,6 @@ function ProjectDashboard() {
     assess: copaProgress.done.includes('A'),
   };
   const allPhasesHaveEntries = copaProgress.allDone;
-
-  const lastCompletedEntry = (() => {
-    const phaseToType: Record<string, string> = {
-      C: 'structured_C', O: 'structured_O', P: 'structured_P', A: 'structured_A',
-    };
-    for (const phase of [...copaProgress.done].reverse()) {
-      const type = phaseToType[phase];
-      if (!type) continue;
-      const entry = [...entries]
-        .filter((e) => e.entry_type === type)
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-      if (entry) return entry;
-    }
-    return null;
-  })();
 
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
@@ -388,8 +372,14 @@ function ProjectDashboard() {
           const handleStateClick = () => {
             if (isBlocked) {
               void navigate({ to: '/project/$id/diagnosis', params: { id } });
+            } else if (allDone) {
+              void navigate({ to: '/diary', search: { projectId: id } as never });
             } else {
-              setShowLastEntry((v) => !v);
+              const lastPhase = [...copaProgress.done].reverse()[0] as 'C' | 'O' | 'P' | 'A' | undefined;
+              void navigate({
+                to: '/register/structured',
+                search: { projectId: id, ...(lastPhase ? { format: lastPhase } : {}) } as never,
+              });
             }
           };
 
@@ -404,12 +394,7 @@ function ProjectDashboard() {
                 <p className={`text-heading ${stateDisplay.color}`}>
                   {stateDisplay.icon} {stateDisplay.label}
                 </p>
-                {isBlocked
-                  ? <ChevronRight className="size-4 text-op-gray shrink-0" />
-                  : showLastEntry
-                  ? <ChevronDown className="size-4 text-op-gray shrink-0" />
-                  : <ChevronRight className="size-4 text-op-gray shrink-0" />
-                }
+                <ChevronRight className="size-4 text-op-gray shrink-0" />
               </div>
               {isBlocked ? (
                 <p className="text-small text-op-gray">Execute um diagnóstico para destravar</p>
@@ -417,7 +402,7 @@ function ProjectDashboard() {
                 <CopaStepsRow done={done} next={nextPhase} allDone={allDone} />
               )}
               {!isBlocked && allDone && (
-                <p className="text-small text-op-gray mt-1">Ciclo completo — revise ou inicie novo ciclo</p>
+                <p className="text-small text-op-gray mt-1">Ciclo completo — ver linha do tempo</p>
               )}
               {currentState === 'proving' && totalDays > 0 && (
                 <div className="pt-1">
@@ -433,63 +418,6 @@ function ProjectDashboard() {
                 <p className="text-small mt-1" style={{ color: '#b45309' }}>
                   Atenção: IMV vence hoje {fmtDeadlineDDMM(pDeadline)}.
                 </p>
-              )}
-              {showLastEntry && lastCompletedEntry && (
-                <div className="border-t border-op-gray/30 pt-3 mt-1 space-y-2">
-                  {lastCompletedEntry.entry_type === 'structured_C' && (
-                    <>
-                      {(lastCompletedEntry.content as { fact_text?: string }).fact_text && (
-                        <p className="text-small text-op-white">
-                          <span className="text-op-gray">Fatos: </span>
-                          {(lastCompletedEntry.content as { fact_text: string }).fact_text}
-                        </p>
-                      )}
-                      {(lastCompletedEntry.content as { hypothesis_text?: string }).hypothesis_text && (
-                        <p className="text-small text-op-white">
-                          <span className="text-op-gray">Hipótese: </span>
-                          {(lastCompletedEntry.content as { hypothesis_text: string }).hypothesis_text}
-                        </p>
-                      )}
-                    </>
-                  )}
-                  {lastCompletedEntry.entry_type === 'structured_O' && (
-                    <p className="text-small text-op-white">
-                      <span className="text-op-gray">Gargalo: </span>
-                      {(lastCompletedEntry.content as { main_bottleneck?: string }).main_bottleneck}
-                    </p>
-                  )}
-                  {lastCompletedEntry.entry_type === 'structured_P' && (
-                    <>
-                      {(lastCompletedEntry.content as { action?: string }).action && (
-                        <p className="text-small text-op-white">
-                          <span className="text-op-gray">Ação: </span>
-                          {(lastCompletedEntry.content as { action: string }).action}
-                        </p>
-                      )}
-                      {(lastCompletedEntry.content as { metric?: string }).metric && (
-                        <p className="text-small text-op-white">
-                          <span className="text-op-gray">Métrica: </span>
-                          {(lastCompletedEntry.content as { metric: string }).metric}
-                        </p>
-                      )}
-                    </>
-                  )}
-                  {lastCompletedEntry.entry_type === 'structured_A' && (
-                    <>
-                      {(lastCompletedEntry.content as { what_happened?: string }).what_happened && (
-                        <p className="text-small text-op-white">
-                          <span className="text-op-gray">O que aconteceu: </span>
-                          {(lastCompletedEntry.content as { what_happened: string }).what_happened}
-                        </p>
-                      )}
-                      {(lastCompletedEntry.content as { principle_text?: string }).principle_text && (
-                        <p className="text-small text-op-white border-l-2 border-op-cyan pl-2">
-                          {(lastCompletedEntry.content as { principle_text: string }).principle_text}
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
               )}
             </button>
           ) : (
