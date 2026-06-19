@@ -35,7 +35,6 @@ import { PactReturnSheet } from '@/components/pact/PactReturnSheet';
 import { checkPactReturn, getCycle } from '@/lib/pact';
 import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
 import type { Project, Entry, Principle } from '@/types/database';
-import type { ProjectState } from '@/types/app';
 
 const COPA_PHASE_ORDER = ['C', 'O', 'P', 'A'] as const;
 
