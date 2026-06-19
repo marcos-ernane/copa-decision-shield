@@ -775,6 +775,13 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               </p>
             </div>
           )}
+          {isDeadlineExpired && imvBlocked && (
+            <div className="rounded-md border border-red-800/50 bg-red-950/30 px-3 py-2.5">
+              <p className="text-small text-red-400">
+                Este projeto atingiu o limite de 4 IMVs. Para continuar testando hipóteses certifique-se de ter concluído este projeto na etapa [A] Aferição, registre o aprendizado e inicie um novo projeto.
+              </p>
+            </div>
+          )}
           {isReviewing && deadline && isDeadlineExpired && (
             <div className="space-y-2">
               {!imvBlocked && (
