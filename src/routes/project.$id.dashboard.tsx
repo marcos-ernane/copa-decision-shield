@@ -373,7 +373,7 @@ function ProjectDashboard() {
             if (isBlocked) {
               void navigate({ to: '/project/$id/diagnosis', params: { id } });
             } else {
-              void navigate({ to: '/register/structured', search: { projectId: id } as never });
+              void navigate({ to: '/diary', search: { projectId: id } as never });
             }
           };
 
