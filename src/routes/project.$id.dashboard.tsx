@@ -543,7 +543,19 @@ function ProjectDashboard() {
                 <CopaStepsRow done={done} next={nextPhase} allDone={allDone} />
               )}
               {!isBlocked && allDone && (
-                <p className="text-small text-op-gray mt-1">Ciclo completo — ver linha do tempo</p>
+                <div className="mt-1 space-y-1.5">
+                  <p className="text-small text-op-gray">Ciclo completo — ver linha do tempo</p>
+                  <button
+                    type="button"
+                    className="text-small text-red-500 hover:text-red-400 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void navigate({ to: '/project/$id/conclude', params: { id } });
+                    }}
+                  >
+                    Encerrar o Projeto →
+                  </button>
+                </div>
               )}
               {currentState === 'proving' && totalDays > 0 && (
                 <div className="pt-1">
