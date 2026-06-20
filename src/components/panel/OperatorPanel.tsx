@@ -210,7 +210,7 @@ export function OperatorPanel() {
                           <Link
                             to="/project/$id/conclude"
                             params={{ id: p.id }}
-                            className="text-small text-[#2563EB] hover:text-blue-400 transition-colors"
+                            className="text-small text-red-500 hover:text-red-400 transition-colors"
                           >
                             Encerrar o Projeto →
                           </Link>
