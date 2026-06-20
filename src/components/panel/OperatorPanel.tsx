@@ -240,7 +240,7 @@ export function OperatorPanel() {
     const reflexoes = entries.filter((e) =>
       ['structured_A', 'corrective'].includes(e.entry_type),
     ).length;
-    return { score, total: entries.length, pulsos, analises, reflexoes };
+    return { score, total: entries.length, pulsos, analises, reflexoes, totalWeight };
   }, [entries]);
 
   const lastPrinciples = principles.slice(-3).reverse();
@@ -597,19 +597,30 @@ export function OperatorPanel() {
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
                   <span className="text-op-gray">Pulsos (peso 1) — capturas rápidas</span>
-                  <span className="text-op-white">{registrationDepth.pulsos}</span>
+                  <span className="text-op-white">{registrationDepth.pulsos} entradas</span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Análises (peso 2-4) — formatos estruturados</span>
-                  <span className="text-op-white">{registrationDepth.analises}</span>
+                  <span className="text-op-gray">Análises (peso 2–4) — formatos estruturados</span>
+                  <span className="text-op-white">{registrationDepth.analises} entradas</span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Reflexões (peso 4-5) — APAs e corretivos</span>
-                  <span className="text-op-white">{registrationDepth.reflexoes}</span>
+                  <span className="text-op-gray">Reflexões (peso 4–5) — APAs e corretivos</span>
+                  <span className="text-op-white">{registrationDepth.reflexoes} entradas</span>
                 </div>
-                <p className="text-label text-op-gray pt-1">
-                  Score = soma dos pesos ÷ (total × 5) × 100
-                </p>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Soma dos pontos de peso</span>
+                  <span className="text-op-white">{registrationDepth.totalWeight} pts</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Máximo possível ({registrationDepth.total} × 5)</span>
+                  <span className="text-op-white">{registrationDepth.total * 5} pts</span>
+                </div>
+                <div className="flex justify-between pt-1">
+                  <span className="text-op-gray font-semibold">Score final</span>
+                  <span style={{ color: depthMeta(registrationDepth.score).barColor }} className="font-semibold">
+                    {registrationDepth.totalWeight} ÷ {registrationDepth.total * 5} × 100 = {registrationDepth.score}
+                  </span>
+                </div>
               </div>
             </div>
 
