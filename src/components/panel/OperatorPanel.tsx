@@ -33,20 +33,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 
-const DEPTH_WEIGHTS: Record<string, number> = {
-  pulse: 1,
-  passive: 1,
-  protocol_5min: 2,
-  pressure_session: 2,
-  copa_session: 3,
-  creative_session: 3,
-  simulation_session: 3,
-  structured_C: 3,
-  structured_O: 3,
-  structured_P: 4,
-  corrective: 4,
-  structured_A: 5,
-};
+const PULSO_WEIGHT = 1;
+const ANALISE_WEIGHT = 3;
+const REFLEXAO_WEIGHT = 5;
 
 function depthMeta(score: number): { label: string; color: string; barColor: string } {
   if (score >= 75) return { label: 'Registro profundo', color: 'text-green-400', barColor: '#4ade80' };
@@ -240,9 +229,9 @@ export function OperatorPanel() {
       ['structured_A', 'corrective'].includes(e.entry_type),
     );
 
-    const pulsosWeight = pulsoEntries.reduce((s, e) => s + (DEPTH_WEIGHTS[e.entry_type] ?? 2), 0);
-    const analisesWeight = analiseEntries.reduce((s, e) => s + (DEPTH_WEIGHTS[e.entry_type] ?? 2), 0);
-    const reflexoesWeight = reflexaoEntries.reduce((s, e) => s + (DEPTH_WEIGHTS[e.entry_type] ?? 2), 0);
+    const pulsosWeight = pulsoEntries.length * PULSO_WEIGHT;
+    const analisesWeight = analiseEntries.length * ANALISE_WEIGHT;
+    const reflexoesWeight = reflexaoEntries.length * REFLEXAO_WEIGHT;
     const totalWeight = pulsosWeight + analisesWeight + reflexoesWeight;
 
     const score = Math.round((totalWeight / (entries.length * 5)) * 100);
@@ -594,8 +583,9 @@ export function OperatorPanel() {
             <div className="space-y-2">
               <p className="text-label text-op-cyan uppercase">O que significa</p>
               <p className="text-body text-op-white">
-                Mede o quanto seus registros vão além da superfície. Um operador que só faz pulsos rápidos
-                tem profundidade baixa. Quem passa pelo ciclo completo e extrai princípios tem profundidade alta.
+                Mede o quanto seus registros vão além da superfície. Cada categoria tem um peso fixo:
+                Pulso = 1 · Análise = 3 · Reflexão = 5. Quem registra mais APAs e corretivos
+                tem profundidade mais alta.
               </p>
               <ul className="mt-2 space-y-1 text-small text-op-gray">
                 <li><span className="text-green-400 font-semibold">Registro profundo</span> — 75 ou mais</li>
@@ -609,19 +599,19 @@ export function OperatorPanel() {
               <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
               <div className="space-y-1 text-small">
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Pulsos (peso 1) — {registrationDepth.pulsos} entrada{registrationDepth.pulsos !== 1 ? 's' : ''}</span>
+                  <span className="text-op-gray">Pulsos (peso 1)</span>
                   <span className="text-op-white">{registrationDepth.pulsos} × 1 = {registrationDepth.pulsosWeight} pt{registrationDepth.pulsosWeight !== 1 ? 's' : ''}</span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Análises (peso 2–4) — {registrationDepth.analises} entrada{registrationDepth.analises !== 1 ? 's' : ''}</span>
-                  <span className="text-op-white">soma ponderada = {registrationDepth.analisesWeight} pts</span>
+                  <span className="text-op-gray">Análises (peso 3)</span>
+                  <span className="text-op-white">{registrationDepth.analises} × 3 = {registrationDepth.analisesWeight} pts</span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Reflexões (peso 4–5) — {registrationDepth.reflexoes} entrada{registrationDepth.reflexoes !== 1 ? 's' : ''}</span>
-                  <span className="text-op-white">soma ponderada = {registrationDepth.reflexoesWeight} pt{registrationDepth.reflexoesWeight !== 1 ? 's' : ''}</span>
+                  <span className="text-op-gray">Reflexões (peso 5)</span>
+                  <span className="text-op-white">{registrationDepth.reflexoes} × 5 = {registrationDepth.reflexoesWeight} pts</span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1 font-semibold">
-                  <span className="text-op-gray">Total de pontos de peso</span>
+                  <span className="text-op-gray">Total de pontos</span>
                   <span className="text-op-white">
                     {registrationDepth.pulsosWeight} + {registrationDepth.analisesWeight} + {registrationDepth.reflexoesWeight} = {registrationDepth.totalWeight} pts
                   </span>
