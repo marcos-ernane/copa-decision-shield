@@ -33,6 +33,20 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 
+const LAYER_NAMES: Record<OperationalLayer, string> = {
+  operabilidade: 'Operabilidade',
+  conversao: 'Conversão',
+  recorrencia: 'Recorrência',
+  escala: 'Escala',
+};
+
+function difficultyMeta(score: number): { label: string; color: string; barColor: string } {
+  if (score < 25) return { label: 'Zona de domínio', color: 'text-green-400', barColor: '#4ade80' };
+  if (score < 50) return { label: 'Operando bem', color: 'text-op-cyan', barColor: '#22C5DA' };
+  if (score < 75) return { label: 'Atenção necessária', color: 'text-amber-400', barColor: '#fbbf24' };
+  return { label: 'Gargalo crítico', color: 'text-red-400', barColor: '#f87171' };
+}
+
 const SCENARIO_LABELS: Record<ScenarioType, string> = {
   fluxo: 'Fluxo',
   processo: 'Processo',
@@ -56,6 +70,7 @@ export function OperatorPanel() {
   const [pausingId, setPausingId] = useState<string | null>(null);
   const [pauseReason, setPauseReason] = useState('');
   const [showMaturitySheet, setShowMaturitySheet] = useState(false);
+  const [showDifficultySheet, setShowDifficultySheet] = useState(false);
 
   async function handleArchive() {
     if (!archivingId) return;
@@ -132,6 +147,60 @@ export function OperatorPanel() {
       })
       .filter((r) => r.started > 0);
   }, [projects]);
+
+  const layerDifficulty = useMemo(() => {
+    const layers: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia', 'escala'];
+    return layers
+      .map((layer) => {
+        const imvEntries = entries.filter(
+          (e) => e.entry_type === 'structured_P' && e.layer_at_entry === layer,
+        );
+        if (imvEntries.length === 0) return null;
+
+        // 1. Qualidade média das IMVs (0-1)
+        const avgIQI =
+          imvEntries.reduce((sum, e) => {
+            const c = e.content as { reversible?: boolean; cheap?: boolean; specific?: boolean; measurable?: boolean };
+            return sum + ((c.reversible ? 1 : 0) + (c.cheap ? 1 : 0) + (c.specific ? 1 : 0) + (c.measurable ? 1 : 0)) / 4;
+          }, 0) / imvEntries.length;
+
+        // 2. Taxa de aferição: P com A posterior no mesmo projeto
+        const followCount = imvEntries.filter((pEntry) =>
+          entries.some(
+            (e) =>
+              e.entry_type === 'structured_A' &&
+              e.project_id === pEntry.project_id &&
+              new Date(e.created_at) > new Date(pEntry.created_at),
+          ),
+        ).length;
+        const followRate = followCount / imvEntries.length;
+
+        // 3. Pressão de bloqueio: projetos ativos nessa camada que estão travados
+        const layerProjects = projects.filter(
+          (p) => p.current_layer === layer && p.state !== 'archived' && p.state !== 'concluded',
+        );
+        const blockRate =
+          layerProjects.length > 0
+            ? layerProjects.filter((p) => p.state === 'blocked').length / layerProjects.length
+            : 0;
+
+        // Dificuldade = soma ponderada (0-100)
+        const difficulty = Math.min(
+          100,
+          Math.round((1 - avgIQI) * 40 + (1 - followRate) * 40 + blockRate * 20),
+        );
+
+        return {
+          layer,
+          difficulty,
+          imvCount: imvEntries.length,
+          avgIQI: Math.round(avgIQI * 100),
+          followRate: Math.round(followRate * 100),
+          blockRate: Math.round(blockRate * 100),
+        };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+  }, [entries, projects]);
 
   const lastPrinciples = principles.slice(-3).reverse();
   const copaCycles = entries.filter(
@@ -315,6 +384,46 @@ export function OperatorPanel() {
           </section>
         )}
 
+        {/* Seção 3C — Índice de Dificuldade por Camada */}
+        {layerDifficulty.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-heading text-foreground">DIFICULDADE POR CAMADA</h2>
+              <button
+                type="button"
+                onClick={() => setShowDifficultySheet(true)}
+                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors"
+                aria-label="Entender este indicador"
+              >
+                ⓘ
+              </button>
+            </div>
+            <ul className="space-y-3">
+              {layerDifficulty.map(({ layer, difficulty }) => {
+                const meta = difficultyMeta(difficulty);
+                return (
+                  <li key={layer} className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-small text-op-white font-medium">{LAYER_NAMES[layer]}</span>
+                      <span className={`text-label font-semibold ${meta.color}`}>{meta.label}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${difficulty}%`, backgroundColor: meta.barColor }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-label text-op-gray">
+                      <span>Índice de dificuldade</span>
+                      <span className={meta.color}>{difficulty}/100</span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
         {/* Seção 4 — Banco de Princípios */}
         <section className="space-y-2">
           <h2 className="text-heading text-foreground">Banco de princípios</h2>
@@ -369,6 +478,76 @@ export function OperatorPanel() {
           </section>
         )}
       </div>
+
+      {/* Sheet explicativo — Dificuldade por Camada */}
+      {showDifficultySheet && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setShowDifficultySheet(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">Dificuldade por Camada</h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que significa</p>
+              <p className="text-body text-op-white">
+                Mede o nível de dificuldade operacional em cada camada com base em três fatores reais do seu histórico.
+                Quanto maior o índice, mais essa camada ainda está resistindo ao método.
+              </p>
+              <ul className="mt-2 space-y-1 text-small text-op-gray">
+                <li><span className="text-green-400 font-semibold">Zona de domínio</span> — índice abaixo de 25</li>
+                <li><span className="text-op-cyan font-semibold">Operando bem</span> — 25 a 49</li>
+                <li><span className="text-amber-400 font-semibold">Atenção necessária</span> — 50 a 74</li>
+                <li><span className="text-red-400 font-semibold">Gargalo crítico</span> — 75 ou mais</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
+              <div className="space-y-3 text-small">
+                {layerDifficulty.map(({ layer, difficulty, avgIQI, followRate, blockRate, imvCount }) => {
+                  const meta = difficultyMeta(difficulty);
+                  return (
+                    <div key={layer} className="border-b border-op-gray/20 pb-3 space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-op-white font-semibold">{LAYER_NAMES[layer]}</span>
+                        <span className={`font-semibold ${meta.color}`}>{difficulty}/100</span>
+                      </div>
+                      <div className="flex justify-between text-op-gray">
+                        <span>Qualidade das IMVs ({imvCount} registros)</span>
+                        <span>{avgIQI}% → peso 40%</span>
+                      </div>
+                      <div className="flex justify-between text-op-gray">
+                        <span>Taxa de aferição (P→A concluídos)</span>
+                        <span>{followRate}% → peso 40%</span>
+                      </div>
+                      <div className="flex justify-between text-op-gray">
+                        <span>Pressão de bloqueio (projetos travados)</span>
+                        <span>{blockRate}% → peso 20%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                <p className="text-label text-op-gray">
+                  Dificuldade = (100% − qualidade) × 40 + (100% − aferição) × 40 + bloqueio × 20
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowDifficultySheet(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sheet explicativo — Maturidade por Tipo de Cenário */}
       {showMaturitySheet && (
