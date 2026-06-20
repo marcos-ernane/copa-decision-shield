@@ -71,6 +71,7 @@ export function OperatorPanel() {
   const [pauseReason, setPauseReason] = useState('');
   const [showMaturitySheet, setShowMaturitySheet] = useState(false);
   const [showDifficultySheet, setShowDifficultySheet] = useState(false);
+  const [showDifficultyLearnMore, setShowDifficultyLearnMore] = useState(false);
 
   async function handleArchive() {
     if (!archivingId) return;
@@ -507,7 +508,16 @@ export function OperatorPanel() {
             </div>
 
             <div className="space-y-3">
-              <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
+              <div className="flex items-center justify-between">
+                <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
+                <button
+                  type="button"
+                  onClick={() => setShowDifficultyLearnMore(true)}
+                  className="text-label text-op-cyan hover:underline"
+                >
+                  saiba mais
+                </button>
+              </div>
               <div className="space-y-3 text-small">
                 {layerDifficulty.map(({ layer, difficulty, avgIQI, followRate, blockRate, imvCount }) => {
                   const meta = difficultyMeta(difficulty);
@@ -541,6 +551,54 @@ export function OperatorPanel() {
             <button
               type="button"
               onClick={() => setShowDifficultySheet(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal — Saiba mais: fatores do Índice de Dificuldade */}
+      {showDifficultyLearnMore && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+          onClick={() => setShowDifficultyLearnMore(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl bg-op-navy border border-op-gray/30 p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-heading text-op-white font-semibold">Como o índice é calculado</h3>
+            <table className="w-full text-small border-collapse">
+              <thead>
+                <tr className="border-b border-op-gray/30">
+                  <th className="text-left text-op-gray font-semibold pb-2 pr-3">Fator</th>
+                  <th className="text-center text-op-gray font-semibold pb-2 pr-3">Peso</th>
+                  <th className="text-left text-op-gray font-semibold pb-2">Lógica</th>
+                </tr>
+              </thead>
+              <tbody className="text-op-white">
+                <tr className="border-b border-op-gray/20">
+                  <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Qualidade das IMVs</td>
+                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">40%</td>
+                  <td className="py-2.5 text-op-gray">Quanto mais critérios (reversível / barato / específico / mensurável) faltando, mais difícil</td>
+                </tr>
+                <tr className="border-b border-op-gray/20">
+                  <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Taxa de aferição</td>
+                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">40%</td>
+                  <td className="py-2.5 text-op-gray">% de IMVs que ficaram sem APA posterior — quanto mais sem aferição, mais difícil</td>
+                </tr>
+                <tr>
+                  <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Pressão de bloqueio</td>
+                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">20%</td>
+                  <td className="py-2.5 text-op-gray">% de projetos ativos nessa camada com estado "Travado"</td>
+                </tr>
+              </tbody>
+            </table>
+            <button
+              type="button"
+              onClick={() => setShowDifficultyLearnMore(false)}
               className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
             >
               Fechar
