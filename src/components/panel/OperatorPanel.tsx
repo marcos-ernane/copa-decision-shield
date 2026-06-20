@@ -44,6 +44,13 @@ function depthMeta(score: number): { label: string; color: string; barColor: str
   return { label: 'Registro superficial', color: 'text-op-gray', barColor: '#64748b' };
 }
 
+function trendDisplay(t: '↑' | '↓' | '→' | null): { arrow: string; label: string; color: string } {
+  if (t === '↑') return { arrow: '↑', label: 'Subindo', color: 'text-green-400' };
+  if (t === '↓') return { arrow: '↓', label: 'Caindo', color: 'text-red-400' };
+  if (t === '→') return { arrow: '→', label: 'Estável', color: 'text-op-gray' };
+  return { arrow: '—', label: 'Sem dados suficientes', color: 'text-op-gray/50' };
+}
+
 function reusabilityMeta(score: number): { label: string; color: string; barColor: string } {
   if (score >= 75) return { label: 'Alta reusabilidade', color: 'text-green-400', barColor: '#4ade80' };
   if (score >= 50) return { label: 'Reusabilidade boa', color: 'text-op-cyan', barColor: '#22C5DA' };
@@ -100,6 +107,7 @@ export function OperatorPanel() {
   const [showDepthSheet, setShowDepthSheet] = useState(false);
   const [showPersistenceSheet, setShowPersistenceSheet] = useState(false);
   const [showReusabilitySheet, setShowReusabilitySheet] = useState(false);
+  const [showGrowthSheet, setShowGrowthSheet] = useState(false);
 
   async function handleArchive() {
     if (!archivingId) return;
@@ -339,6 +347,50 @@ export function OperatorPanel() {
       score,
     };
   }, [principles]);
+
+  const growthTrajectory = useMemo(() => {
+    const now = Date.now();
+    const d30 = 30 * 24 * 60 * 60 * 1000;
+    const d60 = 60 * 24 * 60 * 60 * 1000;
+    const inW = (dateStr: string, from: number, to: number) => {
+      const t = new Date(dateStr).getTime();
+      return t >= now - to && t < now - from;
+    };
+    const delta = (curr: number | null, prev: number | null): '↑' | '↓' | '→' | null => {
+      if (curr === null || prev === null) return null;
+      if (prev === 0 && curr === 0) return '→';
+      if (prev === 0) return '↑';
+      const r = (curr - prev) / prev;
+      if (r > 0.05) return '↑';
+      if (r < -0.05) return '↓';
+      return '→';
+    };
+
+    // Clareza: % de pulsos com fato limpo
+    const pCurr = entries.filter((e) => e.entry_type === 'pulse' && inW(e.created_at, 0, d30));
+    const pPrev = entries.filter((e) => e.entry_type === 'pulse' && inW(e.created_at, d30, d60));
+    const clarityCurr = pCurr.length > 0 ? pCurr.filter((e) => e.is_clean_fact).length / pCurr.length : null;
+    const clarityPrev = pPrev.length > 0 ? pPrev.filter((e) => e.is_clean_fact).length / pPrev.length : null;
+
+    // Execução: APAs / IMVs
+    const imvCurr = entries.filter((e) => e.entry_type === 'structured_P' && inW(e.created_at, 0, d30)).length;
+    const apaCurr = entries.filter((e) => e.entry_type === 'structured_A' && inW(e.created_at, 0, d30)).length;
+    const imvPrev = entries.filter((e) => e.entry_type === 'structured_P' && inW(e.created_at, d30, d60)).length;
+    const apaPrev = entries.filter((e) => e.entry_type === 'structured_A' && inW(e.created_at, d30, d60)).length;
+    const execCurr = imvCurr > 0 ? apaCurr / imvCurr : null;
+    const execPrev = imvPrev > 0 ? apaPrev / imvPrev : null;
+
+    // Aprendizado: princípios criados
+    const learnCurr = principles.filter((p) => inW(p.created_at, 0, d30)).length;
+    const learnPrev = principles.filter((p) => inW(p.created_at, d30, d60)).length;
+
+    const clarity = { trend: delta(clarityCurr, clarityPrev), curr: clarityCurr !== null ? Math.round(clarityCurr * 100) : null, prev: clarityPrev !== null ? Math.round(clarityPrev * 100) : null };
+    const execution = { trend: delta(execCurr, execPrev), curr: execCurr !== null ? Math.round(execCurr * 100) : null, prev: execPrev !== null ? Math.round(execPrev * 100) : null };
+    const learning = { trend: delta(learnCurr > 0 ? learnCurr : null, learnPrev > 0 ? learnPrev : null), curr: learnCurr, prev: learnPrev };
+
+    if (clarity.trend === null && execution.trend === null && learning.trend === null) return null;
+    return { clarity, execution, learning };
+  }, [entries, principles]);
 
   const lastPrinciples = principles.slice(-3).reverse();
   const copaCycles = entries.filter(
@@ -689,6 +741,56 @@ export function OperatorPanel() {
           </section>
         )}
 
+        {/* Seção 3G — Trajetória de Crescimento */}
+        {growthTrajectory && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-heading text-foreground">TRAJETÓRIA DE CRESCIMENTO</h2>
+              <button
+                type="button"
+                onClick={() => setShowGrowthSheet(true)}
+                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors"
+                aria-label="Entender este indicador"
+              >
+                ⓘ
+              </button>
+            </div>
+            <div className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-3">
+              {(
+                [
+                  { label: 'Clareza', data: growthTrajectory.clarity, unit: '%' },
+                  { label: 'Execução', data: growthTrajectory.execution, unit: '%' },
+                ] as const
+              ).map(({ label, data }) => {
+                const td = trendDisplay(data.trend);
+                return (
+                  <div key={label} className="flex items-center justify-between gap-3">
+                    <span className="text-small text-op-gray w-24 shrink-0">{label}</span>
+                    <span className={`text-title font-bold leading-none ${td.color}`}>{td.arrow}</span>
+                    <span className={`text-small font-semibold flex-1 ${td.color}`}>{td.label}</span>
+                    {data.curr !== null && data.prev !== null && (
+                      <span className="text-label text-op-gray">{data.prev}% → {data.curr}%</span>
+                    )}
+                  </div>
+                );
+              })}
+              {(() => {
+                const { learning } = growthTrajectory;
+                const td = trendDisplay(learning.trend);
+                return (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-small text-op-gray w-24 shrink-0">Aprendizado</span>
+                    <span className={`text-title font-bold leading-none ${td.color}`}>{td.arrow}</span>
+                    <span className={`text-small font-semibold flex-1 ${td.color}`}>{td.label}</span>
+                    <span className="text-label text-op-gray">{learning.prev} → {learning.curr} princípios</span>
+                  </div>
+                );
+              })()}
+              <p className="text-label text-op-gray pt-1">Últimos 30 dias vs 30 dias anteriores</p>
+            </div>
+          </section>
+        )}
+
         {/* Seção 4 — Banco de Princípios */}
         <section className="space-y-2">
           <h2 className="text-heading text-foreground">Banco de princípios</h2>
@@ -743,6 +845,83 @@ export function OperatorPanel() {
           </section>
         )}
       </div>
+
+      {/* Sheet explicativo — Trajetória de Crescimento */}
+      {showGrowthSheet && growthTrajectory && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setShowGrowthSheet(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">Trajetória de Crescimento</h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que significa</p>
+              <p className="text-body text-op-white">
+                Compara seu desempenho nos últimos 30 dias com os 30 dias anteriores.
+                Mostra se você está avançando, estável ou recuando em três dimensões do método.
+              </p>
+              <ul className="mt-2 space-y-1 text-small text-op-gray">
+                <li><span className="text-green-400 font-semibold">↑ Subindo</span> — crescimento acima de 5%</li>
+                <li><span className="text-op-gray font-semibold">→ Estável</span> — variação dentro de 5%</li>
+                <li><span className="text-red-400 font-semibold">↓ Caindo</span> — queda acima de 5%</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
+              <div className="space-y-1 text-small">
+                <div className="border-b border-op-gray/20 pb-2 space-y-0.5">
+                  <div className="flex justify-between">
+                    <span className="text-op-white font-semibold">Clareza</span>
+                    <span className={growthTrajectory.clarity.trend ? trendDisplay(growthTrajectory.clarity.trend).color : 'text-op-gray'}>
+                      {trendDisplay(growthTrajectory.clarity.trend).arrow}
+                    </span>
+                  </div>
+                  <p className="text-op-gray">% de pulsos com fato limpo (is_clean_fact)</p>
+                  {growthTrajectory.clarity.curr !== null && growthTrajectory.clarity.prev !== null && (
+                    <p className="text-op-gray">{growthTrajectory.clarity.prev}% (período anterior) → {growthTrajectory.clarity.curr}% (últimos 30 dias)</p>
+                  )}
+                </div>
+                <div className="border-b border-op-gray/20 pb-2 pt-1 space-y-0.5">
+                  <div className="flex justify-between">
+                    <span className="text-op-white font-semibold">Execução</span>
+                    <span className={growthTrajectory.execution.trend ? trendDisplay(growthTrajectory.execution.trend).color : 'text-op-gray'}>
+                      {trendDisplay(growthTrajectory.execution.trend).arrow}
+                    </span>
+                  </div>
+                  <p className="text-op-gray">Razão APAs / IMVs (quantas provas geraram aferição)</p>
+                  {growthTrajectory.execution.curr !== null && growthTrajectory.execution.prev !== null && (
+                    <p className="text-op-gray">{growthTrajectory.execution.prev}% (período anterior) → {growthTrajectory.execution.curr}% (últimos 30 dias)</p>
+                  )}
+                </div>
+                <div className="pb-1 pt-1 space-y-0.5">
+                  <div className="flex justify-between">
+                    <span className="text-op-white font-semibold">Aprendizado</span>
+                    <span className={growthTrajectory.learning.trend ? trendDisplay(growthTrajectory.learning.trend).color : 'text-op-gray'}>
+                      {trendDisplay(growthTrajectory.learning.trend).arrow}
+                    </span>
+                  </div>
+                  <p className="text-op-gray">Princípios criados no período</p>
+                  <p className="text-op-gray">{growthTrajectory.learning.prev} (período anterior) → {growthTrajectory.learning.curr} (últimos 30 dias)</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowGrowthSheet(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sheet explicativo — Reusabilidade de Princípios */}
       {showReusabilitySheet && principleReusability && (
