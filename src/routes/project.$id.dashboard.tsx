@@ -163,15 +163,20 @@ function buildVelocityColumns(v: { cToO: number | null; oToP: number | null; pTo
         j++;
       }
       if (nodes.length > 2) {
-        // 2+ transições consecutivas no mesmo dia → agrupa com colchetes
-        result.push({ label: `[${nodes.join('→')}]`, days: 0, isGroup: true });
+        // 2+ transições no mesmo dia → agrupa; mínimo 1d para exibição
+        result.push({ label: `[${nodes.join('→')}]`, days: 1, isGroup: true });
         i = j;
       } else {
-        result.push({ label: `${curr.from}→${curr.to}`, days: 0, isGroup: false });
+        result.push({ label: `${curr.from}→${curr.to}`, days: 1, isGroup: false });
         i++;
       }
     } else {
-      result.push({ label: `${curr.from}→${curr.to}`, days: curr.days, isGroup: false });
+      // Dias > 0 ou null (pendente)
+      result.push({
+        label: `${curr.from}→${curr.to}`,
+        days: curr.days !== null ? Math.max(1, curr.days) : null,
+        isGroup: false,
+      });
       i++;
     }
   }
@@ -259,6 +264,11 @@ function ProjectDashboard() {
   const cycleVelocity = computeCycleVelocity(entries);
   const velocityColumns = buildVelocityColumns(cycleVelocity);
   const showVelocityCard = entries.some((e) => e.entry_type === 'structured_C');
+  const adjustedTotal = (() => {
+    const { cToO, oToP, pToA } = cycleVelocity;
+    if (cToO === null || oToP === null || pToA === null) return null;
+    return Math.max(1, cToO) + Math.max(1, oToP) + Math.max(1, pToA);
+  })();
 
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
@@ -532,22 +542,24 @@ function ProjectDashboard() {
                 <Info className="size-4" />
               </button>
             </div>
-            <div className="flex items-end gap-4">
+            <div className="flex items-start gap-2">
               {velocityColumns.map((col) => (
-                <div key={col.label} className="text-center">
-                  <p className={`text-label mb-0.5 ${col.isGroup ? 'text-op-cyan' : 'text-op-gray'}`}>
+                <div key={col.label} className="flex-1 text-center">
+                  <p className={`text-label mb-1 ${col.isGroup ? 'text-op-cyan' : 'text-op-gray'}`}>
                     {col.label}
                   </p>
-                  <p className="text-heading text-op-white font-semibold">
-                    {col.days !== null ? `${col.days}d` : ''}
-                  </p>
+                  {col.days !== null ? (
+                    <p className="text-heading text-op-white font-semibold">{col.days}d</p>
+                  ) : (
+                    <p className="text-label text-op-gray italic leading-snug">Fase aguardando registro</p>
+                  )}
                 </div>
               ))}
-              {cycleVelocity.total !== null && (
-                <div className="text-center ml-auto">
-                  <p className="text-label text-op-gray mb-0.5">Total</p>
+              {adjustedTotal !== null && (
+                <div className="flex-1 text-center">
+                  <p className="text-label text-op-gray mb-1">Total</p>
                   <p className="text-heading font-semibold" style={{ color: '#0EA5E9' }}>
-                    {cycleVelocity.total}d
+                    {adjustedTotal}d
                   </p>
                 </div>
               )}
@@ -575,8 +587,10 @@ function ProjectDashboard() {
                 <p className="text-body text-op-white">
                   Mostra quantos dias você levou para passar de uma fase COPA para a próxima neste projeto.
                   Transições longas indicam onde você tende a travar ou perder foco.
-                  Quando duas ou mais fases foram registradas no mesmo dia, elas aparecem agrupadas
-                  entre colchetes — ex: <span className="text-op-cyan font-mono">[C→O→P]</span> — com 0 dias entre elas.
+                  O mínimo exibido é sempre <strong>1 dia</strong> — todo registro acontece em pelo menos um dia.
+                  Quando duas ou mais fases são registradas no mesmo dia, aparecem agrupadas entre colchetes —
+                  ex: <span className="text-op-cyan font-mono">[C→O→P]</span>.
+                  Fases ainda não registradas mostram "Fase aguardando registro".
                 </p>
               </div>
 
