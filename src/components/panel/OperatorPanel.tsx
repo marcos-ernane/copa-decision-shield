@@ -618,7 +618,7 @@ export function OperatorPanel() {
                 <div className="flex justify-between pt-1">
                   <span className="text-op-gray font-semibold">Score final</span>
                   <span style={{ color: depthMeta(registrationDepth.score).barColor }} className="font-semibold">
-                    {registrationDepth.totalWeight} ÷ {registrationDepth.total * 5} × 100 = {registrationDepth.score}
+                    {registrationDepth.totalWeight} / {registrationDepth.total * 5} × 100 = {registrationDepth.score}
                   </span>
                 </div>
               </div>
