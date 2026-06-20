@@ -228,19 +228,36 @@ export function OperatorPanel() {
 
   const registrationDepth = useMemo(() => {
     if (entries.length === 0) return null;
-    const totalWeight = entries.reduce((sum, e) => sum + (DEPTH_WEIGHTS[e.entry_type] ?? 2), 0);
-    const score = Math.round((totalWeight / (entries.length * 5)) * 100);
-    const pulsos = entries.filter((e) =>
+
+    const pulsoEntries = entries.filter((e) =>
       ['pulse', 'passive', 'protocol_5min'].includes(e.entry_type),
-    ).length;
-    const analises = entries.filter((e) =>
+    );
+    const analiseEntries = entries.filter((e) =>
       ['structured_C', 'structured_O', 'structured_P', 'copa_session', 'pressure_session',
         'creative_session', 'simulation_session'].includes(e.entry_type),
-    ).length;
-    const reflexoes = entries.filter((e) =>
+    );
+    const reflexaoEntries = entries.filter((e) =>
       ['structured_A', 'corrective'].includes(e.entry_type),
-    ).length;
-    return { score, total: entries.length, pulsos, analises, reflexoes, totalWeight };
+    );
+
+    const pulsosWeight = pulsoEntries.reduce((s, e) => s + (DEPTH_WEIGHTS[e.entry_type] ?? 2), 0);
+    const analisesWeight = analiseEntries.reduce((s, e) => s + (DEPTH_WEIGHTS[e.entry_type] ?? 2), 0);
+    const reflexoesWeight = reflexaoEntries.reduce((s, e) => s + (DEPTH_WEIGHTS[e.entry_type] ?? 2), 0);
+    const totalWeight = pulsosWeight + analisesWeight + reflexoesWeight;
+
+    const score = Math.round((totalWeight / (entries.length * 5)) * 100);
+
+    return {
+      score,
+      total: entries.length,
+      pulsos: pulsoEntries.length,
+      analises: analiseEntries.length,
+      reflexoes: reflexaoEntries.length,
+      pulsosWeight,
+      analisesWeight,
+      reflexoesWeight,
+      totalWeight,
+    };
   }, [entries]);
 
   const lastPrinciples = principles.slice(-3).reverse();
@@ -592,24 +609,22 @@ export function OperatorPanel() {
               <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
               <div className="space-y-1 text-small">
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Total de registros</span>
-                  <span className="text-op-white">{registrationDepth.total}</span>
+                  <span className="text-op-gray">Pulsos (peso 1) — {registrationDepth.pulsos} entrada{registrationDepth.pulsos !== 1 ? 's' : ''}</span>
+                  <span className="text-op-white">{registrationDepth.pulsos} × 1 = {registrationDepth.pulsosWeight} pt{registrationDepth.pulsosWeight !== 1 ? 's' : ''}</span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Pulsos (peso 1) — capturas rápidas</span>
-                  <span className="text-op-white">{registrationDepth.pulsos} entradas</span>
+                  <span className="text-op-gray">Análises (peso 2–4) — {registrationDepth.analises} entrada{registrationDepth.analises !== 1 ? 's' : ''}</span>
+                  <span className="text-op-white">soma ponderada = {registrationDepth.analisesWeight} pts</span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Análises (peso 2–4) — formatos estruturados</span>
-                  <span className="text-op-white">{registrationDepth.analises} entradas</span>
+                  <span className="text-op-gray">Reflexões (peso 4–5) — {registrationDepth.reflexoes} entrada{registrationDepth.reflexoes !== 1 ? 's' : ''}</span>
+                  <span className="text-op-white">soma ponderada = {registrationDepth.reflexoesWeight} pt{registrationDepth.reflexoesWeight !== 1 ? 's' : ''}</span>
                 </div>
-                <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Reflexões (peso 4–5) — APAs e corretivos</span>
-                  <span className="text-op-white">{registrationDepth.reflexoes} entradas</span>
-                </div>
-                <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Soma dos pontos de peso</span>
-                  <span className="text-op-white">{registrationDepth.totalWeight} pts</span>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1 font-semibold">
+                  <span className="text-op-gray">Total de pontos de peso</span>
+                  <span className="text-op-white">
+                    {registrationDepth.pulsosWeight} + {registrationDepth.analisesWeight} + {registrationDepth.reflexoesWeight} = {registrationDepth.totalWeight} pts
+                  </span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
                   <span className="text-op-gray">Máximo possível ({registrationDepth.total} × 5)</span>
