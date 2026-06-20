@@ -323,7 +323,8 @@ function ProjectDashboard() {
   const adjustedTotal = (() => {
     const { cToO, oToP, pToA } = cycleVelocity;
     if (cToO === null || oToP === null || pToA === null) return null;
-    return Math.max(1, cToO) + Math.max(1, oToP) + Math.max(1, pToA);
+    // Soma as colunas já agrupadas (não as 3 transições brutas individualmente)
+    return velocityColumns.reduce((sum, col) => sum + (col.days ?? 0), 0);
   })();
 
   const counts = {
