@@ -44,6 +44,13 @@ function depthMeta(score: number): { label: string; color: string; barColor: str
   return { label: 'Registro superficial', color: 'text-op-gray', barColor: '#64748b' };
 }
 
+function persistenceMeta(index: number): { label: string; color: string; barColor: string } {
+  if (index < 25) return { label: 'Gargalo ágil', color: 'text-green-400', barColor: '#4ade80' };
+  if (index < 50) return { label: 'Moderado', color: 'text-op-cyan', barColor: '#22C5DA' };
+  if (index < 75) return { label: 'Persistente', color: 'text-amber-400', barColor: '#fbbf24' };
+  return { label: 'Gargalo crítico', color: 'text-red-400', barColor: '#f87171' };
+}
+
 const LAYER_NAMES: Record<OperationalLayer, string> = {
   operabilidade: 'Operabilidade',
   conversao: 'Conversão',
@@ -84,6 +91,7 @@ export function OperatorPanel() {
   const [showDifficultySheet, setShowDifficultySheet] = useState(false);
   const [showDifficultyLearnMore, setShowDifficultyLearnMore] = useState(false);
   const [showDepthSheet, setShowDepthSheet] = useState(false);
+  const [showPersistenceSheet, setShowPersistenceSheet] = useState(false);
 
   async function handleArchive() {
     if (!archivingId) return;
@@ -246,6 +254,57 @@ export function OperatorPanel() {
       analisesWeight,
       reflexoesWeight,
       totalWeight,
+    };
+  }, [entries]);
+
+  const bottleneckPersistence = useMemo(() => {
+    const oEntries = entries.filter((e) => e.entry_type === 'structured_O');
+    if (oEntries.length === 0) return null;
+
+    const resolvedDays: number[] = [];
+    let unresolved = 0;
+
+    for (const oEntry of oEntries) {
+      const nextA = entries
+        .filter(
+          (e) =>
+            e.entry_type === 'structured_A' &&
+            e.project_id === oEntry.project_id &&
+            new Date(e.created_at) > new Date(oEntry.created_at),
+        )
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
+
+      if (nextA) {
+        const days = Math.max(
+          0,
+          Math.round(
+            (new Date(nextA.created_at).getTime() - new Date(oEntry.created_at).getTime()) /
+              (1000 * 60 * 60 * 24),
+          ),
+        );
+        resolvedDays.push(days);
+      } else {
+        unresolved++;
+      }
+    }
+
+    const avgDays =
+      resolvedDays.length > 0
+        ? Math.round(resolvedDays.reduce((s, d) => s + d, 0) / resolvedDays.length)
+        : null;
+
+    const unresolvedPct = Math.round((unresolved / oEntries.length) * 100);
+    const daysPct = Math.round((Math.min(avgDays ?? 60, 60) / 60) * 100);
+    const persistenceIndex = Math.round(unresolvedPct * 0.6 + daysPct * 0.4);
+
+    return {
+      total: oEntries.length,
+      resolved: resolvedDays.length,
+      unresolved,
+      avgDays,
+      unresolvedPct,
+      daysPct,
+      persistenceIndex,
     };
   }, [entries]);
 
@@ -512,6 +571,49 @@ export function OperatorPanel() {
           </section>
         )}
 
+        {/* Seção 3E — Persistência do Gargalo */}
+        {bottleneckPersistence && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-heading text-foreground">PERSISTÊNCIA DO GARGALO</h2>
+              <button
+                type="button"
+                onClick={() => setShowPersistenceSheet(true)}
+                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors"
+                aria-label="Entender este indicador"
+              >
+                ⓘ
+              </button>
+            </div>
+            <div className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className={`text-small font-semibold ${persistenceMeta(bottleneckPersistence.persistenceIndex).color}`}>
+                  {persistenceMeta(bottleneckPersistence.persistenceIndex).label}
+                </span>
+                <span className={`text-label font-semibold ${persistenceMeta(bottleneckPersistence.persistenceIndex).color}`}>
+                  {bottleneckPersistence.persistenceIndex}/100
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${bottleneckPersistence.persistenceIndex}%`,
+                    backgroundColor: persistenceMeta(bottleneckPersistence.persistenceIndex).barColor,
+                  }}
+                />
+              </div>
+              <div className="flex justify-between text-label text-op-gray pt-0.5">
+                <span>{bottleneckPersistence.resolved} resolvido{bottleneckPersistence.resolved !== 1 ? 's' : ''}</span>
+                {bottleneckPersistence.avgDays !== null && (
+                  <span>média {bottleneckPersistence.avgDays} dia{bottleneckPersistence.avgDays !== 1 ? 's' : ''} para resolver</span>
+                )}
+                <span>{bottleneckPersistence.unresolved} sem resolução</span>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Seção 4 — Banco de Princípios */}
         <section className="space-y-2">
           <h2 className="text-heading text-foreground">Banco de princípios</h2>
@@ -566,6 +668,75 @@ export function OperatorPanel() {
           </section>
         )}
       </div>
+
+      {/* Sheet explicativo — Persistência do Gargalo */}
+      {showPersistenceSheet && bottleneckPersistence && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setShowPersistenceSheet(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">Persistência do Gargalo</h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que significa</p>
+              <p className="text-body text-op-white">
+                Mede quanto tempo seus gargalos levam para ser resolvidos. Para cada fase de Organização
+                (mapeamento do gargalo), verifica se houve uma Aferição (APA) posterior e quantos dias levou.
+                Índice alto significa gargalos que resistem por muito tempo.
+              </p>
+              <ul className="mt-2 space-y-1 text-small text-op-gray">
+                <li><span className="text-green-400 font-semibold">Gargalo ágil</span> — índice abaixo de 25</li>
+                <li><span className="text-op-cyan font-semibold">Moderado</span> — 25 a 49</li>
+                <li><span className="text-amber-400 font-semibold">Persistente</span> — 50 a 74</li>
+                <li><span className="text-red-400 font-semibold">Gargalo crítico</span> — 75 ou mais</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
+              <div className="space-y-1 text-small">
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Total de gargalos mapeados (fase O)</span>
+                  <span className="text-op-white">{bottleneckPersistence.total}</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Resolvidos (seguidos de APA)</span>
+                  <span className="text-op-white">{bottleneckPersistence.resolved}</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Sem resolução</span>
+                  <span className="text-op-white">{bottleneckPersistence.unresolved} = {bottleneckPersistence.unresolvedPct}%</span>
+                </div>
+                {bottleneckPersistence.avgDays !== null && (
+                  <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                    <span className="text-op-gray">Média de dias para resolver</span>
+                    <span className="text-op-white">{bottleneckPersistence.avgDays} dias = {bottleneckPersistence.daysPct}% de 60 dias</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-1">
+                  <span className="text-op-gray font-semibold">Índice de persistência</span>
+                  <span style={{ color: persistenceMeta(bottleneckPersistence.persistenceIndex).barColor }} className="font-semibold">
+                    {bottleneckPersistence.unresolvedPct}% × 60% + {bottleneckPersistence.daysPct}% × 40% = {bottleneckPersistence.persistenceIndex}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowPersistenceSheet(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sheet explicativo — Profundidade de Registro */}
       {showDepthSheet && registrationDepth && (
