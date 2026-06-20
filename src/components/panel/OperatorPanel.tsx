@@ -33,12 +33,29 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 
+const SCENARIO_LABELS: Record<ScenarioType, string> = {
+  fluxo: 'Fluxo',
+  processo: 'Processo',
+  oferta: 'Oferta',
+  relacionamento: 'Relacionamento',
+  pressao: 'Pressão',
+};
+
+function maturityMeta(rate: number | null): { label: string; color: string; barColor: string } {
+  if (rate === null) return { label: 'Sem dados', color: 'text-op-gray', barColor: '#475569' };
+  if (rate >= 0.75) return { label: 'Mestre', color: 'text-green-400', barColor: '#4ade80' };
+  if (rate >= 0.5) return { label: 'Operando', color: 'text-op-cyan', barColor: '#22C5DA' };
+  if (rate >= 0.25) return { label: 'Aprendendo', color: 'text-amber-400', barColor: '#fbbf24' };
+  return { label: 'Iniciando', color: 'text-op-gray', barColor: '#64748b' };
+}
+
 export function OperatorPanel() {
   const navigate = useNavigate();
   const { projects, entries, principles, baselines, loading, refresh } = usePanelData();
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [pausingId, setPausingId] = useState<string | null>(null);
   const [pauseReason, setPauseReason] = useState('');
+  const [showMaturitySheet, setShowMaturitySheet] = useState(false);
 
   async function handleArchive() {
     if (!archivingId) return;
@@ -102,6 +119,18 @@ export function OperatorPanel() {
     let best: [OperationalLayer, number] | null = null;
     for (const e of m) if (!best || e[1] > best[1]) best = e;
     return best;
+  }, [projects]);
+
+  const scenarioMaturity = useMemo(() => {
+    const types: ScenarioType[] = ['fluxo', 'processo', 'oferta', 'relacionamento', 'pressao'];
+    return types
+      .map((tipo) => {
+        const started = projects.filter((p) => p.scenario_type === tipo && p.state !== 'archived');
+        const closed = started.filter((p) => p.state === 'concluded');
+        const rate = started.length > 0 ? closed.length / started.length : null;
+        return { tipo, started: started.length, closed: closed.length, rate };
+      })
+      .filter((r) => r.started > 0);
   }, [projects]);
 
   const lastPrinciples = principles.slice(-3).reverse();
@@ -230,6 +259,49 @@ export function OperatorPanel() {
           )}
         </section>
 
+        {/* Seção 3B — Maturidade por Tipo de Cenário */}
+        {scenarioMaturity.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-heading text-foreground">
+                MATURIDADE POR TIPO DE CENÁRIO
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowMaturitySheet(true)}
+                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors"
+                aria-label="Entender este indicador"
+              >
+                ⓘ
+              </button>
+            </div>
+            <ul className="space-y-3">
+              {scenarioMaturity.map(({ tipo, started, closed, rate }) => {
+                const meta = maturityMeta(rate);
+                const pct = rate !== null ? Math.round(rate * 100) : 0;
+                return (
+                  <li key={tipo} className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-small text-op-white font-medium">{SCENARIO_LABELS[tipo]}</span>
+                      <span className={`text-label font-semibold ${meta.color}`}>{meta.label}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${pct}%`, backgroundColor: meta.barColor }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-label text-op-gray">
+                      <span>{closed} concluído{closed !== 1 ? 's' : ''} de {started} projeto{started !== 1 ? 's' : ''}</span>
+                      <span className={meta.color}>{pct}%</span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
         {/* Seção 4 — Banco de Princípios */}
         <section className="space-y-2">
           <h2 className="text-heading text-foreground">Banco de princípios</h2>
@@ -284,6 +356,69 @@ export function OperatorPanel() {
           </section>
         )}
       </div>
+
+      {/* Sheet explicativo — Maturidade por Tipo de Cenário */}
+      {showMaturitySheet && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setShowMaturitySheet(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">
+              Maturidade por Tipo de Cenário
+            </h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que significa</p>
+              <p className="text-body text-op-white">
+                Mostra a taxa de fechamento dos seus projetos agrupados pelo tipo de cenário.
+                Um tipo com alta taxa indica domínio operacional naquele contexto.
+                Um tipo com baixa taxa revela onde você ainda está desenvolvendo o método.
+              </p>
+              <ul className="mt-2 space-y-1 text-small text-op-gray">
+                <li><span className="text-green-400 font-semibold">Mestre</span> — 75% ou mais dos projetos concluídos</li>
+                <li><span className="text-op-cyan font-semibold">Operando</span> — 50% a 74%</li>
+                <li><span className="text-amber-400 font-semibold">Aprendendo</span> — 25% a 49%</li>
+                <li><span className="text-op-gray font-semibold">Iniciando</span> — menos de 25%</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
+              <div className="space-y-2 text-small">
+                {scenarioMaturity.map(({ tipo, started, closed, rate }) => {
+                  const pct = rate !== null ? Math.round(rate * 100) : 0;
+                  const meta = maturityMeta(rate);
+                  return (
+                    <div key={tipo} className="flex justify-between border-b border-op-gray/20 pb-1 gap-2">
+                      <span className="text-op-gray shrink-0">{SCENARIO_LABELS[tipo]}</span>
+                      <span className="text-op-white text-right">
+                        {closed} concluído{closed !== 1 ? 's' : ''} ÷ {started} projeto{started !== 1 ? 's' : ''} ={' '}
+                        <strong className={meta.color}>{pct}%</strong>
+                      </span>
+                    </div>
+                  );
+                })}
+                <p className="text-label text-op-gray pt-1">
+                  Projetos arquivados são excluídos do cálculo.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowMaturitySheet(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Dialog: Pausar */}
       <AlertDialog open={!!pausingId} onOpenChange={(v) => { if (!v) { setPausingId(null); setPauseReason(''); } }}>
