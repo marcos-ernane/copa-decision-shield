@@ -33,6 +33,28 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 
+const DEPTH_WEIGHTS: Record<string, number> = {
+  pulse: 1,
+  passive: 1,
+  protocol_5min: 2,
+  pressure_session: 2,
+  copa_session: 3,
+  creative_session: 3,
+  simulation_session: 3,
+  structured_C: 3,
+  structured_O: 3,
+  structured_P: 4,
+  corrective: 4,
+  structured_A: 5,
+};
+
+function depthMeta(score: number): { label: string; color: string; barColor: string } {
+  if (score >= 75) return { label: 'Registro profundo', color: 'text-green-400', barColor: '#4ade80' };
+  if (score >= 50) return { label: 'Registro sólido', color: 'text-op-cyan', barColor: '#22C5DA' };
+  if (score >= 25) return { label: 'Registro básico', color: 'text-amber-400', barColor: '#fbbf24' };
+  return { label: 'Registro superficial', color: 'text-op-gray', barColor: '#64748b' };
+}
+
 const LAYER_NAMES: Record<OperationalLayer, string> = {
   operabilidade: 'Operabilidade',
   conversao: 'Conversão',
@@ -72,6 +94,7 @@ export function OperatorPanel() {
   const [showMaturitySheet, setShowMaturitySheet] = useState(false);
   const [showDifficultySheet, setShowDifficultySheet] = useState(false);
   const [showDifficultyLearnMore, setShowDifficultyLearnMore] = useState(false);
+  const [showDepthSheet, setShowDepthSheet] = useState(false);
 
   async function handleArchive() {
     if (!archivingId) return;
@@ -202,6 +225,23 @@ export function OperatorPanel() {
       })
       .filter((r): r is NonNullable<typeof r> => r !== null);
   }, [entries, projects]);
+
+  const registrationDepth = useMemo(() => {
+    if (entries.length === 0) return null;
+    const totalWeight = entries.reduce((sum, e) => sum + (DEPTH_WEIGHTS[e.entry_type] ?? 2), 0);
+    const score = Math.round((totalWeight / (entries.length * 5)) * 100);
+    const pulsos = entries.filter((e) =>
+      ['pulse', 'passive', 'protocol_5min'].includes(e.entry_type),
+    ).length;
+    const analises = entries.filter((e) =>
+      ['structured_C', 'structured_O', 'structured_P', 'copa_session', 'pressure_session',
+        'creative_session', 'simulation_session'].includes(e.entry_type),
+    ).length;
+    const reflexoes = entries.filter((e) =>
+      ['structured_A', 'corrective'].includes(e.entry_type),
+    ).length;
+    return { score, total: entries.length, pulsos, analises, reflexoes };
+  }, [entries]);
 
   const lastPrinciples = principles.slice(-3).reverse();
   const copaCycles = entries.filter(
@@ -425,6 +465,47 @@ export function OperatorPanel() {
           </section>
         )}
 
+        {/* Seção 3D — Profundidade de Registro */}
+        {registrationDepth && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-heading text-foreground">PROFUNDIDADE DE REGISTRO</h2>
+              <button
+                type="button"
+                onClick={() => setShowDepthSheet(true)}
+                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors"
+                aria-label="Entender este indicador"
+              >
+                ⓘ
+              </button>
+            </div>
+            <div className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className={`text-small font-semibold ${depthMeta(registrationDepth.score).color}`}>
+                  {depthMeta(registrationDepth.score).label}
+                </span>
+                <span className={`text-label font-semibold ${depthMeta(registrationDepth.score).color}`}>
+                  {registrationDepth.score}/100
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${registrationDepth.score}%`,
+                    backgroundColor: depthMeta(registrationDepth.score).barColor,
+                  }}
+                />
+              </div>
+              <div className="flex justify-between text-label text-op-gray pt-0.5">
+                <span>Pulsos: {registrationDepth.pulsos}</span>
+                <span>Análises: {registrationDepth.analises}</span>
+                <span>Reflexões: {registrationDepth.reflexoes}</span>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Seção 4 — Banco de Princípios */}
         <section className="space-y-2">
           <h2 className="text-heading text-foreground">Banco de princípios</h2>
@@ -479,6 +560,69 @@ export function OperatorPanel() {
           </section>
         )}
       </div>
+
+      {/* Sheet explicativo — Profundidade de Registro */}
+      {showDepthSheet && registrationDepth && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setShowDepthSheet(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">Profundidade de Registro</h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que significa</p>
+              <p className="text-body text-op-white">
+                Mede o quanto seus registros vão além da superfície. Um operador que só faz pulsos rápidos
+                tem profundidade baixa. Quem passa pelo ciclo completo e extrai princípios tem profundidade alta.
+              </p>
+              <ul className="mt-2 space-y-1 text-small text-op-gray">
+                <li><span className="text-green-400 font-semibold">Registro profundo</span> — 75 ou mais</li>
+                <li><span className="text-op-cyan font-semibold">Registro sólido</span> — 50 a 74</li>
+                <li><span className="text-amber-400 font-semibold">Registro básico</span> — 25 a 49</li>
+                <li><span className="text-op-gray font-semibold">Registro superficial</span> — abaixo de 25</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
+              <div className="space-y-1 text-small">
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Total de registros</span>
+                  <span className="text-op-white">{registrationDepth.total}</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Pulsos (peso 1) — capturas rápidas</span>
+                  <span className="text-op-white">{registrationDepth.pulsos}</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Análises (peso 2-4) — formatos estruturados</span>
+                  <span className="text-op-white">{registrationDepth.analises}</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Reflexões (peso 4-5) — APAs e corretivos</span>
+                  <span className="text-op-white">{registrationDepth.reflexoes}</span>
+                </div>
+                <p className="text-label text-op-gray pt-1">
+                  Score = soma dos pesos ÷ (total × 5) × 100
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowDepthSheet(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sheet explicativo — Dificuldade por Camada */}
       {showDifficultySheet && (
