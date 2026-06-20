@@ -597,53 +597,44 @@ function ProjectDashboard() {
               <div className="space-y-3">
                 <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
                 <div className="space-y-2 text-small">
-                  {cycleVelocity.dates.c && cycleVelocity.dates.o && cycleVelocity.cToO !== null && (
-                    <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                      <span className="text-op-gray">Captura → Organização</span>
-                      <span className="text-op-white">
-                        {cycleVelocity.dates.c} até {cycleVelocity.dates.o} = <strong>{cycleVelocity.cToO} dia{cycleVelocity.cToO !== 1 ? 's' : ''}</strong>
-                      </span>
-                    </div>
-                  )}
-                  {!cycleVelocity.dates.o && (
-                    <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                      <span className="text-op-gray">Captura → Organização</span>
-                      <span className="text-op-gray italic">pendente</span>
-                    </div>
-                  )}
-                  {cycleVelocity.dates.o && cycleVelocity.dates.p && cycleVelocity.oToP !== null && (
-                    <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                      <span className="text-op-gray">Organização → Prova</span>
-                      <span className="text-op-white">
-                        {cycleVelocity.dates.o} até {cycleVelocity.dates.p} = <strong>{cycleVelocity.oToP} dia{cycleVelocity.oToP !== 1 ? 's' : ''}</strong>
-                      </span>
-                    </div>
-                  )}
-                  {cycleVelocity.dates.o && !cycleVelocity.dates.p && (
-                    <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                      <span className="text-op-gray">Organização → Prova</span>
-                      <span className="text-op-gray italic">pendente</span>
-                    </div>
-                  )}
-                  {cycleVelocity.dates.p && cycleVelocity.dates.a && cycleVelocity.pToA !== null && (
-                    <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                      <span className="text-op-gray">Prova → Aferição</span>
-                      <span className="text-op-white">
-                        {cycleVelocity.dates.p} até {cycleVelocity.dates.a} = <strong>{cycleVelocity.pToA} dia{cycleVelocity.pToA !== 1 ? 's' : ''}</strong>
-                      </span>
-                    </div>
-                  )}
-                  {cycleVelocity.dates.p && !cycleVelocity.dates.a && (
-                    <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                      <span className="text-op-gray">Prova → Aferição</span>
-                      <span className="text-op-gray italic">pendente</span>
-                    </div>
-                  )}
-                  {cycleVelocity.total !== null && (
+                  {(() => {
+                    const nodeNameMap: Record<string, string> = {
+                      C: 'Captura', O: 'Organização', P: 'Prova', A: 'Aferição',
+                    };
+                    const nodeDateMap: Record<string, string | null> = {
+                      C: cycleVelocity.dates.c, O: cycleVelocity.dates.o,
+                      P: cycleVelocity.dates.p, A: cycleVelocity.dates.a,
+                    };
+                    return velocityColumns.map((col) => {
+                      const isGroup = col.label.startsWith('[');
+                      const nodesStr = isGroup ? col.label.slice(1, -1) : col.label;
+                      const nodes = nodesStr.split('→');
+                      const fullName = nodes.map((n) => nodeNameMap[n] ?? n).join(' → ');
+                      const startDate = nodeDateMap[nodes[0]];
+                      const endDate = nodeDateMap[nodes[nodes.length - 1]];
+                      const sameDay = startDate && endDate && startDate === endDate;
+                      return (
+                        <div key={col.label} className="flex justify-between border-b border-op-gray/20 pb-1 gap-2">
+                          <span className={`${isGroup ? 'text-op-cyan' : 'text-op-gray'} shrink-0`}>{fullName}</span>
+                          {col.days !== null ? (
+                            <span className="text-op-white text-right">
+                              {sameDay
+                                ? <>{startDate} (mesmo dia) = <strong>1 dia</strong></>
+                                : <>{startDate} até {endDate} = <strong>{col.days} dia{col.days !== 1 ? 's' : ''}</strong></>
+                              }
+                            </span>
+                          ) : (
+                            <span className="text-op-gray italic">pendente</span>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
+                  {adjustedTotal !== null && (
                     <div className="flex justify-between pt-1">
                       <span className="text-op-gray font-semibold">Ciclo completo</span>
                       <span style={{ color: '#0EA5E9' }} className="font-semibold">
-                        {cycleVelocity.total} dia{cycleVelocity.total !== 1 ? 's' : ''} no total
+                        {adjustedTotal} dia{adjustedTotal !== 1 ? 's' : ''} no total
                       </span>
                     </div>
                   )}
