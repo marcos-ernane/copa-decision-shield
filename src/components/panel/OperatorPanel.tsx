@@ -44,6 +44,13 @@ function depthMeta(score: number): { label: string; color: string; barColor: str
   return { label: 'Registro superficial', color: 'text-op-gray', barColor: '#64748b' };
 }
 
+function reusabilityMeta(score: number): { label: string; color: string; barColor: string } {
+  if (score >= 75) return { label: 'Alta reusabilidade', color: 'text-green-400', barColor: '#4ade80' };
+  if (score >= 50) return { label: 'Reusabilidade boa', color: 'text-op-cyan', barColor: '#22C5DA' };
+  if (score >= 25) return { label: 'Em desenvolvimento', color: 'text-amber-400', barColor: '#fbbf24' };
+  return { label: 'Baixa reusabilidade', color: 'text-op-gray', barColor: '#64748b' };
+}
+
 function persistenceMeta(index: number): { label: string; color: string; barColor: string } {
   if (index < 25) return { label: 'Gargalo ágil', color: 'text-green-400', barColor: '#4ade80' };
   if (index < 50) return { label: 'Moderado', color: 'text-op-cyan', barColor: '#22C5DA' };
@@ -92,6 +99,7 @@ export function OperatorPanel() {
   const [showDifficultyLearnMore, setShowDifficultyLearnMore] = useState(false);
   const [showDepthSheet, setShowDepthSheet] = useState(false);
   const [showPersistenceSheet, setShowPersistenceSheet] = useState(false);
+  const [showReusabilitySheet, setShowReusabilitySheet] = useState(false);
 
   async function handleArchive() {
     if (!archivingId) return;
@@ -307,6 +315,30 @@ export function OperatorPanel() {
       persistenceIndex,
     };
   }, [entries]);
+
+  const principleReusability = useMemo(() => {
+    const active = principles.filter((p) => !p.is_archived);
+    if (active.length === 0) return null;
+
+    const recalled = active.filter((p) => p.recall_count > 0);
+    const totalRecalls = active.reduce((s, p) => s + p.recall_count, 0);
+    const masters = active.filter((p) => p.is_master_principle).length;
+
+    const recallRate = Math.round((recalled.length / active.length) * 100);
+    const avgRecalls = totalRecalls / active.length;
+    const avgNorm = Math.round(Math.min(avgRecalls / 5, 1) * 100);
+    const score = Math.round(recallRate * 0.7 + avgNorm * 0.3);
+
+    return {
+      total: active.length,
+      recalled: recalled.length,
+      totalRecalls,
+      masters,
+      recallRate,
+      avgNorm,
+      score,
+    };
+  }, [principles]);
 
   const lastPrinciples = principles.slice(-3).reverse();
   const copaCycles = entries.filter(
@@ -614,6 +646,49 @@ export function OperatorPanel() {
           </section>
         )}
 
+        {/* Seção 3F — Score de Reusabilidade de Princípios */}
+        {principleReusability && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-heading text-foreground">REUSABILIDADE DE PRINCÍPIOS</h2>
+              <button
+                type="button"
+                onClick={() => setShowReusabilitySheet(true)}
+                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors"
+                aria-label="Entender este indicador"
+              >
+                ⓘ
+              </button>
+            </div>
+            <div className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className={`text-small font-semibold ${reusabilityMeta(principleReusability.score).color}`}>
+                  {reusabilityMeta(principleReusability.score).label}
+                </span>
+                <span className={`text-label font-semibold ${reusabilityMeta(principleReusability.score).color}`}>
+                  {principleReusability.score}/100
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${principleReusability.score}%`,
+                    backgroundColor: reusabilityMeta(principleReusability.score).barColor,
+                  }}
+                />
+              </div>
+              <div className="flex justify-between text-label text-op-gray pt-0.5">
+                <span>{principleReusability.recalled} de {principleReusability.total} relembrado{principleReusability.recalled !== 1 ? 's' : ''}</span>
+                <span>{principleReusability.totalRecalls} recall{principleReusability.totalRecalls !== 1 ? 's' : ''} no total</span>
+                {principleReusability.masters > 0 && (
+                  <span>{principleReusability.masters} mestre{principleReusability.masters !== 1 ? 's' : ''}</span>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Seção 4 — Banco de Princípios */}
         <section className="space-y-2">
           <h2 className="text-heading text-foreground">Banco de princípios</h2>
@@ -668,6 +743,81 @@ export function OperatorPanel() {
           </section>
         )}
       </div>
+
+      {/* Sheet explicativo — Reusabilidade de Princípios */}
+      {showReusabilitySheet && principleReusability && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setShowReusabilitySheet(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">Reusabilidade de Princípios</h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que significa</p>
+              <p className="text-body text-op-white">
+                Mede se seus princípios extraídos estão sendo aplicados de verdade ou ficam esquecidos após a APA.
+                Um princípio relembrado e reaplicado tem alto valor operacional.
+                Índice alto significa que o banco de princípios está vivo e em uso.
+              </p>
+              <ul className="mt-2 space-y-1 text-small text-op-gray">
+                <li><span className="text-green-400 font-semibold">Alta reusabilidade</span> — 75 ou mais</li>
+                <li><span className="text-op-cyan font-semibold">Reusabilidade boa</span> — 50 a 74</li>
+                <li><span className="text-amber-400 font-semibold">Em desenvolvimento</span> — 25 a 49</li>
+                <li><span className="text-op-gray font-semibold">Baixa reusabilidade</span> — abaixo de 25</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
+              <div className="space-y-1 text-small">
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Total de princípios ativos</span>
+                  <span className="text-op-white">{principleReusability.total}</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Relembrados ao menos 1x</span>
+                  <span className="text-op-white">
+                    {principleReusability.recalled} de {principleReusability.total} = {principleReusability.recallRate}% (peso 70%)
+                  </span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Total de recalls acumulados</span>
+                  <span className="text-op-white">{principleReusability.totalRecalls} → média {(principleReusability.totalRecalls / principleReusability.total).toFixed(1)}/princípio</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Frequência normalizada (máx 5 recalls)</span>
+                  <span className="text-op-white">{principleReusability.avgNorm}% (peso 30%)</span>
+                </div>
+                {principleReusability.masters > 0 && (
+                  <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                    <span className="text-op-gray">Princípios mestres</span>
+                    <span className="text-op-white">{principleReusability.masters}</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-1">
+                  <span className="text-op-gray font-semibold">Score final</span>
+                  <span style={{ color: reusabilityMeta(principleReusability.score).barColor }} className="font-semibold">
+                    {principleReusability.recallRate}% × 70% + {principleReusability.avgNorm}% × 30% = {principleReusability.score}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowReusabilitySheet(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sheet explicativo — Persistência do Gargalo */}
       {showPersistenceSheet && bottleneckPersistence && (
