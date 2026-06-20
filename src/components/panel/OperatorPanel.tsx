@@ -187,23 +187,36 @@ export function OperatorPanel() {
                 const status = deriveProjectStatus(p, projectEntries);
                 return (
                   <li key={p.id} className="flex items-stretch rounded-md border border-op-gray/30 bg-op-navy overflow-hidden">
-                    <Link
-                      to="/project/$id/dashboard"
-                      params={{ id: p.id }}
-                      className="flex-1 p-3 hover:bg-accent min-w-0 space-y-1"
-                    >
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-base leading-none ${status.color}`} aria-hidden>{status.icon}</span>
-                        <span className={`text-small font-medium ${status.color}`}>{status.label}</span>
-                        <span className="text-small text-foreground font-medium">{p.name}</span>
-                      </div>
-                      {(p.scenario_type || p.current_layer) && (
-                        <div className="flex gap-1 flex-wrap pl-5">
-                          {p.scenario_type && <ScenarioTypeChip type={p.scenario_type} />}
-                          {p.current_layer && <LayerChip layer={p.current_layer} />}
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        to="/project/$id/dashboard"
+                        params={{ id: p.id }}
+                        className="block p-3 hover:bg-accent space-y-1"
+                      >
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-base leading-none ${status.color}`} aria-hidden>{status.icon}</span>
+                          <span className={`text-small font-medium ${status.color}`}>{status.label}</span>
+                          <span className="text-small text-foreground font-medium">{p.name}</span>
+                        </div>
+                        {(p.scenario_type || p.current_layer) && (
+                          <div className="flex gap-1 flex-wrap pl-5">
+                            {p.scenario_type && <ScenarioTypeChip type={p.scenario_type} />}
+                            {p.current_layer && <LayerChip layer={p.current_layer} />}
+                          </div>
+                        )}
+                      </Link>
+                      {status.label === 'Ciclo completo' && (
+                        <div className="px-3 pb-2.5 border-t border-op-gray/20 pt-2">
+                          <Link
+                            to="/project/$id/conclude"
+                            params={{ id: p.id }}
+                            className="text-small text-[#2563EB] hover:text-blue-400 transition-colors"
+                          >
+                            Encerrar o Projeto →
+                          </Link>
                         </div>
                       )}
-                    </Link>
+                    </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button
