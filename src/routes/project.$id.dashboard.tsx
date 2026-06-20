@@ -184,6 +184,60 @@ function buildVelocityColumns(v: { cToO: number | null; oToP: number | null; pTo
   return result;
 }
 
+interface IQIResult {
+  score: number;
+  count: number;
+  criteria: { reversible: number; cheap: number; specific: number; measurable: number };
+  weakest: string | null;
+}
+
+function computeIQI(entries: Entry[]): IQIResult | null {
+  const imvs = entries.filter((e) => e.entry_type === 'structured_P');
+  if (imvs.length === 0) return null;
+
+  let totalScore = 0;
+  let rev = 0, chp = 0, spc = 0, msr = 0;
+
+  for (const e of imvs) {
+    const c = e.content as { reversible?: boolean | null; cheap?: boolean | null; specific?: boolean | null; measurable?: boolean | null };
+    const r = c.reversible === true ? 1 : 0;
+    const ch = c.cheap === true ? 1 : 0;
+    const sp = c.specific === true ? 1 : 0;
+    const ms = c.measurable === true ? 1 : 0;
+    totalScore += (r + ch + sp + ms) * 25;
+    rev += r; chp += ch; spc += sp; msr += ms;
+  }
+
+  const n = imvs.length;
+  const criteria = {
+    reversible: Math.round((rev / n) * 100),
+    cheap: Math.round((chp / n) * 100),
+    specific: Math.round((spc / n) * 100),
+    measurable: Math.round((msr / n) * 100),
+  };
+
+  const weakest = (Object.entries(criteria) as [string, number][])
+    .sort((a, b) => a[1] - b[1])
+    .find(([, v]) => v < 100)?.[0] ?? null;
+
+  return { score: Math.round(totalScore / n), count: n, criteria, weakest };
+}
+
+function iqiLabel(score: number): { text: string; color: string } {
+  if (score >= 90) return { text: 'Excelente', color: '#16A34A' };
+  if (score >= 75) return { text: 'Boa qualidade', color: '#16A34A' };
+  if (score >= 50) return { text: 'Razoável', color: '#D97706' };
+  if (score >= 25) return { text: 'Em desenvolvimento', color: '#D97706' };
+  return { text: 'Precisa de atenção', color: '#DC2626' };
+}
+
+const CRITERIA_LABELS: Record<string, string> = {
+  reversible: 'Reversível',
+  cheap: 'Barato',
+  specific: 'Específico',
+  measurable: 'Mensurável',
+};
+
 function ProjectDashboard() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -196,6 +250,7 @@ function ProjectDashboard() {
   const [pauseReason, setPauseReason] = useState('');
   const [isArchiving, setIsArchiving] = useState(false);
   const [showVelocitySheet, setShowVelocitySheet] = useState(false);
+  const [showIQISheet, setShowIQISheet] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -264,6 +319,7 @@ function ProjectDashboard() {
   const cycleVelocity = computeCycleVelocity(entries);
   const velocityColumns = buildVelocityColumns(cycleVelocity);
   const showVelocityCard = entries.some((e) => e.entry_type === 'structured_C');
+  const iqi = computeIQI(entries);
   const adjustedTotal = (() => {
     const { cToO, oToP, pToA } = cycleVelocity;
     if (cToO === null || oToP === null || pToA === null) return null;
@@ -644,6 +700,121 @@ function ProjectDashboard() {
               <button
                 type="button"
                 onClick={() => setShowVelocitySheet(false)}
+                className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* IQI — Índice de Qualidade das IMVs */}
+        {iqi && (
+          <section className="rounded-md border border-op-gray/30 bg-op-navy p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-label text-op-gray uppercase">Índice de Qualidade das IMVs</h2>
+              <button
+                type="button"
+                onClick={() => setShowIQISheet(true)}
+                className="text-op-gray hover:text-op-white transition-colors ml-2 shrink-0"
+                aria-label="Como é calculado"
+              >
+                <Info className="size-4" />
+              </button>
+            </div>
+
+            {/* Score principal */}
+            <div className="flex items-baseline gap-2 mb-3">
+              <p className="text-display font-bold" style={{ color: iqiLabel(iqi.score).color }}>
+                {iqi.score}
+              </p>
+              <p className="text-small text-op-gray">/ 100</p>
+              <p className="text-small ml-1" style={{ color: iqiLabel(iqi.score).color }}>
+                {iqiLabel(iqi.score).text}
+              </p>
+            </div>
+
+            {/* Critérios */}
+            <div className="flex items-start gap-2">
+              {(Object.entries(iqi.criteria) as [string, number][]).map(([key, pct]) => {
+                const isWeakest = key === iqi.weakest;
+                const barColor = pct >= 75 ? '#16A34A' : pct >= 50 ? '#D97706' : '#DC2626';
+                return (
+                  <div key={key} className="flex-1 text-center">
+                    <p className={`text-label mb-1 ${isWeakest ? 'text-brand-red' : 'text-op-gray'}`}>
+                      {CRITERIA_LABELS[key]}
+                    </p>
+                    <p className="text-heading font-semibold" style={{ color: barColor }}>{pct}%</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {iqi.weakest && (
+              <p className="text-label text-op-gray mt-2">
+                Critério mais fraco: <span style={{ color: '#DC2626' }}>{CRITERIA_LABELS[iqi.weakest]}</span>
+              </p>
+            )}
+          </section>
+        )}
+
+        {/* Sheet explicativo — IQI */}
+        {showIQISheet && iqi && (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center"
+            onClick={() => setShowIQISheet(false)}
+          >
+            <div
+              className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+              <h3 className="text-heading text-op-white font-semibold">Índice de Qualidade das IMVs</h3>
+
+              <div className="space-y-2">
+                <p className="text-label text-op-cyan uppercase">O que significa</p>
+                <p className="text-body text-op-white">
+                  Mede quantas das suas IMVs atendem os 4 critérios operacionais do método:
+                  Reversível, Barato, Específico e Mensurável.
+                  Quanto mais alto, mais precisas e bem-formadas são as ações que você define.
+                  Critérios frequentemente ignorados indicam onde sua tomada de decisão pode ser mais rigorosa.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
+                <div className="space-y-2 text-small">
+                  <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                    <span className="text-op-gray">IMVs analisadas</span>
+                    <span className="text-op-white font-semibold">{iqi.count}</span>
+                  </div>
+                  <p className="text-op-gray italic">Cada IMV vale 25 pontos por critério atendido (máx 100):</p>
+                  {(Object.entries(iqi.criteria) as [string, number][]).map(([key, pct]) => {
+                    const isWeakest = key === iqi.weakest;
+                    const met = Math.round((pct / 100) * iqi.count);
+                    return (
+                      <div key={key} className="flex justify-between border-b border-op-gray/20 pb-1">
+                        <span className={isWeakest ? 'text-brand-red font-semibold' : 'text-op-gray'}>
+                          {CRITERIA_LABELS[key]} {isWeakest ? '← mais fraco' : ''}
+                        </span>
+                        <span className="text-op-white">
+                          {met}/{iqi.count} IMVs = <strong>{pct}%</strong>
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <div className="flex justify-between pt-1">
+                    <span className="text-op-gray font-semibold">Score médio</span>
+                    <span className="font-semibold" style={{ color: iqiLabel(iqi.score).color }}>
+                      {iqi.score}/100 — {iqiLabel(iqi.score).text}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowIQISheet(false)}
                 className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
               >
                 Fechar
