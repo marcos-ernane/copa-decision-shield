@@ -18,7 +18,7 @@ export function BottleneckBankSheet({ open, bottlenecks, onDismiss, onClose }: P
 
   function handleSelect(b: PendingBottleneck) {
     onClose();
-    void navigate({ to: '/project/new', search: { bottleneck: b.text } });
+    void navigate({ to: '/project/new', search: { bottleneck: b.text, bottleneckEntryId: b.entryId } });
   }
 
   return (
