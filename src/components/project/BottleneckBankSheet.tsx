@@ -68,22 +68,21 @@ export function BottleneckBankSheet({ open, bottlenecks, onDismiss, onClose }: P
             bottlenecks.map((b) => (
               <div
                 key={b.entryId}
-                className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-1"
+                className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2"
               >
-                <button
-                  type="button"
-                  className="w-full text-left space-y-1 group"
-                  onClick={() => handleSelect(b)}
-                >
-                  <p className="text-small text-op-white group-hover:text-op-cyan transition-colors leading-snug">
-                    {b.text}
-                  </p>
-                  <p className="text-label text-op-gray">
-                    Registrado na [A] Aferição do projeto <span className="text-op-white font-medium">{b.projectName}</span>
-                    {' '}— toque para criar um novo projeto a partir deste gargalo
-                  </p>
-                </button>
-                <div className="flex justify-end pt-0.5">
+                <p className="text-small text-op-white leading-snug">{b.text}</p>
+                <p className="text-label text-op-gray">
+                  Registrado na [A] Aferição do projeto{' '}
+                  <span className="text-op-white font-medium">{b.projectName}</span>
+                </p>
+                <div className="flex items-center justify-between pt-1 border-t border-op-gray/20">
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(b)}
+                    className="text-small text-op-cyan font-medium hover:underline transition-colors"
+                  >
+                    Criar projeto →
+                  </button>
                   <button
                     type="button"
                     onClick={() => onDismiss(b.entryId)}
