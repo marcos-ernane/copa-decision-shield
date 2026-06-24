@@ -108,6 +108,7 @@ export function OperatorPanel() {
   const [showPersistenceSheet, setShowPersistenceSheet] = useState(false);
   const [showReusabilitySheet, setShowReusabilitySheet] = useState(false);
   const [showGrowthSheet, setShowGrowthSheet] = useState(false);
+  const [showPressureSheet, setShowPressureSheet] = useState(false);
 
   async function handleArchive() {
     if (!archivingId) return;
@@ -391,6 +392,66 @@ export function OperatorPanel() {
     if (clarity.trend === null && execution.trend === null && learning.trend === null) return null;
     return { clarity, execution, learning };
   }, [entries, principles]);
+
+  const pressureSignature = useMemo(() => {
+    const pressureEntries = entries.filter((e) => e.entry_type === 'pressure_session');
+    if (pressureEntries.length === 0) return null;
+
+    const now = Date.now();
+    const d30 = 30 * 24 * 60 * 60 * 1000;
+    const d60 = 60 * 24 * 60 * 60 * 1000;
+
+    // Volume por período
+    const recent = pressureEntries.filter((e) => new Date(e.created_at).getTime() >= now - d30).length;
+    const prev30 = pressureEntries.filter((e) => {
+      const t = new Date(e.created_at).getTime();
+      return t >= now - d60 && t < now - d30;
+    }).length;
+
+    // Distribuição por projeto
+    const byProject = new Map<string, number>();
+    for (const e of pressureEntries) {
+      byProject.set(e.project_id, (byProject.get(e.project_id) ?? 0) + 1);
+    }
+    const projectsAffected = byProject.size;
+
+    // Projetos com padrão de abuso potencial (≥ 5 ativações no total)
+    const abuseCandidates = Array.from(byProject.values()).filter((n) => n >= 5).length;
+
+    // Taxa de substituição: projetos onde pressão > 2× COPA (pressão como substituto)
+    const projectIds = Array.from(byProject.keys());
+    let substituting = 0;
+    for (const pid of projectIds) {
+      const pCount = byProject.get(pid) ?? 0;
+      const copaCount = entries.filter(
+        (e) => (e.entry_type === 'structured_C' || e.entry_type === 'copa_session') && e.project_id === pid,
+      ).length;
+      if (copaCount === 0 && pCount >= 3) substituting++;
+      else if (copaCount > 0 && pCount / copaCount > 2) substituting++;
+    }
+    const substitutionRate = projectsAffected > 0 ? Math.round((substituting / projectsAffected) * 100) : 0;
+
+    // Tendência de volume (últimos 30d vs anteriores)
+    const trend: '↑' | '↓' | '→' | null = (() => {
+      if (prev30 === 0 && recent === 0) return '→';
+      if (prev30 === 0) return '↑';
+      const r = (recent - prev30) / prev30;
+      if (r > 0.1) return '↑';
+      if (r < -0.1) return '↓';
+      return '→';
+    })();
+
+    return {
+      total: pressureEntries.length,
+      recent,
+      prev30,
+      projectsAffected,
+      abuseCandidates,
+      substituting,
+      substitutionRate,
+      trend,
+    };
+  }, [entries]);
 
   const lastPrinciples = principles.slice(-3).reverse();
   const copaCycles = entries.filter(
@@ -791,6 +852,67 @@ export function OperatorPanel() {
           </section>
         )}
 
+        {/* Seção 3H — Assinatura de Pressão */}
+        {pressureSignature && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-heading text-foreground">ASSINATURA DE PRESSÃO</h2>
+              <button
+                type="button"
+                onClick={() => setShowPressureSheet(true)}
+                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors"
+                aria-label="Entender este indicador"
+              >
+                ⓘ
+              </button>
+            </div>
+            <div className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-3">
+              {/* Volume */}
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-small text-op-gray shrink-0 w-40">Ativações (30 dias)</span>
+                <span className={`text-small font-semibold flex-1 ${
+                  pressureSignature.trend === '↑' ? 'text-red-400'
+                  : pressureSignature.trend === '↓' ? 'text-green-400'
+                  : 'text-op-gray'
+                }`}>
+                  {pressureSignature.trend === '↑' ? 'Subindo' : pressureSignature.trend === '↓' ? 'Caindo' : 'Estável'}
+                </span>
+                <span className="text-label text-op-gray">
+                  {pressureSignature.prev30} → {pressureSignature.recent}
+                </span>
+              </div>
+              {/* Projetos afetados */}
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-small text-op-gray shrink-0 w-40">Projetos com pressão</span>
+                <span className="text-small font-semibold flex-1 text-op-white">
+                  {pressureSignature.projectsAffected} projeto{pressureSignature.projectsAffected !== 1 ? 's' : ''}
+                </span>
+                <span className="text-label text-op-gray">{pressureSignature.total} total</span>
+              </div>
+              {/* Taxa de substituição */}
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-small text-op-gray shrink-0 w-40">Pressão como substituto</span>
+                <span className={`text-small font-semibold flex-1 ${
+                  pressureSignature.substitutionRate >= 50 ? 'text-red-400'
+                  : pressureSignature.substitutionRate >= 25 ? 'text-amber-400'
+                  : 'text-green-400'
+                }`}>
+                  {pressureSignature.substitutionRate === 0 ? 'Uso complementar'
+                  : pressureSignature.substitutionRate < 25 ? 'Baixo'
+                  : pressureSignature.substitutionRate < 50 ? 'Moderado'
+                  : 'Alto'}
+                </span>
+                <span className="text-label text-op-gray">{pressureSignature.substitutionRate}%</span>
+              </div>
+              {pressureSignature.abuseCandidates > 0 && (
+                <p className="text-label text-amber-400 pt-0.5">
+                  {pressureSignature.abuseCandidates} projeto{pressureSignature.abuseCandidates !== 1 ? 's' : ''} com ≥ 5 ativações acumuladas
+                </p>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Seção 4 — Banco de Princípios */}
         <section className="space-y-2">
           <h2 className="text-heading text-foreground">Banco de princípios</h2>
@@ -845,6 +967,85 @@ export function OperatorPanel() {
           </section>
         )}
       </div>
+
+      {/* Sheet explicativo — Assinatura de Pressão */}
+      {showPressureSheet && pressureSignature && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setShowPressureSheet(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">Assinatura de Pressão</h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que significa</p>
+              <p className="text-body text-op-white">
+                Mostra como você usa o Modo Pressão: com que frequência, em quantos projetos e
+                se ele está sendo usado como complemento do COPA ou como substituto.
+                Pressão alta com pouco COPA indica que decisões urgentes estão sendo tomadas
+                sem o ciclo completo de análise.
+              </p>
+              <ul className="mt-2 space-y-1 text-small text-op-gray">
+                <li><span className="text-green-400 font-semibold">Uso complementar</span> — pressão apoia o COPA, não o substitui</li>
+                <li><span className="text-amber-400 font-semibold">Moderado</span> — atenção ao padrão nos projetos indicados</li>
+                <li><span className="text-red-400 font-semibold">Alto</span> — pressão dominante, ciclo COPA subutilizado</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
+              <div className="space-y-1 text-small">
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Total de ativações do Modo Pressão</span>
+                  <span className="text-op-white">{pressureSignature.total}</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Últimos 30 dias</span>
+                  <span className="text-op-white">{pressureSignature.recent} ativações</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">30 dias anteriores</span>
+                  <span className="text-op-white">{pressureSignature.prev30} ativações</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Projetos com pressão ativada</span>
+                  <span className="text-op-white">{pressureSignature.projectsAffected}</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Projetos com ≥ 5 ativações acumuladas</span>
+                  <span className="text-op-white">{pressureSignature.abuseCandidates}</span>
+                </div>
+                <div className="flex justify-between border-b border-op-gray/20 pb-1">
+                  <span className="text-op-gray">Projetos onde pressão {">"} 2× COPA</span>
+                  <span className="text-op-white">{pressureSignature.substituting} de {pressureSignature.projectsAffected}</span>
+                </div>
+                <div className="flex justify-between pt-1">
+                  <span className="text-op-gray font-semibold">Taxa de substituição</span>
+                  <span className={`font-semibold ${
+                    pressureSignature.substitutionRate >= 50 ? 'text-red-400'
+                    : pressureSignature.substitutionRate >= 25 ? 'text-amber-400'
+                    : 'text-green-400'
+                  }`}>
+                    {pressureSignature.substituting} / {pressureSignature.projectsAffected} = {pressureSignature.substitutionRate}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowPressureSheet(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sheet explicativo — Trajetória de Crescimento */}
       {showGrowthSheet && growthTrajectory && (
