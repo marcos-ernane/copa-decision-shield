@@ -5,10 +5,12 @@ import { useEffect, useState } from 'react';
 import { Plus, Settings as SettingsIcon } from 'lucide-react';
 import { GuestStorage } from '@/lib/guestStorage';
 import { supabase } from '@/lib/supabase';
-import { listProjects, listPrinciples, updateProject } from '@/lib/projects';
+import { listProjects, listPrinciples, updateProject, listAllEntries } from '@/lib/projects';
 import { sortProjects } from '@/lib/projectState';
 import { ProjectCard } from '@/components/project/ProjectCard';
 import { CommunityLink } from '@/components/project/CommunityLink';
+import { BottleneckBankSheet } from '@/components/project/BottleneckBankSheet';
+import { usePendingBottlenecks } from '@/hooks/usePendingBottlenecks';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { Project, Principle } from '@/types/database';
+import type { Project, Principle, Entry } from '@/types/database';
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -29,13 +31,17 @@ function Home() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [entries, setEntries] = useState<Entry[]>([]);
   const [principles, setPrinciples] = useState<Record<string, Principle | null>>({});
   const [name, setName] = useState('');
   const [communityLink, setCommunityLink] = useState<string | null>(null);
   const [showConcluded, setShowConcluded] = useState(false);
+  const [showBottleneckBank, setShowBottleneckBank] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [pausingId, setPausingId] = useState<string | null>(null);
   const [pauseReason, setPauseReason] = useState('');
+
+  const { pending: pendingBottlenecks, dismiss: dismissBottleneck } = usePendingBottlenecks(entries, projects);
 
   useEffect(() => {
     void (async () => {
@@ -66,8 +72,9 @@ function Home() {
   }, [navigate]);
 
   async function load() {
-    const list = await listProjects();
+    const [list, allEntries] = await Promise.all([listProjects(), listAllEntries()]);
     setProjects(list);
+    setEntries(allEntries);
     // Principle recall: para cada projeto blocked/new, busca 1 princípio
     const recall: Record<string, Principle | null> = {};
     await Promise.all(
@@ -136,6 +143,26 @@ function Home() {
           Novo projeto
         </Link>
 
+        {pendingBottlenecks.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowBottleneckBank(true)}
+            className="w-full flex items-center justify-between gap-3 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left hover:bg-op-navy-elevated transition-colors"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-small text-op-cyan font-medium">
+                {pendingBottlenecks.length} gargalo{pendingBottlenecks.length !== 1 ? 's' : ''} pendente{pendingBottlenecks.length !== 1 ? 's' : ''}
+              </p>
+              <p className="text-label text-op-gray truncate">
+                {pendingBottlenecks.length !== 1
+                  ? 'Podem se transformar em novos projetos →'
+                  : 'Pode se transformar em um novo projeto →'}
+              </p>
+            </div>
+            <span className="text-label text-op-cyan shrink-0">Ver →</span>
+          </button>
+        )}
+
         {active.length === 0 && (
           <p className="text-small text-op-gray py-8 text-center">
             Nenhum projeto em campo.
@@ -174,6 +201,13 @@ function Home() {
 
         <CommunityLink url={communityLink} />
       </main>
+
+      <BottleneckBankSheet
+        open={showBottleneckBank}
+        bottlenecks={pendingBottlenecks}
+        onDismiss={dismissBottleneck}
+        onClose={() => setShowBottleneckBank(false)}
+      />
 
       {/* Dialog: Pausar projeto */}
       <AlertDialog open={!!pausingId} onOpenChange={(v) => { if (!v) { setPausingId(null); setPauseReason(''); } }}>

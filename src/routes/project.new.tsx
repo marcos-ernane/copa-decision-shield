@@ -1,6 +1,6 @@
 // NewProjectScreen — criação de projeto com state='new' (REQ-PROJ-01).
 
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { CircleHelp, X } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
@@ -10,6 +10,9 @@ import { createProject } from '@/lib/projects';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 export const Route = createFileRoute('/project/new')({
+  validateSearch: (s: Record<string, unknown>) => ({
+    bottleneck: typeof s.bottleneck === 'string' ? s.bottleneck : undefined,
+  }),
   component: NewProject,
 });
 
@@ -57,7 +60,8 @@ type HelpKey = 'scenario' | 'layer' | null;
 
 function NewProject() {
   const navigate = useNavigate();
-  const [name, setName] = useState('');
+  const { bottleneck } = useSearch({ from: '/project/new' });
+  const [name, setName] = useState(bottleneck ?? '');
   const [north, setNorth] = useState('');
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
   const [layer, setLayer] = useState<OperationalLayer | null>(null);

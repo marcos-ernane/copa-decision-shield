@@ -20,6 +20,20 @@ export async function listProjects(): Promise<Project[]> {
   return (data ?? []) as Project[];
 }
 
+export async function listAllEntries(): Promise<Entry[]> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return GuestStorage.getEntries();
+  const { data, error } = await supabase
+    .from('entries')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.warn('listAllEntries fallback to guest:', error.message);
+    return GuestStorage.getEntries();
+  }
+  return (data ?? []) as Entry[];
+}
+
 export async function getProject(id: string): Promise<Project | null> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {

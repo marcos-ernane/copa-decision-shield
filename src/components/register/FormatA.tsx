@@ -154,6 +154,7 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [nudge, setNudge] = useState(false);
   const [showWhatHappenedHelp, setShowWhatHappenedHelp] = useState(false);
   const [showWhyHappenedHelp, setShowWhyHappenedHelp] = useState(false);
+  const [showBottleneckHelp, setShowBottleneckHelp] = useState(false);
 
   const hasChanges =
     fact !== (initialData?.fact_text ?? '') ||
@@ -374,8 +375,26 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
             <VoiceInput value={cutNext} onChange={setCutNext} placeholder="" rows={2} />
           </div>
           <div>
-            <p className="text-small font-medium text-op-white mb-1">Próximo gargalo</p>
-            <VoiceInput value={nextBottleneck} onChange={setNextBottleneck} placeholder="" rows={2} />
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-small font-medium text-op-white">
+                Registre outro GARGALO para um novo projeto{' '}
+                <span className="text-op-gray font-normal">(Opcional)</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowBottleneckHelp(true)}
+                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors shrink-0"
+                aria-label="Saiba mais sobre o Banco de Gargalos"
+              >
+                ⓘ
+              </button>
+            </div>
+            <VoiceInput
+              value={nextBottleneck}
+              onChange={setNextBottleneck}
+              placeholder="Descreva o próximo problema que precisa de uma solução"
+              rows={2}
+            />
           </div>
         </div>
       )}
@@ -403,6 +422,57 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
 
       <RegistrationNudge open={nudge} moment={1} onDismiss={() => { setNudge(false); onSaved(); }} />
     </div>
+
+    {/* Sheet — Banco de Gargalos (ⓘ do campo Próximo Gargalo) */}
+    {showBottleneckHelp && (
+      <div
+        className="fixed inset-0 z-50 flex items-end justify-center"
+        onClick={() => setShowBottleneckHelp(false)}
+      >
+        <div
+          className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+          <h3 className="text-heading text-op-white font-semibold">Banco de Gargalos</h3>
+
+          <div className="space-y-2">
+            <p className="text-label text-op-cyan uppercase">O que é este campo</p>
+            <p className="text-body text-op-white">
+              Ao concluir uma Aferição, você provavelmente já identifica o próximo problema
+              a resolver. Registrá-lo aqui cria um banco acumulativo de gargalos — uma memória
+              operacional que aparece na tela Início sempre que houver itens pendentes.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-label text-op-cyan uppercase">O que acontece depois</p>
+            <p className="text-body text-op-white">
+              Cada gargalo registrado fica disponível no Banco de Gargalos. Quando estiver
+              pronto para atacar aquele problema, toque no item e o app abre a tela de criação
+              de projeto com o gargalo já pré-preenchido.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-label text-op-cyan uppercase">Onde consultar</p>
+            <p className="text-body text-op-white">
+              Na tela Início, abaixo do botão "Novo projeto", sempre que houver gargalos
+              pendentes. O registro original desta Aferição fica preservado na Linha do Tempo
+              do Diário.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowBottleneckHelp(false)}
+            className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    )}
     </>
   );
 }
