@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate, Link } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { TimelineTab } from './TimelineTab';
 import { PrinciplesTab } from './PrinciplesTab';
 import { SymptomIndex } from './SymptomIndex';
@@ -48,6 +49,7 @@ export function DiaryShell({ active, children }: Props) {
         <div className="flex items-center gap-2 px-4 py-3">
           <BackButton />
           <h1 className="text-heading text-foreground">Diário do operador</h1>
+          <CloseButton className="ml-auto" />
         </div>
         <nav className="flex overflow-x-auto px-2 gap-1 pb-2">
           {TABS.map((t) => (

@@ -1,6 +1,7 @@
 import { Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { MoreVertical } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { useMemo, useState } from 'react';
 import { usePanelData } from '@/hooks/usePanelData';
 import { GuestStorage } from '@/lib/guestStorage';
@@ -545,6 +546,7 @@ export function OperatorPanel() {
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-black z-10">
         <BackButton />
         <h1 className="text-heading text-foreground">Painel do operador</h1>
+        <CloseButton className="ml-auto" />
       </header>
 
       <div className="px-4 py-4 space-y-6">
