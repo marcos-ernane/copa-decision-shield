@@ -49,7 +49,7 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
             className="text-label px-2 py-0.5 rounded-full"
             style={{
               backgroundColor: '#0D1B2A',
-              color: '#5A6E84',
+              color: '#F0F4F8',
               border: '1px solid rgba(90,110,132,0.3)',
             }}
           >
