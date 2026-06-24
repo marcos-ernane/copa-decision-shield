@@ -2,6 +2,7 @@
 
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
+import { GuestStorage } from '@/lib/guestStorage';
 import { CircleHelp, X } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import type { ScenarioType, OperationalLayer } from '@/types/app';
 export const Route = createFileRoute('/project/new')({
   validateSearch: (s: Record<string, unknown>) => ({
     bottleneck: typeof s.bottleneck === 'string' ? s.bottleneck : undefined,
+    bottleneckEntryId: typeof s.bottleneckEntryId === 'string' ? s.bottleneckEntryId : undefined,
   }),
   component: NewProject,
 });
@@ -60,7 +62,7 @@ type HelpKey = 'scenario' | 'layer' | null;
 
 function NewProject() {
   const navigate = useNavigate();
-  const { bottleneck } = useSearch({ from: '/project/new' });
+  const { bottleneck, bottleneckEntryId } = useSearch({ from: '/project/new' });
   const [name, setName] = useState(bottleneck ?? '');
   const [north, setNorth] = useState('');
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
@@ -86,6 +88,9 @@ function NewProject() {
         current_layer: layer,
       });
       void notifyAuto;
+      if (bottleneckEntryId) {
+        GuestStorage.dismissBottleneck(bottleneckEntryId);
+      }
       navigate({ to: '/project/$id/dashboard', params: { id: project.id } });
     } finally {
       setSubmitting(false);
