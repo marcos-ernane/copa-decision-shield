@@ -13,6 +13,7 @@ const KEYS = {
   baselines: 'aop.baselines',
   sheets: 'aop.sheets',
   guestStartedAt: 'aop.guest_started_at',
+  dismissedBottlenecks: 'aop.dismissed_bottlenecks',
 } as const;
 
 const isBrowser = () => typeof window !== 'undefined';
@@ -157,6 +158,17 @@ export const GuestStorage = {
       GuestStorage.getEntries().length > 0 ||
       GuestStorage.getPrinciples().length > 0
     );
+  },
+
+  getDismissedBottlenecks(): string[] {
+    return read<string[]>(KEYS.dismissedBottlenecks, []);
+  },
+
+  dismissBottleneck(entryId: string): void {
+    const current = GuestStorage.getDismissedBottlenecks();
+    if (!current.includes(entryId)) {
+      write(KEYS.dismissedBottlenecks, [...current, entryId]);
+    }
   },
 };
 
