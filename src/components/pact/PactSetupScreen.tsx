@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { getProject } from '@/lib/projects';
 import {
   activatePact, updatePactConfig, deactivatePact, getCycle, PHASES,
@@ -80,6 +81,7 @@ export function PactSetupScreen({ projectId }: Props) {
           <p className="text-label uppercase tracking-wide text-muted-foreground">Pacto Semanal</p>
           <h1 className="text-heading text-foreground">{project.name}</h1>
         </div>
+        <CloseButton className="ml-auto" />
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-24 space-y-6">

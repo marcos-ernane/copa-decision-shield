@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
 import { DiagnosisQuestion } from './DiagnosisQuestion';
 import { LayerTriageFlow } from './LayerTriageFlow';
@@ -120,6 +121,7 @@ export function DiagnosisFlow({ projectId }: Props) {
         <p className="text-label uppercase tracking-wide text-muted-foreground">Diagnóstico</p>
         <h1 className="text-heading text-foreground">{project.name}</h1>
       </div>
+      <CloseButton className="ml-auto" />
     </header>
   );
 

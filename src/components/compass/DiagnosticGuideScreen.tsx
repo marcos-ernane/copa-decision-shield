@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Check } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
@@ -30,6 +31,7 @@ export function DiagnosticGuideScreen() {
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-black z-10">
         <BackButton />
         <h1 className="text-heading text-foreground flex-1">Guia Diagnóstico</h1>
+        <CloseButton className="ml-auto" />
       </header>
 
       <div className="px-4 py-3 border-b border-border max-w-md mx-auto">

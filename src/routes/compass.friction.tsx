@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { FrictionMatrix } from '@/components/compass/FrictionMatrix';
 import type { ScenarioType } from '@/types/app';
 
@@ -22,6 +23,7 @@ function Page() {
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
         <BackButton />
         <h1 className="text-heading text-foreground">Tabela de Fricções</h1>
+        <CloseButton className="ml-auto" />
       </header>
       <main className="px-4 py-4 max-w-md mx-auto">
         <FrictionMatrix initialType={type} />

@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { ChevronRight, MoreVertical, Info } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -472,6 +473,7 @@ function ProjectDashboard() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <CloseButton className="ml-2" />
       </header>
 
       <main className="px-6 py-6 space-y-6 max-w-md mx-auto">

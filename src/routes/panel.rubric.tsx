@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { usePanelData } from '@/hooks/usePanelData';
 import { calculateIndex, type RubricScores } from '@/engines/IndexCalculator';
 import { RubricDetail } from '@/components/panel/RubricDetail';
@@ -21,6 +22,7 @@ function RubricPage() {
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
         <BackButton />
         <h1 className="text-heading text-foreground">Rubrica do operador</h1>
+        <CloseButton className="ml-auto" />
       </header>
       <div className="px-4 py-4 space-y-6">
         {loading ? (

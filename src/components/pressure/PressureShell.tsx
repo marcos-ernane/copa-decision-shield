@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
 import { PressureRealityCheckScreen } from './PressureRealityCheckScreen';
 import { AbuseWarningScreen } from './AbuseWarningScreen';
@@ -117,6 +118,7 @@ export function PressureShell() {
         <header className="flex items-center gap-3 px-4 py-4 border-b border-border">
           <BackButton />
           <h1 className="text-heading text-foreground">Modo Pressão</h1>
+          <CloseButton className="ml-auto" />
         </header>
         <div className="space-y-4 p-4">
         <h2 className="text-title">Para qual projeto?</h2>

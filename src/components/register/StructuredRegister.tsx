@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
 import { CheckCircle2, Lock, ArrowRight, CircleHelp, X } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 
 // Total de passos por formato (passo final = índice TOTAL_STEPS - 1)
 const FORMAT_STEPS: Record<'C' | 'O' | 'P' | 'A', number> = { C: 4, O: 3, P: 4, A: 5 };
@@ -285,6 +286,7 @@ export function StructuredRegister() {
           <p className="text-label text-op-gray uppercase tracking-wide">Nome</p>
           <p className="text-heading text-op-white">{projectData?.name ?? '…'}</p>
         </div>
+        <CloseButton className="ml-auto" />
       </header>
 
       <div className="space-y-4 p-4">

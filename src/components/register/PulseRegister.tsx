@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { ProjectPicker } from './ProjectPicker';
@@ -95,6 +96,7 @@ export function PulseRegister() {
           <p className="text-label uppercase tracking-wide text-op-gray">Registro de Pulso</p>
           <p className="text-heading text-op-white">{currentProject?.name ?? '…'}</p>
         </div>
+        <CloseButton className="ml-auto" />
       </header>
       <div className="space-y-4 p-4">
       <VoiceInput

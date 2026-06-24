@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { getProject, listEntries, listPrinciples } from '@/lib/projects';
 import type { Entry, Principle, Project } from '@/types/database';
 
@@ -110,6 +111,7 @@ export function AccumulatedCapacityScreen({ projectId }: Props) {
           <p className="text-label uppercase tracking-wide text-muted-foreground">Capacidade Acumulada</p>
           <p className="text-heading text-foreground">{cap?.project?.name ?? '…'}</p>
         </div>
+        <CloseButton className="ml-auto" />
       </header>
 
       {!cap ? (
