@@ -48,8 +48,8 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
           <span
             className="text-label px-2 py-0.5 rounded-full"
             style={{
-              backgroundColor: 'var(--color-op-navy)',
-              color: 'var(--color-op-gray)',
+              backgroundColor: '#0D1B2A',
+              color: '#5A6E84',
               border: '1px solid rgba(90,110,132,0.3)',
             }}
           >
