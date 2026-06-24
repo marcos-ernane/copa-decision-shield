@@ -45,7 +45,14 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
 
       <div className="flex flex-wrap gap-1">
         {project && (
-          <span className="text-label px-2 py-0.5 rounded-full bg-op-navy border border-op-gray/30 text-op-gray">
+          <span
+            className="text-label px-2 py-0.5 rounded-full"
+            style={{
+              backgroundColor: 'var(--color-op-navy)',
+              color: 'var(--color-op-gray)',
+              border: '1px solid rgba(90,110,132,0.3)',
+            }}
+          >
             {project.name}
           </span>
         )}
