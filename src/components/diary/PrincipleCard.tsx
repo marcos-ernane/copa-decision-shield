@@ -45,7 +45,7 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
 
       <div className="flex flex-wrap gap-1">
         {project && (
-          <span className="text-label px-2 py-0.5 rounded-full bg-[var(--color-surface-1)] text-foreground">
+          <span className="text-label px-2 py-0.5 rounded-full bg-op-navy border border-op-gray/30 text-op-gray">
             {project.name}
           </span>
         )}
@@ -60,7 +60,7 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
               onClick={async () => { await persist({ content: text.trim() }); setEditing(false); }}
               className="text-[color:var(--color-brand-blue)] hover:underline"
             >Salvar</button>
-            <button onClick={() => { setText(principle.content); setEditing(false); }} className="text-muted-foreground">
+            <button onClick={() => { setText(principle.content); setEditing(false); }} className="text-op-gray hover:underline">
               Cancelar
             </button>
           </>
@@ -77,7 +77,7 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
               onConfirm={() => persist({ is_archived: true })}
             >
               {(open) => (
-                <button onClick={open} className="text-muted-foreground hover:underline">
+                <button onClick={open} className="text-op-gray hover:underline">
                   Arquivar
                 </button>
               )}
