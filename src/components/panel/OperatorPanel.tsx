@@ -109,6 +109,7 @@ export function OperatorPanel() {
   const [showReusabilitySheet, setShowReusabilitySheet] = useState(false);
   const [showGrowthSheet, setShowGrowthSheet] = useState(false);
   const [showPressureSheet, setShowPressureSheet] = useState(false);
+  const [showRubricCorrelationSheet, setShowRubricCorrelationSheet] = useState(false);
 
   async function handleArchive() {
     if (!archivingId) return;
@@ -452,6 +453,85 @@ export function OperatorPanel() {
       trend,
     };
   }, [entries]);
+
+  const rubricCorrelation = useMemo(() => {
+    if (baselines.length === 0) return null;
+
+    const latest = [...baselines].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    )[0];
+    const scores = latest.scores;
+    if (!scores || Object.keys(scores).length === 0) return null;
+
+    const pulses = entries.filter((e) => e.entry_type === 'pulse');
+    const imvEntries = entries.filter((e) => e.entry_type === 'structured_P');
+    const pressureSessions = entries.filter((e) => e.entry_type === 'pressure_session');
+    const copaSessions = entries.filter(
+      (e) => e.entry_type === 'structured_C' || e.entry_type === 'copa_session',
+    );
+
+    // Proxy comportamental — Observação: taxa de fatos limpos nos pulsos (0-5)
+    const observationBehavior =
+      pulses.length >= 3
+        ? Math.round((pulses.filter((e) => e.is_clean_fact).length / pulses.length) * 5)
+        : null;
+
+    // Proxy comportamental — Proporcionalidade: critérios reversível+barato nas IMVs (0-5)
+    const proportionalityBehavior =
+      imvEntries.length >= 3
+        ? Math.round(
+            (imvEntries.reduce((s, e) => {
+              const c = e.content as { reversible?: boolean; cheap?: boolean };
+              return s + ((c.reversible ? 1 : 0) + (c.cheap ? 1 : 0)) / 2;
+            }, 0) /
+              imvEntries.length) *
+              5,
+          )
+        : null;
+
+    // Proxy comportamental — Pressão: equilíbrio COPA vs. Pressão (mais COPA = melhor gestão, 0-5)
+    const pressureBehavior = (() => {
+      if (pressureSessions.length === 0) return copaSessions.length >= 3 ? 5 : null;
+      if (copaSessions.length === 0) return pressureSessions.length >= 3 ? 0 : null;
+      const ratio = copaSessions.length / (copaSessions.length + pressureSessions.length);
+      return Math.round(ratio * 5);
+    })();
+
+    // Proxy comportamental — Ética: taxa de campo ético preenchido nas IMVs (0-5)
+    const ethicsBehavior =
+      imvEntries.length >= 3
+        ? Math.round(
+            (imvEntries.filter((e) => {
+              const c = e.content as { ethical_check?: string };
+              return typeof c.ethical_check === 'string' && c.ethical_check.trim().length > 0;
+            }).length /
+              imvEntries.length) *
+              5,
+          )
+        : null;
+
+    type Alignment = 'above' | 'aligned' | 'below';
+    const align = (self: number, behavior: number): Alignment => {
+      if (behavior >= self + 1.5) return 'above';
+      if (behavior <= self - 1.5) return 'below';
+      return 'aligned';
+    };
+
+    const dimensions = [
+      { key: 'observation', label: 'Observação', self: scores['observation'] ?? null, behavior: observationBehavior },
+      { key: 'proportionality', label: 'Proporcionalidade', self: scores['proportionality'] ?? null, behavior: proportionalityBehavior },
+      { key: 'pressure', label: 'Pressão', self: scores['pressure'] ?? null, behavior: pressureBehavior },
+      { key: 'ethics', label: 'Ética', self: scores['ethics'] ?? null, behavior: ethicsBehavior },
+    ]
+      .filter((d): d is { key: string; label: string; self: number; behavior: number } =>
+        d.self !== null && d.behavior !== null,
+      )
+      .map((d) => ({ ...d, alignment: align(d.self, d.behavior) as Alignment }));
+
+    if (dimensions.length === 0) return null;
+
+    return { dimensions, totalScore: latest.total_score };
+  }, [baselines, entries]);
 
   const lastPrinciples = principles.slice(-3).reverse();
   const copaCycles = entries.filter(
@@ -913,6 +993,71 @@ export function OperatorPanel() {
           </section>
         )}
 
+        {/* Seção 3I — Correlação Rubrica × Resultado */}
+        {rubricCorrelation && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-heading text-foreground">RUBRICA × RESULTADO</h2>
+              <button
+                type="button"
+                onClick={() => setShowRubricCorrelationSheet(true)}
+                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors"
+                aria-label="Entender este indicador"
+              >
+                ⓘ
+              </button>
+            </div>
+            <div className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-4">
+              {rubricCorrelation.dimensions.map(({ key, label, self, behavior, alignment }) => {
+                const alignLabel =
+                  alignment === 'above' ? 'Acima do declarado'
+                  : alignment === 'below' ? 'Abaixo do declarado'
+                  : 'Alinhado';
+                const alignColor =
+                  alignment === 'above' ? 'text-green-400'
+                  : alignment === 'below' ? 'text-amber-400'
+                  : 'text-op-cyan';
+                return (
+                  <div key={key} className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-small text-op-white font-medium">{label}</span>
+                      <span className={`text-label font-semibold ${alignColor}`}>{alignLabel}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-label text-op-gray w-20 shrink-0">Declarado</span>
+                        <div className="flex-1 h-1.5 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
+                          <div className="h-full rounded-full bg-op-gray/60" style={{ width: `${(self / 5) * 100}%` }} />
+                        </div>
+                        <span className="text-label text-op-gray w-6 text-right">{self}/5</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-label text-op-gray w-20 shrink-0">Evidência</span>
+                        <div className="flex-1 h-1.5 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${(behavior / 5) * 100}%`,
+                              backgroundColor:
+                                alignment === 'above' ? '#4ade80'
+                                : alignment === 'below' ? '#fbbf24'
+                                : '#22C5DA',
+                            }}
+                          />
+                        </div>
+                        <span className={`text-label w-6 text-right ${alignColor}`}>{behavior}/5</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              <p className="text-label text-op-gray pt-1">
+                Rubrica total: {rubricCorrelation.totalScore}/35
+              </p>
+            </div>
+          </section>
+        )}
+
         {/* Seção 4 — Banco de Princípios */}
         <section className="space-y-2">
           <h2 className="text-heading text-foreground">Banco de princípios</h2>
@@ -967,6 +1112,74 @@ export function OperatorPanel() {
           </section>
         )}
       </div>
+
+      {/* Sheet explicativo — Rubrica × Resultado */}
+      {showRubricCorrelationSheet && rubricCorrelation && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setShowRubricCorrelationSheet(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">Rubrica × Resultado</h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que significa</p>
+              <p className="text-body text-op-white">
+                Compara o que você declarou na Rubrica de Linha de Base com o que seus registros
+                mostram na prática. Identifica onde sua autopercepção está alinhada com os dados
+                reais — e onde há lacunas a fechar.
+              </p>
+              <ul className="mt-2 space-y-1 text-small text-op-gray">
+                <li><span className="text-green-400 font-semibold">Acima do declarado</span> — seu comportamento supera a nota que você se deu</li>
+                <li><span className="text-op-cyan font-semibold">Alinhado</span> — autopercepção e evidência coincidem</li>
+                <li><span className="text-amber-400 font-semibold">Abaixo do declarado</span> — há gap entre a nota declarada e a prática</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
+              <div className="space-y-3 text-small">
+                {rubricCorrelation.dimensions.map(({ key, label, self, behavior, alignment }) => {
+                  const alignColor =
+                    alignment === 'above' ? 'text-green-400'
+                    : alignment === 'below' ? 'text-amber-400'
+                    : 'text-op-cyan';
+                  const proxyDesc: Record<string, string> = {
+                    observation: 'Taxa de pulsos com fato limpo (is_clean_fact) × 5',
+                    proportionality: 'Critérios reversível + barato nas IMVs × 5',
+                    pressure: 'Proporção COPA vs. Modo Pressão × 5',
+                    ethics: 'Taxa de campo ético preenchido nas IMVs × 5',
+                  };
+                  return (
+                    <div key={key} className="border-b border-op-gray/20 pb-2 space-y-0.5">
+                      <div className="flex justify-between">
+                        <span className="text-op-white font-semibold">{label}</span>
+                        <span className={`font-semibold ${alignColor}`}>{self}/5 → {behavior}/5</span>
+                      </div>
+                      <p className="text-op-gray">{proxyDesc[key]}</p>
+                    </div>
+                  );
+                })}
+                <p className="text-label text-op-gray">
+                  Alinhamento detectado quando diferença {"<"} 1,5 ponto. Mínimo 3 registros por dimensão para calcular evidência.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowRubricCorrelationSheet(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sheet explicativo — Assinatura de Pressão */}
       {showPressureSheet && pressureSignature && (
