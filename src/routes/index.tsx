@@ -158,6 +158,7 @@ function Home() {
                   ? 'Podem se transformar em novos projetos →'
                   : 'Pode se transformar em um novo projeto →'}
               </p>
+              <p className="text-label text-op-cyan font-medium mt-0.5">Criar projeto →</p>
             </div>
             <span className="text-label text-op-cyan shrink-0">Ver →</span>
           </button>
