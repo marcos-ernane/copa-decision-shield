@@ -70,10 +70,16 @@ async function invokeFunction(
       body: JSON.stringify({ trigger, context }),
       signal: controller.signal,
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.warn('[Facilitator] HTTP', res.status, body.slice(0, 300));
+      return null;
+    }
     const json = await res.json() as { suggestion?: string | null };
+    console.info('[Facilitator] response →', json?.suggestion ? 'AI text received' : 'null suggestion');
     return json?.suggestion ?? null;
-  } catch {
+  } catch (err) {
+    console.warn('[Facilitator] fetch error:', err);
     return null;
   } finally {
     clearTimeout(timer);
