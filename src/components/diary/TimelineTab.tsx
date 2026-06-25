@@ -10,6 +10,13 @@ import { supabase } from '@/lib/supabase';
 import { GuestStorage } from '@/lib/guestStorage';
 
 const SCENARIOS: ScenarioType[] = ['fluxo', 'processo', 'oferta', 'relacionamento', 'pressao'];
+const SCENARIO_LABELS: Record<ScenarioType, string> = {
+  fluxo: 'Fluxo',
+  processo: 'Processo',
+  oferta: 'Oferta',
+  relacionamento: 'Relacionamento',
+  pressao: 'Pressão',
+};
 const LAYERS: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia', 'escala'];
 const ENTRY_TYPES = [
   { v: 'pulse', label: 'Pulso' },
@@ -18,7 +25,6 @@ const ENTRY_TYPES = [
   { v: 'structured_P', label: 'IMV' },
   { v: 'structured_A', label: 'APA' },
   { v: 'corrective', label: 'Corretiva' },
-  { v: 'pressure_session', label: 'Pressão' },
 ] as const;
 const PERIODS = [
   { v: 7, label: '7 dias' },
@@ -93,6 +99,8 @@ export function TimelineTab() {
     const scenarios = new Set(
       base.map((e) => e.scenario_type_at_entry ?? projectMap[e.project_id]?.scenario_type ?? null).filter(Boolean)
     );
+    // pressure_session entries contam como cenário 'pressao'
+    if (base.some((e) => e.entry_type === 'pressure_session')) scenarios.add('pressao');
     const layers = new Set(
       base.map((e) => e.layer_at_entry ?? projectMap[e.project_id]?.current_layer ?? null).filter(Boolean)
     );
@@ -113,6 +121,7 @@ export function TimelineTab() {
       .filter((e) => project === 'all' || e.project_id === project)
       .filter((e) => {
         if (!scenario) return true;
+        if (scenario === 'pressao' && e.entry_type === 'pressure_session') return true;
         const s = e.scenario_type_at_entry ?? projectMap[e.project_id]?.scenario_type ?? null;
         return s === scenario;
       })
@@ -156,7 +165,7 @@ export function TimelineTab() {
                     : 'border-op-gray/30 bg-op-navy text-op-gray'
                 }`}
               >
-                {s}
+                {SCENARIO_LABELS[s]}
               </button>
             );
           })}
