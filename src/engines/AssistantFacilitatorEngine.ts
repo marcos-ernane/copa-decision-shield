@@ -60,11 +60,14 @@ export async function askFacilitator(
     }
 
     const key = trigger + ':' + JSON.stringify(context);
-    const hit = cache.get(key);
-    if (hit && hit.expiresAt > Date.now()) return hit.value;
+    const isHelp = trigger === 'HELP_CENTER_QUERY';
+    if (!isHelp) {
+      const hit = cache.get(key);
+      if (hit && hit.expiresAt > Date.now()) return hit.value;
+    }
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
+    const timer = setTimeout(() => controller.abort(), isHelp ? 12000 : 3000);
 
     const { data, error } = await supabase.functions.invoke('assistant-facilitator', {
       body: { trigger, context },
