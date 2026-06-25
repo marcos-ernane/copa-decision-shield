@@ -125,8 +125,9 @@ export function HelpCenterChat() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#070C12' }}>
-      <header className="sticky top-0 z-10 border-b border-op-gray/30 bg-op-black px-4 py-3 flex items-center gap-3">
+    <div className="h-screen flex flex-col" style={{ backgroundColor: '#070C12' }}>
+      {/* Header fixo */}
+      <header className="shrink-0 border-b border-op-gray/30 bg-op-black px-4 py-3 flex items-center gap-3">
         <BotMessageSquare className="size-5 text-op-cyan shrink-0" />
         <div className="flex-1">
           <h1 className="text-heading text-op-white">Ajuda IA</h1>
@@ -134,6 +135,24 @@ export function HelpCenterChat() {
         </div>
       </header>
 
+      {/* Perguntas frequentes — sempre visíveis no topo, fora do scroll */}
+      <div className="shrink-0 border-b border-op-gray/20 px-4 py-3" style={{ backgroundColor: '#070C12' }}>
+        <p className="text-label text-op-gray uppercase tracking-wide mb-2">Perguntas frequentes</p>
+        <div className="flex flex-wrap gap-2">
+          {SUGGESTED_QUESTIONS.map((q) => (
+            <button
+              key={q}
+              onClick={() => void send(q)}
+              disabled={loading}
+              className="text-label px-3 py-1.5 rounded-full border border-op-cyan/40 bg-op-navy text-op-cyan hover:bg-op-cyan/10 transition-colors text-left disabled:opacity-40"
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Mensagens — área scrollável */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4" style={{ paddingBottom: '120px' }}>
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -165,25 +184,10 @@ export function HelpCenterChat() {
           </div>
         )}
 
-        <div className="space-y-2 pt-2">
-          <p className="text-label text-op-gray uppercase tracking-wide">Perguntas frequentes</p>
-          <div className="flex flex-wrap gap-2">
-            {SUGGESTED_QUESTIONS.map((q) => (
-              <button
-                key={q}
-                onClick={() => void send(q)}
-                disabled={loading}
-                className="text-label px-3 py-1.5 rounded-full border border-op-cyan/40 bg-op-navy text-op-cyan hover:bg-op-cyan/10 transition-colors text-left disabled:opacity-40"
-              >
-                {q}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div ref={bottomRef} />
       </div>
 
+      {/* Input fixo na base */}
       <div
         className="fixed bottom-0 left-0 right-0 border-t border-op-gray/30 px-4 py-3"
         style={{ backgroundColor: '#070C12', zIndex: 200 }}
