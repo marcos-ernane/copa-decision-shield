@@ -74,9 +74,9 @@ const LAYER_NAMES: Record<OperationalLayer, string> = {
 };
 
 function difficultyMeta(score: number): { label: string; color: string; barColor: string } {
-  if (score < 25) return { label: 'Zona de domínio', color: 'text-green-400', barColor: '#4ade80' };
-  if (score < 50) return { label: 'Operando bem', color: 'text-op-cyan', barColor: '#22C5DA' };
-  if (score < 75) return { label: 'Atenção necessária', color: 'text-amber-400', barColor: '#fbbf24' };
+  if (score >= 75) return { label: 'Zona de domínio', color: 'text-green-400', barColor: '#4ade80' };
+  if (score >= 50) return { label: 'Operando bem', color: 'text-op-cyan', barColor: '#22C5DA' };
+  if (score >= 25) return { label: 'Atenção necessária', color: 'text-amber-400', barColor: '#fbbf24' };
   return { label: 'Gargalo crítico', color: 'text-red-400', barColor: '#f87171' };
 }
 
@@ -224,10 +224,10 @@ export function OperatorPanel() {
             ? layerProjects.filter((p) => p.state === 'blocked').length / layerProjects.length
             : 0;
 
-        // Dificuldade = soma ponderada (0-100)
+        // Domínio = soma ponderada (0-100); quanto maior, melhor
         const difficulty = Math.min(
           100,
-          Math.round((1 - avgIQI) * 40 + (1 - followRate) * 40 + blockRate * 20),
+          Math.round(avgIQI * 40 + followRate * 40 + (1 - blockRate) * 20),
         );
 
         return {
@@ -717,11 +717,11 @@ export function OperatorPanel() {
           </section>
         )}
 
-        {/* Seção 3C — Índice de Dificuldade por Camada */}
+        {/* Seção 3C — Índice de Domínio por Camada */}
         {layerDifficulty.length > 0 && (
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-heading text-foreground">DIFICULDADE POR CAMADA</h2>
+              <h2 className="text-heading text-foreground">DOMÍNIO POR CAMADA</h2>
               <button
                 type="button"
                 onClick={() => setShowDifficultySheet(true)}
@@ -747,7 +747,7 @@ export function OperatorPanel() {
                       />
                     </div>
                     <div className="flex justify-between text-label text-op-gray">
-                      <span>Índice de dificuldade</span>
+                      <span>Índice de domínio</span>
                       <span className={meta.color}>Score: {difficulty}/100</span>
                     </div>
                   </li>
@@ -1556,7 +1556,7 @@ export function OperatorPanel() {
         </div>
       )}
 
-      {/* Sheet explicativo — Dificuldade por Camada */}
+      {/* Sheet explicativo — Domínio por Camada */}
       {showDifficultySheet && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center"
@@ -1567,19 +1567,19 @@ export function OperatorPanel() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
-            <h3 className="text-heading text-op-white font-semibold">Dificuldade por Camada</h3>
+            <h3 className="text-heading text-op-white font-semibold">Domínio por Camada</h3>
 
             <div className="space-y-2">
               <p className="text-label text-op-cyan uppercase">O que significa</p>
               <p className="text-body text-op-white">
-                Mede o nível de dificuldade operacional em cada camada com base em três fatores reais do seu histórico.
-                Quanto maior o índice, mais essa camada ainda está resistindo ao método.
+                Mede o nível de domínio operacional em cada camada com base em três fatores reais do seu histórico.
+                Quanto maior o índice, mais essa camada está respondendo ao método.
               </p>
               <ul className="mt-2 space-y-1 text-small text-op-gray">
-                <li><span className="text-green-400 font-semibold">Zona de domínio</span> — índice abaixo de 25</li>
-                <li><span className="text-op-cyan font-semibold">Operando bem</span> — 25 a 49</li>
-                <li><span className="text-amber-400 font-semibold">Atenção necessária</span> — 50 a 74</li>
-                <li><span className="text-red-400 font-semibold">Gargalo crítico</span> — 75 ou mais</li>
+                <li><span className="text-green-400 font-semibold">Zona de domínio</span> — Score: 75 ou mais</li>
+                <li><span className="text-op-cyan font-semibold">Operando bem</span> — Score: 50 a 74</li>
+                <li><span className="text-amber-400 font-semibold">Atenção necessária</span> — Score: 25 a 49</li>
+                <li><span className="text-red-400 font-semibold">Gargalo crítico</span> — Score: abaixo de 25</li>
               </ul>
             </div>
 
@@ -1619,7 +1619,7 @@ export function OperatorPanel() {
                   );
                 })}
                 <p className="text-label text-op-gray">
-                  Dificuldade = (100% − qualidade) × 40 + (100% − aferição) × 40 + bloqueio × 20
+                  Domínio = qualidade × 40 + aferição × 40 + (100% − bloqueio) × 20
                 </p>
               </div>
             </div>
@@ -1635,7 +1635,7 @@ export function OperatorPanel() {
         </div>
       )}
 
-      {/* Modal — Saiba mais: fatores do Índice de Dificuldade */}
+      {/* Modal — Saiba mais: fatores do Índice de Domínio */}
       {showDifficultyLearnMore && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center px-4"
@@ -1658,17 +1658,17 @@ export function OperatorPanel() {
                 <tr className="border-b border-op-gray/20">
                   <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Qualidade das IMVs</td>
                   <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">40%</td>
-                  <td className="py-2.5 text-op-gray">Quanto mais critérios (reversível / barato / específico / mensurável) faltando, mais difícil</td>
+                  <td className="py-2.5 text-op-gray">Quanto mais critérios cumpridos (reversível / barato / específico / mensurável), maior o domínio</td>
                 </tr>
                 <tr className="border-b border-op-gray/20">
                   <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Taxa de aferição</td>
                   <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">40%</td>
-                  <td className="py-2.5 text-op-gray">% de IMVs que ficaram sem APA posterior — quanto mais sem aferição, mais difícil</td>
+                  <td className="py-2.5 text-op-gray">% de IMVs que geraram APA posterior — quanto mais aferições, maior o domínio</td>
                 </tr>
                 <tr>
-                  <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Pressão de bloqueio</td>
+                  <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Ausência de bloqueio</td>
                   <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">20%</td>
-                  <td className="py-2.5 text-op-gray">% de projetos ativos nessa camada com estado "Travado"</td>
+                  <td className="py-2.5 text-op-gray">Quanto menos projetos travados nessa camada, maior o domínio</td>
                 </tr>
               </tbody>
             </table>
