@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, BotMessageSquare } from 'lucide-react';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
-import { BackButton } from '@/components/app/BackButton';
-import { CloseButton } from '@/components/app/CloseButton';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -128,13 +126,12 @@ export function HelpCenterChat() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#070C12' }}>
-      <header className="sticky top-0 z-10 border-b border-op-gray/30 bg-op-black px-4 py-3 flex items-center gap-2">
-        <BackButton />
+      <header className="sticky top-0 z-10 border-b border-op-gray/30 bg-op-black px-4 py-3 flex items-center gap-3">
+        <BotMessageSquare className="size-5 text-op-cyan shrink-0" />
         <div className="flex-1">
-          <h1 className="text-heading text-op-white">Central de Ajuda</h1>
+          <h1 className="text-heading text-op-white">Ajuda IA</h1>
           <p className="text-label text-op-gray">Assistente do app</p>
         </div>
-        <CloseButton />
       </header>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4" style={{ paddingBottom: '120px' }}>
