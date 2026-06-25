@@ -28,7 +28,7 @@ interface FilterChip {
 }
 
 const FILTER_CHIPS: FilterChip[] = [
-  { key: 'gargalos',     label: 'Restrições',          entryType: 'structured_O',    displayField: 'bottleneck' },
+  { key: 'gargalos',     label: 'R3-Restrições',       entryType: 'structured_O',    displayField: 'bottleneck' },
   { key: 'friccoes',     label: 'Fricções',            entryType: 'structured_O',    displayField: 'frictions' },
   { key: 'pressao',      label: 'Pressão',             entryType: 'pressure_session', displayField: 'fact' },
   { key: 'funcionou',    label: 'O que funcionou',     entryType: 'structured_A',    displayField: 'what_worked' },
