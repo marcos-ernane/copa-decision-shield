@@ -86,6 +86,27 @@ export function TimelineTab() {
     [projects],
   );
 
+  // Quais filtros têm dados (considerando apenas o filtro de projeto ativo)
+  const dataMap = useMemo(() => {
+    const now = Date.now();
+    const base = entries.filter((e) => project === 'all' || e.project_id === project);
+    const scenarios = new Set(
+      base.map((e) => e.scenario_type_at_entry ?? projectMap[e.project_id]?.scenario_type ?? null).filter(Boolean)
+    );
+    const layers = new Set(
+      base.map((e) => e.layer_at_entry ?? projectMap[e.project_id]?.current_layer ?? null).filter(Boolean)
+    );
+    const types = new Set(base.map((e) => e.entry_type));
+    return {
+      scenarios,
+      layers,
+      types,
+      has7: base.some((e) => now - new Date(e.created_at).getTime() <= 7 * 86400000),
+      has30: base.some((e) => now - new Date(e.created_at).getTime() <= 30 * 86400000),
+      hasAll: base.length > 0,
+    };
+  }, [entries, project, projectMap]);
+
   const filtered = useMemo(() => {
     const now = Date.now();
     return entries
@@ -120,48 +141,88 @@ export function TimelineTab() {
         </select>
 
         <div className="flex flex-wrap gap-1">
-          {SCENARIOS.map((s) => (
-            <button
-              key={s}
-              onClick={() => setScenario(scenario === s ? null : s)}
-              className={`text-label px-2 py-0.5 rounded-full border ${scenario === s ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}
-            >
-              {s}
-            </button>
-          ))}
+          {SCENARIOS.map((s) => {
+            const active = scenario === s;
+            const hasData = dataMap.scenarios.has(s);
+            return (
+              <button
+                key={s}
+                onClick={() => setScenario(active ? null : s)}
+                className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
+                  active
+                    ? 'bg-op-amber text-op-black border-op-amber font-semibold'
+                    : hasData
+                    ? 'border-dashed border-op-cyan/60 bg-op-navy text-op-gray'
+                    : 'border-op-gray/30 bg-op-navy text-op-gray'
+                }`}
+              >
+                {s}
+              </button>
+            );
+          })}
         </div>
         <div className="flex flex-wrap gap-1">
-          {LAYERS.map((l) => (
-            <button
-              key={l}
-              onClick={() => setLayer(layer === l ? null : l)}
-              className={`text-label px-2 py-0.5 rounded-full border ${layer === l ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}
-            >
-              {l}
-            </button>
-          ))}
+          {LAYERS.map((l) => {
+            const active = layer === l;
+            const hasData = dataMap.layers.has(l);
+            return (
+              <button
+                key={l}
+                onClick={() => setLayer(active ? null : l)}
+                className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
+                  active
+                    ? 'bg-op-amber text-op-black border-op-amber font-semibold'
+                    : hasData
+                    ? 'border-dashed border-op-cyan/60 bg-op-navy text-op-gray'
+                    : 'border-op-gray/30 bg-op-navy text-op-gray'
+                }`}
+              >
+                {l}
+              </button>
+            );
+          })}
         </div>
         <div className="flex flex-wrap gap-1">
-          {ENTRY_TYPES.map((t) => (
-            <button
-              key={t.v}
-              onClick={() => setEtype(etype === t.v ? null : t.v)}
-              className={`text-label px-2 py-0.5 rounded-full border ${etype === t.v ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}
-            >
-              {t.label}
-            </button>
-          ))}
+          {ENTRY_TYPES.map((t) => {
+            const active = etype === t.v;
+            const hasData = dataMap.types.has(t.v);
+            return (
+              <button
+                key={t.v}
+                onClick={() => setEtype(active ? null : t.v)}
+                className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
+                  active
+                    ? 'bg-op-amber text-op-black border-op-amber font-semibold'
+                    : hasData
+                    ? 'border-dashed border-op-cyan/60 bg-op-navy text-op-gray'
+                    : 'border-op-gray/30 bg-op-navy text-op-gray'
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </div>
         <div className="flex gap-1">
-          {PERIODS.map((p) => (
-            <button
-              key={p.v}
-              onClick={() => setPeriod(p.v)}
-              className={`text-label px-2 py-0.5 rounded-full border ${period === p.v ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}
-            >
-              {p.label}
-            </button>
-          ))}
+          {PERIODS.map((p) => {
+            const active = period === p.v;
+            const hasData = p.v === 7 ? dataMap.has7 : p.v === 30 ? dataMap.has30 : dataMap.hasAll;
+            return (
+              <button
+                key={p.v}
+                onClick={() => setPeriod(p.v)}
+                className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
+                  active
+                    ? 'bg-op-amber text-op-black border-op-amber font-semibold'
+                    : hasData
+                    ? 'border-dashed border-op-cyan/60 bg-op-navy text-op-gray'
+                    : 'border-op-gray/30 bg-op-navy text-op-gray'
+                }`}
+              >
+                {p.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
