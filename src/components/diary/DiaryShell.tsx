@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useNavigate, Link } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
@@ -29,6 +29,8 @@ const TABS: Array<{ id: DiaryTab; label: string }> = [
 export function DiaryShell({ active, children }: Props) {
   const navigate = useNavigate();
   const [tab, setTab] = useState<DiaryTab>(active);
+
+  useEffect(() => { setTab(active); }, [active]);
 
   function go(id: DiaryTab) {
     setTab(id);
