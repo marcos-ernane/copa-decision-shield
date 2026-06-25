@@ -159,6 +159,10 @@ export function SettingsScreen() {
         </Section>
 
 
+        <Section title="Ajuda">
+          <LinkRow to="/settings/help" label="Central de Ajuda com IA" />
+        </Section>
+
         <Section title="Notificações">
           <LinkRow to="/settings/notifications" label="Gerenciar notificações" />
         </Section>

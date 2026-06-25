@@ -24,6 +24,7 @@ import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as PanelIndexRouteImport } from './routes/panel.index'
 import { Route as CompassIndexRouteImport } from './routes/compass.index'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
+import { Route as SettingsHelpRouteImport } from './routes/settings.help'
 import { Route as RegisterStructuredRouteImport } from './routes/register.structured'
 import { Route as RegisterPulseRouteImport } from './routes/register.pulse'
 import { Route as ProjectNewRouteImport } from './routes/project.new'
@@ -124,6 +125,11 @@ const CompassIndexRoute = CompassIndexRouteImport.update({
 const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsHelpRoute = SettingsHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => SettingsRoute,
 } as any)
 const RegisterStructuredRoute = RegisterStructuredRouteImport.update({
@@ -892,11 +898,13 @@ const PressureRouteWithChildren = PressureRoute._addFileChildren(
 
 interface SettingsRouteChildren {
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
+  SettingsHelpRoute: typeof SettingsHelpRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsNotificationsRoute: SettingsNotificationsRoute,
+  SettingsHelpRoute: SettingsHelpRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
 
