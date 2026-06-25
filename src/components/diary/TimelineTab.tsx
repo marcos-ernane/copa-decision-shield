@@ -142,7 +142,7 @@ export function TimelineTab() {
       })
       .filter((e) => period === 0 || now - new Date(e.created_at).getTime() <= period * 86400000)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [entries, projects, project, scenario, layer, etype, period, projectMap]);
+  }, [entries, projects, project, scenario, layer, etype, imvSub, period, projectMap]);
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? '—';
 
