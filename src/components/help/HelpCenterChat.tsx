@@ -156,22 +156,21 @@ export function HelpCenterChat() {
           </div>
         )}
 
-        {messages.length === 1 && !loading && (
-          <div className="space-y-2 pt-2">
-            <p className="text-label text-op-gray uppercase tracking-wide">Perguntas frequentes</p>
-            <div className="flex flex-wrap gap-2">
-              {SUGGESTED_QUESTIONS.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => void send(q)}
-                  className="text-label px-3 py-1.5 rounded-full border border-op-cyan/40 bg-op-navy text-op-cyan hover:bg-op-cyan/10 transition-colors text-left"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
+        <div className="space-y-2 pt-2">
+          <p className="text-label text-op-gray uppercase tracking-wide">Perguntas frequentes</p>
+          <div className="flex flex-wrap gap-2">
+            {SUGGESTED_QUESTIONS.map((q) => (
+              <button
+                key={q}
+                onClick={() => void send(q)}
+                disabled={loading}
+                className="text-label px-3 py-1.5 rounded-full border border-op-cyan/40 bg-op-navy text-op-cyan hover:bg-op-cyan/10 transition-colors text-left disabled:opacity-40"
+              >
+                {q}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
 
         <div ref={bottomRef} />
       </div>
