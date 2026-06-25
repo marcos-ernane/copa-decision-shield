@@ -19,10 +19,10 @@ const SCENARIO_LABELS: Record<ScenarioType, string> = {
 };
 const LAYERS: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia', 'escala'];
 const ENTRY_TYPES = [
+  { v: 'structured_P', label: 'IMV' },
   { v: 'pulse', label: 'Pulso' },
   { v: 'structured_C', label: 'Análise' },
   { v: 'structured_O', label: 'Organização' },
-  { v: 'structured_P', label: 'IMV' },
   { v: 'structured_A', label: 'APA' },
   { v: 'corrective', label: 'Corretiva' },
 ] as const;
@@ -84,6 +84,7 @@ export function TimelineTab() {
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
   const [layer, setLayer] = useState<OperationalLayer | null>(null);
   const [etype, setEtype] = useState<string | null>(search.type ?? null);
+  const [imvSub, setImvSub] = useState<'vencidas' | 'a_vencer' | 'encerradas' | null>(null);
   const [period, setPeriod] = useState<number>(0);
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -131,6 +132,14 @@ export function TimelineTab() {
         return l === layer;
       })
       .filter((e) => !etype || e.entry_type === etype)
+      .filter((e) => {
+        if (etype !== 'structured_P' || !imvSub) return true;
+        const deadline = (e.content as Record<string, unknown>).deadline as string | undefined;
+        if (imvSub === 'encerradas') return projectMap[e.project_id]?.state === 'concluded';
+        if (!deadline) return false;
+        const expired = new Date(deadline).getTime() < now;
+        return imvSub === 'vencidas' ? expired : !expired;
+      })
       .filter((e) => period === 0 || now - new Date(e.created_at).getTime() <= period * 86400000)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [entries, projects, project, scenario, layer, etype, period, projectMap]);
@@ -233,7 +242,10 @@ export function TimelineTab() {
               return (
                 <button
                   key={t.v}
-                  onClick={() => setEtype(active ? null : t.v)}
+                  onClick={() => {
+                    if (active) { setEtype(null); setImvSub(null); }
+                    else { setEtype(t.v); if (t.v !== 'structured_P') setImvSub(null); }
+                  }}
                   className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
                     active
                       ? 'bg-op-amber text-op-black border-op-amber font-semibold'
@@ -247,6 +259,27 @@ export function TimelineTab() {
               );
             })}
           </div>
+          {etype === 'structured_P' && (
+            <div className="flex gap-1 pt-1 pl-1">
+              {(['vencidas', 'a_vencer', 'encerradas'] as const).map((sub) => {
+                const labels = { vencidas: 'Vencidas', a_vencer: 'A vencer', encerradas: 'Encerradas' };
+                const active = imvSub === sub;
+                return (
+                  <button
+                    key={sub}
+                    onClick={() => setImvSub(active ? null : sub)}
+                    className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
+                      active
+                        ? 'bg-op-cyan text-op-black border-op-cyan font-semibold'
+                        : 'border-op-cyan/40 bg-op-navy text-op-cyan'
+                    }`}
+                  >
+                    {labels[sub]}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
