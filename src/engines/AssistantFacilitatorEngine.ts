@@ -49,6 +49,37 @@ async function userIsPaid(): Promise<boolean> {
   }
 }
 
+const FUNCTIONS_URL = 'https://nvkjzdhpjrbaietwcnmg.supabase.co/functions/v1/assistant-facilitator';
+const ANON_KEY = 'sb_publishable_UEenS-933goX-Wg4UUlN5A_KK7-pnIL';
+
+async function invokeFunction(
+  trigger: FacilitatorTrigger,
+  context: Record<string, unknown>,
+  timeoutMs: number,
+): Promise<string | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(FUNCTIONS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${ANON_KEY}`,
+        'apikey': ANON_KEY,
+      },
+      body: JSON.stringify({ trigger, context }),
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+    const json = await res.json() as { suggestion?: string | null };
+    return json?.suggestion ?? null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function askFacilitator(
   trigger: FacilitatorTrigger,
   context: Record<string, unknown>,
@@ -59,24 +90,20 @@ export async function askFacilitator(
       if (!paid) return null;
     }
 
-    const key = trigger + ':' + JSON.stringify(context);
     const isHelp = trigger === 'HELP_CENTER_QUERY';
+    const key = trigger + ':' + JSON.stringify(context);
+
     if (!isHelp) {
       const hit = cache.get(key);
       if (hit && hit.expiresAt > Date.now()) return hit.value;
     }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), isHelp ? 12000 : 3000);
+    const timeoutMs = isHelp ? 12000 : 3000;
+    const suggestion = await invokeFunction(trigger, context, timeoutMs);
 
-    const { data, error } = await supabase.functions.invoke('assistant-facilitator', {
-      body: { trigger, context },
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-    if (error) return null;
-    const suggestion = (data as { suggestion?: string | null } | null)?.suggestion ?? null;
-    cache.set(key, { value: suggestion, expiresAt: Date.now() + FIFTEEN_MIN });
+    if (!isHelp) {
+      cache.set(key, { value: suggestion, expiresAt: Date.now() + FIFTEEN_MIN });
+    }
     return suggestion;
   } catch {
     return null;
