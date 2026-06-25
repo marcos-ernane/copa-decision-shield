@@ -7,6 +7,7 @@ import { CloseButton } from '@/components/app/CloseButton';
 interface Message {
   role: 'user' | 'assistant';
   text: string;
+  source?: 'ai' | 'local';
 }
 
 const SUGGESTED_QUESTIONS = [
@@ -115,7 +116,11 @@ export function HelpCenterChat() {
     const reply = await askFacilitator('HELP_CENTER_QUERY', { question: text });
     setMessages((prev) => [
       ...prev,
-      { role: 'assistant', text: reply ?? staticFallback(text) },
+      {
+        role: 'assistant',
+        text: reply ?? staticFallback(text),
+        source: reply ? 'ai' : 'local',
+      },
     ]);
     setLoading(false);
     setTimeout(() => textareaRef.current?.focus(), 100);
@@ -135,14 +140,21 @@ export function HelpCenterChat() {
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4" style={{ paddingBottom: '120px' }}>
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div
-              className={`max-w-[85%] rounded-2xl px-4 py-3 text-small leading-relaxed ${
-                msg.role === 'user'
-                  ? 'bg-op-amber text-op-black rounded-br-sm'
-                  : 'bg-op-navy border border-op-gray/30 text-op-white rounded-bl-sm'
-              }`}
-            >
-              {msg.text}
+            <div className="max-w-[85%] space-y-1">
+              <div
+                className={`rounded-2xl px-4 py-3 text-small leading-relaxed ${
+                  msg.role === 'user'
+                    ? 'bg-op-amber text-op-black rounded-br-sm'
+                    : 'bg-op-navy border border-op-gray/30 text-op-white rounded-bl-sm'
+                }`}
+              >
+                {msg.text}
+              </div>
+              {msg.role === 'assistant' && msg.source && (
+                <p className="text-label px-1" style={{ color: msg.source === 'ai' ? '#22C5DA' : '#475569', fontSize: '10px' }}>
+                  {msg.source === 'ai' ? '✦ IA' : '○ base local'}
+                </p>
+              )}
             </div>
           </div>
         ))}
@@ -202,7 +214,7 @@ export function HelpCenterChat() {
           </button>
         </div>
         <p className="text-label text-op-gray text-center mt-2">
-          Respostas por IA em produção · base local ativa agora
+          ✦ IA · ○ base local — indicado por mensagem
         </p>
       </div>
     </div>
