@@ -149,89 +149,104 @@ export function TimelineTab() {
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
 
-        <div className="flex flex-wrap gap-1">
-          {SCENARIOS.map((s) => {
-            const active = scenario === s;
-            const hasData = dataMap.scenarios.has(s);
-            return (
-              <button
-                key={s}
-                onClick={() => setScenario(active ? null : s)}
-                className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
-                  active
-                    ? 'bg-op-amber text-op-black border-op-amber font-semibold'
-                    : hasData
-                    ? 'border-dashed border-op-cyan/60 bg-op-navy text-op-gray'
-                    : 'border-op-gray/30 bg-op-navy text-op-gray'
-                }`}
-              >
-                {SCENARIO_LABELS[s]}
-              </button>
-            );
-          })}
+        <div className="space-y-0.5">
+          <p className="text-label text-op-gray uppercase tracking-wide">Período</p>
+          <div className="flex gap-1">
+            {PERIODS.map((p) => {
+              const active = period === p.v;
+              const hasData = p.v === 7 ? dataMap.has7 : p.v === 30 ? dataMap.has30 : dataMap.hasAll;
+              return (
+                <button
+                  key={p.v}
+                  onClick={() => setPeriod(p.v)}
+                  className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
+                    active
+                      ? 'bg-op-amber text-op-black border-op-amber font-semibold'
+                      : hasData
+                      ? 'border-dashed border-op-cyan/60 bg-op-navy text-op-gray'
+                      : 'border-op-gray/30 bg-op-navy text-op-gray'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-1">
-          {LAYERS.map((l) => {
-            const active = layer === l;
-            const hasData = dataMap.layers.has(l);
-            return (
-              <button
-                key={l}
-                onClick={() => setLayer(active ? null : l)}
-                className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
-                  active
-                    ? 'bg-op-amber text-op-black border-op-amber font-semibold'
-                    : hasData
-                    ? 'border-dashed border-op-cyan/60 bg-op-navy text-op-gray'
-                    : 'border-op-gray/30 bg-op-navy text-op-gray'
-                }`}
-              >
-                {l}
-              </button>
-            );
-          })}
+
+        <div className="space-y-0.5">
+          <p className="text-label text-op-gray uppercase tracking-wide">Cenário</p>
+          <div className="flex flex-wrap gap-1">
+            {SCENARIOS.map((s) => {
+              const active = scenario === s;
+              const hasData = dataMap.scenarios.has(s);
+              return (
+                <button
+                  key={s}
+                  onClick={() => setScenario(active ? null : s)}
+                  className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
+                    active
+                      ? 'bg-op-amber text-op-black border-op-amber font-semibold'
+                      : hasData
+                      ? 'border-dashed border-op-cyan/60 bg-op-navy text-op-gray'
+                      : 'border-op-gray/30 bg-op-navy text-op-gray'
+                  }`}
+                >
+                  {SCENARIO_LABELS[s]}
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-1">
-          {ENTRY_TYPES.map((t) => {
-            const active = etype === t.v;
-            const hasData = dataMap.types.has(t.v);
-            return (
-              <button
-                key={t.v}
-                onClick={() => setEtype(active ? null : t.v)}
-                className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
-                  active
-                    ? 'bg-op-amber text-op-black border-op-amber font-semibold'
-                    : hasData
-                    ? 'border-dashed border-op-cyan/60 bg-op-navy text-op-gray'
-                    : 'border-op-gray/30 bg-op-navy text-op-gray'
-                }`}
-              >
-                {t.label}
-              </button>
-            );
-          })}
+
+        <div className="space-y-0.5">
+          <p className="text-label text-op-gray uppercase tracking-wide">Camada</p>
+          <div className="flex flex-wrap gap-1">
+            {LAYERS.map((l) => {
+              const active = layer === l;
+              const hasData = dataMap.layers.has(l);
+              return (
+                <button
+                  key={l}
+                  onClick={() => setLayer(active ? null : l)}
+                  className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
+                    active
+                      ? 'bg-op-amber text-op-black border-op-amber font-semibold'
+                      : hasData
+                      ? 'border-dashed border-op-cyan/60 bg-op-navy text-op-gray'
+                      : 'border-op-gray/30 bg-op-navy text-op-gray'
+                  }`}
+                >
+                  {l}
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <div className="flex gap-1">
-          {PERIODS.map((p) => {
-            const active = period === p.v;
-            const hasData = p.v === 7 ? dataMap.has7 : p.v === 30 ? dataMap.has30 : dataMap.hasAll;
-            return (
-              <button
-                key={p.v}
-                onClick={() => setPeriod(p.v)}
-                className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
-                  active
-                    ? 'bg-op-amber text-op-black border-op-amber font-semibold'
-                    : hasData
-                    ? 'border-dashed border-op-cyan/60 bg-op-navy text-op-gray'
-                    : 'border-op-gray/30 bg-op-navy text-op-gray'
-                }`}
-              >
-                {p.label}
-              </button>
-            );
-          })}
+
+        <div className="space-y-0.5">
+          <p className="text-label text-op-gray uppercase tracking-wide">Tipo de entrada</p>
+          <div className="flex flex-wrap gap-1">
+            {ENTRY_TYPES.map((t) => {
+              const active = etype === t.v;
+              const hasData = dataMap.types.has(t.v);
+              return (
+                <button
+                  key={t.v}
+                  onClick={() => setEtype(active ? null : t.v)}
+                  className={`text-label px-2 py-0.5 rounded-full border transition-colors ${
+                    active
+                      ? 'bg-op-amber text-op-black border-op-amber font-semibold'
+                      : hasData
+                      ? 'border-dashed border-op-cyan/60 bg-op-navy text-op-gray'
+                      : 'border-op-gray/30 bg-op-navy text-op-gray'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
