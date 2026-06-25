@@ -151,7 +151,11 @@ Calcule o score (0 a 100) baseado em:
 
 async function callClaude(trigger: string, payload: Record<string, unknown>): Promise<string | null> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.error('[callClaude] ANTHROPIC_API_KEY not set');
+    return null;
+  }
+  console.log('[callClaude] key prefix:', apiKey.slice(0, 10), 'trigger:', trigger);
 
   const controller = new AbortController();
   const isReport = trigger === 'TRANSFER_CONSISTENCY_REPORT';
@@ -159,7 +163,6 @@ async function callClaude(trigger: string, payload: Record<string, unknown>): Pr
   const timeoutId = setTimeout(() => controller.abort(), isReport ? 7500 : isHelp ? 10000 : 4000);
 
   try {
-    const isHelp = trigger === 'HELP_CENTER_QUERY';
     const triggerInstruction = TRIGGER_PROMPTS[trigger] ?? TRIGGER_PROMPTS_EXTENDED[trigger] ?? '';
     const system = isReport
       ? `${SYSTEM_PROMPT}\n\n${TRANSFER_REPORT_PROMPT}`
@@ -189,11 +192,17 @@ async function callClaude(trigger: string, payload: Record<string, unknown>): Pr
       }),
       signal: controller.signal,
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      console.error('[callClaude] Anthropic HTTP', res.status, errBody.slice(0, 300));
+      return null;
+    }
     const json = await res.json();
     const text = json?.content?.[0]?.text;
+    console.log('[callClaude] success, text length:', typeof text === 'string' ? text.length : 'N/A');
     return typeof text === 'string' && text.trim().length > 0 ? text.trim() : null;
-  } catch {
+  } catch (err) {
+    console.error('[callClaude] exception:', err);
     return null;
   } finally {
     clearTimeout(timeoutId);
