@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react';
-import { useNavigate, Link } from '@tanstack/react-router';
+import { useNavigate, useRouterState, Link } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import { TimelineTab } from './TimelineTab';
@@ -26,11 +26,22 @@ const TABS: Array<{ id: DiaryTab; label: string }> = [
   { id: 'manual', label: 'Manual' },
 ];
 
-export function DiaryShell({ active, children }: Props) {
+export function DiaryShell({ active: _active, children }: Props) {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<DiaryTab>(active);
+  const routerState = useRouterState();
+  const pathname = routerState.location.pathname;
 
-  useEffect(() => { setTab(active); }, [active]);
+  const activeFromUrl: DiaryTab =
+    pathname.includes('/principles') ? 'principles' :
+    pathname.includes('/symptoms') ? 'symptoms' :
+    pathname.includes('/gargalos') ? 'gargalos' :
+    pathname.includes('/weekly') ? 'weekly' :
+    pathname.includes('/manual') ? 'manual' :
+    'timeline';
+
+  const [tab, setTab] = useState<DiaryTab>(activeFromUrl);
+
+  useEffect(() => { setTab(activeFromUrl); }, [activeFromUrl]);
 
   function go(id: DiaryTab) {
     setTab(id);
