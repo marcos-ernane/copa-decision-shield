@@ -748,7 +748,7 @@ export function OperatorPanel() {
                     </div>
                     <div className="flex justify-between text-label text-op-gray">
                       <span>Índice de dificuldade</span>
-                      <span className={meta.color}>{difficulty}/100</span>
+                      <span className={meta.color}>Score: {difficulty}/100</span>
                     </div>
                   </li>
                 );
@@ -777,7 +777,7 @@ export function OperatorPanel() {
                   {depthMeta(registrationDepth.score).label}
                 </span>
                 <span className={`text-label font-semibold ${depthMeta(registrationDepth.score).color}`}>
-                  {registrationDepth.score}/100
+                  Score: {registrationDepth.score}/100
                 </span>
               </div>
               <div className="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
@@ -818,7 +818,7 @@ export function OperatorPanel() {
                   {persistenceMeta(bottleneckPersistence.persistenceIndex).label}
                 </span>
                 <span className={`text-label font-semibold ${persistenceMeta(bottleneckPersistence.persistenceIndex).color}`}>
-                  {bottleneckPersistence.persistenceIndex}/100
+                  Score: {bottleneckPersistence.persistenceIndex}/100
                 </span>
               </div>
               <div className="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
@@ -861,7 +861,7 @@ export function OperatorPanel() {
                   {reusabilityMeta(principleReusability.score).label}
                 </span>
                 <span className={`text-label font-semibold ${reusabilityMeta(principleReusability.score).color}`}>
-                  {principleReusability.score}/100
+                  Score: {principleReusability.score}/100
                 </span>
               </div>
               <div className="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
@@ -1601,7 +1601,7 @@ export function OperatorPanel() {
                     <div key={layer} className="border-b border-op-gray/20 pb-3 space-y-1">
                       <div className="flex justify-between">
                         <span className="text-op-white font-semibold">{LAYER_NAMES[layer]}</span>
-                        <span className={`font-semibold ${meta.color}`}>{difficulty}/100</span>
+                        <span className={`font-semibold ${meta.color}`}>Score: {difficulty}/100</span>
                       </div>
                       <div className="flex justify-between text-op-gray">
                         <span>Qualidade das IMVs ({imvCount} registros)</span>
