@@ -782,17 +782,10 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               </p>
             </div>
           )}
-          {isReviewing && deadline && isDeadlineExpired && (
-            <div className="space-y-2">
-              {!imvBlocked && (
-                <Button variant="outline" className="w-full" onClick={handleAjustarIMV}>
-                  Ajustar a IMV
-                </Button>
-              )}
-              <Button variant="outline" className="w-full" onClick={() => setShowInterruptMenu(true)}>
-                Interromper Projeto
-              </Button>
-            </div>
+          {isReviewing && deadline && isDeadlineExpired && !imvBlocked && (
+            <Button variant="outline" className="w-full" onClick={handleAjustarIMV}>
+              Ajustar a IMV
+            </Button>
           )}
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -836,6 +829,11 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           {isReviewing && (
             <Button variant="outline" className="w-full" disabled={hasChanges} onClick={onNextStep}>
               Avançar sem salvar →
+            </Button>
+          )}
+          {isReviewing && deadline && isDeadlineExpired && (
+            <Button variant="outline" className="w-full" onClick={() => setShowInterruptMenu(true)}>
+              Interromper Projeto
             </Button>
           )}
         </div>
