@@ -62,6 +62,21 @@ const TYPE_ICON: Record<string, string> = {
   passive: '·',
 };
 
+const TYPE_LABEL: Record<string, string> = {
+  pulse: 'Pulso',
+  structured_C: 'Análise',
+  structured_O: 'Organização',
+  structured_P: 'IMV',
+  structured_A: 'APA',
+  corrective: 'Corretiva',
+  pressure_session: 'Pressão',
+  copa_session: 'COPA',
+  passive: 'Passivo',
+  protocol_5min: '5 Min',
+  creative_session: 'Criativo',
+  simulation_session: 'Simulação',
+};
+
 async function archiveEntry(id: string) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
@@ -305,6 +320,11 @@ export function TimelineTab() {
                 {entryPreview(e)}
               </p>
               <div className="flex gap-1 mt-1 flex-wrap">
+                {TYPE_LABEL[e.entry_type] && (
+                  <span className="inline-flex items-center rounded-full border border-op-cyan/30 bg-op-navy text-op-cyan text-label px-2 py-0.5">
+                    {TYPE_LABEL[e.entry_type]}
+                  </span>
+                )}
                 {e.scenario_type_at_entry && <ScenarioTypeChip type={e.scenario_type_at_entry} />}
                 {e.layer_at_entry && <LayerChip layer={e.layer_at_entry} />}
               </div>
