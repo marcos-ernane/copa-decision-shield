@@ -313,10 +313,11 @@ export function TimelineTab() {
                 <span className="font-mono">{TYPE_ICON[e.entry_type] ?? '?'}</span>
                 {e.entry_type === 'corrective' && <span className="text-[color:var(--color-brand-amber)]">[C]</span>}
                 <span>{new Date(e.created_at).toLocaleDateString('pt-BR')}</span>
-                <span>·</span>
-                <span className="truncate text-op-white font-medium">{projectName(e.project_id)}</span>
               </div>
-              <p className={`text-small text-op-white/70 mt-1 ${expanded === e.id ? '' : 'line-clamp-2'}`}>
+              <p className="text-body font-semibold text-op-white mt-0.5 truncate">
+                {projectName(e.project_id)}
+              </p>
+              <p className={`text-small text-op-white/70 mt-0.5 ${expanded === e.id ? '' : 'line-clamp-2'}`}>
                 {entryPreview(e)}
               </p>
               <div className="flex gap-1 mt-1 flex-wrap">

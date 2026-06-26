@@ -42,11 +42,9 @@ export function GargalosTab() {
               key={b.entryId}
               className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2"
             >
-              <p className="text-small text-op-white leading-snug">{b.text}</p>
-              <p className="text-label text-op-gray">
-                Registrado na [A] Aferição do projeto{' '}
-                <span className="text-op-white font-medium">{b.projectName}</span>
-              </p>
+              <p className="text-body font-semibold text-op-white truncate">{b.projectName}</p>
+              <p className="text-small text-op-white/70 leading-snug">{b.text}</p>
+              <p className="text-label text-op-gray">Registrado na [A] Aferição</p>
               <div className="flex items-center justify-between pt-1 border-t border-op-gray/20">
                 <button
                   type="button"
