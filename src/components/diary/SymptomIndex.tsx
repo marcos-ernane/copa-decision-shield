@@ -281,10 +281,10 @@ export function SymptomIndex() {
       {/* Resultados agrupados por projeto */}
       {results.groups.map((g) => (
         <div key={g.projectId} className="space-y-2">
-          <h3 className="text-heading text-foreground">{pname(g.projectId)}</h3>
+          <h3 className="text-body font-semibold text-op-white">{pname(g.projectId)}</h3>
           <ul className="space-y-1">
             {g.items.slice(0, 8).map((it) => (
-              <li key={it.id} className="rounded-md border border-op-gray/30 bg-op-navy p-2 text-small text-op-white">
+              <li key={it.id} className="rounded-md border border-op-gray/30 bg-op-navy p-2 text-small text-op-white/70">
                 <span className="text-label text-op-gray mr-2">
                   {it.kind === 'principle' ? 'princípio' : 'registro'}
                 </span>
