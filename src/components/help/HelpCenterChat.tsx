@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, BotMessageSquare } from 'lucide-react';
+import { Send, Loader2, BotMessageSquare, Lightbulb } from 'lucide-react';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { BackButton } from '@/components/app/BackButton';
+import { FeedbackModal } from '@/components/help/FeedbackModal';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -102,6 +103,7 @@ export function HelpCenterChat() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -230,7 +232,16 @@ export function HelpCenterChat() {
         <p className="text-label text-op-gray text-center mt-2">
           ✦ IA · ○ base local — indicado por mensagem
         </p>
+        <button
+          onClick={() => setShowFeedback(true)}
+          className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border border-op-amber/50 bg-op-amber/10 text-op-amber text-small font-medium py-3 hover:bg-op-amber/20 transition-colors"
+        >
+          <Lightbulb className="size-4" />
+          Quero sugerir melhoria
+        </button>
       </div>
+
+      {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
     </div>
   );
 }
