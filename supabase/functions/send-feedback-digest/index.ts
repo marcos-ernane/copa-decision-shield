@@ -4,8 +4,9 @@ import nodemailer from 'npm:nodemailer@6';
 
 const SUPABASE_URL    = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SK     = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const GMAIL_USER      = Deno.env.get('GMAIL_USER')!;
-const GMAIL_PASS      = Deno.env.get('GMAIL_APP_PASSWORD')!;
+const SMTP_HOST       = Deno.env.get('SMTP_HOST')!;
+const SMTP_USER       = Deno.env.get('SMTP_USER')!;
+const SMTP_PASS       = Deno.env.get('SMTP_PASS')!;
 const ADMIN_EMAIL     = Deno.env.get('ADMIN_EMAIL')!;
 
 interface Suggestion {
@@ -121,14 +122,16 @@ serve(async (req) => {
     .join('\n---\n\n');
 
   const transport = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: GMAIL_USER, pass: GMAIL_PASS },
+    host:   SMTP_HOST,
+    port:   465,
+    secure: true,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
   });
 
   const now = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   await transport.sendMail({
-    from: `"Operador de Precisão" <${GMAIL_USER}>`,
+    from: `"Operador de Precisão" <${SMTP_USER}>`,
     to: ADMIN_EMAIL,
     subject: `[App] Digest de Sugestões — ${suggestions.length} item${suggestions.length !== 1 ? 'ens' : ''} · ${now}`,
     text,
