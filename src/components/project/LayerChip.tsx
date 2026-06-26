@@ -20,7 +20,7 @@ export function LayerChip({ layer, onPress, size = 'sm' }: Props) {
     <Comp
       onClick={onPress}
       className={cn(
-        'inline-flex items-center rounded-full bg-op-navy border border-op-gray/30 text-op-gray',
+        'inline-flex items-center rounded-full border border-op-gray/30 bg-op-navy text-op-gray',
         size === 'sm' ? 'text-label px-2 py-0.5' : 'text-small px-3 py-1',
         onPress && 'hover:opacity-80 transition-opacity cursor-pointer',
       )}
