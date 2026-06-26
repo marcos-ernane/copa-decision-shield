@@ -17,6 +17,8 @@ import { enablePactGlobally, disablePactGlobally } from '@/lib/pact';
 import { isProtocol5FabEnabled, setProtocol5FabEnabled } from '@/components/app/Fabs';
 import type { Profile } from '@/types/database';
 import { ChevronRight } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
+import { useNavigate, useRouter } from '@tanstack/react-router';
 
 type Pref = 'entry_alignment_enabled' | 'book_anchors_enabled' | 'reading_mode_enabled' | 'compass_enabled';
 
@@ -28,10 +30,20 @@ const PREFS: { key: Pref; label: string }[] = [
 ];
 
 export function SettingsScreen() {
+  const navigate = useNavigate();
+  const router = useRouter();
   const { userId, email, authState, subscription } = useAuthState();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [upgrade, setUpgrade] = useState(false);
   const [p5Fab, setP5Fab] = useState(false);
+
+  function handleBack() {
+    if (router.history.length > 1) {
+      router.history.back();
+    } else {
+      void navigate({ to: '/' });
+    }
+  }
 
   useEffect(() => {
     setP5Fab(isProtocol5FabEnabled());
@@ -82,7 +94,8 @@ export function SettingsScreen() {
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <TrialEndingSheet />
-      <header className="px-4 pt-8 pb-4">
+      <header className="px-4 pt-6 pb-4 flex items-center gap-3">
+        <BackButton onClick={handleBack} />
         <h1 className="text-display text-op-white">Configurações</h1>
       </header>
 
