@@ -321,7 +321,7 @@ export function TimelineTab() {
               </p>
               <div className="flex gap-1 mt-1 flex-wrap">
                 {TYPE_LABEL[e.entry_type] && (
-                  <span className="inline-flex items-center rounded-full border border-op-cyan/30 bg-op-navy text-op-cyan text-label px-2 py-0.5">
+                  <span className="inline-flex items-center rounded-full border border-op-gray/30 bg-op-navy text-op-gray text-label px-2 py-0.5">
                     {TYPE_LABEL[e.entry_type]}
                   </span>
                 )}
