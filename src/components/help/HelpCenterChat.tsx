@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, BotMessageSquare } from 'lucide-react';
+import { useNavigate, useRouter } from '@tanstack/react-router';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
+import { BackButton } from '@/components/app/BackButton';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -90,6 +92,8 @@ function staticFallback(question: string): string {
 }
 
 export function HelpCenterChat() {
+  const navigate = useNavigate();
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -100,6 +104,14 @@ export function HelpCenterChat() {
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function handleBack() {
+    if (router.history.length > 1) {
+      router.history.back();
+    } else {
+      void navigate({ to: '/' });
+    }
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -128,6 +140,7 @@ export function HelpCenterChat() {
     <div className="h-screen flex flex-col" style={{ backgroundColor: '#070C12' }}>
       {/* Header fixo */}
       <header className="shrink-0 border-b border-op-gray/30 bg-op-black px-4 py-3 flex items-center gap-3">
+        <BackButton onClick={handleBack} />
         <BotMessageSquare className="size-5 text-op-cyan shrink-0" />
         <div className="flex-1">
           <h1 className="text-heading text-op-white">Ajuda IA</h1>
