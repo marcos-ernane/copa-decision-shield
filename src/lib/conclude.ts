@@ -104,9 +104,12 @@ export function buildChapterPreview(
 
   const worked: string[] = [];
   const didnt: string[] = [];
+  const seenLabels = new Set<string>();
   for (const p of provs) {
-    const c = p.content as { imv?: string; metric?: string };
-    const label = c.imv || c.metric || 'IMV';
+    const c = p.content as { action?: string; imv?: string; metric?: string };
+    const label = c.action || c.imv || c.metric || 'IMV';
+    if (seenLabels.has(label)) continue;
+    seenLabels.add(label);
     const apa = apaByProv.get(p.id);
     if (apa) {
       const ac = apa.content as { what_worked?: string; decision?: string };
