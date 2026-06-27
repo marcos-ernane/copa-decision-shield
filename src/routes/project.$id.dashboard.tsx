@@ -25,10 +25,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { getProject, listEntries, listPrinciples, updateProject } from '@/lib/projects';
+import { updateEntryExecutionPlan } from '@/lib/register';
 import { computeProjectState, deriveProjectStatus, daysSince } from '@/lib/projectState';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import { IMVProgressBar } from '@/components/project/IMVProgressBar';
+import { ExecutionProgressBar } from '@/components/project/ExecutionProgressBar';
+import { ExecutionPlanView } from '@/components/copa/ExecutionPlanView';
 import { AccumulatedCapacityCard } from '@/components/project/AccumulatedCapacityCard';
 import { ProjectStateIcon } from '@/components/project/ProjectStateIcon';
 import { PactWeekView } from '@/components/pact/PactWeekView';
@@ -36,6 +39,7 @@ import { PactReturnSheet } from '@/components/pact/PactReturnSheet';
 import { checkPactReturn, getCycle } from '@/lib/pact';
 import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
 import type { Project, Entry, Principle } from '@/types/database';
+import type { ExecutionPlan } from '@/types/app';
 
 const COPA_PHASE_ORDER = ['C', 'O', 'P', 'A'] as const;
 
@@ -374,6 +378,21 @@ function ProjectDashboard() {
     return null;
   })();
 
+  // Plano de execução da IMV mais recente com plan habilitado
+  const activeEntryWithPlan = [...entries]
+    .filter((e) => e.entry_type === 'structured_P')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .find((e) => (e.content as { execution_plan?: { enabled?: boolean } }).execution_plan?.enabled);
+  const activePlan = activeEntryWithPlan
+    ? (activeEntryWithPlan.content as { execution_plan: ExecutionPlan }).execution_plan
+    : null;
+  const activeEntryImvAction = activeEntryWithPlan
+    ? (activeEntryWithPlan.content as { action?: string }).action ?? ''
+    : '';
+  const activeEntryImvDeadline = activeEntryWithPlan
+    ? (activeEntryWithPlan.content as { deadline?: string | null }).deadline ?? null
+    : null;
+
   const motorAlert: { message: string; cta?: { label: string; onClick: () => void } } | null = (() => {
     const isTerminal = currentState === 'paused' || currentState === 'concluded' || currentState === 'archived';
     if (copaProgress.allDone || isTerminal) return null;
@@ -564,6 +583,15 @@ function ProjectDashboard() {
                   <IMVProgressBar current_day={currentDay} total_days={totalDays} />
                 </div>
               )}
+              {activePlan?.enabled && (
+                <div className="pt-1">
+                  <ExecutionProgressBar
+                    plan={activePlan}
+                    imvOverdue={imvDeadlineStatus === 'expired'}
+                    projectId={id}
+                  />
+                </div>
+              )}
               {!isBlocked && imvDeadlineStatus === 'expired' && pDeadline && (
                 <p className="text-small mt-1" style={{ color: '#dc2626' }}>
                   IMV vencida em {fmtDeadlineDDMM(pDeadline)} — Verifique.
@@ -596,6 +624,29 @@ function ProjectDashboard() {
             </section>
           );
         })()}
+
+        {/* Plano de Execução da IMV (REQ-PLANEXEC-21, 25) */}
+        {activePlan?.enabled && activeEntryWithPlan && (
+          <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
+            <h2 className="text-label text-op-gray uppercase">Plano de Execução</h2>
+            <ExecutionPlanView
+              plan={activePlan}
+              imvAction={activeEntryImvAction}
+              imvDeadline={activeEntryImvDeadline}
+              imvOverdue={imvDeadlineStatus === 'expired'}
+              onUpdate={async (newPlan: ExecutionPlan) => {
+                await updateEntryExecutionPlan(activeEntryWithPlan.id, newPlan);
+                setEntries((prev) =>
+                  prev.map((e) =>
+                    e.id === activeEntryWithPlan.id
+                      ? { ...e, content: { ...e.content, execution_plan: newPlan } }
+                      : e,
+                  ),
+                );
+              }}
+            />
+          </section>
+        )}
 
         {/* Velocidade — Transição entre as fases */}
         {showVelocityCard && (
