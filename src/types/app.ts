@@ -62,3 +62,30 @@ export interface WeeklyCycle {
   week_start: string; // ISO date (segunda-feira) usada para reset semanal
 }
 
+// ---------- Plano de Execução da IMV (Seção 37) ----------
+
+export type ExecutionPhaseStatus = 'pendente' | 'concluída';
+
+export interface ExecutionReopenRecord {
+  previous_deadline: string; // ISO
+  new_deadline: string;      // ISO
+  changed_at: string;        // ISO
+}
+
+export interface ExecutionPhase {
+  id: string;
+  how: string;
+  who: string | null;
+  deadline: string;                        // ISO — obrigatoriamente < deadline da IMV
+  status: ExecutionPhaseStatus;
+  completed_at: string | null;
+  reopen_history: ExecutionReopenRecord[];
+}
+
+export interface ExecutionPlan {
+  enabled: boolean;
+  phases: ExecutionPhase[];
+}
+
+export type ExecutionProgressColor = 'green' | 'blue' | 'amber' | 'red' | 'none';
+

@@ -9,6 +9,7 @@ import { markPhaseComplete } from './pact';
 import type { Entry, Principle } from '@/types/database';
 import type {
   EntryType,
+  ExecutionPlan,
   OperationalLayer,
   ScenarioType,
 } from '@/types/app';
@@ -64,6 +65,7 @@ export interface StructuredPContent {
   cut_rule: string;
   layer: OperationalLayer | null;
   ethical_check?: string | null;
+  execution_plan?: ExecutionPlan;
 }
 
 export interface StructuredAContent {
