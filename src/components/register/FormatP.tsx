@@ -85,7 +85,6 @@ interface Props {
   currentProjectLayer?: OperationalLayer | null;
   onSaved: () => void;
   onNextStep: () => void;
-  onAutoSaved?: () => Promise<void>;
   onGoToStep?: (step: number) => void;
   initialData?: StructuredPContent | null;
   step: number;
@@ -260,7 +259,7 @@ function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boole
   );
 }
 
-export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onAutoSaved, onGoToStep, initialData, step, isReviewing }: Props) {
+export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onGoToStep, initialData, step, isReviewing }: Props) {
   const [actionItems, setActionItems] = useState<string[]>(() => toItems(initialData?.action));
   const action = fromItems(actionItems);
   const [reversible, setReversible] = useState<boolean | null>(initialData?.reversible ?? null);
@@ -329,25 +328,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
     await performSave(layerChanged);
   }
 
-  // No passo 2 (Métrica + Prazo) em modo revisão, salva silenciosamente antes de avançar
-  // para que o prazo novo já esteja no banco ao verificar o bloqueio do Formato A.
-  async function handleProximo() {
-    if (isReviewing && step === 2 && onAutoSaved) {
-      setSaving(true);
-      await saveStructuredP(projectId, {
-        action: action.trim(),
-        reversible,
-        cheap,
-        specific,
-        measurable,
-        metric: metric.trim(),
-        deadline: deadline || null,
-        cut_rule: cutRule.trim(),
-        layer,
-        }, scenarioType);
-      await onAutoSaved();
-      setSaving(false);
-    }
+  function handleProximo() {
     onNextStep();
   }
 
