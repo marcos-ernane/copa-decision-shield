@@ -30,7 +30,6 @@ import { computeProjectState, deriveProjectStatus, daysSince } from '@/lib/proje
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import { IMVProgressBar } from '@/components/project/IMVProgressBar';
-import { ExecutionProgressBar } from '@/components/project/ExecutionProgressBar';
 import { ExecutionPlanView } from '@/components/copa/ExecutionPlanView';
 import { AccumulatedCapacityCard } from '@/components/project/AccumulatedCapacityCard';
 import { ProjectStateIcon } from '@/components/project/ProjectStateIcon';
@@ -581,15 +580,6 @@ function ProjectDashboard() {
               {currentState === 'proving' && totalDays > 0 && (
                 <div className="pt-1">
                   <IMVProgressBar current_day={currentDay} total_days={totalDays} />
-                </div>
-              )}
-              {activePlan?.enabled && (
-                <div className="pt-1">
-                  <ExecutionProgressBar
-                    plan={activePlan}
-                    imvOverdue={imvDeadlineStatus === 'expired'}
-                    projectId={id}
-                  />
                 </div>
               )}
               {!isBlocked && imvDeadlineStatus === 'expired' && pDeadline && (
