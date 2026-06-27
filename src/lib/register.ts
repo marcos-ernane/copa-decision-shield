@@ -310,6 +310,38 @@ export async function saveStructuredA(
   return { entry, principle, isFirstPrinciple };
 }
 
+// ---------- Execution Plan ----------
+
+export async function updateEntryExecutionPlan(
+  entryId: string,
+  plan: ExecutionPlan,
+): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    const entries = GuestStorage.getEntries();
+    const entry = entries.find((e) => e.id === entryId);
+    if (!entry) return;
+    GuestStorage.updateEntry(entryId, {
+      content: { ...entry.content, execution_plan: plan },
+    });
+    return;
+  }
+
+  const { data: current, error: fetchError } = await supabase
+    .from('entries')
+    .select('content')
+    .eq('id', entryId)
+    .single();
+  if (fetchError || !current) return;
+
+  const { error } = await supabase
+    .from('entries')
+    .update({ content: { ...(current.content as Record<string, unknown>), execution_plan: plan } })
+    .eq('id', entryId);
+  if (error) throw error;
+}
+
 // ---------- Corrective ----------
 
 export async function saveCorrective(

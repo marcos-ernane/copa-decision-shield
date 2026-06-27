@@ -6,9 +6,12 @@ import { X, CircleHelp, Plus, ChevronDown, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceInput } from '@/components/copa/VoiceInput';
-import { saveStructuredP, savePassive, type StructuredPContent } from '@/lib/register';
+import { saveStructuredP, savePassive, updateEntryExecutionPlan, type StructuredPContent } from '@/lib/register';
+import { createPlan } from '@/lib/executionPlan';
 import { updateProject } from '@/lib/projects';
+import { ExecutionPlanInvite } from '@/components/copa/ExecutionPlanInvite';
 import { StepDots } from './StepDots';
+import type { Entry } from '@/types/database';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -277,6 +280,8 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const [pauseReason, setPauseReason] = useState('');
   const [isArchiving, setIsArchiving] = useState(false);
   const [interruptSaving, setInterruptSaving] = useState(false);
+  const [savedEntry, setSavedEntry] = useState<Entry | null>(null);
+  const [showInvite, setShowInvite] = useState(false);
   const [criteriaHelp, setCriteriaHelp] = useState<CriteriaHelpKey | null>(null);
   const [metricHelp, setMetricHelp] = useState(false);
   const [cutRuleHelp, setCutRuleHelp] = useState(false);
@@ -295,7 +300,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
 
   async function performSave(updateLayer: boolean) {
     setSaving(true);
-    await saveStructuredP(projectId, {
+    const entry = await saveStructuredP(projectId, {
       action: action.trim(),
       reversible,
       cheap,
@@ -310,6 +315,12 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
       await updateProject(projectId, { current_layer: layer });
     }
     setSaving(false);
+    // Convite ao Plano de Execução apenas em IMVs novas (REQ-PLANEXEC-06)
+    if (!isReviewing) {
+      setSavedEntry(entry);
+      setShowInvite(true);
+      return;
+    }
     onSaved();
   }
 
@@ -391,6 +402,22 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
 
   return (
     <>
+      {/* Convite ao Plano de Execução (REQ-PLANEXEC-06) */}
+      {showInvite && savedEntry && (
+        <ExecutionPlanInvite
+          imvAction={action}
+          onSkip={() => {
+            setShowInvite(false);
+            onSaved();
+          }}
+          onPlan={async () => {
+            await updateEntryExecutionPlan(savedEntry.id, createPlan());
+            setShowInvite(false);
+            onSaved();
+          }}
+        />
+      )}
+
       {/* Bottom sheet de ajuda da IMV */}
       {imvHelp && (
         <div
