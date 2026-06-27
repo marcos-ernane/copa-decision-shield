@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { Link, useSearch } from '@tanstack/react-router';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
-import type { ScenarioType, OperationalLayer } from '@/types/app';
+import type { ScenarioType, OperationalLayer, ExecutionPlan } from '@/types/app';
+import { getPhaseTimeState } from '@/lib/executionPlan';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import { EditZoneGuard } from '@/components/EditZoneGuard';
@@ -329,6 +330,31 @@ export function TimelineTab() {
                 {e.scenario_type_at_entry && <ScenarioTypeChip type={e.scenario_type_at_entry} />}
                 {e.layer_at_entry && <LayerChip layer={e.layer_at_entry} />}
               </div>
+              {/* Fases do plano de execução inline (REQ-PLANEXEC-20) */}
+              {e.entry_type === 'structured_P' && (() => {
+                const plan = (e.content as { execution_plan?: ExecutionPlan }).execution_plan;
+                if (!plan?.enabled || plan.phases.length === 0) return null;
+                return (
+                  <div className="mt-2 pt-2 border-t border-op-gray/10 space-y-1">
+                    {plan.phases.map((phase, i) => {
+                      const ts = getPhaseTimeState(phase);
+                      return (
+                        <div key={phase.id} className="flex items-center gap-2">
+                          <span className={`text-label font-mono shrink-0 ${ts === 'done' ? 'text-op-success' : ts === 'overdue' ? 'text-op-danger' : 'text-op-gray'}`}>
+                            {ts === 'done' ? '✓' : ts === 'overdue' ? '!' : '○'}
+                          </span>
+                          <span className="text-small text-op-white/70 line-clamp-1 flex-1">
+                            {i + 1}. {phase.how}
+                          </span>
+                          <span className="text-label text-op-gray shrink-0">
+                            {new Date(phase.deadline).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
             {expanded === e.id && (
               <div className="mt-3 pt-3 border-t border-border flex gap-3">

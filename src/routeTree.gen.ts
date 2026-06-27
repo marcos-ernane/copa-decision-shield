@@ -51,6 +51,7 @@ import { Route as ProjectIdDiagnosisRouteImport } from './routes/project.$id.dia
 import { Route as ProjectIdDashboardRouteImport } from './routes/project.$id.dashboard'
 import { Route as ProjectIdConcludeRouteImport } from './routes/project.$id.conclude'
 import { Route as ProjectIdCapacityRouteImport } from './routes/project.$id.capacity'
+import { Route as ProjectIdPlanDetailRouteImport } from './routes/project.$id.plan-detail'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -263,6 +264,11 @@ const ProjectIdCapacityRoute = ProjectIdCapacityRouteImport.update({
   path: '/capacity',
   getParentRoute: () => ProjectIdRoute,
 } as any)
+const ProjectIdPlanDetailRoute = ProjectIdPlanDetailRouteImport.update({
+  id: '/plan-detail',
+  path: '/plan-detail',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -305,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/project/$id/edit': typeof ProjectIdEditRoute
   '/project/$id/pact': typeof ProjectIdPactRoute
   '/project/$id/sheet': typeof ProjectIdSheetRoute
+  '/project/$id/plan-detail': typeof ProjectIdPlanDetailRoute
   '/register/corrective/$entryId': typeof RegisterCorrectiveEntryIdRoute
 }
 export interface FileRoutesByTo {
@@ -345,6 +352,7 @@ export interface FileRoutesByTo {
   '/project/$id/edit': typeof ProjectIdEditRoute
   '/project/$id/pact': typeof ProjectIdPactRoute
   '/project/$id/sheet': typeof ProjectIdSheetRoute
+  '/project/$id/plan-detail': typeof ProjectIdPlanDetailRoute
   '/register/corrective/$entryId': typeof RegisterCorrectiveEntryIdRoute
 }
 export interface FileRoutesById {
@@ -389,6 +397,7 @@ export interface FileRoutesById {
   '/project/$id/edit': typeof ProjectIdEditRoute
   '/project/$id/pact': typeof ProjectIdPactRoute
   '/project/$id/sheet': typeof ProjectIdSheetRoute
+  '/project/$id/plan-detail': typeof ProjectIdPlanDetailRoute
   '/register/corrective/$entryId': typeof RegisterCorrectiveEntryIdRoute
 }
 export interface FileRouteTypes {
@@ -434,6 +443,7 @@ export interface FileRouteTypes {
     | '/project/$id/edit'
     | '/project/$id/pact'
     | '/project/$id/sheet'
+    | '/project/$id/plan-detail'
     | '/register/corrective/$entryId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -474,6 +484,7 @@ export interface FileRouteTypes {
     | '/project/$id/edit'
     | '/project/$id/pact'
     | '/project/$id/sheet'
+    | '/project/$id/plan-detail'
     | '/register/corrective/$entryId'
   id:
     | '__root__'
@@ -517,6 +528,7 @@ export interface FileRouteTypes {
     | '/project/$id/edit'
     | '/project/$id/pact'
     | '/project/$id/sheet'
+    | '/project/$id/plan-detail'
     | '/register/corrective/$entryId'
   fileRoutesById: FileRoutesById
 }
@@ -830,6 +842,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectIdCapacityRouteImport
       parentRoute: typeof ProjectIdRoute
     }
+    '/project/$id/plan-detail': {
+      id: '/project/$id/plan-detail'
+      path: '/plan-detail'
+      fullPath: '/project/$id/plan-detail'
+      preLoaderRoute: typeof ProjectIdPlanDetailRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
   }
 }
 
@@ -920,6 +939,7 @@ interface ProjectIdRouteChildren {
   ProjectIdEditRoute: typeof ProjectIdEditRoute
   ProjectIdPactRoute: typeof ProjectIdPactRoute
   ProjectIdSheetRoute: typeof ProjectIdSheetRoute
+  ProjectIdPlanDetailRoute: typeof ProjectIdPlanDetailRoute
 }
 
 const ProjectIdRouteChildren: ProjectIdRouteChildren = {
@@ -930,6 +950,7 @@ const ProjectIdRouteChildren: ProjectIdRouteChildren = {
   ProjectIdEditRoute: ProjectIdEditRoute,
   ProjectIdPactRoute: ProjectIdPactRoute,
   ProjectIdSheetRoute: ProjectIdSheetRoute,
+  ProjectIdPlanDetailRoute: ProjectIdPlanDetailRoute,
 }
 
 const ProjectIdRouteWithChildren = ProjectIdRoute._addFileChildren(
