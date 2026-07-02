@@ -39,7 +39,19 @@ export function PrinciplesTab() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return principles
+
+    // Deduplicar por (project_id + conteúdo): mantém o mais recente
+    const sorted = [...principles].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+    const seen = new Map<string, typeof principles[0]>();
+    for (const p of sorted) {
+      const key = `${p.project_id}|${p.content.trim().toLowerCase()}`;
+      if (!seen.has(key)) seen.set(key, p);
+    }
+    const deduped = [...seen.values()];
+
+    return deduped
       .filter((p) => !p.is_archived)
       .filter((p) => !projectFilter || p.project_id === projectFilter)
       .filter((p) => {
