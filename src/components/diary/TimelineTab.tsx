@@ -197,7 +197,7 @@ export function TimelineTab() {
           onChange={(e) => setProject(e.target.value)}
           className={`w-full rounded-xl border border-op-gray/30 bg-op-navy text-small p-2 ${project === 'none' ? 'text-op-gray' : 'text-op-white'}`}
         >
-          <option value="none" disabled>Escolha o projeto</option>
+          <option value="none">Escolha o projeto</option>
           <option value="all">Todos os projetos</option>
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
