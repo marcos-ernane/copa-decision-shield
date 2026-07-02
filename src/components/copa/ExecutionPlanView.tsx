@@ -22,6 +22,7 @@ interface Props {
   imvAction: string;
   imvDeadline: string | null;
   imvOverdue: boolean;
+  cycleComplete?: boolean;
   onUpdate: (plan: ExecutionPlan) => Promise<void>;
 }
 
@@ -32,6 +33,7 @@ export function ExecutionPlanView({
   imvAction,
   imvDeadline,
   imvOverdue,
+  cycleComplete = false,
   onUpdate,
 }: Props) {
   const [formMode, setFormMode] = useState<FormMode>(null);
@@ -145,16 +147,18 @@ export function ExecutionPlanView({
         </div>
       )}
 
-      {/* Adicionar etapa */}
-      <Button
-        variant="outline"
-        className="w-full border-dashed border-op-gray/40 text-op-gray hover:bg-op-navy hover:text-op-white py-4 h-auto"
-        onClick={() => setFormMode({ kind: 'add' })}
-        disabled={saving}
-      >
-        <Plus className="size-4 mr-2" />
-        Adicionar etapa
-      </Button>
+      {/* Adicionar etapa — oculto quando ciclo COPA já está completo */}
+      {!cycleComplete && (
+        <Button
+          variant="outline"
+          className="w-full border-dashed border-op-gray/40 text-op-gray hover:bg-op-navy hover:text-op-white py-4 h-auto"
+          onClick={() => setFormMode({ kind: 'add' })}
+          disabled={saving}
+        >
+          <Plus className="size-4 mr-2" />
+          Adicionar etapa
+        </Button>
+      )}
 
       {/* Formulário — overlay fullscreen */}
       {formMode && (

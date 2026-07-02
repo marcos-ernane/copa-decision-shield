@@ -650,6 +650,7 @@ function ProjectDashboard() {
               imvAction={activeEntryImvAction}
               imvDeadline={activeEntryImvDeadline}
               imvOverdue={imvDeadlineStatus === 'expired'}
+              cycleComplete={copaProgress.allDone}
               onUpdate={async (newPlan: ExecutionPlan) => {
                 await updateEntryExecutionPlan(activeEntryWithPlan.id, newPlan);
                 setEntries((prev) =>
