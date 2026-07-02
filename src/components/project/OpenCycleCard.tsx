@@ -18,7 +18,7 @@ export interface OpenCycleCardProps {
 }
 
 export function OpenCycleCard({ imv, daysOpen, projectId }: OpenCycleCardProps) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
 
   const deadlineLabel = (() => {
