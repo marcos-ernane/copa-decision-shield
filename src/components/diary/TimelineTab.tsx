@@ -25,6 +25,7 @@ const ENTRY_TYPES = [
   { v: 'structured_C', label: 'Análise' },
   { v: 'structured_O', label: 'Organização' },
   { v: 'structured_A', label: 'APA' },
+  { v: 'quick_review', label: 'Revisão' },
   { v: 'corrective', label: 'Corretiva' },
 ] as const;
 const PERIODS = [
@@ -42,6 +43,10 @@ function entryPreview(e: Entry): string {
     return fact || nextStep || '—';
   }
 
+  if (e.entry_type === 'quick_review') {
+    return (c.what_happened as string) || '—';
+  }
+
   return (
     (c.text as string) ||
     (c.fact_text as string) ||
@@ -52,6 +57,12 @@ function entryPreview(e: Entry): string {
   );
 }
 
+const MET_EXPECTATION_CONFIG: Record<string, { label: string; cls: string }> = {
+  yes:     { label: 'Atingiu',       cls: 'border-op-success/50 text-op-success' },
+  partial: { label: 'Parcialmente',  cls: 'border-op-amber/50 text-op-amber'   },
+  no:      { label: 'Não atingiu',   cls: 'border-op-danger/50 text-op-danger'  },
+};
+
 const TYPE_ICON: Record<string, string> = {
   pulse: '•',
   structured_C: 'C',
@@ -61,6 +72,7 @@ const TYPE_ICON: Record<string, string> = {
   corrective: '⟲',
   pressure_session: '⚡',
   passive: '·',
+  quick_review: 'R',
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -76,6 +88,7 @@ const TYPE_LABEL: Record<string, string> = {
   protocol_5min: '5 Min',
   creative_session: 'Criativo',
   simulation_session: 'Simulação',
+  quick_review: 'Revisão Rápida',
 };
 
 async function archiveEntry(id: string) {
@@ -325,6 +338,20 @@ export function TimelineTab() {
                 {TYPE_LABEL[e.entry_type] && (
                   <span className="inline-flex items-center rounded-full border border-op-gray/30 bg-op-navy text-op-gray text-label px-2 py-0.5">
                     {TYPE_LABEL[e.entry_type]}
+                  </span>
+                )}
+                {e.entry_type === 'quick_review' && (() => {
+                  const met = (e.content as { met_expectation?: string }).met_expectation;
+                  const cfg = met ? MET_EXPECTATION_CONFIG[met] : null;
+                  return cfg ? (
+                    <span className={`inline-flex items-center rounded-full border bg-op-navy text-label px-2 py-0.5 ${cfg.cls}`}>
+                      {cfg.label}
+                    </span>
+                  ) : null;
+                })()}
+                {e.entry_type === 'quick_review' && e.linked_to && (
+                  <span className="inline-flex items-center rounded-full border border-op-gray/20 bg-op-navy text-op-gray/60 text-label px-2 py-0.5">
+                    ← IMV
                   </span>
                 )}
                 {e.scenario_type_at_entry && <ScenarioTypeChip type={e.scenario_type_at_entry} />}
