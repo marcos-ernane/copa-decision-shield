@@ -145,7 +145,7 @@ export function calculateIndex(
     );
     const hasQuickReview = qrEntries.some(
       (qr) =>
-        (qr.linked_to === p.id || qr.project_id === p.project_id) &&
+        qr.linked_to === p.id &&
         new Date(qr.created_at).getTime() > pTime &&
         new Date(qr.created_at).getTime() - pTime <= 7 * 86400000,
     );

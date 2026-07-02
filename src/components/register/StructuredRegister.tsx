@@ -186,7 +186,7 @@ export function StructuredRegister() {
       }
       setCurrentStep(0);
     })();
-  }, [projectId, search.format]);
+  }, [projectId, search.format, search.linkedTo]);
 
   if (!projectId) {
     return <ProjectPicker projects={projects} onPick={setProjectId} />;

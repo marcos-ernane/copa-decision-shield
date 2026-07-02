@@ -81,6 +81,7 @@ export async function migrateGuestToCloud(userId: string): Promise<void> {
           entry_type: e.entry_type,
           content: e.content,
           copa_phase: e.copa_phase,
+          is_clean_fact: e.is_clean_fact,
           scenario_type_at_entry: e.scenario_type_at_entry,
           layer_at_entry: e.layer_at_entry,
           classification: e.classification ?? null,

@@ -94,12 +94,7 @@ const TYPE_LABEL: Record<string, string> = {
 async function archiveEntry(id: string) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    const all = GuestStorage.getEntries();
-    const idx = all.findIndex((e) => e.id === id);
-    if (idx >= 0) {
-      all[idx] = { ...all[idx], classification: 'archived' };
-      window.localStorage.setItem('aop.entries', JSON.stringify(all));
-    }
+    GuestStorage.updateEntry(id, { classification: 'archived' });
     return;
   }
   await supabase.from('entries').update({ classification: 'archived' }).eq('id', id);

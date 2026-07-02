@@ -9,7 +9,6 @@ import { listEntries } from '@/lib/projects';
 import { saveQuickReview } from '@/lib/register';
 import type { QuickReviewExpectation } from '@/lib/register';
 import type { Entry } from '@/types/database';
-import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 interface Props {
   projectId: string;
@@ -49,12 +48,20 @@ export function ReviewResultScreen({ projectId, structuredPId }: Props) {
     })();
   }, [projectId, structuredPId, navigate]);
 
+  // Quando "Salvar e aprofundar" é acionado, navega automaticamente para o FormatA
+  useEffect(() => {
+    if (!saved?.elevated) return;
+    void navigate({
+      to: '/register/structured',
+      search: { projectId, format: 'A', linkedTo: structuredPId } as never,
+    });
+  }, [saved, navigate, projectId, structuredPId]);
+
   async function handleSave(elevateToApa: boolean) {
     if (!metExpectation || !whatHappened.trim() || !nextStep.trim() || !imvEntry) return;
     setSaving(true);
     setError(null);
     try {
-      const c = imvEntry.content as { scenario_type_at_entry?: ScenarioType; layer_at_entry?: OperationalLayer };
       await saveQuickReview(
         projectId,
         structuredPId,
@@ -65,8 +72,8 @@ export function ReviewResultScreen({ projectId, structuredPId }: Props) {
           elevated_to_apa: elevateToApa,
           linked_structured_p_id: structuredPId,
         },
-        imvEntry.scenario_type_at_entry ?? (c.scenario_type_at_entry ?? null),
-        imvEntry.layer_at_entry ?? (c.layer_at_entry ?? null),
+        imvEntry.scenario_type_at_entry ?? null,
+        imvEntry.layer_at_entry ?? null,
       );
       setSaved({ done: true, elevated: elevateToApa });
     } catch {

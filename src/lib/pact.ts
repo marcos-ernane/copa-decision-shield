@@ -55,10 +55,10 @@ function buildDefaultCycle(project: Project): WeeklyCycle {
     last_completed_at: null,
   });
   return {
-    capture: make('capture', project.pact_day_capture || DEFAULT_DAYS.capture),
-    organize: make('organize', project.pact_day_organize || DEFAULT_DAYS.organize),
-    prove: make('prove', project.pact_day_prove || DEFAULT_DAYS.prove),
-    assess: make('assess', project.pact_day_assess || DEFAULT_DAYS.assess),
+    capture: make('capture', project.pact_day_capture ?? DEFAULT_DAYS.capture),
+    organize: make('organize', project.pact_day_organize ?? DEFAULT_DAYS.organize),
+    prove: make('prove', project.pact_day_prove ?? DEFAULT_DAYS.prove),
+    assess: make('assess', project.pact_day_assess ?? DEFAULT_DAYS.assess),
     week_start: currentWeekStartISO(),
   };
 }
