@@ -617,16 +617,28 @@ function ProjectDashboard() {
           );
         })()}
 
-        {/* Ciclos Abertos de APA (PRD-ITEM-01) — imediatamente após "Onde estou agora" */}
+        {/* Ciclos Abertos de APA (PRD-ITEM-01) — mostra apenas o mais atrasado + contador */}
         {currentState !== 'paused' && currentState !== 'concluded' && currentState !== 'archived' &&
-          detectOpenCycles(entries).map((cycle) => (
-            <OpenCycleCard
-              key={cycle.imv.id}
-              imv={cycle.imv}
-              daysOpen={cycle.daysOpen}
-              projectId={id}
-            />
-          ))
+          (() => {
+            const cycles = detectOpenCycles(entries);
+            if (cycles.length === 0) return null;
+            const [first, ...rest] = cycles;
+            return (
+              <>
+                <OpenCycleCard
+                  key={first.imv.id}
+                  imv={first.imv}
+                  daysOpen={first.daysOpen}
+                  projectId={id}
+                />
+                {rest.length > 0 && (
+                  <p className="text-label text-op-gray text-center">
+                    + {rest.length} {rest.length === 1 ? 'outro ciclo aguarda' : 'outros ciclos aguardam'} resultado
+                  </p>
+                )}
+              </>
+            );
+          })()
         }
 
         {/* Plano de Execução da IMV (REQ-PLANEXEC-21, 25) */}
