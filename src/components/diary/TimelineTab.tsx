@@ -168,6 +168,23 @@ export function TimelineTab() {
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [entries, projects, project, scenario, layer, etype, imvSub, period, projectMap]);
 
+  // Deduplicação por conteúdo: agrupa entradas com mesmo tipo + projeto + texto.
+  // Mantém a mais recente (lista já está ordenada por data desc).
+  // O badge ×N informa quantas foram agrupadas sem apagar o histórico.
+  const deduped = useMemo(() => {
+    const seen = new Map<string, { entry: typeof filtered[0]; count: number }>();
+    for (const e of filtered) {
+      const key = `${e.entry_type}|${e.project_id}|${entryPreview(e).trim()}`;
+      const existing = seen.get(key);
+      if (!existing) {
+        seen.set(key, { entry: e, count: 1 });
+      } else {
+        seen.set(key, { entry: existing.entry, count: existing.count + 1 });
+      }
+    }
+    return [...seen.values()];
+  }, [filtered]);
+
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? '—';
 
   return (
@@ -308,8 +325,8 @@ export function TimelineTab() {
       </div>
 
       <ul className="space-y-2">
-        {filtered.length === 0 && <li className="text-small text-muted-foreground">Nenhum registro.</li>}
-        {filtered.map((e) => (
+        {deduped.length === 0 && <li className="text-small text-muted-foreground">Nenhum registro.</li>}
+        {deduped.map(({ entry: e, count }) => (
           <li
             key={e.id}
             className="rounded-md border border-op-gray/30 bg-op-navy p-3"
@@ -322,6 +339,11 @@ export function TimelineTab() {
                 <span className="font-mono">{TYPE_ICON[e.entry_type] ?? '?'}</span>
                 {e.entry_type === 'corrective' && <span className="text-[color:var(--color-brand-amber)]">[C]</span>}
                 <span>{new Date(e.created_at).toLocaleDateString('pt-BR')}</span>
+                {count > 1 && (
+                  <span className="ml-1 rounded-full bg-op-navy-elevated border border-op-gray/30 text-op-gray px-1.5 py-0.5" style={{ fontSize: 10 }}>
+                    ×{count}
+                  </span>
+                )}
               </div>
               <p className="text-body font-semibold text-op-white mt-0.5 truncate">
                 {projectName(e.project_id)}
