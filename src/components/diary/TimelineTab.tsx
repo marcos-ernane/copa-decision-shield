@@ -226,6 +226,13 @@ export function TimelineTab() {
   return (
     <div className="space-y-3">
       <div className="space-y-2">
+        {/* Legenda de cores do seletor */}
+        <div className="flex items-center gap-4 text-label text-op-gray">
+          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-success shrink-0" />Ativo</span>
+          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-danger shrink-0" />Concluído</span>
+          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-amber shrink-0" />Pausado/Arquivado</span>
+        </div>
+
         {/* Seletor de projeto — custom dropdown para mobile */}
         <div ref={dropdownRef} className="relative">
           <button
