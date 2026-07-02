@@ -104,7 +104,8 @@ export function TimelineTab() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const search = useSearch({ strict: false }) as { projectId?: string; type?: string };
   const { entries, projects, refresh } = usePanelData();
-  const [project, setProject] = useState<string>(search.projectId ?? 'all');
+  // 'none' = nenhuma seleção ainda → timeline vazia até o usuário escolher
+  const [project, setProject] = useState<string>(search.projectId ?? 'none');
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
   const [layer, setLayer] = useState<OperationalLayer | null>(null);
   const [etype, setEtype] = useState<string | null>(search.type ?? null);
@@ -120,7 +121,7 @@ export function TimelineTab() {
   // Quais filtros têm dados (considerando apenas o filtro de projeto ativo)
   const dataMap = useMemo(() => {
     const now = Date.now();
-    const base = entries.filter((e) => project === 'all' || e.project_id === project);
+    const base = project === 'none' ? [] : entries.filter((e) => project === 'all' || e.project_id === project);
     const scenarios = new Set(
       base.map((e) => e.scenario_type_at_entry ?? projectMap[e.project_id]?.scenario_type ?? null).filter(Boolean)
     );
@@ -141,6 +142,7 @@ export function TimelineTab() {
   }, [entries, project, projectMap]);
 
   const filtered = useMemo(() => {
+    if (project === 'none') return [];
     const now = Date.now();
     return entries
       .filter((e) => project === 'all' || e.project_id === project)
@@ -193,8 +195,9 @@ export function TimelineTab() {
         <select
           value={project}
           onChange={(e) => setProject(e.target.value)}
-          className="w-full rounded-xl border border-op-gray/30 bg-op-navy text-op-white text-small p-2"
+          className={`w-full rounded-xl border border-op-gray/30 bg-op-navy text-small p-2 ${project === 'none' ? 'text-op-gray' : 'text-op-white'}`}
         >
+          <option value="none" disabled>Escolha o projeto</option>
           <option value="all">Todos os projetos</option>
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
@@ -325,7 +328,11 @@ export function TimelineTab() {
       </div>
 
       <ul className="space-y-2">
-        {deduped.length === 0 && <li className="text-small text-muted-foreground">Nenhum registro.</li>}
+        {deduped.length === 0 && (
+          <li className="text-small text-op-gray text-center py-6">
+            {project === 'none' ? 'Escolha um projeto para ver os registros.' : 'Nenhum registro.'}
+          </li>
+        )}
         {deduped.map(({ entry: e, count }) => (
           <li
             key={e.id}
