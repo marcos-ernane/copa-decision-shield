@@ -26,6 +26,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { getProject, listEntries, listPrinciples, updateProject } from '@/lib/projects';
 import { updateEntryExecutionPlan } from '@/lib/register';
+import { detectOpenCycles } from '@/lib/openCycle';
+import { OpenCycleCard } from '@/components/project/OpenCycleCard';
 import { computeProjectState, deriveProjectStatus, daysSince } from '@/lib/projectState';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
@@ -614,6 +616,18 @@ function ProjectDashboard() {
             </section>
           );
         })()}
+
+        {/* Ciclos Abertos de APA (PRD-ITEM-01) — imediatamente após "Onde estou agora" */}
+        {currentState !== 'paused' && currentState !== 'concluded' && currentState !== 'archived' &&
+          detectOpenCycles(entries).map((cycle) => (
+            <OpenCycleCard
+              key={cycle.imv.id}
+              imv={cycle.imv}
+              daysOpen={cycle.daysOpen}
+              projectId={id}
+            />
+          ))
+        }
 
         {/* Plano de Execução da IMV (REQ-PLANEXEC-21, 25) */}
         {activePlan?.enabled && activeEntryWithPlan && (

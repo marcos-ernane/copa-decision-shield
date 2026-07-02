@@ -146,12 +146,14 @@ export function StructuredRegister() {
   const navigate = useNavigate();
   const router = useRouter();
   const { projectId, setProjectId, projects } = useProjectPicker();
-  const search = useSearch({ strict: false }) as { format?: 'C' | 'O' | 'P' | 'A' };
+  const search = useSearch({ strict: false }) as { format?: 'C' | 'O' | 'P' | 'A'; linkedTo?: string };
   const [format, setFormat] = useState<Format>('C');
   const [currentStep, setCurrentStep] = useState(0);
   const [projectData, setProjectData] = useState<Project | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [phaseHelp, setPhaseHelp] = useState<Format | null>(null);
+  // Contexto de quick_review pré-existente para pré-preencher FormatA
+  const [linkedQuickReviewFact, setLinkedQuickReviewFact] = useState<string | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -159,6 +161,15 @@ export function StructuredRegister() {
       const [p, es] = await Promise.all([getProject(projectId), listEntries(projectId)]);
       setProjectData(p ?? null);
       setEntries(es);
+      // Pré-carrega contexto de quick_review se linkedTo presente e formato='A'
+      if (search.linkedTo) {
+        const qr = es.find(
+          (e) => e.entry_type === 'quick_review' && e.linked_to === search.linkedTo,
+        );
+        setLinkedQuickReviewFact(
+          qr ? ((qr.content as { what_happened?: string }).what_happened ?? null) : null,
+        );
+      }
       // Se um formato foi solicitado via URL (ex: Pacto da semana), usa ele.
       // Caso contrário, auto-detecta a próxima fase pendente.
       if (search.format) {
@@ -423,7 +434,24 @@ export function StructuredRegister() {
             onNextStep={handleNextStep}
             step={currentStep}
             isReviewing={isReviewing}
-            initialData={statuses['A'] === 'done' ? lastContent<StructuredAContent>(entries, 'structured_A') : null}
+            linkedTo={search.linkedTo ?? null}
+            initialData={
+              statuses['A'] === 'done'
+                ? lastContent<StructuredAContent>(entries, 'structured_A')
+                : linkedQuickReviewFact
+                ? {
+                    fact_text: linkedQuickReviewFact,
+                    interpretation_text: '',
+                    principle_text: '',
+                    decision: '',
+                    what_worked: '',
+                    hidden_cost: null,
+                    repeat_rule: '',
+                    cut_rule_next: '',
+                    next_bottleneck: '',
+                  }
+                : null
+            }
           />
         )}
       </div>

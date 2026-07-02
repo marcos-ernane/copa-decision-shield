@@ -23,6 +23,7 @@ interface Props {
   initialData?: StructuredAContent | null;
   step: number;
   isReviewing?: boolean;
+  linkedTo?: string | null;
 }
 
 const TOTAL_STEPS = 5;
@@ -136,7 +137,7 @@ Ele escreve:
 Somente depois ele investiga as possíveis causas.
 É exatamente essa disciplina que transforma experiência em inteligência operacional.`;
 
-export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing }: Props) {
+export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing, linkedTo }: Props) {
   const [factItems, setFactItems] = useState<string[]>(() => toItems(initialData?.fact_text));
   const [interpItems, setInterpItems] = useState<string[]>(() => toItems(initialData?.interpretation_text));
   const fact = fromItems(factItems);
@@ -196,7 +197,7 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
       repeat_rule: repeatRule.trim(),
       cut_rule_next: cutNext.trim(),
       next_bottleneck: nextBottleneck.trim(),
-    }, scenarioType, currentLayer);
+    }, scenarioType, currentLayer, linkedTo ?? null);
     setSaving(false);
     if (isFirstPrinciple) {
       setNudge(true);

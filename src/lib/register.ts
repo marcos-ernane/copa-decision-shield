@@ -246,12 +246,14 @@ export async function saveStructuredA(
   content: StructuredAContent,
   scenarioType?: ScenarioType | null,
   layerAtEntry?: OperationalLayer | null,
+  linkedTo?: string | null,
 ): Promise<{ entry: Entry; principle: Principle | null; isFirstPrinciple: boolean }> {
   const entry = await insertEntry({
     projectId,
     entry_type: 'structured_A',
     content: content as unknown as Record<string, unknown>,
     is_clean_fact: false,
+    linked_to: linkedTo ?? null,
     scenario_type_at_entry: scenarioType ?? null,
     layer_at_entry: layerAtEntry ?? null,
     copa_phase: 'A',
