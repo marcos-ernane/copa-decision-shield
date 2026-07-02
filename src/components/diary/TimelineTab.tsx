@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useSearch } from '@tanstack/react-router';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
@@ -33,6 +33,8 @@ const PERIODS = [
   { v: 30, label: '30 dias' },
   { v: 0, label: 'Tudo' },
 ] as const;
+
+const ACTIVE_STATES = new Set(['new', 'capturing', 'organizing', 'proving', 'blocked']);
 
 function entryPreview(e: Entry): string {
   const c = e.content as Record<string, unknown>;
@@ -112,11 +114,43 @@ export function TimelineTab() {
   const [imvSub, setImvSub] = useState<'vencidas' | 'a_vencer' | 'encerradas' | null>(null);
   const [period, setPeriod] = useState<number>(0);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [dropdownOpen]);
 
   const projectMap = useMemo(
     () => Object.fromEntries(projects.map((p) => [p.id, p])),
     [projects],
   );
+
+  const sortedProjects = useMemo(() => {
+    const byTime = (a: (typeof projects)[0], b: (typeof projects)[0]) => {
+      const at = a.last_entry_at ? new Date(a.last_entry_at).getTime() : new Date(a.created_at).getTime();
+      const bt = b.last_entry_at ? new Date(b.last_entry_at).getTime() : new Date(b.created_at).getTime();
+      return bt - at;
+    };
+    const active = projects.filter((p) => ACTIVE_STATES.has(p.state)).sort(byTime);
+    const concluded = projects.filter((p) => p.state === 'concluded').sort(byTime);
+    const other = projects.filter((p) => p.state === 'paused' || p.state === 'archived').sort(byTime);
+    return [...active, ...concluded, ...other];
+  }, [projects]);
+
+  function statusDotClass(state: string): string {
+    if (ACTIVE_STATES.has(state)) return 'bg-op-success';
+    if (state === 'concluded') return 'bg-op-danger';
+    return 'bg-op-amber';
+  }
+
+  const selectedProject = project === 'all' || project === 'none' ? null : projectMap[project];
 
   // Quais filtros têm dados (considerando apenas o filtro de projeto ativo)
   const dataMap = useMemo(() => {
@@ -192,15 +226,60 @@ export function TimelineTab() {
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <select
-          value={project}
-          onChange={(e) => setProject(e.target.value)}
-          className={`w-full rounded-xl border border-op-gray/30 bg-op-navy text-small p-2 ${project === 'none' ? 'text-op-gray' : 'text-op-white'}`}
-        >
-          <option value="none">Escolha o projeto</option>
-          <option value="all">Todos os projetos</option>
-          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        {/* Seletor de projeto — custom dropdown para mobile */}
+        <div ref={dropdownRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setDropdownOpen((v) => !v)}
+            className={`w-full flex items-center justify-between rounded-xl border border-op-gray/30 bg-op-navy text-small px-3 py-2 text-left ${project === 'none' ? 'text-op-gray' : 'text-op-white'}`}
+          >
+            <span className="flex items-center gap-2 min-w-0">
+              {selectedProject && (
+                <span className={`size-2 rounded-full shrink-0 ${statusDotClass(selectedProject.state)}`} />
+              )}
+              <span className="truncate">
+                {project === 'none' ? 'Escolha o projeto' : project === 'all' ? 'Todos os projetos' : (selectedProject?.name ?? '—')}
+              </span>
+            </span>
+            <svg className={`size-4 text-op-gray shrink-0 ml-2 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {dropdownOpen && (
+            <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl border border-op-gray/30 bg-op-navy shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+              <button
+                type="button"
+                onClick={() => { setProject('none'); setDropdownOpen(false); }}
+                className={`w-full flex items-center gap-2 px-3 py-2.5 text-small text-left hover:bg-op-navy-elevated transition-colors ${project === 'none' ? 'text-op-amber font-semibold' : 'text-op-gray'}`}
+              >
+                Escolha o projeto
+              </button>
+              <button
+                type="button"
+                onClick={() => { setProject('all'); setDropdownOpen(false); }}
+                className={`w-full flex items-center gap-2 px-3 py-2.5 text-small text-left hover:bg-op-navy-elevated transition-colors border-t border-op-gray/10 ${project === 'all' ? 'text-op-amber font-semibold' : 'text-op-white'}`}
+              >
+                Todos os projetos
+              </button>
+              {sortedProjects.length > 0 && (
+                <div className="border-t border-op-gray/10">
+                  {sortedProjects.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => { setProject(p.id); setDropdownOpen(false); }}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 text-small text-left hover:bg-op-navy-elevated transition-colors border-t border-op-gray/10 first:border-t-0 ${project === p.id ? 'text-op-amber font-semibold' : 'text-op-white'}`}
+                    >
+                      <span className={`size-2 rounded-full shrink-0 ${statusDotClass(p.state)}`} />
+                      <span className="truncate">{p.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="space-y-0.5">
           <p className="text-label text-op-gray uppercase tracking-wide">Período</p>
