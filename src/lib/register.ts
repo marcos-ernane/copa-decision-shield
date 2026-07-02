@@ -85,6 +85,16 @@ export interface CorrectiveContent {
   why_previous_was_imprecise: string;
 }
 
+export type QuickReviewExpectation = 'yes' | 'partial' | 'no';
+
+export interface QuickReviewContent {
+  what_happened: string;             // max 300 chars, obrigatório
+  met_expectation: QuickReviewExpectation; // obrigatório
+  next_step: string;                 // max 200 chars, obrigatório
+  elevated_to_apa: boolean;
+  linked_structured_p_id: string;   // UUID do structured_P de origem
+}
+
 async function insertEntry(args: {
   projectId: string;
   entry_type: EntryType | 'passive' | 'protocol_5min' | 'creative_session' | 'simulation_session' | 'copa_session' | 'pressure_session';
@@ -355,6 +365,27 @@ export async function saveCorrective(
     content: content as unknown as Record<string, unknown>,
     is_clean_fact: false,
     linked_to: originalEntryId,
+  });
+}
+
+// ---------- Quick Review (PRD-ITEM-01 v2.0) ----------
+
+export async function saveQuickReview(
+  projectId: string,
+  linkedStructuredPId: string,
+  content: QuickReviewContent,
+  scenarioType?: ScenarioType | null,
+  layerAtEntry?: OperationalLayer | null,
+): Promise<Entry> {
+  return insertEntry({
+    projectId,
+    entry_type: 'quick_review',
+    content: content as unknown as Record<string, unknown>,
+    is_clean_fact: true,
+    linked_to: linkedStructuredPId,
+    copa_phase: 'A',
+    scenario_type_at_entry: scenarioType ?? null,
+    layer_at_entry: layerAtEntry ?? null,
   });
 }
 

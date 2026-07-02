@@ -67,18 +67,38 @@ export async function migrateGuestToCloud(userId: string): Promise<void> {
 
     emit({ state: 'running', step: 'Sincronizando registros' });
     const entries = GuestStorage.getEntries();
+    // Mapa de IDs locais → IDs Supabase (necessário para linked_to de quick_review e corrective)
+    const entryIdMap = new Map<string, string>();
+    // Primeira passagem: inserir entradas sem linked_to para popular o mapa
     for (const e of entries) {
       const newProjectId = projectIdMap.get(e.project_id);
       if (!newProjectId) continue;
-      await supabase.from('entries').insert({
-        project_id: newProjectId,
-        user_id: userId,
-        entry_type: e.entry_type,
-        content: e.content,
-        copa_phase: e.copa_phase,
-        scenario_type_at_entry: e.scenario_type_at_entry,
-        layer_at_entry: e.layer_at_entry,
-      });
+      const { data, error } = await supabase
+        .from('entries')
+        .insert({
+          project_id: newProjectId,
+          user_id: userId,
+          entry_type: e.entry_type,
+          content: e.content,
+          copa_phase: e.copa_phase,
+          scenario_type_at_entry: e.scenario_type_at_entry,
+          layer_at_entry: e.layer_at_entry,
+          classification: e.classification ?? null,
+          ai_assist_used: e.ai_assist_used ?? false,
+          ai_assist_type: e.ai_assist_type ?? null,
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      entryIdMap.set(e.id, data.id);
+    }
+    // Segunda passagem: atualizar linked_to para entradas que referenciam outras
+    for (const e of entries) {
+      if (!e.linked_to) continue;
+      const newEntryId = entryIdMap.get(e.id);
+      const newLinkedId = entryIdMap.get(e.linked_to);
+      if (!newEntryId || !newLinkedId) continue;
+      await supabase.from('entries').update({ linked_to: newLinkedId }).eq('id', newEntryId);
     }
 
     emit({ state: 'running', step: 'Sincronizando princípios' });

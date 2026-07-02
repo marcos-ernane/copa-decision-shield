@@ -38,7 +38,8 @@ export type EntryType =
   | 'structured_P'
   | 'structured_A'
   | 'corrective'
-  | 'passive';
+  | 'passive'
+  | 'quick_review';
 
 export type CopaPhase = 'C' | 'O' | 'P' | 'A';
 
