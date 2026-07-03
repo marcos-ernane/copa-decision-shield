@@ -3,9 +3,9 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowRight, Check, ChevronDown, Clock, Mic } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, Clock, Mic, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { markInboxProcessed } from '@/lib/universalCapture';
+import { markInboxProcessed, discardInboxEntry } from '@/lib/universalCapture';
 import { listProjects } from '@/lib/projects';
 import { savePulse } from '@/lib/register';
 import type { InboxEntry } from '@/lib/universalCapture';
@@ -33,6 +33,7 @@ type LinkState = 'idle' | 'picking' | 'picked';
 export function InboxCard({ entry, onProcessed }: Props) {
   const navigate = useNavigate();
   const [marking, setMarking] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
   const [linkState, setLinkState] = useState<LinkState>('idle');
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -47,6 +48,18 @@ export function InboxCard({ entry, onProcessed }: Props) {
       onProcessed?.();
     } catch {
       setMarking(false);
+    }
+  }
+
+  async function handleDiscard() {
+    setDiscarding(true);
+    try {
+      await discardInboxEntry(entry.id);
+      window.dispatchEvent(new CustomEvent('aop:inbox-updated'));
+      onProcessed?.();
+    } catch {
+      toast.error('Não foi possível descartar. Tente novamente.');
+      setDiscarding(false);
     }
   }
 
@@ -143,6 +156,19 @@ export function InboxCard({ entry, onProcessed }: Props) {
         >
           <Check className="size-3.5" />
           {marking ? 'Processando…' : 'Já processado'}
+        </button>
+      </div>
+
+      {/* Descartar */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          disabled={discarding || marking}
+          onClick={() => void handleDiscard()}
+          className="flex items-center gap-1 text-label text-op-gray/50 hover:text-brand-red transition-colors disabled:opacity-40"
+        >
+          <Trash2 className="size-3" />
+          {discarding ? 'Descartando…' : 'Descartar'}
         </button>
       </div>
 

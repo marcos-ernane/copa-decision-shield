@@ -176,6 +176,10 @@ export const GuestStorage = {
     );
     write(KEYS.inboxEntries, all);
   },
+  discardInboxEntry(id: string): void {
+    const all = GuestStorage.getInboxEntries().filter((e) => e.id !== id);
+    write(KEYS.inboxEntries, all);
+  },
 
   // ---------- Clear (após migração) ----------
   clearAll(): void {

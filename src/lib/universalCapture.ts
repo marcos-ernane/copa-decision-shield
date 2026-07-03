@@ -79,6 +79,22 @@ export async function markInboxProcessed(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function discardInboxEntry(id: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    GuestStorage.discardInboxEntry(id);
+    return;
+  }
+
+  const { error } = await supabase
+    .from('entries')
+    .delete()
+    .eq('id', id)
+    .eq('entry_type', 'inbox');
+  if (error) throw error;
+}
+
 export async function getInboxCount(): Promise<number> {
   const { data: { session } } = await supabase.auth.getSession();
 
