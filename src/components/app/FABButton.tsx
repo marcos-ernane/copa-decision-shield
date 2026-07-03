@@ -5,14 +5,14 @@ import { Link } from '@tanstack/react-router';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type FABColorScheme = 'primary' | 'pressure' | 'tertiary' | 'inbox';
+export type FABColorScheme = 'primary' | 'pressure' | 'tertiary' | 'inbox' | 'capture';
 
 type BaseProps = {
   icon: LucideIcon;
   label: string;
   colorScheme: FABColorScheme;
   haptic?: boolean;
-  size?: 'default' | 'small';
+  size?: 'default' | 'medium' | 'small';
   badge?: React.ReactNode;
 };
 
@@ -41,14 +41,18 @@ export function FABButton({
       ? 'bg-[var(--color-brand-amber)] text-white'
       : colorScheme === 'inbox'
         ? 'bg-[var(--color-brand-blue)] text-white'
-        : colorScheme === 'tertiary'
-          ? 'bg-[var(--color-surface-4)] text-white'
-          : 'bg-[var(--color-brand-navy)] text-white';
+        : colorScheme === 'capture'
+          ? 'bg-[var(--color-surface-2)] text-[var(--color-text-primary)]'
+          : colorScheme === 'tertiary'
+            ? 'bg-[var(--color-surface-4)] text-white'
+            : 'bg-[var(--color-brand-navy)] text-white';
 
   const sizing =
     size === 'small'
       ? 'h-10 px-3 text-label'
-      : 'h-12 px-4 text-small';
+      : size === 'medium'
+        ? 'h-[44px] px-4 text-small'
+        : 'h-12 px-4 text-small';
 
   const baseClass = cn(
     'relative rounded-full shadow-lg flex items-center gap-2 font-semibold',
@@ -59,7 +63,7 @@ export function FABButton({
 
   const content = (
     <>
-      <Icon className={size === 'small' ? 'size-4' : 'size-5'} />
+      <Icon className={size === 'small' ? 'size-4' : size === 'medium' ? 'size-4' : 'size-5'} />
       {label}
       {badge && (
         <span className="absolute -top-1.5 -right-1.5">{badge}</span>

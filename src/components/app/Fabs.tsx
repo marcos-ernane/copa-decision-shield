@@ -2,7 +2,7 @@
 // Visíveis em todas as telas exceto onboarding, fluxos modais fullscreen e Modo Leitura.
 
 import { useEffect, useState } from 'react';
-import { Zap, Clock, Inbox } from 'lucide-react';
+import { Zap, Clock } from 'lucide-react';
 import { FABButton } from './FABButton';
 import { InboxBadge } from '@/components/capture/InboxBadge';
 import { UniversalCaptureSheet } from '@/components/capture/UniversalCaptureSheet';
@@ -43,9 +43,10 @@ export function Fabs() {
       <div className="fixed bottom-20 left-4 z-40">
         <FABButton
           onClick={() => setCaptureOpen(true)}
-          icon={Inbox}
+          icon={Zap}
           label="CAPTURAR"
-          colorScheme="inbox"
+          colorScheme="capture"
+          size="medium"
           badge={<InboxBadge />}
         />
       </div>
