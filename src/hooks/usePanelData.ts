@@ -23,9 +23,15 @@ export function usePanelData(): PanelData {
   const load = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
+      // Inbox processado aparece na Timeline como histórico
+      const processedInbox = GuestStorage.getInboxEntries()
+        .filter((e) => e.inbox_processed)
+        .map((e) => ({ ...e, project_id: null as unknown as string, classification: null, is_clean_fact: false,
+          copa_phase: null, linked_to: null, edit_history: [], scenario_type_at_entry: null,
+          layer_at_entry: null, ai_assist_used: false, ai_assist_type: null }));
       setState({
         projects: GuestStorage.getProjects(),
-        entries: GuestStorage.getEntries(),
+        entries: [...GuestStorage.getEntries(), ...processedInbox] as import('@/types/database').Entry[],
         principles: GuestStorage.getPrinciples(),
         chapters: GuestStorage.getChapters(),
         baselines: [],
@@ -36,7 +42,10 @@ export function usePanelData(): PanelData {
     const uid = session.user.id;
     const [projectsR, entriesR, principlesR, chaptersR, baselinesR] = await Promise.all([
       supabase.from('projects').select('*').eq('user_id', uid),
-      supabase.from('entries').select('*').eq('user_id', uid).neq('entry_type', 'inbox').order('created_at', { ascending: false }),
+      // Inclui inbox apenas se já processado (inbox_processed=true); exclui pendentes
+      supabase.from('entries').select('*').eq('user_id', uid)
+        .or('entry_type.neq.inbox,inbox_processed.eq.true')
+        .order('created_at', { ascending: false }),
       supabase.from('principles').select('*').eq('user_id', uid),
       supabase.from('chapters').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
       supabase.from('baseline_assessments').select('*').eq('user_id', uid).order('created_at', { ascending: true }),

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { Inbox as InboxIcon } from 'lucide-react';
 import { Link, useSearch } from '@tanstack/react-router';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
@@ -75,6 +76,7 @@ const TYPE_ICON: Record<string, string> = {
   pressure_session: '⚡',
   passive: '·',
   quick_review: 'R',
+  inbox: '⊡', // rendered via Lucide Inbox component in JSX
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -91,6 +93,7 @@ const TYPE_LABEL: Record<string, string> = {
   creative_session: 'Criativo',
   simulation_session: 'Simulação',
   quick_review: 'Revisão Rápida',
+  inbox: 'Captura Universal',
 };
 
 async function archiveEntry(id: string) {
@@ -429,7 +432,9 @@ export function TimelineTab() {
               onClick={() => setExpanded(expanded === e.id ? null : e.id)}
             >
               <div className="flex items-center gap-1.5 text-label text-op-gray">
-                <span className="font-mono">{TYPE_ICON[e.entry_type] ?? '?'}</span>
+                {e.entry_type === 'inbox'
+                  ? <InboxIcon className="size-3 text-op-cyan shrink-0" />
+                  : <span className="font-mono">{TYPE_ICON[e.entry_type] ?? '?'}</span>}
                 {e.entry_type === 'corrective' && <span className="text-[color:var(--color-brand-amber)]">[C]</span>}
                 <span>{new Date(e.created_at).toLocaleDateString('pt-BR')}</span>
                 {count > 1 && (
@@ -448,6 +453,11 @@ export function TimelineTab() {
                 {TYPE_LABEL[e.entry_type] && (
                   <span className="inline-flex items-center rounded-full border border-op-gray/30 bg-op-navy text-op-gray text-label px-2 py-0.5">
                     {TYPE_LABEL[e.entry_type]}
+                  </span>
+                )}
+                {e.entry_type === 'inbox' && (
+                  <span className="inline-flex items-center rounded-full border border-op-cyan/40 bg-op-navy text-op-cyan text-label px-2 py-0.5">
+                    processado
                   </span>
                 )}
                 {e.entry_type === 'quick_review' && (() => {
