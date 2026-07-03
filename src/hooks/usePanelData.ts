@@ -36,7 +36,7 @@ export function usePanelData(): PanelData {
     const uid = session.user.id;
     const [projectsR, entriesR, principlesR, chaptersR, baselinesR] = await Promise.all([
       supabase.from('projects').select('*').eq('user_id', uid),
-      supabase.from('entries').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+      supabase.from('entries').select('*').eq('user_id', uid).neq('entry_type', 'inbox').order('created_at', { ascending: false }),
       supabase.from('principles').select('*').eq('user_id', uid),
       supabase.from('chapters').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
       supabase.from('baseline_assessments').select('*').eq('user_id', uid).order('created_at', { ascending: true }),

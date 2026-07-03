@@ -117,6 +117,19 @@ export async function migrateGuestToCloud(userId: string): Promise<void> {
       });
     }
 
+    emit({ state: 'running', step: 'Sincronizando inbox' });
+    const inboxEntries = GuestStorage.getInboxEntries();
+    for (const e of inboxEntries) {
+      await supabase.from('entries').insert({
+        user_id: userId,
+        project_id: null,
+        entry_type: 'inbox',
+        content: e.content,
+        inbox_processed: e.inbox_processed,
+        is_clean_fact: false,
+      });
+    }
+
     GuestStorage.clearAll();
     emit({
       state: 'done',

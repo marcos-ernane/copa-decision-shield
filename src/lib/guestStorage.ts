@@ -14,6 +14,7 @@ const KEYS = {
   sheets: 'aop.sheets',
   guestStartedAt: 'aop.guest_started_at',
   dismissedBottlenecks: 'aop.dismissed_bottlenecks',
+  inboxEntries: 'aop.inbox_entries',
 } as const;
 
 const isBrowser = () => typeof window !== 'undefined';
@@ -31,6 +32,15 @@ function read<T>(key: string, fallback: T): T {
 function write<T>(key: string, value: T): void {
   if (!isBrowser()) return;
   window.localStorage.setItem(key, JSON.stringify(value));
+}
+
+export interface GuestInboxEntry {
+  id: string;
+  user_id: string;
+  entry_type: 'inbox';
+  content: { text: string; input_method: 'text' | 'voice' };
+  inbox_processed: boolean;
+  created_at: string;
 }
 
 export type GuestProfile = Partial<Profile> & {
@@ -152,6 +162,21 @@ export const GuestStorage = {
     write(KEYS.sheets, [sheet, ...all]);
   },
 
+  // ---------- Inbox (Captura Universal) ----------
+  getInboxEntries(): GuestInboxEntry[] {
+    return read<GuestInboxEntry[]>(KEYS.inboxEntries, []);
+  },
+  addInboxEntry(entry: GuestInboxEntry): void {
+    const all = GuestStorage.getInboxEntries();
+    write(KEYS.inboxEntries, [entry, ...all]);
+  },
+  markInboxProcessed(id: string): void {
+    const all = GuestStorage.getInboxEntries().map((e) =>
+      e.id === id ? { ...e, inbox_processed: true } : e,
+    );
+    write(KEYS.inboxEntries, all);
+  },
+
   // ---------- Clear (após migração) ----------
   clearAll(): void {
     if (!isBrowser()) return;
@@ -162,7 +187,8 @@ export const GuestStorage = {
     return (
       GuestStorage.getProjects().length > 0 ||
       GuestStorage.getEntries().length > 0 ||
-      GuestStorage.getPrinciples().length > 0
+      GuestStorage.getPrinciples().length > 0 ||
+      GuestStorage.getInboxEntries().length > 0
     );
   },
 
