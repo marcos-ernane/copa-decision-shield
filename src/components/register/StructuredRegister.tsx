@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
-import { markInboxProcessed } from '@/lib/universalCapture';
+import { processInboxEntry } from '@/lib/universalCapture';
 import { CheckCircle2, Lock, ArrowRight, CircleHelp, X } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
@@ -246,7 +246,7 @@ export function StructuredRegister() {
     if (!projectId) return;
     // Se veio do Inbox, marcar como processado após a primeira fase (C) salva.
     if (format === 'C' && search.inboxEntryId) {
-      void markInboxProcessed(search.inboxEntryId);
+      void processInboxEntry(search.inboxEntryId);
       window.dispatchEvent(new CustomEvent('aop:inbox-updated'));
     }
     const newEntries = await listEntries(projectId);

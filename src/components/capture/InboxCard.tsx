@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowRight, Check, ChevronDown, Clock, Mic, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { markInboxProcessed, discardInboxEntry } from '@/lib/universalCapture';
+import { processInboxEntry, discardInboxEntry } from '@/lib/universalCapture';
 import { listProjects } from '@/lib/projects';
 import { savePulse } from '@/lib/register';
 import type { InboxEntry } from '@/lib/universalCapture';
@@ -43,7 +43,7 @@ export function InboxCard({ entry, onProcessed }: Props) {
   async function handleMarkProcessed() {
     setMarking(true);
     try {
-      await markInboxProcessed(entry.id);
+      await processInboxEntry(entry.id);
       window.dispatchEvent(new CustomEvent('aop:inbox-updated'));
       onProcessed?.();
     } catch {
@@ -111,7 +111,7 @@ export function InboxCard({ entry, onProcessed }: Props) {
         input_method: content.input_method,
         has_mixed_interpretation: false,
       });
-      await markInboxProcessed(entry.id);
+      await processInboxEntry(entry.id);
       window.dispatchEvent(new CustomEvent('aop:inbox-updated'));
       toast.success(`Salvo como pulso em "${selectedProject.name}".`);
       onProcessed?.();

@@ -46,7 +46,7 @@ export async function saveInboxEntry(
   return data as InboxEntry;
 }
 
-export async function getPendingInboxEntries(): Promise<InboxEntry[]> {
+export async function getInboxEntries(): Promise<InboxEntry[]> {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
@@ -64,7 +64,7 @@ export async function getPendingInboxEntries(): Promise<InboxEntry[]> {
   return (data ?? []) as InboxEntry[];
 }
 
-export async function markInboxProcessed(id: string): Promise<void> {
+export async function processInboxEntry(id: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {

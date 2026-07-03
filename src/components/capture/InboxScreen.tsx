@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Inbox } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { InboxCard } from './InboxCard';
-import { getPendingInboxEntries } from '@/lib/universalCapture';
+import { getInboxEntries } from '@/lib/universalCapture';
 import type { InboxEntry } from '@/lib/universalCapture';
 
 export function InboxScreen() {
@@ -13,7 +13,7 @@ export function InboxScreen() {
   const [loading, setLoading] = useState(true);
 
   async function load() {
-    const data = await getPendingInboxEntries();
+    const data = await getInboxEntries();
     setEntries(data);
     setLoading(false);
   }
