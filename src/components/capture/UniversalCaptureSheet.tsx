@@ -1,13 +1,18 @@
-// UniversalCaptureSheet — PRD-CU-01 v1.0 Etapa 3
-// Bottom-sheet de captura bruta sem projeto. Processe depois no Inbox.
+// UniversalCaptureSheet — PRD-CU-01 v1.0 Etapa 3 (Option B)
+// Bottom-sheet de captura bruta. Vincula a projeto (pulso) ou vai ao Inbox.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Inbox } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveInboxEntry } from '@/lib/universalCapture';
+import { listProjects } from '@/lib/projects';
+import { savePulse } from '@/lib/register';
+import type { Project, ProjectState } from '@/types/database';
+
+const INACTIVE_STATES: ProjectState[] = ['concluded', 'archived', 'paused'];
 
 interface Props {
   open: boolean;
@@ -18,20 +23,55 @@ interface Props {
 export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
   const [text, setText] = useState('');
   const [saving, setSaving] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    listProjects()
+      .then((all) => {
+        const active = all
+          .filter((p) => !INACTIVE_STATES.includes(p.state))
+          .sort((a, b) => {
+            const ta = a.last_entry_at ? new Date(a.last_entry_at).getTime() : 0;
+            const tb = b.last_entry_at ? new Date(b.last_entry_at).getTime() : 0;
+            return tb - ta;
+          })
+          .slice(0, 4);
+        setProjects(active);
+      })
+      .catch(() => setProjects([]));
+    setSelectedProjectId(null);
+    setText('');
+  }, [open]);
 
   async function handleSave() {
     const trimmed = text.trim();
     if (!trimmed) return;
     setSaving(true);
     try {
-      await saveInboxEntry(trimmed, 'text');
+      if (selectedProjectId) {
+        const project = projects.find((p) => p.id === selectedProjectId)!;
+        await savePulse(selectedProjectId, {
+          text: trimmed,
+          fact_text: trimmed,
+          interpretation_text: '',
+          classification: 'fact',
+          input_method: 'text',
+          has_mixed_interpretation: false,
+        });
+        toast.success(`Registrado em "${project.name}".`);
+      } else {
+        await saveInboxEntry(trimmed, 'text');
+        window.dispatchEvent(new CustomEvent('aop:inbox-updated'));
+        toast.success('Capturado.', {
+          description: 'Disponível no Inbox para processar quando quiser.',
+        });
+      }
       setText('');
+      setSelectedProjectId(null);
       onOpenChange(false);
-      window.dispatchEvent(new CustomEvent('aop:inbox-updated'));
       onSaved?.();
-      toast.success('Capturado.', {
-        description: 'Disponível no Inbox para processar quando quiser.',
-      });
     } catch {
       toast.error('Não foi possível salvar. Tente novamente.');
     } finally {
@@ -42,6 +82,8 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
   function handleOpenChange(v: boolean) {
     if (!saving) onOpenChange(v);
   }
+
+  const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null;
 
   return (
     <Drawer open={open} onOpenChange={handleOpenChange}>
@@ -64,6 +106,44 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
             maxSeconds={30}
             rows={4}
           />
+
+          {projects.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-label text-op-gray">Vincular a um projeto? (opcional)</p>
+              <div className="flex flex-wrap gap-2">
+                {projects.map((p) => {
+                  const active = selectedProjectId === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() =>
+                        setSelectedProjectId(active ? null : p.id)
+                      }
+                      className={[
+                        'px-3 py-1 rounded-full text-small font-semibold border transition-colors',
+                        active
+                          ? 'bg-brand-amber/20 border-brand-amber text-brand-amber'
+                          : 'bg-transparent border-op-gray/30 text-op-gray hover:border-op-gray/60 hover:text-op-white',
+                      ].join(' ')}
+                    >
+                      {p.name}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedProject && (
+                <p className="text-label text-op-cyan/80">
+                  Será salvo como pulso em "{selectedProject.name}"
+                </p>
+              )}
+              {!selectedProject && (
+                <p className="text-label text-op-gray/70">
+                  Sem projeto selecionado → vai para o Inbox
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-3">
             <Button

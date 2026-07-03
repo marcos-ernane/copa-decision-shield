@@ -1,11 +1,17 @@
-// InboxCard — PRD-CU-01 v1.0 Etapa 3
+// InboxCard — PRD-CU-01 v1.0 Etapa 3 + Inbox linker
 // Card de uma captura bruta pendente no Inbox.
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowRight, Check, Clock, Mic } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, Clock, Mic } from 'lucide-react';
+import { toast } from 'sonner';
 import { markInboxProcessed } from '@/lib/universalCapture';
+import { listProjects } from '@/lib/projects';
+import { savePulse } from '@/lib/register';
 import type { InboxEntry } from '@/lib/universalCapture';
+import type { Project, ProjectState } from '@/types/database';
+
+const INACTIVE_STATES: ProjectState[] = ['concluded', 'archived', 'paused'];
 
 interface Props {
   entry: InboxEntry;
@@ -22,9 +28,15 @@ function timeAgo(iso: string): string {
   return `${Math.floor(hours / 24)}d atrás`;
 }
 
+type LinkState = 'idle' | 'picking' | 'picked';
+
 export function InboxCard({ entry, onProcessed }: Props) {
   const navigate = useNavigate();
   const [marking, setMarking] = useState(false);
+  const [linkState, setLinkState] = useState<LinkState>('idle');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [linking, setLinking] = useState(false);
   const content = entry.content;
 
   async function handleMarkProcessed() {
@@ -38,11 +50,62 @@ export function InboxCard({ entry, onProcessed }: Props) {
     }
   }
 
-  function handleOpenCopa() {
+  function handleOpenCopa(projectId?: string) {
     void navigate({
       to: '/register/structured',
-      search: { format: 'C', inboxEntryId: entry.id, inboxText: content.text } as never,
+      search: {
+        format: 'C',
+        inboxEntryId: entry.id,
+        inboxText: content.text,
+        ...(projectId ? { projectId } : {}),
+      } as never,
     });
+  }
+
+  async function handleVincularClick() {
+    if (linkState === 'idle') {
+      const all = await listProjects().catch(() => []);
+      const active = all
+        .filter((p) => !INACTIVE_STATES.includes(p.state))
+        .sort((a, b) => {
+          const ta = a.last_entry_at ? new Date(a.last_entry_at).getTime() : 0;
+          const tb = b.last_entry_at ? new Date(b.last_entry_at).getTime() : 0;
+          return tb - ta;
+        })
+        .slice(0, 4);
+      setProjects(active);
+      setLinkState('picking');
+    } else {
+      setLinkState('idle');
+      setSelectedProject(null);
+    }
+  }
+
+  function handlePickProject(p: Project) {
+    setSelectedProject(p);
+    setLinkState('picked');
+  }
+
+  async function handleSaveAsPulse() {
+    if (!selectedProject) return;
+    setLinking(true);
+    try {
+      await savePulse(selectedProject.id, {
+        text: content.text,
+        fact_text: content.text,
+        interpretation_text: '',
+        classification: 'fact',
+        input_method: content.input_method,
+        has_mixed_interpretation: false,
+      });
+      await markInboxProcessed(entry.id);
+      window.dispatchEvent(new CustomEvent('aop:inbox-updated'));
+      toast.success(`Salvo como pulso em "${selectedProject.name}".`);
+      onProcessed?.();
+    } catch {
+      toast.error('Não foi possível salvar. Tente novamente.');
+      setLinking(false);
+    }
   }
 
   return (
@@ -65,7 +128,7 @@ export function InboxCard({ entry, onProcessed }: Props) {
       <div className="flex gap-2 pt-1 border-t border-op-gray/20">
         <button
           type="button"
-          onClick={handleOpenCopa}
+          onClick={() => handleOpenCopa()}
           className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-small font-semibold text-white hover:opacity-90 transition-opacity"
           style={{ backgroundColor: 'var(--color-brand-blue)' }}
         >
@@ -81,6 +144,79 @@ export function InboxCard({ entry, onProcessed }: Props) {
           <Check className="size-3.5" />
           {marking ? 'Processando…' : 'Já processado'}
         </button>
+      </div>
+
+      {/* Inbox linker */}
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => void handleVincularClick()}
+          className="flex items-center gap-1 text-label text-op-gray/70 hover:text-op-gray transition-colors"
+        >
+          Vincular a projeto
+          <ChevronDown
+            className={[
+              'size-3 transition-transform',
+              linkState !== 'idle' ? 'rotate-180' : '',
+            ].join(' ')}
+          />
+        </button>
+
+        {linkState === 'picking' && (
+          <div className="space-y-2">
+            {projects.length === 0 ? (
+              <p className="text-label text-op-gray/60">Nenhum projeto ativo.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {projects.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => handlePickProject(p)}
+                    className="px-3 py-1 rounded-full text-small font-semibold border border-op-gray/30 text-op-gray hover:border-op-gray/60 hover:text-op-white transition-colors"
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {linkState === 'picked' && selectedProject && (
+          <div className="space-y-2">
+            <p className="text-label text-op-cyan/80">
+              Projeto: <span className="font-semibold">{selectedProject.name}</span>
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={linking}
+                onClick={() => handleOpenCopa(selectedProject.id)}
+                className="flex-1 flex items-center justify-center gap-1 rounded-lg py-1.5 text-small font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                style={{ backgroundColor: 'var(--color-brand-blue)' }}
+              >
+                Abrir no COPA
+                <ArrowRight className="size-3" />
+              </button>
+              <button
+                type="button"
+                disabled={linking}
+                onClick={() => void handleSaveAsPulse()}
+                className="flex-1 flex items-center justify-center gap-1 rounded-lg py-1.5 text-small font-semibold text-op-gray border border-op-gray/30 hover:text-op-white hover:border-op-gray/60 transition-colors disabled:opacity-50"
+              >
+                {linking ? 'Salvando…' : 'Salvar como pulso'}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setLinkState('picking'); setSelectedProject(null); }}
+              className="text-label text-op-gray/60 hover:text-op-gray transition-colors"
+            >
+              ← Trocar projeto
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
