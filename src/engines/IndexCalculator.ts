@@ -83,13 +83,16 @@ function applySmoothing(curr: number, prev: number | undefined, sameDay: boolean
 }
 
 export function calculateIndex(
-  entries: Entry[],
+  allEntries: Entry[],
   principles: Principle[],
   projects: Project[],
 ): IndexResult {
   const today = new Date().toISOString().slice(0, 10);
   const prev = readSmooth();
   const sameDay = prev?.date === today;
+
+  // Inbox entries são capturas brutas não processadas — nunca afetam scores nem guardas
+  const entries = allEntries.filter((e) => e.entry_type !== 'inbox');
 
   // Congelamento total: nenhum projeto ativo
   const hasActive = projects.some(
