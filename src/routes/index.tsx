@@ -150,9 +150,10 @@ function Home() {
       <main className="px-6 space-y-3">
         <Link
           to="/project/new"
-          className="flex items-center justify-center gap-2 rounded-md border border-dashed border-op-gray/20 bg-op-navy py-4 text-small text-op-gray hover:bg-op-navy-elevated transition-colors"
+          className="flex items-center justify-center gap-2 rounded-lg py-4 text-body font-semibold text-white shadow-sm hover:opacity-90 active:scale-[0.98] transition-all"
+          style={{ backgroundColor: 'var(--color-brand-blue)' }}
         >
-          <Plus className="size-4" />
+          <Plus className="size-5" />
           Novo projeto
         </Link>
 
