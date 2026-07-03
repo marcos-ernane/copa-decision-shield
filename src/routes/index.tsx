@@ -2,8 +2,9 @@
 
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { Plus, Settings as SettingsIcon } from 'lucide-react';
+import { Plus, Settings as SettingsIcon, Inbox } from 'lucide-react';
 import { GuestStorage } from '@/lib/guestStorage';
+import { getInboxCount } from '@/lib/universalCapture';
 import { supabase } from '@/lib/supabase';
 import { listProjects, listPrinciples, updateProject, listAllEntries } from '@/lib/projects';
 import { sortProjects } from '@/lib/projectState';
@@ -35,6 +36,7 @@ function Home() {
   const [principles, setPrinciples] = useState<Record<string, Principle | null>>({});
   const [name, setName] = useState('');
   const [communityLink, setCommunityLink] = useState<string | null>(null);
+  const [inboxCount, setInboxCount] = useState(0);
   const [showConcluded, setShowConcluded] = useState(false);
   const [showBottleneckBank, setShowBottleneckBank] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
@@ -42,6 +44,17 @@ function Home() {
   const [pauseReason, setPauseReason] = useState('');
 
   const { pending: pendingBottlenecks, dismiss: dismissBottleneck } = usePendingBottlenecks(entries, projects);
+
+  useEffect(() => {
+    async function loadInbox() {
+      const n = await getInboxCount();
+      setInboxCount(n);
+    }
+    void loadInbox();
+    const handler = () => void loadInbox();
+    window.addEventListener('aop:inbox-updated', handler);
+    return () => window.removeEventListener('aop:inbox-updated', handler);
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -142,6 +155,23 @@ function Home() {
           <Plus className="size-4" />
           Novo projeto
         </Link>
+
+        {inboxCount > 0 && (
+          <Link
+            to="/inbox"
+            className="w-full flex items-center justify-between gap-3 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 hover:bg-op-navy-elevated transition-colors"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <Inbox className="size-4 text-op-cyan shrink-0" />
+              <div className="min-w-0">
+                <p className="text-small text-op-cyan font-medium">
+                  {inboxCount} {inboxCount === 1 ? 'captura pendente' : 'capturas pendentes'} no Inbox
+                </p>
+                <p className="text-label text-op-gray">Processar e transformar em COPA →</p>
+              </div>
+            </div>
+          </Link>
+        )}
 
         {pendingBottlenecks.length > 0 && (
           <button
