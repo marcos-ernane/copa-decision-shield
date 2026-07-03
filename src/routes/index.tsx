@@ -214,6 +214,10 @@ function Home() {
           </button>
         )}
 
+        <p className="text-label text-op-gray uppercase tracking-wide pt-1">
+          Projetos ativos
+        </p>
+
         {active.length === 0 && (
           <p className="text-small text-op-gray py-8 text-center">
             Nenhum projeto em campo.
