@@ -195,20 +195,20 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
 
           <div className="flex gap-3">
             <Button
-              variant="outline"
-              className="flex-1 border-op-gray/30 text-op-gray"
-              disabled={saving}
-              onClick={() => onOpenChange(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
               className="flex-1 text-white font-semibold"
               style={{ backgroundColor: 'var(--color-brand-blue)' }}
               disabled={!text.trim() || saving}
               onClick={() => void handleSave()}
             >
               {saving ? 'Salvando…' : 'Capturar'}
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 border-op-gray/30 text-op-gray"
+              disabled={saving}
+              onClick={() => onOpenChange(false)}
+            >
+              Cancelar
             </Button>
           </div>
         </div>
