@@ -21,7 +21,16 @@ export function WeeklyReport() {
     const now = Date.now();
     const sevenAgo = now - 7 * 86400000;
     const week = entries.filter((e) => new Date(e.created_at).getTime() >= sevenAgo);
-    const weekPrinciples = principles.filter((p) => new Date(p.created_at).getTime() >= sevenAgo);
+    // Total de princípios únicos não arquivados — mesma lógica do PrinciplesTab
+    const seenPrinc = new Set<string>();
+    const uniquePrinciples = principles.filter((p) => {
+      if (p.is_archived) return false;
+      const key = `${p.project_id}|${p.content.trim().toLowerCase()}`;
+      if (seenPrinc.has(key)) return false;
+      seenPrinc.add(key);
+      return true;
+    });
+
     const imvs = week.filter((e) => e.entry_type === 'structured_P').length;
 
     const counts = new Map<string, number>();
@@ -35,7 +44,7 @@ export function WeeklyReport() {
 
     return {
       count: week.length,
-      principles: weekPrinciples.length,
+      principles: uniquePrinciples.length,
       imvs,
       topId,
       topName,
@@ -60,7 +69,7 @@ export function WeeklyReport() {
             onClick={() => void navigate({ to: '/diary/principles' })}
             className="block text-left text-op-cyan hover:underline transition-colors"
           >
-            {data.principles} princípios extraídos →
+            {data.principles} princípios no banco →
           </button>
 
           <button
