@@ -1,9 +1,9 @@
 // UniversalCaptureSheet — PRD-CU-01 v1.0 Etapa 3 (Option B)
 // Bottom-sheet de captura bruta. Vincula a projeto (pulso) ou vai ao Inbox.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Inbox } from 'lucide-react';
+import { Check, ChevronDown, Inbox } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
@@ -25,6 +25,8 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -36,14 +38,26 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
             const ta = a.last_entry_at ? new Date(a.last_entry_at).getTime() : 0;
             const tb = b.last_entry_at ? new Date(b.last_entry_at).getTime() : 0;
             return tb - ta;
-          })
-          .slice(0, 4);
+          });
         setProjects(active);
       })
       .catch(() => setProjects([]));
     setSelectedProjectId(null);
+    setDropdownOpen(false);
     setText('');
   }, [open]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    function handler(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [dropdownOpen]);
 
   async function handleSave() {
     const trimmed = text.trim();
@@ -70,6 +84,7 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
       }
       setText('');
       setSelectedProjectId(null);
+      setDropdownOpen(false);
       onOpenChange(false);
       onSaved?.();
     } catch {
@@ -83,6 +98,11 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
     if (!saving) onOpenChange(v);
   }
 
+  function handleSelect(id: string | null) {
+    setSelectedProjectId(id);
+    setDropdownOpen(false);
+  }
+
   const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null;
 
   return (
@@ -94,7 +114,7 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
             Captura Universal
           </DrawerTitle>
           <p className="text-small text-op-gray">
-            Capture agora, sem projeto. Processe depois.
+            Capture agora, com ou sem projeto. Processe depois.
           </p>
         </DrawerHeader>
 
@@ -108,40 +128,68 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
           />
 
           {projects.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <p className="text-label text-op-gray">Vincular a um projeto? (opcional)</p>
-              <div className="flex flex-wrap gap-2">
-                {projects.map((p) => {
-                  const active = selectedProjectId === p.id;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() =>
-                        setSelectedProjectId(active ? null : p.id)
-                      }
-                      className={[
-                        'px-3 py-1 rounded-full text-small font-semibold border transition-colors',
-                        active
-                          ? 'bg-brand-amber/20 border-brand-amber text-brand-amber'
-                          : 'bg-transparent border-op-gray/30 text-op-gray hover:border-op-gray/60 hover:text-op-white',
-                      ].join(' ')}
-                    >
-                      {p.name}
-                    </button>
-                  );
-                })}
+
+              {/* Dropdown trigger */}
+              <div ref={dropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setDropdownOpen((v) => !v)}
+                  className="w-full flex items-center justify-between gap-2 rounded-lg border border-op-gray/30 bg-op-navy px-3 py-2 text-small text-left transition-colors hover:border-op-gray/60"
+                >
+                  <span className={selectedProject ? 'text-op-white font-semibold' : 'text-op-gray'}>
+                    {selectedProject ? selectedProject.name : 'Projetos ativos'}
+                  </span>
+                  <ChevronDown
+                    className={[
+                      'size-4 text-op-gray shrink-0 transition-transform',
+                      dropdownOpen ? 'rotate-180' : '',
+                    ].join(' ')}
+                  />
+                </button>
+
+                {dropdownOpen && (
+                  <ul className="absolute z-50 mt-1 w-full rounded-lg border border-op-gray/30 bg-op-navy shadow-lg overflow-hidden">
+                    {/* "No project" option */}
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => handleSelect(null)}
+                        className="w-full flex items-center justify-between px-3 py-2.5 text-small text-op-gray hover:bg-white/5 transition-colors"
+                      >
+                        <span>Sem projeto → Inbox</span>
+                        {!selectedProjectId && <Check className="size-3.5 text-op-cyan" />}
+                      </button>
+                    </li>
+
+                    <li className="border-t border-op-gray/20" />
+
+                    {/* Active projects */}
+                    {projects.map((p) => (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          onClick={() => handleSelect(p.id)}
+                          className="w-full flex items-center justify-between px-3 py-2.5 text-small text-op-white hover:bg-white/5 transition-colors"
+                        >
+                          <span className="truncate pr-2">{p.name}</span>
+                          {selectedProjectId === p.id && (
+                            <Check className="size-3.5 text-op-cyan shrink-0" />
+                          )}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-              {selectedProject && (
-                <p className="text-label text-op-cyan/80">
-                  Será salvo como pulso em "{selectedProject.name}"
-                </p>
-              )}
-              {!selectedProject && (
-                <p className="text-label text-op-gray/70">
-                  Sem projeto selecionado → vai para o Inbox
-                </p>
-              )}
+
+              {/* Context hint below selector */}
+              <p className="text-label text-op-gray/60">
+                {selectedProject
+                  ? `Será salvo como pulso em "${selectedProject.name}"`
+                  : 'Sem seleção → captura vai ao Inbox'}
+              </p>
             </div>
           )}
 
