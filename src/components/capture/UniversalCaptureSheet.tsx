@@ -150,7 +150,7 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
                 </button>
 
                 {dropdownOpen && (
-                  <ul className="absolute z-50 mt-1 w-full rounded-lg border border-op-gray/30 bg-op-navy shadow-lg overflow-hidden">
+                  <ul className="absolute z-50 bottom-full mb-1 w-full rounded-lg border border-op-gray/30 bg-op-navy shadow-lg overflow-y-auto max-h-48">
                     {/* "No project" option */}
                     <li>
                       <button
