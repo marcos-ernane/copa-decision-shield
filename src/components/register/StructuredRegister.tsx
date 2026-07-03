@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
+import { markInboxProcessed } from '@/lib/universalCapture';
 import { CheckCircle2, Lock, ArrowRight, CircleHelp, X } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
@@ -146,7 +147,12 @@ export function StructuredRegister() {
   const navigate = useNavigate();
   const router = useRouter();
   const { projectId, setProjectId, projects } = useProjectPicker();
-  const search = useSearch({ strict: false }) as { format?: 'C' | 'O' | 'P' | 'A'; linkedTo?: string };
+  const search = useSearch({ strict: false }) as {
+    format?: 'C' | 'O' | 'P' | 'A';
+    linkedTo?: string;
+    inboxEntryId?: string;
+    inboxText?: string;
+  };
   const [format, setFormat] = useState<Format>('C');
   const [currentStep, setCurrentStep] = useState(0);
   const [projectData, setProjectData] = useState<Project | null>(null);
@@ -238,6 +244,11 @@ export function StructuredRegister() {
 
   async function onSaved() {
     if (!projectId) return;
+    // Se veio do Inbox, marcar como processado após a primeira fase (C) salva.
+    if (format === 'C' && search.inboxEntryId) {
+      void markInboxProcessed(search.inboxEntryId);
+      window.dispatchEvent(new CustomEvent('aop:inbox-updated'));
+    }
     const newEntries = await listEntries(projectId);
     setEntries(newEntries);
     const newStatuses = computeStatuses(newEntries);
@@ -394,7 +405,13 @@ export function StructuredRegister() {
             onNextStep={handleNextStep}
             step={currentStep}
             isReviewing={isReviewing}
-            initialData={statuses['C'] === 'done' ? lastContent<StructuredCContent>(entries, 'structured_C') : null}
+            initialData={
+              statuses['C'] === 'done'
+                ? lastContent<StructuredCContent>(entries, 'structured_C')
+                : search.inboxText
+                ? { fact_text: search.inboxText, interpretation_text: '', hypothesis_text: '' }
+                : null
+            }
           />
         )}
         {format === 'O' && (

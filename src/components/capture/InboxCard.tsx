@@ -40,8 +40,8 @@ export function InboxCard({ entry, onProcessed }: Props) {
 
   function handleOpenCopa() {
     void navigate({
-      to: '/copa',
-      search: { inboxText: content.text } as never,
+      to: '/register/structured',
+      search: { format: 'C', inboxEntryId: entry.id, inboxText: content.text } as never,
     });
   }
 

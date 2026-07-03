@@ -10,6 +10,8 @@ export const Route = createFileRoute('/register/structured')({
       ? (s.format as 'C' | 'O' | 'P' | 'A')
       : undefined,
     linkedTo: typeof s.linkedTo === 'string' ? s.linkedTo : undefined,
+    inboxEntryId: typeof s.inboxEntryId === 'string' ? s.inboxEntryId : undefined,
+    inboxText: typeof s.inboxText === 'string' ? s.inboxText : undefined,
   }),
   component: StructuredRegister,
 });
