@@ -157,6 +157,26 @@ function Home() {
           Novo projeto
         </Link>
 
+        {concluded.length > 0 && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setShowConcluded((s) => !s)}
+              className="w-full text-left text-small font-medium py-1 transition-opacity hover:opacity-80"
+              style={{ color: 'var(--color-brand-red)' }}
+            >
+              Projetos já concluídos ({concluded.length}) {showConcluded ? '−' : '+'}
+            </button>
+            {showConcluded && (
+              <div className="space-y-3">
+                {concluded.map((p) => (
+                  <ProjectCard key={p.id} project={p} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {inboxCount > 0 && (
           <Link
             to="/inbox"
@@ -211,24 +231,6 @@ function Home() {
             onResume={p.state === 'paused' ? () => void handleResume(p.id) : undefined}
           />
         ))}
-
-        {concluded.length > 0 && (
-          <div className="pt-4 space-y-2">
-            <button
-              onClick={() => setShowConcluded((s) => !s)}
-              className="w-full text-left text-label text-op-gray uppercase py-2"
-            >
-              Concluídos ({concluded.length}) {showConcluded ? '−' : '+'}
-            </button>
-            {showConcluded && (
-              <div className="space-y-3">
-                {concluded.map((p) => (
-                  <ProjectCard key={p.id} project={p} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         <CommunityLink url={communityLink} />
       </main>
