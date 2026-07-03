@@ -68,5 +68,15 @@ export function detectOpenCycles(entries: Entry[]): OpenCycle[] {
         projectId: p.project_id,
       };
     })
-    .sort((a, b) => b.daysOpen - a.daysOpen);
+    .sort((a, b) => b.daysOpen - a.daysOpen)
+    // Deduplicar por (projectId + action): mesma IMV criada múltiplas vezes → mantém a mais crítica
+    .filter((() => {
+      const seen = new Set<string>();
+      return (c: OpenCycle) => {
+        const key = `${c.projectId}|${c.imv.action.trim().toLowerCase()}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      };
+    })());
 }
