@@ -108,7 +108,7 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
   }
 
   function handleOpenChange(v: boolean) {
-    if (!saving && !helpOpen) onOpenChange(v);
+    if (!saving) onOpenChange(v);
   }
 
   function handleSelect(id: string | null) {
@@ -119,139 +119,16 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
   const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null;
 
   return (
-    <>
-      <Drawer open={open} onOpenChange={handleOpenChange}>
-        <DrawerContent className="max-h-[80vh]">
-          <DrawerHeader className="text-left">
-            <div className="flex items-center justify-between gap-2">
-              <DrawerTitle className="text-heading flex items-center gap-2">
-                <Inbox className="size-5 text-op-cyan" />
-                Captura Universal
-              </DrawerTitle>
-              <button
-                type="button"
-                onClick={() => setHelpOpen(true)}
-                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors shrink-0"
-              >
-                <CircleHelp className="size-3.5" />
-                Ajuda
-              </button>
-            </div>
-            <p className="text-small text-op-gray mt-1">
-              Capture agora, com ou sem projeto. Processe depois.
-            </p>
-          </DrawerHeader>
-
-          <div className="px-4 pb-6 space-y-4">
-            <VoiceInput
-              value={text}
-              onChange={setText}
-              placeholder="O que está acontecendo? Escreva ou dite…"
-              maxSeconds={30}
-              rows={4}
-            />
-
-            {projects.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-label text-op-gray">Vincular a um projeto? (opcional)</p>
-
-                {/* Dropdown trigger */}
-                <div ref={dropdownRef} className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setDropdownOpen((v) => !v)}
-                    className="w-full flex items-center justify-between gap-2 rounded-lg border border-op-gray/30 bg-op-navy px-3 py-2 text-small text-left transition-colors hover:border-op-gray/60"
-                  >
-                    <span className={selectedProject ? 'text-op-white font-semibold' : 'text-op-gray'}>
-                      {selectedProject ? selectedProject.name : 'Projetos ativos'}
-                    </span>
-                    <ChevronDown
-                      className={[
-                        'size-4 text-op-gray shrink-0 transition-transform',
-                        dropdownOpen ? 'rotate-180' : '',
-                      ].join(' ')}
-                    />
-                  </button>
-
-                  {dropdownOpen && (
-                    <ul className="absolute z-50 bottom-full mb-1 w-full rounded-lg border border-op-gray/30 bg-op-navy shadow-lg overflow-y-auto max-h-48">
-                      <li>
-                        <button
-                          type="button"
-                          onClick={() => handleSelect(null)}
-                          className="w-full flex items-center justify-between px-3 py-2.5 text-small text-op-gray hover:bg-white/5 transition-colors"
-                        >
-                          <span>Sem projeto → Inbox</span>
-                          {!selectedProjectId && <Check className="size-3.5 text-op-cyan" />}
-                        </button>
-                      </li>
-
-                      <li className="border-t border-op-gray/20" />
-
-                      {projects.map((p) => (
-                        <li key={p.id}>
-                          <button
-                            type="button"
-                            onClick={() => handleSelect(p.id)}
-                            className="w-full flex items-center justify-between px-3 py-2.5 text-small text-op-white hover:bg-white/5 transition-colors"
-                          >
-                            <span className="truncate pr-2">{p.name}</span>
-                            {selectedProjectId === p.id && (
-                              <Check className="size-3.5 text-op-cyan shrink-0" />
-                            )}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
-                <p className="text-label text-op-gray/60">
-                  {selectedProject
-                    ? `Será salvo como pulso em "${selectedProject.name}"`
-                    : 'Sem seleção → captura vai ao Inbox'}
-                </p>
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              <Button
-                className="flex-1 text-white font-semibold"
-                style={{ backgroundColor: 'var(--color-brand-blue)' }}
-                disabled={!text.trim() || saving}
-                onClick={() => void handleSave()}
-              >
-                {saving ? 'Salvando…' : 'Capturar'}
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 border-op-gray/30 text-op-gray"
-                disabled={saving}
-                onClick={() => onOpenChange(false)}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
-
-      {/* Bottom sheet de ajuda — padrão do app */}
-      {helpOpen && (
-        <div
-          className="fixed inset-0 z-[60] flex items-end bg-black/50"
-          onClick={() => setHelpOpen(false)}
-        >
-          <div
-            className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
+    <Drawer open={open} onOpenChange={handleOpenChange}>
+      <DrawerContent className="max-h-[80vh]">
+        {helpOpen ? (
+          <div className="px-4 pt-5 pb-6 space-y-4 overflow-y-auto">
             <div className="flex items-center justify-between">
               <h3 className="text-heading font-semibold text-op-white">{HELP_CONTENT.title}</h3>
               <button
                 type="button"
                 onClick={() => setHelpOpen(false)}
-                className="p-1 rounded-md hover:bg-op-navy-elevated"
+                className="p-1 rounded-md hover:bg-white/10 transition-colors"
                 aria-label="Fechar ajuda"
               >
                 <X className="size-5 text-op-gray" />
@@ -261,8 +138,122 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
               <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
             ))}
           </div>
-        </div>
-      )}
-    </>
+        ) : (
+          <>
+            <DrawerHeader className="text-left">
+              <div className="flex items-center justify-between gap-2">
+                <DrawerTitle className="text-heading flex items-center gap-2">
+                  <Inbox className="size-5 text-op-cyan" />
+                  Captura Universal
+                </DrawerTitle>
+                <button
+                  type="button"
+                  onClick={() => setHelpOpen(true)}
+                  className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors shrink-0"
+                >
+                  <CircleHelp className="size-3.5" />
+                  Ajuda
+                </button>
+              </div>
+              <p className="text-small text-op-gray mt-1">
+                Capture agora, com ou sem projeto. Processe depois.
+              </p>
+            </DrawerHeader>
+
+            <div className="px-4 pb-6 space-y-4">
+              <VoiceInput
+                value={text}
+                onChange={setText}
+                placeholder="O que está acontecendo? Escreva ou dite…"
+                maxSeconds={30}
+                rows={4}
+              />
+
+              {projects.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-label text-op-gray">Vincular a um projeto? (opcional)</p>
+
+                  {/* Dropdown trigger */}
+                  <div ref={dropdownRef} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setDropdownOpen((v) => !v)}
+                      className="w-full flex items-center justify-between gap-2 rounded-lg border border-op-gray/30 bg-op-navy px-3 py-2 text-small text-left transition-colors hover:border-op-gray/60"
+                    >
+                      <span className={selectedProject ? 'text-op-white font-semibold' : 'text-op-gray'}>
+                        {selectedProject ? selectedProject.name : 'Projetos ativos'}
+                      </span>
+                      <ChevronDown
+                        className={[
+                          'size-4 text-op-gray shrink-0 transition-transform',
+                          dropdownOpen ? 'rotate-180' : '',
+                        ].join(' ')}
+                      />
+                    </button>
+
+                    {dropdownOpen && (
+                      <ul className="absolute z-50 bottom-full mb-1 w-full rounded-lg border border-op-gray/30 bg-op-navy shadow-lg overflow-y-auto max-h-48">
+                        <li>
+                          <button
+                            type="button"
+                            onClick={() => handleSelect(null)}
+                            className="w-full flex items-center justify-between px-3 py-2.5 text-small text-op-gray hover:bg-white/5 transition-colors"
+                          >
+                            <span>Sem projeto → Inbox</span>
+                            {!selectedProjectId && <Check className="size-3.5 text-op-cyan" />}
+                          </button>
+                        </li>
+
+                        <li className="border-t border-op-gray/20" />
+
+                        {projects.map((p) => (
+                          <li key={p.id}>
+                            <button
+                              type="button"
+                              onClick={() => handleSelect(p.id)}
+                              className="w-full flex items-center justify-between px-3 py-2.5 text-small text-op-white hover:bg-white/5 transition-colors"
+                            >
+                              <span className="truncate pr-2">{p.name}</span>
+                              {selectedProjectId === p.id && (
+                                <Check className="size-3.5 text-op-cyan shrink-0" />
+                              )}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  <p className="text-label text-op-gray/60">
+                    {selectedProject
+                      ? `Será salvo como pulso em "${selectedProject.name}"`
+                      : 'Sem seleção → captura vai ao Inbox'}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button
+                  className="flex-1 text-white font-semibold"
+                  style={{ backgroundColor: 'var(--color-brand-blue)' }}
+                  disabled={!text.trim() || saving}
+                  onClick={() => void handleSave()}
+                >
+                  {saving ? 'Salvando…' : 'Capturar'}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 border-op-gray/30 text-op-gray"
+                  disabled={saving}
+                  onClick={() => onOpenChange(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </DrawerContent>
+    </Drawer>
   );
 }
