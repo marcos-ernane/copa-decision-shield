@@ -14,6 +14,13 @@ const PHASE_TO_FORMAT: Record<PactPhase, 'C' | 'O' | 'P' | 'A'> = {
   assess: 'A',
 };
 
+const PHASE_TO_ENTRY_TYPE: Record<PactPhase, string> = {
+  capture: 'structured_C',
+  organize: 'structured_O',
+  prove: 'structured_P',
+  assess: 'structured_A',
+};
+
 const PHASE_LABEL: Record<PactPhase, string> = {
   capture: 'Captura', organize: 'Organização', prove: 'Prova', assess: 'Aferição',
 };
@@ -47,7 +54,10 @@ export function PactWeekView({ projectId, cycle, entryPhases }: Props) {
 
   function handlePhaseClick(phase: PactPhase) {
     if (isDone(phase)) {
-      void navigate({ to: '/diary' });
+      void navigate({
+        to: '/diary',
+        search: { projectId, type: PHASE_TO_ENTRY_TYPE[phase] } as never,
+      });
     } else {
       void navigate({
         to: '/register/structured',
