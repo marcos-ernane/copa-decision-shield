@@ -244,4 +244,30 @@ export async function markAllPhasesComplete(projectId: string): Promise<void> {
   await updateProject(projectId, { pact_last_cycle_at: now });
 }
 
+// Listener global — dispara markPhaseComplete quando uma entry estruturada é salva
+// em projeto com Pacto ativo, somente se hoje é o dia configurado para aquela fase.
+// [REQ-PACT-12] Usa fuso horário local do dispositivo (getDay()).
+if (typeof window !== 'undefined') {
+  window.addEventListener('aop:entry-saved', (e: Event) => {
+    const detail = (e as CustomEvent<{
+      projectId: string;
+      copaPhase: string | null;
+      entryType: string;
+    }>).detail;
+    const { projectId, copaPhase } = detail;
+    if (!copaPhase || !['C', 'O', 'P', 'A'].includes(copaPhase)) return;
+    const phase = pactPhaseFromCopa(copaPhase as CopaPhase);
+    const today = new Date().getDay();
+    void (async () => {
+      try {
+        const project = await getProject(projectId);
+        if (!project?.pact_enabled) return;
+        const cycle = getCycle(project);
+        if (cycle[phase].day_of_week !== today) return;
+        await markPhaseComplete(projectId, phase);
+      } catch { /* silencioso — nunca quebra o fluxo de registro */ }
+    })();
+  });
+}
+
 export { PHASES };
