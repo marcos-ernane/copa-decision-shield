@@ -118,28 +118,28 @@ export function ProjectHealthBadge({ projectId, authState }: ProjectHealthBadgeP
             className={`size-2.5 rounded-full shrink-0 ${colorDot(health.color)}`}
           />
           {/* Headline */}
-          <span className="text-small text-[var(--color-text-primary)] flex-1 truncate">
+          <span className="text-small text-op-white flex-1 truncate">
             {health.headline}
           </span>
           {/* Chevron */}
           {expanded
-            ? <ChevronUp className="size-3.5 text-[var(--color-surface-3)] shrink-0" />
-            : <ChevronDown className="size-3.5 text-[var(--color-surface-3)] shrink-0" />
+            ? <ChevronUp className="size-3.5 text-op-gray shrink-0" />
+            : <ChevronDown className="size-3.5 text-op-gray shrink-0" />
           }
         </button>
 
         {/* ── Card expandido — inline, empurra conteúdo abaixo ── */}
         {expanded && (
           <div
-            className={`mt-1 rounded-lg bg-[var(--color-surface-1)] border-l-4 ${borderLeft(health.color)} px-4 py-3 space-y-2`}
+            className={`mt-1 rounded-lg bg-op-navy border-l-4 ${borderLeft(health.color)} px-4 py-3 space-y-2`}
           >
             {/* Cabeçalho com headline e botão de ajuda */}
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 space-y-0.5">
-                <p className="text-body font-bold text-[var(--color-text-primary)]">
+                <p className="text-body font-bold text-op-white">
                   {health.headline}
                 </p>
-                <p className="text-body text-[var(--color-surface-3)] leading-snug">
+                <p className="text-body text-op-gray leading-snug">
                   {health.detail}
                 </p>
               </div>
@@ -154,7 +154,7 @@ export function ProjectHealthBadge({ projectId, authState }: ProjectHealthBadgeP
             </div>
 
             {/* Separador */}
-            <div className="border-b border-[var(--color-surface-2)]" />
+            <div className="border-b border-op-gray/20" />
 
             {/* Lista de critérios */}
             <ul className="space-y-1.5">
@@ -162,10 +162,10 @@ export function ProjectHealthBadge({ projectId, authState }: ProjectHealthBadgeP
                 <li key={i} className="flex items-start gap-2">
                   <CriterionIcon status={c.status} />
                   <div className="flex-1 min-w-0">
-                    <span className="text-small font-semibold text-[var(--color-text-primary)]">
+                    <span className="text-small font-semibold text-op-white">
                       {c.label}
                     </span>
-                    <span className="text-small text-[var(--color-surface-3)] ml-1">
+                    <span className="text-small text-op-gray ml-1">
                       — {c.detail}
                     </span>
                   </div>
