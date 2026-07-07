@@ -85,7 +85,8 @@ export async function getProjectHealth(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
   const lastEntry = sorted[0] ?? null;
-  const daysSinceLast = lastEntry ? daysSince(lastEntry.created_at) : Infinity;
+  const hasAnyEntry = lastEntry !== null;
+  const daysSinceLast = lastEntry ? daysSince(lastEntry.created_at) : 0;
 
   // Ciclos abertos via detectOpenCycles (PRD-ITEM-01)
   const openCycles = detectOpenCycles(entries).filter(
@@ -103,22 +104,23 @@ export async function getProjectHealth(
   // ── Avaliar critérios na ordem de prioridade ──────────────────────────────
 
   const criteria: HealthCriterion[] = [
-    // Critério 1 — Inatividade crítica (>21 dias)
+    // Critério 1 — Inatividade (só avaliada quando há ao menos 1 entry)
     {
       label: 'Atividade recente',
-      status: daysSinceLast > 21
-        ? 'critical'
-        : daysSinceLast > 8
-          ? 'warn'
-          : 'ok',
-      detail:
-        daysSinceLast === Infinity
-          ? 'Nenhum registro encontrado neste projeto.'
-          : daysSinceLast > 21
-            ? `Último registro há ${daysSinceLast} dias. Projetos sem atividade perdem contexto operacional.`
-            : daysSinceLast > 8
-              ? `Sem registro nos últimos ${daysSinceLast} dias. Um pulso rápido mantém o contexto vivo.`
-              : `Último registro há ${daysSinceLast} ${daysSinceLast === 1 ? 'dia' : 'dias'}. Atividade em dia.`,
+      status: !hasAnyEntry
+        ? 'ok'
+        : daysSinceLast > 21
+          ? 'critical'
+          : daysSinceLast > 8
+            ? 'warn'
+            : 'ok',
+      detail: !hasAnyEntry
+        ? 'Nenhum registro ainda. Faça o primeiro registro para iniciar o acompanhamento.'
+        : daysSinceLast > 21
+          ? `Último registro há ${daysSinceLast} dias. Projetos sem atividade perdem contexto operacional.`
+          : daysSinceLast > 8
+            ? `Sem registro nos últimos ${daysSinceLast} dias. Um pulso rápido mantém o contexto vivo.`
+            : `Último registro há ${daysSinceLast} ${daysSinceLast === 1 ? 'dia' : 'dias'}. Atividade em dia.`,
     },
     // Critério 2 — Ciclo aberto (antigo > 14 dias / recente > 0)
     {
@@ -151,11 +153,11 @@ export async function getProjectHealth(
   let detail =
     'Entradas recentes, ciclos fechados e IMV dentro do prazo. Continue operando no mesmo ritmo.';
 
-  // Vermelho — inatividade crítica
-  if (daysSinceLast > 21) {
+  // Vermelho — inatividade crítica (só quando há entries mas estão velhas)
+  if (hasAnyEntry && daysSinceLast > 21) {
     color = 'red';
     headline = `Parado há mais de 21 dias.`;
-    detail = `Último registro há ${daysSinceLast === Infinity ? 'muito tempo' : `${daysSinceLast} dias`}. Projetos sem atividade tendem a perder contexto e clareza operacional.`;
+    detail = `Último registro há ${daysSinceLast} dias. Projetos sem atividade tendem a perder contexto e clareza operacional.`;
   }
   // Vermelho — ciclo aberto antigo
   else if (worstCycle && worstCycle.daysOpen > 14) {
@@ -164,8 +166,8 @@ export async function getProjectHealth(
     detail =
       'Existe uma IMV não analisada há mais de 14 dias. Isso compromete o aprendizado e o execution_score.';
   }
-  // Amarelo — inatividade moderada
-  else if (daysSinceLast > 8) {
+  // Amarelo — inatividade moderada (só quando há entries mas estão antigas)
+  else if (hasAnyEntry && daysSinceLast > 8) {
     color = 'yellow';
     headline = `Sem registro nos últimos ${daysSinceLast} dias.`;
     detail =
