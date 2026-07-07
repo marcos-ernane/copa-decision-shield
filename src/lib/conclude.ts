@@ -5,6 +5,7 @@
 import { GuestStorage, guestId } from './guestStorage';
 import { supabase } from './supabase';
 import { updateProject } from './projects';
+import { markAllPhasesComplete } from './pact';
 import type {
   Project,
   Entry,
@@ -226,6 +227,9 @@ export async function concludeProject(
     state: 'concluded',
     concluded_at: now,
   });
+
+  // Marca todas as fases do pacto como completas ao concluir o projeto (silencioso).
+  void markAllPhasesComplete(project.id).catch(() => {});
 
   // Stats para celebração
   let allProjects: Project[] = [];

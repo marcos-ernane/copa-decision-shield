@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { CircleHelp, X } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import { getProject } from '@/lib/projects';
@@ -33,6 +34,7 @@ export function PactSetupScreen({ projectId }: Props) {
   const [project, setProject] = useState<Project | null>(null);
   const [cycle, setCycle] = useState<WeeklyCycle | null>(null);
   const [saving, setSaving] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -86,9 +88,19 @@ export function PactSetupScreen({ projectId }: Props) {
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-24 space-y-6">
         <section className="space-y-3">
-          <p className="text-body text-foreground font-medium">
-            O app vai te lembrar nos dias configurados.
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-body text-foreground font-medium">
+              O app vai te lembrar nos dias configurados.
+            </p>
+            <button
+              type="button"
+              onClick={() => setHelpOpen(true)}
+              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors shrink-0 mt-0.5"
+            >
+              <CircleHelp className="size-3.5" />
+              Ajuda
+            </button>
+          </div>
           <p className="text-small text-muted-foreground">
             Você receberá uma notificação por fase, no horário escolhido. Ao abrir, cai direto no projeto.
           </p>
@@ -153,6 +165,45 @@ export function PactSetupScreen({ projectId }: Props) {
           </button>
         )}
       </main>
+
+      {/* Bottom sheet de ajuda */}
+      {helpOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50"
+          onClick={() => setHelpOpen(false)}
+        >
+          <div
+            className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-heading font-semibold text-op-white">
+                Como o Pacto Semanal funciona?
+              </h3>
+              <button
+                type="button"
+                onClick={() => setHelpOpen(false)}
+                className="p-1 rounded-md hover:bg-op-navy-elevated"
+                aria-label="Fechar ajuda"
+              >
+                <X className="size-5 text-op-gray" />
+              </button>
+            </div>
+            <p className="text-body text-op-white leading-relaxed">
+              O Pacto define um dia por fase COPA na semana. Você escolhe o dia e o horário de cada fase — o app envia um lembrete no momento configurado.
+            </p>
+            <p className="text-body text-op-white leading-relaxed">
+              Quando você registra a fase correspondente no dia configurado, o app a marca automaticamente como cumprida na Semana do Operador.
+            </p>
+            <p className="text-body text-op-white leading-relaxed">
+              Se fizer as fases em outros dias, os registros continuam valendo — apenas o marcador automático de "feito no dia certo" não é acionado.
+            </p>
+            <p className="text-body text-op-white leading-relaxed">
+              Desativar o pacto não apaga registros anteriores. Apenas remove os lembretes automáticos. Você pode reativar a qualquer momento.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
