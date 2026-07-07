@@ -126,6 +126,17 @@ export const GuestStorage = {
     write(KEYS.entries, all);
   },
 
+  // ---------- Pact helpers (PRD-ITEM-03) ----------
+  hasGuestEntryToday(projectId?: string, copaPhase?: string): boolean {
+    const todayPrefix = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    return GuestStorage.getEntries().some((e) => {
+      if (!e.created_at.startsWith(todayPrefix)) return false;
+      if (projectId !== undefined && e.project_id !== projectId) return false;
+      if (copaPhase !== undefined && e.copa_phase !== copaPhase) return false;
+      return true;
+    });
+  },
+
   // ---------- Project Health helpers (PRD-ITEM-02) ----------
   getGuestLastEntryDate(projectId: string): string | null {
     const projectEntries = GuestStorage.getEntries().filter(

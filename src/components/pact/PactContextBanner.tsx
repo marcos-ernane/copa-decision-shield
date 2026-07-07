@@ -44,9 +44,12 @@ export function PactContextBanner({ projects, entries }: Props) {
   const today = new Date().getDay();
   const weekStart = currentWeekStartISO();
 
+  const INACTIVE_STATES = new Set(['concluded', 'archived', 'paused']);
+
   const items: PactItem[] = [];
   for (const project of projects) {
     if (!project.pact_enabled) continue;
+    if (INACTIVE_STATES.has(project.state)) continue;
     const cycle = getCycle(project);
     for (const phase of PHASES) {
       if (cycle[phase].day_of_week !== today) continue;
