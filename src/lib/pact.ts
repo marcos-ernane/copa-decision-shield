@@ -64,7 +64,7 @@ function buildDefaultCycle(project: Project): WeeklyCycle {
 }
 
 // Segunda-feira 00:00 local da semana corrente.
-function currentWeekStartISO(): string {
+export function currentWeekStartISO(): string {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   const dow = d.getDay(); // 0=Dom..6=Sáb

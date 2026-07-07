@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { listProjects, listPrinciples, updateProject, listAllEntries } from '@/lib/projects';
 import { sortProjects } from '@/lib/projectState';
 import { ProjectCard } from '@/components/project/ProjectCard';
+import { PactContextBanner } from '@/components/pact/PactContextBanner';
 import { CommunityLink } from '@/components/project/CommunityLink';
 import { BottleneckBankSheet } from '@/components/project/BottleneckBankSheet';
 import { usePendingBottlenecks } from '@/hooks/usePendingBottlenecks';
@@ -213,6 +214,9 @@ function Home() {
             <span className="text-label text-op-cyan shrink-0">Ver →</span>
           </button>
         )}
+
+        {/* Pacto — presença contextual [PRD-ITEM-03 Etapa 4] */}
+        <PactContextBanner projects={projects} entries={entries} />
 
         <p className="text-label text-op-gray uppercase tracking-wide pt-1">
           Projetos ativos
