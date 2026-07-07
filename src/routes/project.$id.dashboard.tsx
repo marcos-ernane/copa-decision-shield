@@ -39,6 +39,8 @@ import { PactWeekView } from '@/components/pact/PactWeekView';
 import { PactReturnSheet } from '@/components/pact/PactReturnSheet';
 import { checkPactReturn, getCycle } from '@/lib/pact';
 import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
+import { ProjectHealthBadge } from '@/components/project/ProjectHealthBadge';
+import { useAuthState } from '@/lib/planLimits';
 import type { Project, Entry, Principle } from '@/types/database';
 import type { ExecutionPlan } from '@/types/app';
 
@@ -247,6 +249,7 @@ const CRITERIA_LABELS: Record<string, string> = {
 function ProjectDashboard() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const { authState } = useAuthState();
   const [project, setProject] = useState<Project | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [principles, setPrinciples] = useState<Principle[]>([]);
@@ -524,6 +527,9 @@ function ProjectDashboard() {
             {project.current_layer && <LayerChip layer={project.current_layer} />}
           </div>
         </section>
+
+        {/* Indicador de Saúde do Projeto — PRD-ITEM-02 */}
+        <ProjectHealthBadge projectId={id} authState={authState} />
 
         {/* Onde estou agora */}
         {(() => {
