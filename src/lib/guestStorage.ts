@@ -126,6 +126,25 @@ export const GuestStorage = {
     write(KEYS.entries, all);
   },
 
+  // ---------- Project Health helpers (PRD-ITEM-02) ----------
+  getGuestLastEntryDate(projectId: string): string | null {
+    const projectEntries = GuestStorage.getEntries().filter(
+      (e) => e.project_id === projectId && e.entry_type !== 'inbox',
+    );
+    if (projectEntries.length === 0) return null;
+    return projectEntries.sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    )[0].created_at;
+  },
+  getGuestEntriesByPhase(
+    projectId: string,
+    phase: 'C' | 'O' | 'P' | 'A',
+  ): Entry[] {
+    return GuestStorage.getEntries().filter(
+      (e) => e.project_id === projectId && e.copa_phase === phase,
+    );
+  },
+
   // ---------- Principles ----------
   getPrinciples(): Principle[] {
     return read<Principle[]>(KEYS.principles, []);
