@@ -1,6 +1,6 @@
 // Formato C — Análise de Situação. 3 quadros em passos sequenciais + step 3: fotos (opcional).
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, X, ChevronDown, CircleHelp, Search, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
@@ -213,6 +213,24 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [inRootCauseFlow, setInRootCauseFlow] = useState(false);
   // PRD-IMG-01: ID da entry recém-salva nesta sessão (sobrepõe initialEntryId no step 3)
   const [savedEntryId, setSavedEntryId] = useState<string | null>(null);
+  // PRD-IMG-01: userId resolvido para o step 3 — começa com o prop (pode ser null) e é atualizado
+  // via prop (quando useAuthState() do pai resolve) ou diretamente via getSession() ao entrar no step 3.
+  const [step3UserId, setStep3UserId] = useState<string | null>(userId ?? null);
+
+  // Mantém step3UserId sincronizado quando o prop userId resolve (useAuthState() no pai)
+  useEffect(() => {
+    if (userId) setStep3UserId(userId);
+  }, [userId]);
+
+  // Quando entra no step 3 e step3UserId ainda não resolveu, consulta a sessão diretamente.
+  // Cobre o caso onde useAuthState() ainda estava carregando no momento do save.
+  useEffect(() => {
+    if (step !== 3 || step3UserId) return;
+    supabase.auth.getSession().then(({ data }) => {
+      const id = data.session?.user.id;
+      if (id) setStep3UserId(id);
+    });
+  }, [step, step3UserId]);
 
   const fact = fromItems(factItems);
   const interp = fromItems(interpItems);
@@ -233,16 +251,8 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
         ...(rootCauseChain && { root_cause_chain: rootCauseChain }),
       }, scenarioType, currentLayer);
       setSavedEntryId(entry.id);
-      // PRD-IMG-01: usuário autenticado → avança para step 3 (fotos, opcional)
-      // Guest → pula direto para onSaved() [REQ-IMG-15]
-      // Fallback direto à sessão para cobrir race condition de useAuthState() (userId prop ainda null)
-      const resolvedUserId =
-        userId ?? (await supabase.auth.getSession()).data.session?.user.id ?? null;
-      if (resolvedUserId) {
-        onNextStep();
-      } else {
-        onSaved();
-      }
+      // PRD-IMG-01: sempre avança para step 3 — a verificação de auth fica no step 3 [REQ-IMG-15]
+      onNextStep();
     } finally {
       setSaving(false);
     }
@@ -337,8 +347,8 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
       {/* PRD-IMG-01 — Step 3: Fotos do cenário (opcional, apenas autenticados) */}
       {step === 3 ? (
         <div className="space-y-4">
-          {activeEntryId && userId ? (
-            <ImageCapture entryId={activeEntryId} userId={userId} />
+          {activeEntryId && step3UserId ? (
+            <ImageCapture entryId={activeEntryId} userId={step3UserId} />
           ) : null}
           <Button className="w-full" onClick={onSaved}>
             Concluir
