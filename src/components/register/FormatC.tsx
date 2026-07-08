@@ -1,4 +1,4 @@
-// Formato C — Análise de Situação. 3 quadros em passos sequenciais.
+// Formato C — Análise de Situação. 3 quadros em passos sequenciais + step 3: fotos (opcional).
 
 import { useState } from 'react';
 import { Plus, X, ChevronDown, CircleHelp, Search, CheckCircle } from 'lucide-react';
@@ -7,6 +7,7 @@ import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredC, type StructuredCContent, type RootCauseChain } from '@/lib/register';
 import { RootCauseFlow } from './RootCauseFlow';
 import { StepDots } from './StepDots';
+import { ImageCapture } from './ImageCapture';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 interface Props {
@@ -18,6 +19,10 @@ interface Props {
   initialData?: StructuredCContent | null;
   step: number;
   isReviewing?: boolean;
+  // PRD-IMG-01: userId presente → step 3 (fotos) habilitado; null/undefined → guest, pula step 3
+  userId?: string | null;
+  // ID da entry structured_C mais recente (para exibir fotos em modo revisão/back-navigation)
+  initialEntryId?: string | null;
 }
 
 const TOTAL_STEPS = 3;
@@ -195,7 +200,7 @@ Separar observação de interpretação.
 
 Essa capacidade é o fundamento de todo o COPA. Se os fatos forem capturados de forma imprecisa, os recursos, ruídos, restrições, hipóteses, IMVs e aferições serão construídos sobre uma percepção distorcida da realidade. Por isso, a qualidade da captura começa pela qualidade dos fatos registrados.`;
 
-export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing }: Props) {
+export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing, userId, initialEntryId }: Props) {
   const [factItems, setFactItems] = useState<string[]>(() => toItems(initialData?.fact_text));
   const [interpItems, setInterpItems] = useState<string[]>(() => toItems(initialData?.interpretation_text));
   const [hypItems, setHypItems] = useState<string[]>(() => toItems(initialData?.hypothesis_text));
@@ -205,6 +210,8 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [showHypsHelp, setShowHypsHelp] = useState(false);
   const [rootCauseChain, setRootCauseChain] = useState<RootCauseChain | undefined>(undefined);
   const [inRootCauseFlow, setInRootCauseFlow] = useState(false);
+  // PRD-IMG-01: ID da entry recém-salva nesta sessão (sobrepõe initialEntryId no step 3)
+  const [savedEntryId, setSavedEntryId] = useState<string | null>(null);
 
   const fact = fromItems(factItems);
   const interp = fromItems(interpItems);
@@ -217,17 +224,30 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
 
   async function save() {
     setSaving(true);
-    await saveStructuredC(projectId, {
-      fact_text: fact,
-      interpretation_text: interp,
-      hypothesis_text: hyp,
-      ...(rootCauseChain && { root_cause_chain: rootCauseChain }),
-    }, scenarioType, currentLayer);
-    setSaving(false);
-    onSaved();
+    try {
+      const entry = await saveStructuredC(projectId, {
+        fact_text: fact,
+        interpretation_text: interp,
+        hypothesis_text: hyp,
+        ...(rootCauseChain && { root_cause_chain: rootCauseChain }),
+      }, scenarioType, currentLayer);
+      setSavedEntryId(entry.id);
+      // PRD-IMG-01: usuário autenticado → avança para step 3 (fotos, opcional)
+      // Guest → pula direto para onSaved() [REQ-IMG-15]
+      if (userId) {
+        onNextStep();
+      } else {
+        onSaved();
+      }
+    } finally {
+      setSaving(false);
+    }
   }
 
   const isLastStep = step === TOTAL_STEPS - 1;
+
+  // ID ativo para o step 3: prioriza o recém-salvo, fallback para o existente (revisão/back-nav)
+  const activeEntryId = savedEntryId ?? initialEntryId ?? null;
 
   return (
     <>
@@ -310,7 +330,17 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
       </div>
     )}
     <div className="space-y-4">
-      {step === 2 && inRootCauseFlow ? (
+      {/* PRD-IMG-01 — Step 3: Fotos do cenário (opcional, apenas autenticados) */}
+      {step === 3 ? (
+        <div className="space-y-4">
+          {activeEntryId && userId ? (
+            <ImageCapture entryId={activeEntryId} userId={userId} />
+          ) : null}
+          <Button className="w-full" onClick={onSaved}>
+            Concluir
+          </Button>
+        </div>
+      ) : step === 2 && inRootCauseFlow ? (
         <RootCauseFlow
           factText={fact}
           onComplete={(chain) => {

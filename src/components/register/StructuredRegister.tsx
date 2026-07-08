@@ -20,6 +20,7 @@ import { FormatA } from './FormatA';
 import { PrincipleHint } from './PrincipleHint';
 import { useProjectPicker } from '@/hooks/useProjectPicker';
 import { getProject, listEntries, listPrinciples, updatePrincipleRecall } from '@/lib/projects';
+import { useAuthState } from '@/lib/planLimits';
 import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
 import type { SuggestionResult } from '@/engines/SuggestionEngine';
 import type { StructuredCContent, StructuredOContent, StructuredPContent, StructuredAContent } from '@/lib/register';
@@ -128,6 +129,12 @@ function fmtDeadline(ymd: string): string {
   return `${d}/${m}/${y}`;
 }
 
+function lastEntryId(entries: Entry[], type: string): string | null {
+  return [...entries]
+    .filter((e) => e.entry_type === type)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]?.id ?? null;
+}
+
 function lastContent<T>(entries: Entry[], type: string): T | null {
   const sorted = [...entries]
     .filter((e) => e.entry_type === type)
@@ -150,6 +157,7 @@ export function StructuredRegister() {
   const navigate = useNavigate();
   const router = useRouter();
   const { projectId, setProjectId, projects } = useProjectPicker();
+  const { userId } = useAuthState();
   const search = useSearch({ strict: false }) as {
     format?: 'C' | 'O' | 'P' | 'A';
     linkedTo?: string;
@@ -431,6 +439,8 @@ export function StructuredRegister() {
             onNextStep={handleNextStep}
             step={currentStep}
             isReviewing={isReviewing}
+            userId={userId}
+            initialEntryId={lastEntryId(entries, 'structured_C')}
             initialData={
               statuses['C'] === 'done'
                 ? lastContent<StructuredCContent>(entries, 'structured_C')
