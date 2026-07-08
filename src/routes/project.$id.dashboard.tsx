@@ -2,7 +2,7 @@
 
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronRight, MoreVertical, Info } from 'lucide-react';
+import { ChevronRight, MoreVertical, Info, Gavel } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
@@ -1039,6 +1039,14 @@ function ProjectDashboard() {
                 Ver todas ({decisionRecords.length}) →
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => void navigate({ to: '/decision/new', search: { projectId: id } as never })}
+              className="flex items-center gap-1.5 text-label text-op-gray hover:text-op-white transition-colors"
+            >
+              <Gavel className="size-3.5" />
+              Nova decisão
+            </button>
           </section>
         )}
 

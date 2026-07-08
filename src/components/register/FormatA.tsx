@@ -3,6 +3,7 @@
 // 5 passos sequenciais.
 
 import { useEffect, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { X, CircleHelp, Plus, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
@@ -153,6 +154,8 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [loadingAiSuggestion, setLoadingAiSuggestion] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nudge, setNudge] = useState(false);
+  const [showDecisionPrompt, setShowDecisionPrompt] = useState(false);
+  const navigate = useNavigate();
   const [showWhatHappenedHelp, setShowWhatHappenedHelp] = useState(false);
   const [showWhyHappenedHelp, setShowWhyHappenedHelp] = useState(false);
   const [showBottleneckHelp, setShowBottleneckHelp] = useState(false);
@@ -203,7 +206,7 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
       setNudge(true);
       return;
     }
-    onSaved();
+    setShowDecisionPrompt(true);
   }
 
   const isLastStep = step === TOTAL_STEPS - 1;
@@ -402,17 +405,45 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
 
       {isLastStep ? (
         <div className="space-y-2">
-          <Button
-            className="w-full"
-            disabled={!fact.trim() || !interp.trim() || !decision.trim() || saving}
-            onClick={save}
-          >
-            {saving ? 'Salvando…' : isReviewing ? 'Salvar nova versão' : 'Salvar APA'}
-          </Button>
-          {isReviewing && (
-            <Button variant="outline" className="w-full" disabled={hasChanges} onClick={onNextStep}>
-              Avançar sem salvar →
-            </Button>
+          {showDecisionPrompt ? (
+            <div className="rounded-md border border-op-gray/20 bg-op-navy p-3 space-y-2">
+              <p className="text-small text-op-gray text-center">
+                Esta análise gerou uma decisão importante?
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-1 text-[color:var(--color-brand-blue)] hover:text-[color:var(--color-brand-blue)] hover:bg-white/5"
+                  onClick={() => void navigate({ to: '/decision/new', search: { projectId } as never })}
+                >
+                  Registrar decisão
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-1 text-op-gray hover:text-op-white hover:bg-white/5"
+                  onClick={onSaved}
+                >
+                  Não
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <Button
+                className="w-full"
+                disabled={!fact.trim() || !interp.trim() || !decision.trim() || saving}
+                onClick={save}
+              >
+                {saving ? 'Salvando…' : isReviewing ? 'Salvar nova versão' : 'Salvar APA'}
+              </Button>
+              {isReviewing && (
+                <Button variant="outline" className="w-full" disabled={hasChanges} onClick={onNextStep}>
+                  Avançar sem salvar →
+                </Button>
+              )}
+            </>
           )}
         </div>
       ) : (
