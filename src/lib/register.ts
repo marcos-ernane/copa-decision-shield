@@ -67,6 +67,16 @@ export interface StructuredOContent {
   bottleneck: string;
 }
 
+export interface ActionPlan {
+  what: string;             // O quê — da action da IMV (primeira linha)
+  why: string;              // Por quê — do project.current_bottleneck
+  how: string;              // Como — da metric
+  when: string;             // Quando — deadline formatado DD/MM/AAAA
+  who_is_affected: string;  // Quem é afetado — do ethical_check (ou 'Não especificado')
+  how_much: string;         // Quanto custa — do cut_rule (ou 'Não especificado')
+  generated_at: string;     // ISO timestamp da geração
+}
+
 export interface StructuredPContent {
   action: string;
   reversible: boolean | null;
@@ -79,6 +89,7 @@ export interface StructuredPContent {
   layer: OperationalLayer | null;
   ethical_check?: string | null;
   execution_plan?: ExecutionPlan;
+  action_plan?: ActionPlan;
 }
 
 export interface StructuredAContent {
