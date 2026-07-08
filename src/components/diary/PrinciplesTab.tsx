@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 import { useSearch } from '@tanstack/react-router';
 import { usePanelData } from '@/hooks/usePanelData';
 import { PrincipleCard } from './PrincipleCard';
@@ -10,7 +10,9 @@ const LAYERS: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia',
 
 export function PrinciplesTab() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const search = useSearch({ strict: false }) as { projectId?: string };
+  const search = useSearch({ strict: false }) as { projectId?: string; principleId?: string };
+  const highlightId = search.principleId ?? null;
+  const highlightRef = useRef<HTMLDivElement>(null);
   const { principles, projects, refresh } = usePanelData();
   const [projectFilter, setProjectFilter] = useState<string | null>(search.projectId ?? null);
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
@@ -36,6 +38,12 @@ export function PrinciplesTab() {
   );
 
   const noActiveFilters = !scenario && !layer && !masterOnly && !projectFilter;
+
+  // [REQ-PM-11] Scroll ao princípio destacado quando principleId está presente
+  useEffect(() => {
+    if (!highlightId || !highlightRef.current) return;
+    highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlightId, principles]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -130,15 +138,23 @@ export function PrinciplesTab() {
 
       <ul className="space-y-2">
         {filtered.length === 0 && <li className="text-small text-muted-foreground">Nenhum princípio.</li>}
-        {filtered.map((p) => (
-          <li key={p.id}>
-            <PrincipleCard
-              principle={p}
-              project={projects.find((pr) => pr.id === p.project_id)}
-              onChange={refresh}
-            />
-          </li>
-        ))}
+        {filtered.map((p) => {
+          const isHighlighted = highlightId === p.id;
+          return (
+            <li key={p.id}>
+              <div
+                ref={isHighlighted ? highlightRef : undefined}
+                className={isHighlighted ? 'rounded-md ring-2 ring-op-cyan ring-offset-1 ring-offset-transparent' : undefined}
+              >
+                <PrincipleCard
+                  principle={p}
+                  project={projects.find((pr) => pr.id === p.project_id)}
+                  onChange={refresh}
+                />
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

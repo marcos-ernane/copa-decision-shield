@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react';
-import { useNavigate, useRouterState, Link } from '@tanstack/react-router';
+import { useNavigate, useRouterState, useSearch, Link } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import { TimelineTab } from './TimelineTab';
@@ -30,6 +30,8 @@ export function DiaryShell({ active: _active, children }: Props) {
   const navigate = useNavigate();
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const search = useSearch({ strict: false }) as { principleId?: string };
 
   const activeFromUrl: DiaryTab =
     pathname.includes('/principles') ? 'principles' :
@@ -37,6 +39,8 @@ export function DiaryShell({ active: _active, children }: Props) {
     pathname.includes('/gargalos') ? 'gargalos' :
     pathname.includes('/weekly') ? 'weekly' :
     pathname.includes('/manual') ? 'manual' :
+    // [REQ-PM-11] Quando principleId está presente, abre direto na aba de princípios
+    search.principleId ? 'principles' :
     'timeline';
 
   const [tab, setTab] = useState<DiaryTab>(activeFromUrl);

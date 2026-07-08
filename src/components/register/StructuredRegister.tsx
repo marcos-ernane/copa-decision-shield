@@ -17,6 +17,7 @@ import { FormatC } from './FormatC';
 import { FormatO } from './FormatO';
 import { FormatP } from './FormatP';
 import { FormatA } from './FormatA';
+import { PrincipleHint } from './PrincipleHint';
 import { useProjectPicker } from '@/hooks/useProjectPicker';
 import { getProject, listEntries, listPrinciples, updatePrincipleRecall } from '@/lib/projects';
 import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
@@ -415,6 +416,9 @@ export function StructuredRegister() {
             <p className="text-small text-op-white">Ciclo COPA completo. Consulte ou atualize qualquer fase.</p>
           </div>
         )}
+
+        {/* [REQ-PM-10] PrincipleHint — antes do switch de format, uma vez por fase */}
+        <PrincipleHint suggestion={suggestedPrinciple} currentPhase={format} />
 
         {/* Formulários — key muda ao trocar fase ou ao ter novo entry salvo */}
         {format === 'C' && (
