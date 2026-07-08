@@ -182,6 +182,12 @@ export const GuestStorage = {
     const all = GuestStorage.getPrinciples();
     write(KEYS.principles, [principle, ...all]);
   },
+  updatePrinciple(id: string, patch: Partial<Principle>): void {
+    const all = GuestStorage.getPrinciples().map((p) =>
+      p.id === id ? { ...p, ...patch } : p,
+    );
+    write(KEYS.principles, all);
+  },
 
   // ---------- Chapters ----------
   getChapters(): Chapter[] {

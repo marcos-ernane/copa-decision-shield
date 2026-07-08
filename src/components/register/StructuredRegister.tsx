@@ -18,9 +18,11 @@ import { FormatO } from './FormatO';
 import { FormatP } from './FormatP';
 import { FormatA } from './FormatA';
 import { useProjectPicker } from '@/hooks/useProjectPicker';
-import { getProject, listEntries } from '@/lib/projects';
+import { getProject, listEntries, listPrinciples, updatePrincipleRecall } from '@/lib/projects';
+import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
+import type { SuggestionResult } from '@/engines/SuggestionEngine';
 import type { StructuredCContent, StructuredOContent, StructuredPContent, StructuredAContent } from '@/lib/register';
-import type { Project, Entry } from '@/types/database';
+import type { Project, Entry, Principle } from '@/types/database';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 type Format = 'C' | 'O' | 'P' | 'A';
@@ -158,15 +160,22 @@ export function StructuredRegister() {
   const [projectData, setProjectData] = useState<Project | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [phaseHelp, setPhaseHelp] = useState<Format | null>(null);
+  const [principles, setPrinciples] = useState<Principle[]>([]);
+  const [suggestedPrinciple, setSuggestedPrinciple] = useState<SuggestionResult | null>(null);
   // Contexto de quick_review pré-existente para pré-preencher FormatA
   const [linkedQuickReviewFact, setLinkedQuickReviewFact] = useState<string | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
     void (async () => {
-      const [p, es] = await Promise.all([getProject(projectId), listEntries(projectId)]);
+      const [p, es, prs] = await Promise.all([
+        getProject(projectId),
+        listEntries(projectId),
+        listPrinciples(projectId),
+      ]);
       setProjectData(p ?? null);
       setEntries(es);
+      setPrinciples(prs);
       // Pré-carrega contexto de quick_review se linkedTo presente e formato='A'
       if (search.linkedTo) {
         const qr = es.find(
@@ -193,6 +202,19 @@ export function StructuredRegister() {
       setCurrentStep(0);
     })();
   }, [projectId, search.format, search.linkedTo]);
+
+  // Recalcula sugestão de princípio ao mudar de fase — fire-and-forget, não bloqueia UI.
+  useEffect(() => {
+    if (!projectData || principles.length === 0) {
+      setSuggestedPrinciple(null);
+      return;
+    }
+    const result = suggestPrincipleForProject(projectData, principles);
+    setSuggestedPrinciple(result);
+    if (result) {
+      updatePrincipleRecall(result.principle.id).catch(console.error);
+    }
+  }, [format, projectData, principles]);
 
   if (!projectId) {
     return <ProjectPicker projects={projects} onPick={setProjectId} />;

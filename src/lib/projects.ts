@@ -69,6 +69,31 @@ export async function listPrinciples(projectId: string): Promise<Principle[]> {
   return (data ?? []) as Principle[];
 }
 
+export async function updatePrincipleRecall(principleId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    const current = GuestStorage.getPrinciples().find((p) => p.id === principleId);
+    if (!current) return;
+    GuestStorage.updatePrinciple(principleId, {
+      recall_count: (current.recall_count ?? 0) + 1,
+      last_recalled_at: new Date().toISOString(),
+    });
+    return;
+  }
+  const { data } = await supabase
+    .from('principles')
+    .select('recall_count')
+    .eq('id', principleId)
+    .maybeSingle();
+  await supabase
+    .from('principles')
+    .update({
+      recall_count: ((data as { recall_count?: number } | null)?.recall_count ?? 0) + 1,
+      last_recalled_at: new Date().toISOString(),
+    })
+    .eq('id', principleId);
+}
+
 export interface NewProjectInput {
   name: string;
   north: string;
