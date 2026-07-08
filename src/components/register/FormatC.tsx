@@ -5,6 +5,7 @@ import { Plus, X, ChevronDown, CircleHelp, Search, CheckCircle } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredC, type StructuredCContent, type RootCauseChain } from '@/lib/register';
+import { supabase } from '@/lib/supabase';
 import { RootCauseFlow } from './RootCauseFlow';
 import { StepDots } from './StepDots';
 import { ImageCapture } from './ImageCapture';
@@ -234,7 +235,10 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
       setSavedEntryId(entry.id);
       // PRD-IMG-01: usuário autenticado → avança para step 3 (fotos, opcional)
       // Guest → pula direto para onSaved() [REQ-IMG-15]
-      if (userId) {
+      // Fallback direto à sessão para cobrir race condition de useAuthState() (userId prop ainda null)
+      const resolvedUserId =
+        userId ?? (await supabase.auth.getSession()).data.session?.user.id ?? null;
+      if (resolvedUserId) {
         onNextStep();
       } else {
         onSaved();
