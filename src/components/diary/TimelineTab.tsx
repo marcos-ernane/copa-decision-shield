@@ -30,6 +30,7 @@ const ENTRY_TYPES = [
   { v: 'structured_A', label: 'APA' },
   { v: 'quick_review', label: 'Revisão' },
   { v: 'corrective', label: 'Corretiva' },
+  { v: 'decision_record', label: 'Decisão' },
 ] as const;
 const PERIODS = [
   { v: 7, label: '7 dias' },
@@ -50,6 +51,10 @@ function entryPreview(e: Entry): string {
 
   if (e.entry_type === 'quick_review') {
     return (c.what_happened as string) || '—';
+  }
+
+  if (e.entry_type === 'decision_record') {
+    return (c.decision as string) || '—';
   }
 
   return (
@@ -78,6 +83,7 @@ const TYPE_ICON: Record<string, string> = {
   pressure_session: '⚡',
   passive: '·',
   quick_review: 'R',
+  decision_record: '◈',
   inbox: '⊡', // rendered via Lucide Inbox component in JSX
 };
 
@@ -95,6 +101,7 @@ const TYPE_LABEL: Record<string, string> = {
   creative_session: 'Criativo',
   simulation_session: 'Simulação',
   quick_review: 'Revisão Rápida',
+  decision_record: 'Decisão',
   inbox: 'Captura Universal',
 };
 
@@ -568,6 +575,40 @@ export function TimelineTab() {
                     >
                       Ver Plano de Ação 5W2H
                     </button>
+                  );
+                })()}
+                {/* Decisão Importante — campos detalhados */}
+                {e.entry_type === 'decision_record' && (() => {
+                  const c = e.content as { decision?: string; context?: string; main_risk?: string; validation_signal?: string; review_date?: string };
+                  return (
+                    <div className="space-y-2">
+                      {c.context && (
+                        <div>
+                          <p className="text-label text-op-gray uppercase">Por que agora</p>
+                          <p className="text-small text-op-white/80 leading-snug">{c.context}</p>
+                        </div>
+                      )}
+                      {c.main_risk && (
+                        <div>
+                          <p className="text-label text-op-gray uppercase">Maior risco</p>
+                          <p className="text-small text-op-white/80 leading-snug">{c.main_risk}</p>
+                        </div>
+                      )}
+                      {c.validation_signal && (
+                        <div>
+                          <p className="text-label text-op-gray uppercase">Como saberá que foi certa</p>
+                          <p className="text-small text-op-white/80 leading-snug">{c.validation_signal}</p>
+                        </div>
+                      )}
+                      {c.review_date && (
+                        <div>
+                          <p className="text-label text-op-gray uppercase">Revisar em</p>
+                          <p className="text-small text-op-white/80">
+                            {new Date(c.review_date).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   );
                 })()}
                 {/* Ações */}

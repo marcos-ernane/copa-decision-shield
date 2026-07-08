@@ -25,6 +25,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { getProject, listEntries, listPrinciples, updateProject } from '@/lib/projects';
+import { listDecisionRecords } from '@/lib/decisionRecord';
+import type { DecisionRecord } from '@/lib/decisionRecord';
 import { updateEntryExecutionPlan } from '@/lib/register';
 import { ActionPlanSheet } from '@/components/project/ActionPlanSheet';
 import type { ActionPlan } from '@/lib/register';
@@ -255,6 +257,7 @@ function ProjectDashboard() {
   const [project, setProject] = useState<Project | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [principles, setPrinciples] = useState<Principle[]>([]);
+  const [decisionRecords, setDecisionRecords] = useState<DecisionRecord[]>([]);
   const [northExpanded, setNorthExpanded] = useState(false);
   const [returnSheet, setReturnSheet] = useState(false);
   const [isPausing, setIsPausing] = useState(false);
@@ -266,10 +269,11 @@ function ProjectDashboard() {
 
   useEffect(() => {
     void (async () => {
-      const [p, e, pr] = await Promise.all([
+      const [p, e, pr, dr] = await Promise.all([
         getProject(id),
         listEntries(id),
         listPrinciples(id),
+        listDecisionRecords(id),
       ]);
       if (!p) {
         navigate({ to: '/' });
@@ -278,6 +282,7 @@ function ProjectDashboard() {
       setProject(p);
       setEntries(e);
       setPrinciples(pr);
+      setDecisionRecords(dr);
       if (checkPactReturn(p)) setReturnSheet(true);
       // Limpa field_reading antigo que continha alertas transientes concatenados.
       const clean = sanitizeFieldReading(p.field_reading);
@@ -341,7 +346,7 @@ function ProjectDashboard() {
 
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
-    structured: entries.filter((e) => e.entry_type !== 'pulse').length,
+    structured: entries.filter((e) => e.entry_type !== 'pulse' && e.entry_type !== 'decision_record').length,
     imvs: entries.filter((e) => e.entry_type === 'structured_P').length,
     apas: entries.filter((e) => e.entry_type === 'structured_A').length,
     principles: principles.length,
@@ -1008,6 +1013,34 @@ function ProjectDashboard() {
             </button>
           </div>
         </section>
+
+        {/* Decisões Registradas */}
+        {decisionRecords.length > 0 && (
+          <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
+            <h2 className="text-label text-op-gray uppercase">Decisões Registradas</h2>
+            <div className="space-y-2">
+              {decisionRecords.slice(0, 3).map((dr) => (
+                <div key={dr.id} className="space-y-0.5">
+                  <p className="text-small text-op-white line-clamp-1">
+                    {dr.content.decision}
+                  </p>
+                  <p className="text-label text-op-gray">
+                    {new Date(dr.created_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              ))}
+            </div>
+            {decisionRecords.length > 3 && (
+              <button
+                type="button"
+                onClick={() => void navigate({ to: '/diary', search: { projectId: id, type: 'decision_record' } as never })}
+                className="text-label text-[color:var(--color-brand-blue)] hover:underline"
+              >
+                Ver todas ({decisionRecords.length}) →
+              </button>
+            )}
+          </section>
+        )}
 
         {/* Capacidade Acumulada */}
         <AccumulatedCapacityCard

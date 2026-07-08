@@ -2,6 +2,7 @@
 // Bottom-sheet de captura bruta. Vincula a projeto (pulso) ou vai ao Inbox.
 
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { Check, ChevronDown, CircleHelp, Inbox, X } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -10,7 +11,8 @@ import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveInboxEntry } from '@/lib/universalCapture';
 import { listProjects } from '@/lib/projects';
 import { savePulse } from '@/lib/register';
-import type { Project, ProjectState } from '@/types/database';
+import type { Project } from '@/types/database';
+import type { ProjectState } from '@/types/app';
 
 const INACTIVE_STATES: ProjectState[] = ['concluded', 'archived', 'paused'];
 
@@ -32,6 +34,7 @@ interface Props {
 }
 
 export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
+  const navigate = useNavigate();
   const [text, setText] = useState('');
   const [saving, setSaving] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -118,6 +121,17 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null;
 
+  function handleGoToDecision() {
+    onOpenChange(false);
+    void navigate({
+      to: '/decision/new',
+      search: {
+        ...(text.trim() ? { prefill: text.trim() } : {}),
+        ...(selectedProjectId ? { projectId: selectedProjectId } : {}),
+      } as never,
+    });
+  }
+
   return (
     <Drawer open={open} onOpenChange={handleOpenChange}>
       <DrawerContent className="max-h-[80vh]">
@@ -168,6 +182,16 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
                 maxSeconds={30}
                 rows={4}
               />
+              <p className="text-label text-op-gray/70 -mt-2">
+                É uma decisão importante?{' '}
+                <button
+                  type="button"
+                  onClick={handleGoToDecision}
+                  className="text-[color:var(--color-brand-blue)] hover:underline"
+                >
+                  Registre aqui →
+                </button>
+              </p>
 
               {projects.length > 0 && (
                 <div className="space-y-1.5">

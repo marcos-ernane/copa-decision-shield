@@ -91,8 +91,10 @@ export function calculateIndex(
   const prev = readSmooth();
   const sameDay = prev?.date === today;
 
-  // Inbox entries são capturas brutas não processadas — nunca afetam scores nem guardas
-  const entries = allEntries.filter((e) => e.entry_type !== 'inbox');
+  // Inbox e decision_record não contribuem para nenhum score — excluídos inclusive do guarda mínimo
+  const entries = allEntries.filter(
+    (e) => e.entry_type !== 'inbox' && e.entry_type !== 'decision_record',
+  );
 
   // Congelamento total: nenhum projeto ativo
   const hasActive = projects.some(

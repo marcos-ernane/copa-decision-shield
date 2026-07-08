@@ -29,9 +29,21 @@ export function usePanelData(): PanelData {
         .map((e) => ({ ...e, project_id: null as unknown as string, classification: null, is_clean_fact: false,
           copa_phase: null, linked_to: null, edit_history: [], scenario_type_at_entry: null,
           layer_at_entry: null, ai_assist_used: false, ai_assist_type: null }));
+      // Decision records do guest aparecem na Timeline com os demais registros
+      const guestDecisions = GuestStorage.getDecisionRecords().map((dr) => ({
+        ...dr,
+        project_id: (dr.project_id ?? null) as unknown as string,
+        classification: null,
+        is_clean_fact: false,
+        copa_phase: null,
+        linked_to: null,
+        edit_history: [],
+        ai_assist_used: false,
+        ai_assist_type: null,
+      }));
       setState({
         projects: GuestStorage.getProjects(),
-        entries: [...GuestStorage.getEntries(), ...processedInbox] as import('@/types/database').Entry[],
+        entries: [...GuestStorage.getEntries(), ...processedInbox, ...guestDecisions] as import('@/types/database').Entry[],
         principles: GuestStorage.getPrinciples(),
         chapters: GuestStorage.getChapters(),
         baselines: [],
