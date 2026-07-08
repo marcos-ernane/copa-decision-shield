@@ -27,6 +27,7 @@ import { Route as SettingsNotificationsRouteImport } from './routes/settings.not
 import { Route as SettingsHelpRouteImport } from './routes/settings.help'
 import { Route as RegisterStructuredRouteImport } from './routes/register.structured'
 import { Route as RegisterPulseRouteImport } from './routes/register.pulse'
+import { Route as DecisionNewRouteImport } from './routes/decision.new'
 import { Route as ProjectNewRouteImport } from './routes/project.new'
 import { Route as ProjectIdRouteImport } from './routes/project.$id'
 import { Route as PressureSplatRouteImport } from './routes/pressure.$'
@@ -142,6 +143,11 @@ const RegisterStructuredRoute = RegisterStructuredRouteImport.update({
 const RegisterPulseRoute = RegisterPulseRouteImport.update({
   id: '/register/pulse',
   path: '/register/pulse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DecisionNewRoute = DecisionNewRouteImport.update({
+  id: '/decision/new',
+  path: '/decision/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectNewRoute = ProjectNewRouteImport.update({
@@ -303,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/panel/transfer': typeof PanelTransferRoute
   '/pressure/$': typeof PressureSplatRoute
   '/project/$id': typeof ProjectIdRouteWithChildren
+  '/decision/new': typeof DecisionNewRoute
   '/project/new': typeof ProjectNewRoute
   '/register/pulse': typeof RegisterPulseRoute
   '/register/structured': typeof RegisterStructuredRoute
@@ -325,6 +332,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
+  '/decision/new': typeof DecisionNewRoute
   '/diary': typeof DiaryRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/pressure': typeof PressureRouteWithChildren
@@ -369,6 +377,7 @@ export interface FileRoutesById {
   '/compass': typeof CompassRouteWithChildren
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
+  '/decision/new': typeof DecisionNewRoute
   '/diary': typeof DiaryRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/panel': typeof PanelRouteWithChildren
@@ -432,6 +441,7 @@ export interface FileRouteTypes {
     | '/compass/sheet'
     | '/compass/sheets'
     | '/compass/simulations'
+    | '/decision/new'
     | '/diary/$'
     | '/panel/baseline'
     | '/panel/rubric'
@@ -460,6 +470,7 @@ export interface FileRouteTypes {
     | '/'
     | '/concluded'
     | '/creative'
+    | '/decision/new'
     | '/diary'
     | '/onboarding'
     | '/pressure'
@@ -503,6 +514,7 @@ export interface FileRouteTypes {
     | '/compass'
     | '/concluded'
     | '/creative'
+    | '/decision/new'
     | '/diary'
     | '/onboarding'
     | '/panel'
@@ -549,6 +561,7 @@ export interface RootRouteChildren {
   CompassRoute: typeof CompassRouteWithChildren
   ConcludedRoute: typeof ConcludedRoute
   CreativeRoute: typeof CreativeRoute
+  DecisionNewRoute: typeof DecisionNewRoute
   DiaryRoute: typeof DiaryRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   PanelRoute: typeof PanelRouteWithChildren
@@ -684,6 +697,13 @@ declare module '@tanstack/react-router' {
       path: '/register/pulse'
       fullPath: '/register/pulse'
       preLoaderRoute: typeof RegisterPulseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/decision/new': {
+      id: '/decision/new'
+      path: '/decision/new'
+      fullPath: '/decision/new'
+      preLoaderRoute: typeof DecisionNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/project/new': {
@@ -983,6 +1003,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompassRoute: CompassRouteWithChildren,
   ConcludedRoute: ConcludedRoute,
   CreativeRoute: CreativeRoute,
+  DecisionNewRoute: DecisionNewRoute,
   DiaryRoute: DiaryRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   PanelRoute: PanelRouteWithChildren,

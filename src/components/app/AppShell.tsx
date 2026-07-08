@@ -18,6 +18,7 @@ const NO_FABS_PREFIXES = [
   '/protocol5',
   '/register/',
   '/baseline/',
+  '/decision/',
   '/project/new',
 ];
 
