@@ -183,7 +183,7 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
                 rows={4}
               />
               <p className="text-label text-op-gray/70 -mt-2">
-                É uma decisão importante?{' '}
+                Precisa tomar uma decisão importante?{' '}
                 <button
                   type="button"
                   onClick={handleGoToDecision}
