@@ -40,11 +40,25 @@ export interface PulseContent {
   has_mixed_interpretation: boolean;
 }
 
+export interface RootCauseStep {
+  question: string;
+  answer: string;
+  step_number: number; // 1 a 5
+}
+
+export interface RootCauseChain {
+  steps: RootCauseStep[];
+  root_cause: string;
+  completed: boolean;
+  steps_taken: number; // 1-5
+}
+
 export interface StructuredCContent {
   fact_text: string;
   interpretation_text: string;
   hypothesis_text: string;
   imv_possible?: string;
+  root_cause_chain?: RootCauseChain;
 }
 
 export interface StructuredOContent {
