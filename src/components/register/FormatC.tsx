@@ -1,6 +1,6 @@
 // Formato C — Análise de Situação. 3 quadros em passos sequenciais + step 3: fotos (opcional).
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, X, ChevronDown, CircleHelp, Search, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
@@ -213,24 +213,43 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [inRootCauseFlow, setInRootCauseFlow] = useState(false);
   // PRD-IMG-01: ID da entry recém-salva nesta sessão (sobrepõe initialEntryId no step 3)
   const [savedEntryId, setSavedEntryId] = useState<string | null>(null);
-  // PRD-IMG-01: userId resolvido para o step 3 — começa com o prop (pode ser null) e é atualizado
-  // via prop (quando useAuthState() do pai resolve) ou diretamente via getSession() ao entrar no step 3.
+  // PRD-IMG-01: userId confirmado para o step 3. Três caminhos de resolução:
+  //   1. Prop userId já disponível no mount (useAuthState() do pai já carregou)
+  //   2. Prop userId resolve depois do mount (useAuthState() ainda carregava)
+  //   3. Fallback: getSession() diretamente quando entra no step 3
   const [step3UserId, setStep3UserId] = useState<string | null>(userId ?? null);
+  // true quando a verificação de auth para o step 3 foi concluída (independente do resultado)
+  const [step3AuthChecked, setStep3AuthChecked] = useState<boolean>(() => !!userId);
+  // ref estável para onSaved — evita stale closure no efeito de auto-skip
+  const onSavedRef = useRef(onSaved);
+  onSavedRef.current = onSaved;
 
-  // Mantém step3UserId sincronizado quando o prop userId resolve (useAuthState() no pai)
+  // Caminho 2: prop userId resolve depois do mount (pai re-renderiza com useAuthState() resolvido)
   useEffect(() => {
-    if (userId) setStep3UserId(userId);
+    if (!userId) return;
+    setStep3UserId(userId);
+    setStep3AuthChecked(true);
   }, [userId]);
 
-  // Quando entra no step 3 e step3UserId ainda não resolveu, consulta a sessão diretamente.
-  // Cobre o caso onde useAuthState() ainda estava carregando no momento do save.
+  // Caminho 3: ao entrar no step 3, faz verificação definitiva se ainda não resolvido
   useEffect(() => {
-    if (step !== 3 || step3UserId) return;
+    if (step !== 3 || step3AuthChecked) return;
+    let active = true;
     supabase.auth.getSession().then(({ data }) => {
-      const id = data.session?.user.id;
-      if (id) setStep3UserId(id);
+      if (!active) return;
+      const id = data.session?.user.id ?? null;
+      setStep3UserId(id);
+      setStep3AuthChecked(true);
     });
-  }, [step, step3UserId]);
+    return () => { active = false; };
+  }, [step, step3AuthChecked]);
+
+  // Auto-skip: guest confirmado → pula step 3 automaticamente [REQ-IMG-15]
+  useEffect(() => {
+    if (step === 3 && step3AuthChecked && !step3UserId) {
+      onSavedRef.current();
+    }
+  }, [step, step3AuthChecked, step3UserId]);
 
   const fact = fromItems(factItems);
   const interp = fromItems(interpItems);
