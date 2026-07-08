@@ -4,6 +4,7 @@ import { Link, useSearch } from '@tanstack/react-router';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
 import type { ScenarioType, OperationalLayer, ExecutionPlan } from '@/types/app';
+import type { RootCauseChain } from '@/lib/register';
 import { getPhaseTimeState } from '@/lib/executionPlan';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
@@ -117,6 +118,7 @@ export function TimelineTab() {
   const [imvSub, setImvSub] = useState<'vencidas' | 'a_vencer' | 'encerradas' | null>(null);
   const [period, setPeriod] = useState<number>(0);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [expandedChain, setExpandedChain] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -476,6 +478,21 @@ export function TimelineTab() {
                 )}
                 {e.scenario_type_at_entry && <ScenarioTypeChip type={e.scenario_type_at_entry} />}
                 {e.layer_at_entry && <LayerChip layer={e.layer_at_entry} />}
+                {e.entry_type === 'structured_C' && (() => {
+                  const chain = (e.content as { root_cause_chain?: RootCauseChain }).root_cause_chain;
+                  return chain?.completed ? (
+                    <span
+                      className="inline-flex items-center rounded-full text-label px-2 py-0.5"
+                      style={{
+                        backgroundColor: 'rgba(37,99,235,0.10)',
+                        color: 'var(--color-brand-blue)',
+                        border: '1px solid rgba(37,99,235,0.30)',
+                      }}
+                    >
+                      Causa raiz investigada
+                    </span>
+                  ) : null;
+                })()}
               </div>
               {/* Fases do plano de execução inline (REQ-PLANEXEC-20) */}
               {e.entry_type === 'structured_P' && (() => {
@@ -504,33 +521,67 @@ export function TimelineTab() {
               })()}
             </div>
             {expanded === e.id && (
-              <div className="mt-3 pt-3 border-t border-border flex gap-3">
-                {e.entry_type !== 'corrective' && (
-                  <Link
-                    to="/register/corrective/$entryId"
-                    params={{ entryId: e.id }}
-                    className="text-label text-[color:var(--color-brand-blue)] hover:underline"
-                  >
-                    Criar registro corretivo
-                  </Link>
-                )}
-                <EditZoneGuard
-                  zone="red"
-                  title="Arquivar registro?"
-                  description="Este registro ficará oculto no Timeline. Use o Registro Corretivo para corrigir o conteúdo."
-                  confirmLabel="Arquivar"
-                  onConfirm={async () => { await archiveEntry(e.id); void refresh(); }}
-                >
-                  {(open) => (
-                    <button
-                      type="button"
-                      onClick={open}
-                      className="text-label text-muted-foreground hover:text-destructive"
+              <div className="mt-3 pt-3 border-t border-border space-y-3">
+                {/* Cadeia de causa raiz — accordion (REQ-RC-18) */}
+                {e.entry_type === 'structured_C' && (() => {
+                  const chain = (e.content as { root_cause_chain?: RootCauseChain }).root_cause_chain;
+                  if (!chain?.completed) return null;
+                  const open = expandedChain === e.id;
+                  return (
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedChain(open ? null : e.id)}
+                        className="flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
+                      >
+                        {open ? '▾' : '▸'} Ver cadeia de causa raiz
+                      </button>
+                      {open && (
+                        <div className="space-y-1.5 pl-3 border-l-2 border-op-gray/20">
+                          {chain.steps.map((s) => (
+                            <p key={s.step_number} className="text-small leading-snug">
+                              <span className="text-op-white/60">{s.question}</span>
+                              {' → '}
+                              <span className="text-op-white/80">{s.answer}</span>
+                            </p>
+                          ))}
+                          <p className="text-small font-medium text-op-white/90 pt-1">
+                            Causa raiz: {chain.root_cause}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+                {/* Ações */}
+                <div className="flex gap-3">
+                  {e.entry_type !== 'corrective' && (
+                    <Link
+                      to="/register/corrective/$entryId"
+                      params={{ entryId: e.id }}
+                      className="text-label text-[color:var(--color-brand-blue)] hover:underline"
                     >
-                      Arquivar
-                    </button>
+                      Criar registro corretivo
+                    </Link>
                   )}
-                </EditZoneGuard>
+                  <EditZoneGuard
+                    zone="red"
+                    title="Arquivar registro?"
+                    description="Este registro ficará oculto no Timeline. Use o Registro Corretivo para corrigir o conteúdo."
+                    confirmLabel="Arquivar"
+                    onConfirm={async () => { await archiveEntry(e.id); void refresh(); }}
+                  >
+                    {(open) => (
+                      <button
+                        type="button"
+                        onClick={open}
+                        className="text-label text-muted-foreground hover:text-destructive"
+                      >
+                        Arquivar
+                      </button>
+                    )}
+                  </EditZoneGuard>
+                </div>
               </div>
             )}
           </li>
