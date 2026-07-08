@@ -130,6 +130,21 @@ export async function migrateGuestToCloud(userId: string): Promise<void> {
       });
     }
 
+    emit({ state: 'running', step: 'Sincronizando decisões' });
+    const decisionRecords = GuestStorage.getDecisionRecords();
+    for (const dr of decisionRecords) {
+      const newProjectId = dr.project_id ? (projectIdMap.get(dr.project_id) ?? null) : null;
+      await supabase.from('entries').insert({
+        user_id: userId,
+        project_id: newProjectId,
+        entry_type: 'decision_record',
+        content: dr.content,
+        scenario_type_at_entry: dr.scenario_type_at_entry ?? null,
+        layer_at_entry: dr.layer_at_entry ?? null,
+        is_clean_fact: false,
+      });
+    }
+
     GuestStorage.clearAll();
     emit({
       state: 'done',

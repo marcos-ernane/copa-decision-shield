@@ -15,6 +15,7 @@ const KEYS = {
   guestStartedAt: 'aop.guest_started_at',
   dismissedBottlenecks: 'aop.dismissed_bottlenecks',
   inboxEntries: 'aop.inbox_entries',
+  decisionRecords: 'aop.decision_records',
 } as const;
 
 const isBrowser = () => typeof window !== 'undefined';
@@ -32,6 +33,23 @@ function read<T>(key: string, fallback: T): T {
 function write<T>(key: string, value: T): void {
   if (!isBrowser()) return;
   window.localStorage.setItem(key, JSON.stringify(value));
+}
+
+export interface GuestDecisionRecord {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  entry_type: 'decision_record';
+  content: {
+    decision: string;
+    context: string;
+    main_risk: string;
+    validation_signal: string;
+    review_date?: string;
+  };
+  scenario_type_at_entry?: string | null;
+  layer_at_entry?: string | null;
+  created_at: string;
 }
 
 export interface GuestInboxEntry {
@@ -209,6 +227,15 @@ export const GuestStorage = {
   discardInboxEntry(id: string): void {
     const all = GuestStorage.getInboxEntries().filter((e) => e.id !== id);
     write(KEYS.inboxEntries, all);
+  },
+
+  // ---------- Decision Records (PRD-ITEM-06) ----------
+  getDecisionRecords(): GuestDecisionRecord[] {
+    return read<GuestDecisionRecord[]>(KEYS.decisionRecords, []);
+  },
+  addDecisionRecord(record: GuestDecisionRecord): void {
+    const all = GuestStorage.getDecisionRecords();
+    write(KEYS.decisionRecords, [record, ...all]);
   },
 
   // ---------- Clear (após migração) ----------
