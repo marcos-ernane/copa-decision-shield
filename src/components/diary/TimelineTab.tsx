@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Inbox as InboxIcon } from 'lucide-react';
+import { Inbox as InboxIcon, Camera, X } from 'lucide-react';
 import { Link, useSearch } from '@tanstack/react-router';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
@@ -12,6 +12,8 @@ import { LayerChip } from '@/components/project/LayerChip';
 import { EditZoneGuard } from '@/components/EditZoneGuard';
 import { supabase } from '@/lib/supabase';
 import { GuestStorage } from '@/lib/guestStorage';
+import { useAuthState } from '@/lib/planLimits';
+import { listEntryImages, getEntryImageCounts, type EntryImage } from '@/lib/entryImages';
 
 const SCENARIOS: ScenarioType[] = ['fluxo', 'processo', 'oferta', 'relacionamento', 'pressao'];
 const SCENARIO_LABELS: Record<ScenarioType, string> = {
@@ -132,6 +134,12 @@ export function TimelineTab() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // PRD-IMG-01 — estado de imagens na Timeline [REQ-PLANEXEC-20]
+  const { userId } = useAuthState();
+  const [imageCounts, setImageCounts] = useState<Record<string, number>>({});
+  const [entryImagesMap, setEntryImagesMap] = useState<Record<string, EntryImage[]>>({});
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -141,6 +149,7 @@ export function TimelineTab() {
     if (dropdownOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdownOpen]);
+
 
   const projectMap = useMemo(
     () => Object.fromEntries(projects.map((p) => [p.id, p])),
@@ -237,6 +246,33 @@ export function TimelineTab() {
   }, [filtered]);
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? '—';
+
+  // PRD-IMG-01: carrega contagem de imagens para entries structured_C visíveis (uma query em lote)
+  useEffect(() => {
+    if (!userId) return;
+    const ids = deduped
+      .filter(({ entry }) => entry.entry_type === 'structured_C')
+      .map(({ entry }) => entry.id);
+    if (ids.length === 0) return;
+    let active = true;
+    getEntryImageCounts(ids)
+      .then((counts) => { if (active) setImageCounts((prev) => ({ ...prev, ...counts })); })
+      .catch(() => { /* falha silenciosa */ });
+    return () => { active = false; };
+  }, [deduped, userId]);
+
+  // PRD-IMG-01: carrega imagens completas (com signed URLs) ao expandir uma entry structured_C
+  useEffect(() => {
+    if (!expanded || !userId) return;
+    const expandedEntry = deduped.find(({ entry: e }) => e.id === expanded)?.entry;
+    if (expandedEntry?.entry_type !== 'structured_C') return;
+    if (entryImagesMap[expanded]) return; // já carregado
+    let active = true;
+    listEntryImages(expanded)
+      .then((imgs) => { if (active) setEntryImagesMap((prev) => ({ ...prev, [expanded]: imgs })); })
+      .catch(() => { /* falha silenciosa */ });
+    return () => { active = false; };
+  }, [expanded, userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-3">
@@ -454,6 +490,13 @@ export function TimelineTab() {
                     ×{count}
                   </span>
                 )}
+                {/* PRD-IMG-01: badge de imagens — exibido apenas para structured_C com fotos [REQ-IMG-13] */}
+                {e.entry_type === 'structured_C' && userId && (imageCounts[e.id] ?? 0) > 0 && (
+                  <span className="ml-auto flex items-center gap-0.5 text-op-gray">
+                    <Camera className="size-3 shrink-0" />
+                    <span style={{ fontSize: 10 }}>{imageCounts[e.id]}</span>
+                  </span>
+                )}
               </div>
               <p className="text-body font-semibold text-op-white mt-0.5 truncate">
                 {projectName(e.project_id)}
@@ -532,6 +575,37 @@ export function TimelineTab() {
             </div>
             {expanded === e.id && (
               <div className="mt-3 pt-3 border-t border-border space-y-3">
+                {/* PRD-IMG-01: thumbnails de fotos do cenário [REQ-IMG-13 / REQ-IMG-20] */}
+                {e.entry_type === 'structured_C' && userId && (() => {
+                  const imgs = entryImagesMap[e.id];
+                  if (!imgs || imgs.length === 0) return null;
+                  return (
+                    <div className="space-y-1.5">
+                      <p className="text-label text-op-gray uppercase tracking-wide">Fotos do cenário</p>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {imgs.map((img) => (
+                          img.signed_url ? (
+                            <button
+                              key={img.id}
+                              type="button"
+                              className="aspect-square rounded-md overflow-hidden"
+                              onClick={() => setViewerUrl(img.signed_url!)}
+                              aria-label="Ver foto em tela cheia"
+                            >
+                              <img
+                                src={img.signed_url}
+                                alt="Foto do cenário"
+                                className="w-full h-full object-cover"
+                              />
+                            </button>
+                          ) : (
+                            <div key={img.id} className="aspect-square rounded-md bg-op-navy-elevated" />
+                          )
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
                 {/* Cadeia de causa raiz — accordion (REQ-RC-18) */}
                 {e.entry_type === 'structured_C' && (() => {
                   const chain = (e.content as { root_cause_chain?: RootCauseChain }).root_cause_chain;
@@ -653,6 +727,32 @@ export function TimelineTab() {
           imvTitle={activeActionPlan.imv}
           onClose={() => setActiveActionPlan(null)}
         />
+      )}
+
+      {/* PRD-IMG-01: visualizador fullscreen de fotos da Timeline [REQ-IMG-20] */}
+      {viewerUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          onClick={() => setViewerUrl(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Visualizador de foto"
+        >
+          <img
+            src={viewerUrl}
+            alt="Foto do cenário em tela cheia"
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            className="absolute top-4 right-4 rounded-full bg-black/60 p-2 hover:bg-black/80 transition-colors"
+            onClick={() => setViewerUrl(null)}
+            aria-label="Fechar visualizador"
+          >
+            <X className="size-5 text-white" />
+          </button>
+        </div>
       )}
     </div>
   );

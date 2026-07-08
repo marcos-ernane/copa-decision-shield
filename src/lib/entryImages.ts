@@ -149,3 +149,29 @@ export async function countEntryImages(entryId: string): Promise<number> {
   if (error) throw error;
   return count ?? 0;
 }
+
+// ---------------------------------------------------------------------------
+// getEntryImageCounts
+// Consulta em lote: retorna { entry_id → count } para múltiplas entries.
+// Usado na Timeline para exibir badge sem N queries individuais.
+// ---------------------------------------------------------------------------
+export async function getEntryImageCounts(
+  entryIds: string[],
+): Promise<Record<string, number>> {
+  if (entryIds.length === 0) return {};
+
+  const { data } = await supabase
+    .from('entry_images')
+    .select('entry_id')
+    .in('entry_id', entryIds);
+
+  if (!data) return {};
+
+  return (data as { entry_id: string }[]).reduce<Record<string, number>>(
+    (acc, row) => {
+      acc[row.entry_id] = (acc[row.entry_id] ?? 0) + 1;
+      return acc;
+    },
+    {},
+  );
+}
