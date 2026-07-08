@@ -4,8 +4,9 @@ import { Link, useSearch } from '@tanstack/react-router';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
 import type { ScenarioType, OperationalLayer, ExecutionPlan } from '@/types/app';
-import type { RootCauseChain } from '@/lib/register';
+import type { RootCauseChain, ActionPlan } from '@/lib/register';
 import { getPhaseTimeState } from '@/lib/executionPlan';
+import { ActionPlanSheet } from '@/components/project/ActionPlanSheet';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import { EditZoneGuard } from '@/components/EditZoneGuard';
@@ -119,6 +120,7 @@ export function TimelineTab() {
   const [period, setPeriod] = useState<number>(0);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [expandedChain, setExpandedChain] = useState<string | null>(null);
+  const [activeActionPlan, setActiveActionPlan] = useState<{ plan: ActionPlan; imv: string } | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -553,6 +555,21 @@ export function TimelineTab() {
                     </div>
                   );
                 })()}
+                {/* Plano de Ação 5W2H */}
+                {e.entry_type === 'structured_P' && (() => {
+                  const ap = (e.content as { action_plan?: ActionPlan }).action_plan;
+                  if (!ap) return null;
+                  const imv = (e.content as { action?: string }).action ?? '';
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => setActiveActionPlan({ plan: ap, imv })}
+                      className="flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
+                    >
+                      Ver Plano de Ação 5W2H
+                    </button>
+                  );
+                })()}
                 {/* Ações */}
                 <div className="flex gap-3">
                   {e.entry_type !== 'corrective' && (
@@ -587,6 +604,14 @@ export function TimelineTab() {
           </li>
         ))}
       </ul>
+
+      {activeActionPlan && (
+        <ActionPlanSheet
+          plan={activeActionPlan.plan}
+          imvTitle={activeActionPlan.imv}
+          onClose={() => setActiveActionPlan(null)}
+        />
+      )}
     </div>
   );
 }

@@ -26,6 +26,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { getProject, listEntries, listPrinciples, updateProject } from '@/lib/projects';
 import { updateEntryExecutionPlan } from '@/lib/register';
+import { ActionPlanSheet } from '@/components/project/ActionPlanSheet';
+import type { ActionPlan } from '@/lib/register';
 import { detectOpenCycles } from '@/lib/openCycle';
 import { OpenCycleCard } from '@/components/project/OpenCycleCard';
 import { computeProjectState, deriveProjectStatus, daysSince } from '@/lib/projectState';
@@ -260,6 +262,7 @@ function ProjectDashboard() {
   const [isArchiving, setIsArchiving] = useState(false);
   const [showVelocitySheet, setShowVelocitySheet] = useState(false);
   const [showIQISheet, setShowIQISheet] = useState(false);
+  const [showActionPlanSheet, setShowActionPlanSheet] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -396,6 +399,18 @@ function ProjectDashboard() {
   const activeEntryImvDeadline = activeEntryWithPlan
     ? (activeEntryWithPlan.content as { deadline?: string | null }).deadline ?? null
     : null;
+
+  // IMV mais recente com action_plan gerado
+  const activeEntryWithActionPlan = [...entries]
+    .filter((e) => e.entry_type === 'structured_P')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .find((e) => (e.content as { action_plan?: unknown }).action_plan);
+  const activeActionPlan = activeEntryWithActionPlan
+    ? (activeEntryWithActionPlan.content as { action_plan: ActionPlan }).action_plan
+    : null;
+  const activeActionPlanImv = activeEntryWithActionPlan
+    ? (activeEntryWithActionPlan.content as { action?: string }).action ?? ''
+    : '';
 
   const motorAlert: { message: string; cta?: { label: string; onClick: () => void } } | null = (() => {
     const isTerminal = currentState === 'paused' || currentState === 'concluded' || currentState === 'archived';
@@ -669,6 +684,28 @@ function ProjectDashboard() {
               }}
             />
           </section>
+        )}
+
+        {/* Plano de Ação 5W2H — IMV ativa */}
+        {activeActionPlan && (
+          <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-2">
+            <h2 className="text-label text-op-gray uppercase">Plano de Ação 5W2H</h2>
+            <p className="text-small text-op-white/70 line-clamp-1">{activeActionPlanImv}</p>
+            <button
+              type="button"
+              onClick={() => setShowActionPlanSheet(true)}
+              className="text-label text-[color:var(--color-brand-blue)] hover:underline"
+            >
+              Ver plano completo →
+            </button>
+          </section>
+        )}
+        {showActionPlanSheet && activeActionPlan && (
+          <ActionPlanSheet
+            plan={activeActionPlan}
+            imvTitle={activeActionPlanImv}
+            onClose={() => setShowActionPlanSheet(false)}
+          />
         )}
 
         {/* Velocidade — Transição entre as fases */}
