@@ -116,12 +116,13 @@ async function archiveEntry(id: string) {
 
 export function TimelineTab() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const search = useSearch({ strict: false }) as { projectId?: string; type?: string };
+  const search = useSearch({ strict: false }) as { projectId?: string; type?: string; scenario_type?: string; layer?: string };
   const { entries, projects, refresh } = usePanelData();
   // 'none' = nenhuma seleção ainda → timeline vazia até o usuário escolher
   const [project, setProject] = useState<string>(search.projectId ?? 'none');
-  const [scenario, setScenario] = useState<ScenarioType | null>(null);
-  const [layer, setLayer] = useState<OperationalLayer | null>(null);
+  // [REQ-BM-06] Inicializa com filtros vindos do Mapa de Gargalos (scenario_type e layer via URL)
+  const [scenario, setScenario] = useState<ScenarioType | null>((search.scenario_type as ScenarioType | undefined) ?? null);
+  const [layer, setLayer] = useState<OperationalLayer | null>((search.layer as OperationalLayer | undefined) ?? null);
   const [etype, setEtype] = useState<string | null>(search.type ?? null);
   const [imvSub, setImvSub] = useState<'vencidas' | 'a_vencer' | 'encerradas' | null>(null);
   const [period, setPeriod] = useState<number>(0);

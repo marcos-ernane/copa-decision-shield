@@ -13,6 +13,8 @@ import { IndexRings } from './IndexRings';
 import { BaselineEvolution } from './BaselineEvolution';
 import { PatternCards } from './PatternCards';
 import { QualitativeEvolution } from './QualitativeEvolution';
+import { BottleneckMapSection } from './BottleneckMapSection';
+import { buildBottleneckMap } from '@/lib/bottleneckMap';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import {
@@ -161,6 +163,7 @@ export function OperatorPanel() {
     () => generatePatterns(entries, principles, projects),
     [entries, principles, projects],
   );
+  const bottleneckMap = useMemo(() => buildBottleneckMap(entries), [entries]);
 
   const scenarioCount = useMemo(() => {
     const m = new Map<ScenarioType, number>();
@@ -1059,6 +1062,9 @@ export function OperatorPanel() {
             </div>
           </section>
         )}
+
+        {/* Seção 3J — Mapa de Gargalos [PRD-ITEM-08] */}
+        <BottleneckMapSection map={bottleneckMap} />
 
         {/* Seção 4 — Banco de Princípios */}
         <section className="space-y-2">
