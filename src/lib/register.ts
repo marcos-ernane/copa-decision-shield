@@ -119,6 +119,14 @@ export interface QuickReviewContent {
   linked_structured_p_id: string;   // UUID do structured_P de origem
 }
 
+export interface DecisionRecordContent {
+  decision: string;           // A decisão em uma frase — obrigatório, máx 200 chars
+  context: string;            // Por que agora — obrigatório, máx 400 chars
+  main_risk: string;          // Maior risco — obrigatório, máx 300 chars
+  validation_signal: string;  // Sinal de que foi certa — obrigatório, máx 300 chars
+  review_date?: string;       // Quando revisar — opcional, ISO date
+}
+
 async function insertEntry(args: {
   projectId: string;
   entry_type: EntryType | 'passive' | 'protocol_5min' | 'creative_session' | 'simulation_session' | 'copa_session' | 'pressure_session';

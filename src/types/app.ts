@@ -40,7 +40,8 @@ export type EntryType =
   | 'corrective'
   | 'passive'
   | 'quick_review'
-  | 'inbox';
+  | 'inbox'
+  | 'decision_record';
 
 export type CopaPhase = 'C' | 'O' | 'P' | 'A';
 
