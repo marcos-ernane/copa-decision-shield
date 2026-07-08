@@ -1,10 +1,11 @@
 // Formato C — Análise de Situação. 3 quadros em passos sequenciais.
 
 import { useState } from 'react';
-import { Plus, X, ChevronDown, CircleHelp } from 'lucide-react';
+import { Plus, X, ChevronDown, CircleHelp, Search, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
-import { saveStructuredC, type StructuredCContent } from '@/lib/register';
+import { saveStructuredC, type StructuredCContent, type RootCauseChain } from '@/lib/register';
+import { RootCauseFlow } from './RootCauseFlow';
 import { StepDots } from './StepDots';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
@@ -202,6 +203,8 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [showFactsHelp, setShowFactsHelp] = useState(false);
   const [showInterpHelp, setShowInterpHelp] = useState(false);
   const [showHypsHelp, setShowHypsHelp] = useState(false);
+  const [rootCauseChain, setRootCauseChain] = useState<RootCauseChain | undefined>(undefined);
+  const [inRootCauseFlow, setInRootCauseFlow] = useState(false);
 
   const fact = fromItems(factItems);
   const interp = fromItems(interpItems);
@@ -218,6 +221,7 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
       fact_text: fact,
       interpretation_text: interp,
       hypothesis_text: hyp,
+      ...(rootCauseChain && { root_cause_chain: rootCauseChain }),
     }, scenarioType, currentLayer);
     setSaving(false);
     onSaved();
@@ -306,93 +310,126 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
       </div>
     )}
     <div className="space-y-4">
-      <StepDots current={step} total={TOTAL_STEPS} />
+      {step === 2 && inRootCauseFlow ? (
+        <RootCauseFlow
+          factText={fact}
+          onComplete={(chain) => {
+            setRootCauseChain(chain);
+            setInRootCauseFlow(false);
+          }}
+          onSkip={() => setInRootCauseFlow(false)}
+        />
+      ) : (
+        <>
+          <StepDots current={step} total={TOTAL_STEPS} />
 
-      {step === 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-small font-semibold text-op-white">Quadro 1 — Fatos observados</p>
-            <button
-              type="button"
-              onClick={() => setShowFactsHelp(true)}
-              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+          {step === 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-small font-semibold text-op-white">Quadro 1 — Fatos observados</p>
+                <button
+                  type="button"
+                  onClick={() => setShowFactsHelp(true)}
+                  className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+                >
+                  <CircleHelp className="size-3.5" />
+                  Ajuda
+                </button>
+              </div>
+              <TopicList
+                items={factItems}
+                onChange={setFactItems}
+                placeholder="O que você somente observou sem opinar ou justificar."
+                addLabel="+ Adicionar Fatos"
+              />
+            </div>
+          )}
+
+          {step === 1 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-small font-semibold text-op-white">Quadro 2 — Interpretações</p>
+                <button
+                  type="button"
+                  onClick={() => setShowInterpHelp(true)}
+                  className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+                >
+                  <CircleHelp className="size-3.5" />
+                  Ajuda
+                </button>
+              </div>
+              <TopicList
+                items={interpItems}
+                onChange={setInterpItems}
+                placeholder="O que você já conclui mesmo sem verificar."
+                addLabel="+ Adicionar Interpretações"
+              />
+            </div>
+          )}
+
+          {step === 2 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-small font-semibold text-op-white">Quadro 3 — Hipóteses testáveis</p>
+                <button
+                  type="button"
+                  onClick={() => setShowHypsHelp(true)}
+                  className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+                >
+                  <CircleHelp className="size-3.5" />
+                  Ajuda
+                </button>
+              </div>
+              <TopicList
+                items={hypItems}
+                onChange={setHypItems}
+                placeholder="O que poderia ser verdade e precisa mexer para o fato mudar."
+                addLabel="+ Adicionar Hipóteses"
+              />
+              {/* Botão de entrada opcional para investigação de causa raiz */}
+              <div className="border-t border-op-gray/20 mt-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setInRootCauseFlow(true)}
+                  className="flex items-center gap-2 text-label text-op-gray hover:text-op-white transition-colors w-full justify-center py-2"
+                >
+                  {rootCauseChain ? (
+                    <>
+                      <CheckCircle className="size-4" style={{ color: 'var(--color-brand-green)' }} />
+                      <span style={{ color: 'var(--color-brand-green)' }}>Causa raiz investigada</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search className="size-4" />
+                      Investigar causa raiz (opcional)
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isLastStep ? (
+            <div className="space-y-2">
+              <Button className="w-full" disabled={!fact.trim() || saving || (isReviewing && !hasChanges)} onClick={save}>
+                {saving ? 'Salvando…' : isReviewing ? 'Salvar nova versão' : 'Salvar'}
+              </Button>
+              {isReviewing && (
+                <Button variant="outline" className="w-full" disabled={hasChanges} onClick={onNextStep}>
+                  Avançar sem salvar →
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Button
+              className="w-full"
+              disabled={step === 0 ? !fact.trim() : false}
+              onClick={onNextStep}
             >
-              <CircleHelp className="size-3.5" />
-              Ajuda
-            </button>
-          </div>
-          <TopicList
-            items={factItems}
-            onChange={setFactItems}
-            placeholder="O que você somente observou sem opinar ou justificar."
-            addLabel="+ Adicionar Fatos"
-          />
-        </div>
-      )}
-
-      {step === 1 && (
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-small font-semibold text-op-white">Quadro 2 — Interpretações</p>
-            <button
-              type="button"
-              onClick={() => setShowInterpHelp(true)}
-              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
-            >
-              <CircleHelp className="size-3.5" />
-              Ajuda
-            </button>
-          </div>
-          <TopicList
-            items={interpItems}
-            onChange={setInterpItems}
-            placeholder="O que você já conclui mesmo sem verificar."
-            addLabel="+ Adicionar Interpretações"
-          />
-        </div>
-      )}
-
-      {step === 2 && (
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-small font-semibold text-op-white">Quadro 3 — Hipóteses testáveis</p>
-            <button
-              type="button"
-              onClick={() => setShowHypsHelp(true)}
-              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
-            >
-              <CircleHelp className="size-3.5" />
-              Ajuda
-            </button>
-          </div>
-          <TopicList
-            items={hypItems}
-            onChange={setHypItems}
-            placeholder="O que poderia ser verdade e precisa mexer para o fato mudar."
-            addLabel="+ Adicionar Hipóteses"
-          />
-        </div>
-      )}
-
-      {isLastStep ? (
-        <div className="space-y-2">
-          <Button className="w-full" disabled={!fact.trim() || saving || (isReviewing && !hasChanges)} onClick={save}>
-            {saving ? 'Salvando…' : isReviewing ? 'Salvar nova versão' : 'Salvar'}
-          </Button>
-          {isReviewing && (
-            <Button variant="outline" className="w-full" disabled={hasChanges} onClick={onNextStep}>
-              Avançar sem salvar →
+              Próximo
             </Button>
           )}
-        </div>
-      ) : (
-        <Button
-          className="w-full"
-          disabled={step === 0 ? !fact.trim() : false}
-          onClick={onNextStep}
-        >
-          Próximo
-        </Button>
+        </>
       )}
     </div>
     </>
