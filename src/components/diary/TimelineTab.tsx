@@ -490,13 +490,6 @@ export function TimelineTab() {
                     ×{count}
                   </span>
                 )}
-                {/* PRD-IMG-01: badge de imagens — exibido apenas para structured_C com fotos [REQ-IMG-13] */}
-                {e.entry_type === 'structured_C' && userId && (imageCounts[e.id] ?? 0) > 0 && (
-                  <span className="ml-auto flex items-center gap-0.5 text-op-gray">
-                    <Camera className="size-3 shrink-0" />
-                    <span style={{ fontSize: 10 }}>{imageCounts[e.id]}</span>
-                  </span>
-                )}
               </div>
               <p className="text-body font-semibold text-op-white mt-0.5 truncate">
                 {projectName(e.project_id)}
@@ -546,6 +539,20 @@ export function TimelineTab() {
                     </span>
                   ) : null;
                 })()}
+                {/* PRD-IMG-01: chip de fotos — visível na linha de tags [REQ-IMG-13] */}
+                {e.entry_type === 'structured_C' && userId && (imageCounts[e.id] ?? 0) > 0 && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full text-label px-2 py-0.5"
+                    style={{
+                      backgroundColor: 'rgba(14,165,233,0.12)',
+                      color: 'var(--color-brand-cyan)',
+                      border: '1px solid rgba(14,165,233,0.35)',
+                    }}
+                  >
+                    <Camera className="size-3 shrink-0" />
+                    {imageCounts[e.id]} foto{imageCounts[e.id] > 1 ? 's' : ''} · toque para ver
+                  </span>
+                )}
               </div>
               {/* Fases do plano de execução inline (REQ-PLANEXEC-20) */}
               {e.entry_type === 'structured_P' && (() => {
