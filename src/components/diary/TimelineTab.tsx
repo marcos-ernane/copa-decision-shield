@@ -52,6 +52,9 @@ const ACTIVE_STATES = new Set(['new', 'capturing', 'organizing', 'proving', 'blo
 const DIARY_VIEW_KEY = 'aop.diary.timeline_view';
 type DiaryView = 'operational' | 'flat';
 
+// Tipos cuja letra (C/O/P/A) já aparece no cabeçalho da PhaseSection — redundante repetir no card
+const PHASE_NATIVE_TYPES = new Set(['structured_C', 'structured_O', 'structured_P', 'structured_A']);
+
 function entryPreview(e: Entry): string {
   const c = e.content as Record<string, unknown>;
 
@@ -298,7 +301,8 @@ export function TimelineTab() {
     localStorage.setItem(DIARY_VIEW_KEY, newView);
   }
 
-  function renderEntryCard(e: Entry, count = 1): React.ReactNode {
+  function renderEntryCard(e: Entry, count = 1, inOperationalView = false): React.ReactNode {
+    const isPhaseNative = inOperationalView && PHASE_NATIVE_TYPES.has(e.entry_type);
     return (
       <div className="rounded-md border border-op-gray/30 bg-op-navy p-3">
         <div
@@ -308,7 +312,7 @@ export function TimelineTab() {
           <div className="flex items-center gap-1.5 text-label text-op-gray">
             {e.entry_type === 'inbox'
               ? <InboxIcon className="size-3 text-op-cyan shrink-0" />
-              : <span className="font-mono">{TYPE_ICON[e.entry_type] ?? '?'}</span>}
+              : !isPhaseNative && <span className="font-mono">{TYPE_ICON[e.entry_type] ?? '?'}</span>}
             {e.entry_type === 'corrective' && <span className="text-[color:var(--color-brand-amber)]">[C]</span>}
             <span>{new Date(e.created_at).toLocaleDateString('pt-BR')}</span>
             {count > 1 && (
@@ -317,14 +321,16 @@ export function TimelineTab() {
               </span>
             )}
           </div>
-          <p className="text-body font-semibold text-op-white mt-0.5 truncate">
-            {projectName(e.project_id)}
-          </p>
+          {!inOperationalView && (
+            <p className="text-body font-semibold text-op-white mt-0.5 truncate">
+              {projectName(e.project_id)}
+            </p>
+          )}
           <p className={`text-small text-op-white/70 mt-0.5 ${expanded === e.id ? '' : 'line-clamp-2'}`}>
             {entryPreview(e)}
           </p>
           <div className="flex gap-1 mt-1 flex-wrap">
-            {TYPE_LABEL[e.entry_type] && (
+            {TYPE_LABEL[e.entry_type] && !isPhaseNative && (
               <span className="inline-flex items-center rounded-full border border-op-gray/30 bg-op-navy text-op-gray text-label px-2 py-0.5">
                 {TYPE_LABEL[e.entry_type]}
               </span>
@@ -792,7 +798,7 @@ export function TimelineTab() {
                 key={group.project.id}
                 group={group}
                 defaultExpanded={i === 0}
-                renderEntry={(entry) => renderEntryCard(entry)}
+                renderEntry={(entry) => renderEntryCard(entry, 1, true)}
               />
             ))}
           </div>
