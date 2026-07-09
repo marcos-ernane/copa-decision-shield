@@ -29,6 +29,8 @@ export async function startCheckout(
         priceId: STRIPE_PRICES[priceKey],
         userId: session.user.id,
         isTrial: options.isTrial ?? false,
+        successUrl: `${window.location.origin}/settings?checkout=success`,
+        cancelUrl: `${window.location.origin}/settings?checkout=cancelled`,
       },
     });
 

@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     );
 
     const body = await req.json().catch(() => null);
-    const { priceId, userId, isTrial } = body ?? {};
+    const { priceId, userId, isTrial, successUrl, cancelUrl } = body ?? {};
     if (!priceId || !userId) {
       return json({ error: 'Parâmetros inválidos. Tente novamente.' }, 400);
     }
@@ -83,8 +83,8 @@ Deno.serve(async (req) => {
       mode: 'subscription',
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${APP_URL}/settings?checkout=success`,
-      cancel_url: `${APP_URL}/settings?checkout=cancelled`,
+      success_url: successUrl ?? `${APP_URL}/settings?checkout=success`,
+      cancel_url: cancelUrl ?? `${APP_URL}/settings?checkout=cancelled`,
       allow_promotion_codes: true,
       metadata: { user_id: userId, price_id: priceId },
     });
