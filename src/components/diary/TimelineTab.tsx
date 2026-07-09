@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Inbox as InboxIcon, Camera, X } from 'lucide-react';
+import { Inbox as InboxIcon, Camera, X, LayoutList, List } from 'lucide-react';
 import { Link, useSearch } from '@tanstack/react-router';
+import { buildOperationalView } from '@/lib/operationalView';
+import { ProjectSection } from './ProjectSection';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
 import type { ScenarioType, OperationalLayer, ExecutionPlan } from '@/types/app';
@@ -41,6 +43,9 @@ const PERIODS = [
 ] as const;
 
 const ACTIVE_STATES = new Set(['new', 'capturing', 'organizing', 'proving', 'blocked']);
+
+const DIARY_VIEW_KEY = 'aop.diary.timeline_view';
+type DiaryView = 'operational' | 'flat';
 
 function entryPreview(e: Entry): string {
   const c = e.content as Record<string, unknown>;
@@ -133,6 +138,10 @@ export function TimelineTab() {
   const [activeActionPlan, setActiveActionPlan] = useState<{ plan: ActionPlan; imv: string } | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState<DiaryView>(() => {
+    const saved = localStorage.getItem(DIARY_VIEW_KEY);
+    return saved === 'operational' || saved === 'flat' ? saved : 'operational';
+  });
 
   // PRD-IMG-01 — estado de imagens na Timeline [REQ-PLANEXEC-20]
   const { userId } = useAuthState();
@@ -245,6 +254,11 @@ export function TimelineTab() {
     return [...seen.values()];
   }, [filtered]);
 
+  const operationalView = useMemo(() => {
+    if (view !== 'operational') return null;
+    return buildOperationalView(filtered, projectMap);
+  }, [view, filtered, projectMap]);
+
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? '—';
 
   // PRD-IMG-01: carrega contagem de imagens para entries structured_C visíveis (uma query em lote)
@@ -273,6 +287,267 @@ export function TimelineTab() {
       .catch(() => { /* falha silenciosa */ });
     return () => { active = false; };
   }, [expanded, userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleViewChange(newView: DiaryView) {
+    setView(newView);
+    localStorage.setItem(DIARY_VIEW_KEY, newView);
+  }
+
+  function renderEntryCard(e: Entry, count = 1): React.ReactNode {
+    return (
+      <div className="rounded-md border border-op-gray/30 bg-op-navy p-3">
+        <div
+          className="cursor-pointer"
+          onClick={() => setExpanded(expanded === e.id ? null : e.id)}
+        >
+          <div className="flex items-center gap-1.5 text-label text-op-gray">
+            {e.entry_type === 'inbox'
+              ? <InboxIcon className="size-3 text-op-cyan shrink-0" />
+              : <span className="font-mono">{TYPE_ICON[e.entry_type] ?? '?'}</span>}
+            {e.entry_type === 'corrective' && <span className="text-[color:var(--color-brand-amber)]">[C]</span>}
+            <span>{new Date(e.created_at).toLocaleDateString('pt-BR')}</span>
+            {count > 1 && (
+              <span className="ml-1 rounded-full bg-op-navy-elevated border border-op-gray/30 text-op-gray px-1.5 py-0.5" style={{ fontSize: 10 }}>
+                ×{count}
+              </span>
+            )}
+          </div>
+          <p className="text-body font-semibold text-op-white mt-0.5 truncate">
+            {projectName(e.project_id)}
+          </p>
+          <p className={`text-small text-op-white/70 mt-0.5 ${expanded === e.id ? '' : 'line-clamp-2'}`}>
+            {entryPreview(e)}
+          </p>
+          <div className="flex gap-1 mt-1 flex-wrap">
+            {TYPE_LABEL[e.entry_type] && (
+              <span className="inline-flex items-center rounded-full border border-op-gray/30 bg-op-navy text-op-gray text-label px-2 py-0.5">
+                {TYPE_LABEL[e.entry_type]}
+              </span>
+            )}
+            {e.entry_type === 'inbox' && (
+              <span className="inline-flex items-center rounded-full border border-op-cyan/40 bg-op-navy text-op-cyan text-label px-2 py-0.5">
+                processado
+              </span>
+            )}
+            {e.entry_type === 'quick_review' && (() => {
+              const met = (e.content as { met_expectation?: string }).met_expectation;
+              const cfg = met ? MET_EXPECTATION_CONFIG[met] : null;
+              return cfg ? (
+                <span className={`inline-flex items-center rounded-full border bg-op-navy text-label px-2 py-0.5 ${cfg.cls}`}>
+                  {cfg.label}
+                </span>
+              ) : null;
+            })()}
+            {e.entry_type === 'quick_review' && e.linked_to && (
+              <span className="inline-flex items-center rounded-full border border-op-gray/20 bg-op-navy text-op-gray/60 text-label px-2 py-0.5">
+                ← IMV
+              </span>
+            )}
+            {e.scenario_type_at_entry && <ScenarioTypeChip type={e.scenario_type_at_entry} />}
+            {e.layer_at_entry && <LayerChip layer={e.layer_at_entry} />}
+            {e.entry_type === 'structured_C' && (() => {
+              const chain = (e.content as { root_cause_chain?: RootCauseChain }).root_cause_chain;
+              return chain?.completed ? (
+                <span
+                  className="inline-flex items-center rounded-full text-label px-2 py-0.5"
+                  style={{
+                    backgroundColor: 'rgba(37,99,235,0.10)',
+                    color: 'var(--color-brand-blue)',
+                    border: '1px solid rgba(37,99,235,0.30)',
+                  }}
+                >
+                  Causa raiz investigada
+                </span>
+              ) : null;
+            })()}
+            {/* PRD-IMG-01: chip de fotos — visível na linha de tags [REQ-IMG-13] */}
+            {e.entry_type === 'structured_C' && userId && (imageCounts[e.id] ?? 0) > 0 && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full text-label px-2 py-0.5"
+                style={{
+                  backgroundColor: 'rgba(14,165,233,0.12)',
+                  color: 'var(--color-brand-cyan)',
+                  border: '1px solid rgba(14,165,233,0.35)',
+                }}
+              >
+                <Camera className="size-3 shrink-0" />
+                {imageCounts[e.id]} foto{imageCounts[e.id] > 1 ? 's' : ''} · toque para ver
+              </span>
+            )}
+          </div>
+          {/* Fases do plano de execução inline (REQ-PLANEXEC-20) */}
+          {e.entry_type === 'structured_P' && (() => {
+            const plan = (e.content as { execution_plan?: ExecutionPlan }).execution_plan;
+            if (!plan?.enabled || plan.phases.length === 0) return null;
+            return (
+              <div className="mt-2 pt-2 border-t border-op-gray/10 space-y-1">
+                {plan.phases.map((phase, i) => {
+                  const ts = getPhaseTimeState(phase);
+                  return (
+                    <div key={phase.id} className="flex items-center gap-2">
+                      <span className={`text-label font-mono shrink-0 ${ts === 'done' ? 'text-op-success' : ts === 'overdue' ? 'text-op-danger' : 'text-op-gray'}`}>
+                        {ts === 'done' ? '✓' : ts === 'overdue' ? '!' : '○'}
+                      </span>
+                      <span className="text-small text-op-white/70 line-clamp-1 flex-1">
+                        {i + 1}. {phase.how}
+                      </span>
+                      <span className="text-label text-op-gray shrink-0">
+                        {new Date(phase.deadline).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+        {expanded === e.id && (
+          <div className="mt-3 pt-3 border-t border-border space-y-3">
+            {/* Ações — sempre no topo para fácil acesso */}
+            <div className="flex gap-3">
+              {e.entry_type !== 'corrective' && (
+                <Link
+                  to="/register/corrective/$entryId"
+                  params={{ entryId: e.id }}
+                  className="text-label text-[color:var(--color-brand-blue)] hover:underline"
+                >
+                  Criar registro corretivo
+                </Link>
+              )}
+              <EditZoneGuard
+                zone="red"
+                title="Arquivar registro?"
+                description="Este registro ficará oculto no Timeline. Use o Registro Corretivo para corrigir o conteúdo."
+                confirmLabel="Arquivar"
+                onConfirm={async () => { await archiveEntry(e.id); void refresh(); }}
+              >
+                {(open) => (
+                  <button
+                    type="button"
+                    onClick={open}
+                    className="text-label text-muted-foreground hover:text-destructive"
+                  >
+                    Arquivar
+                  </button>
+                )}
+              </EditZoneGuard>
+            </div>
+            {/* PRD-IMG-01: thumbnails de fotos do cenário [REQ-IMG-13 / REQ-IMG-20] */}
+            {e.entry_type === 'structured_C' && userId && (() => {
+              const imgs = entryImagesMap[e.id];
+              if (!imgs || imgs.length === 0) return null;
+              return (
+                <div className="space-y-1.5">
+                  <p className="text-label text-op-gray uppercase tracking-wide">Fotos do cenário</p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {imgs.map((img) => (
+                      img.signed_url ? (
+                        <button
+                          key={img.id}
+                          type="button"
+                          className="aspect-square rounded-md overflow-hidden"
+                          onClick={() => setViewerUrl(img.signed_url!)}
+                          aria-label="Ver foto em tela cheia"
+                        >
+                          <img
+                            src={img.signed_url}
+                            alt="Foto do cenário"
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ) : (
+                        <div key={img.id} className="aspect-square rounded-md bg-op-navy-elevated" />
+                      )
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+            {/* Cadeia de causa raiz — accordion (REQ-RC-18) */}
+            {e.entry_type === 'structured_C' && (() => {
+              const chain = (e.content as { root_cause_chain?: RootCauseChain }).root_cause_chain;
+              if (!chain?.completed) return null;
+              const open = expandedChain === e.id;
+              return (
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedChain(open ? null : e.id)}
+                    className="flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
+                  >
+                    {open ? '▾' : '▸'} Ver cadeia de causa raiz
+                  </button>
+                  {open && (
+                    <div className="space-y-1.5 pl-3 border-l-2 border-op-gray/20">
+                      {chain.steps.map((s) => (
+                        <p key={s.step_number} className="text-small leading-snug">
+                          <span className="text-op-white/60">{s.question}</span>
+                          {' → '}
+                          <span className="text-op-white/80">{s.answer}</span>
+                        </p>
+                      ))}
+                      <p className="text-small font-medium text-op-white/90 pt-1">
+                        Causa raiz: {chain.root_cause}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+            {/* Plano de Ação 5W2H */}
+            {e.entry_type === 'structured_P' && (() => {
+              const ap = (e.content as { action_plan?: ActionPlan }).action_plan;
+              if (!ap) return null;
+              const imv = (e.content as { action?: string }).action ?? '';
+              return (
+                <button
+                  type="button"
+                  onClick={() => setActiveActionPlan({ plan: ap, imv })}
+                  className="flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
+                >
+                  Ver Plano de Ação 5W2H
+                </button>
+              );
+            })()}
+            {/* Decisão Importante — campos detalhados */}
+            {e.entry_type === 'decision_record' && (() => {
+              const c = e.content as { decision?: string; context?: string; main_risk?: string; validation_signal?: string; review_date?: string };
+              return (
+                <div className="space-y-2">
+                  {c.context && (
+                    <div>
+                      <p className="text-label text-op-gray uppercase">Por que agora</p>
+                      <p className="text-small text-op-white/80 leading-snug">{c.context}</p>
+                    </div>
+                  )}
+                  {c.main_risk && (
+                    <div>
+                      <p className="text-label text-op-gray uppercase">Maior risco</p>
+                      <p className="text-small text-op-white/80 leading-snug">{c.main_risk}</p>
+                    </div>
+                  )}
+                  {c.validation_signal && (
+                    <div>
+                      <p className="text-label text-op-gray uppercase">Como saberá que foi certa</p>
+                      <p className="text-small text-op-white/80 leading-snug">{c.validation_signal}</p>
+                    </div>
+                  )}
+                  {c.review_date && (
+                    <div>
+                      <p className="text-label text-op-gray uppercase">Revisar em</p>
+                      <p className="text-small text-op-white/80">
+                        {new Date(c.review_date).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -337,6 +612,34 @@ export function TimelineTab() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Toggle Visão Operacional / Lista [REQ-VO-16..18] */}
+        <div className="flex rounded-lg overflow-hidden border border-op-gray/30">
+          <button
+            type="button"
+            onClick={() => handleViewChange('operational')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-label transition-colors ${
+              view === 'operational'
+                ? 'bg-[color:var(--color-brand-blue)] text-white font-semibold'
+                : 'bg-transparent text-op-gray hover:text-op-white'
+            }`}
+          >
+            <LayoutList className="size-3.5 shrink-0" />
+            Visão Operacional
+          </button>
+          <button
+            type="button"
+            onClick={() => handleViewChange('flat')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-label transition-colors border-l border-op-gray/30 ${
+              view === 'flat'
+                ? 'bg-[color:var(--color-brand-blue)] text-white font-semibold'
+                : 'bg-transparent text-op-gray hover:text-op-white'
+            }`}
+          >
+            <List className="size-3.5 shrink-0" />
+            Lista
+          </button>
         </div>
 
         <div className="space-y-0.5">
@@ -464,269 +767,45 @@ export function TimelineTab() {
         </div>
       </div>
 
-      <ul className="space-y-2">
-        {deduped.length === 0 && (
-          <li className="text-small text-op-gray text-center py-6">
-            {project === 'none' ? 'Escolha um projeto para ver os registros.' : 'Nenhum registro.'}
-          </li>
-        )}
-        {deduped.map(({ entry: e, count }) => (
-          <li
-            key={e.id}
-            className="rounded-md border border-op-gray/30 bg-op-navy p-3"
-          >
-            <div
-              className="cursor-pointer"
-              onClick={() => setExpanded(expanded === e.id ? null : e.id)}
-            >
-              <div className="flex items-center gap-1.5 text-label text-op-gray">
-                {e.entry_type === 'inbox'
-                  ? <InboxIcon className="size-3 text-op-cyan shrink-0" />
-                  : <span className="font-mono">{TYPE_ICON[e.entry_type] ?? '?'}</span>}
-                {e.entry_type === 'corrective' && <span className="text-[color:var(--color-brand-amber)]">[C]</span>}
-                <span>{new Date(e.created_at).toLocaleDateString('pt-BR')}</span>
-                {count > 1 && (
-                  <span className="ml-1 rounded-full bg-op-navy-elevated border border-op-gray/30 text-op-gray px-1.5 py-0.5" style={{ fontSize: 10 }}>
-                    ×{count}
-                  </span>
-                )}
-              </div>
-              <p className="text-body font-semibold text-op-white mt-0.5 truncate">
-                {projectName(e.project_id)}
-              </p>
-              <p className={`text-small text-op-white/70 mt-0.5 ${expanded === e.id ? '' : 'line-clamp-2'}`}>
-                {entryPreview(e)}
-              </p>
-              <div className="flex gap-1 mt-1 flex-wrap">
-                {TYPE_LABEL[e.entry_type] && (
-                  <span className="inline-flex items-center rounded-full border border-op-gray/30 bg-op-navy text-op-gray text-label px-2 py-0.5">
-                    {TYPE_LABEL[e.entry_type]}
-                  </span>
-                )}
-                {e.entry_type === 'inbox' && (
-                  <span className="inline-flex items-center rounded-full border border-op-cyan/40 bg-op-navy text-op-cyan text-label px-2 py-0.5">
-                    processado
-                  </span>
-                )}
-                {e.entry_type === 'quick_review' && (() => {
-                  const met = (e.content as { met_expectation?: string }).met_expectation;
-                  const cfg = met ? MET_EXPECTATION_CONFIG[met] : null;
-                  return cfg ? (
-                    <span className={`inline-flex items-center rounded-full border bg-op-navy text-label px-2 py-0.5 ${cfg.cls}`}>
-                      {cfg.label}
-                    </span>
-                  ) : null;
-                })()}
-                {e.entry_type === 'quick_review' && e.linked_to && (
-                  <span className="inline-flex items-center rounded-full border border-op-gray/20 bg-op-navy text-op-gray/60 text-label px-2 py-0.5">
-                    ← IMV
-                  </span>
-                )}
-                {e.scenario_type_at_entry && <ScenarioTypeChip type={e.scenario_type_at_entry} />}
-                {e.layer_at_entry && <LayerChip layer={e.layer_at_entry} />}
-                {e.entry_type === 'structured_C' && (() => {
-                  const chain = (e.content as { root_cause_chain?: RootCauseChain }).root_cause_chain;
-                  return chain?.completed ? (
-                    <span
-                      className="inline-flex items-center rounded-full text-label px-2 py-0.5"
-                      style={{
-                        backgroundColor: 'rgba(37,99,235,0.10)',
-                        color: 'var(--color-brand-blue)',
-                        border: '1px solid rgba(37,99,235,0.30)',
-                      }}
-                    >
-                      Causa raiz investigada
-                    </span>
-                  ) : null;
-                })()}
-                {/* PRD-IMG-01: chip de fotos — visível na linha de tags [REQ-IMG-13] */}
-                {e.entry_type === 'structured_C' && userId && (imageCounts[e.id] ?? 0) > 0 && (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full text-label px-2 py-0.5"
-                    style={{
-                      backgroundColor: 'rgba(14,165,233,0.12)',
-                      color: 'var(--color-brand-cyan)',
-                      border: '1px solid rgba(14,165,233,0.35)',
-                    }}
-                  >
-                    <Camera className="size-3 shrink-0" />
-                    {imageCounts[e.id]} foto{imageCounts[e.id] > 1 ? 's' : ''} · toque para ver
-                  </span>
-                )}
-              </div>
-              {/* Fases do plano de execução inline (REQ-PLANEXEC-20) */}
-              {e.entry_type === 'structured_P' && (() => {
-                const plan = (e.content as { execution_plan?: ExecutionPlan }).execution_plan;
-                if (!plan?.enabled || plan.phases.length === 0) return null;
-                return (
-                  <div className="mt-2 pt-2 border-t border-op-gray/10 space-y-1">
-                    {plan.phases.map((phase, i) => {
-                      const ts = getPhaseTimeState(phase);
-                      return (
-                        <div key={phase.id} className="flex items-center gap-2">
-                          <span className={`text-label font-mono shrink-0 ${ts === 'done' ? 'text-op-success' : ts === 'overdue' ? 'text-op-danger' : 'text-op-gray'}`}>
-                            {ts === 'done' ? '✓' : ts === 'overdue' ? '!' : '○'}
-                          </span>
-                          <span className="text-small text-op-white/70 line-clamp-1 flex-1">
-                            {i + 1}. {phase.how}
-                          </span>
-                          <span className="text-label text-op-gray shrink-0">
-                            {new Date(phase.deadline).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-            </div>
-            {expanded === e.id && (
-              <div className="mt-3 pt-3 border-t border-border space-y-3">
-                {/* Ações — sempre no topo para fácil acesso */}
-                <div className="flex gap-3">
-                  {e.entry_type !== 'corrective' && (
-                    <Link
-                      to="/register/corrective/$entryId"
-                      params={{ entryId: e.id }}
-                      className="text-label text-[color:var(--color-brand-blue)] hover:underline"
-                    >
-                      Criar registro corretivo
-                    </Link>
-                  )}
-                  <EditZoneGuard
-                    zone="red"
-                    title="Arquivar registro?"
-                    description="Este registro ficará oculto no Timeline. Use o Registro Corretivo para corrigir o conteúdo."
-                    confirmLabel="Arquivar"
-                    onConfirm={async () => { await archiveEntry(e.id); void refresh(); }}
-                  >
-                    {(open) => (
-                      <button
-                        type="button"
-                        onClick={open}
-                        className="text-label text-muted-foreground hover:text-destructive"
-                      >
-                        Arquivar
-                      </button>
-                    )}
-                  </EditZoneGuard>
-                </div>
-                {/* PRD-IMG-01: thumbnails de fotos do cenário [REQ-IMG-13 / REQ-IMG-20] */}
-                {e.entry_type === 'structured_C' && userId && (() => {
-                  const imgs = entryImagesMap[e.id];
-                  if (!imgs || imgs.length === 0) return null;
-                  return (
-                    <div className="space-y-1.5">
-                      <p className="text-label text-op-gray uppercase tracking-wide">Fotos do cenário</p>
-                      <div className="grid grid-cols-3 gap-1.5">
-                        {imgs.map((img) => (
-                          img.signed_url ? (
-                            <button
-                              key={img.id}
-                              type="button"
-                              className="aspect-square rounded-md overflow-hidden"
-                              onClick={() => setViewerUrl(img.signed_url!)}
-                              aria-label="Ver foto em tela cheia"
-                            >
-                              <img
-                                src={img.signed_url}
-                                alt="Foto do cenário"
-                                className="w-full h-full object-cover"
-                              />
-                            </button>
-                          ) : (
-                            <div key={img.id} className="aspect-square rounded-md bg-op-navy-elevated" />
-                          )
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-                {/* Cadeia de causa raiz — accordion (REQ-RC-18) */}
-                {e.entry_type === 'structured_C' && (() => {
-                  const chain = (e.content as { root_cause_chain?: RootCauseChain }).root_cause_chain;
-                  if (!chain?.completed) return null;
-                  const open = expandedChain === e.id;
-                  return (
-                    <div className="space-y-2">
-                      <button
-                        type="button"
-                        onClick={() => setExpandedChain(open ? null : e.id)}
-                        className="flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
-                      >
-                        {open ? '▾' : '▸'} Ver cadeia de causa raiz
-                      </button>
-                      {open && (
-                        <div className="space-y-1.5 pl-3 border-l-2 border-op-gray/20">
-                          {chain.steps.map((s) => (
-                            <p key={s.step_number} className="text-small leading-snug">
-                              <span className="text-op-white/60">{s.question}</span>
-                              {' → '}
-                              <span className="text-op-white/80">{s.answer}</span>
-                            </p>
-                          ))}
-                          <p className="text-small font-medium text-op-white/90 pt-1">
-                            Causa raiz: {chain.root_cause}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-                {/* Plano de Ação 5W2H */}
-                {e.entry_type === 'structured_P' && (() => {
-                  const ap = (e.content as { action_plan?: ActionPlan }).action_plan;
-                  if (!ap) return null;
-                  const imv = (e.content as { action?: string }).action ?? '';
-                  return (
-                    <button
-                      type="button"
-                      onClick={() => setActiveActionPlan({ plan: ap, imv })}
-                      className="flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
-                    >
-                      Ver Plano de Ação 5W2H
-                    </button>
-                  );
-                })()}
-                {/* Decisão Importante — campos detalhados */}
-                {e.entry_type === 'decision_record' && (() => {
-                  const c = e.content as { decision?: string; context?: string; main_risk?: string; validation_signal?: string; review_date?: string };
-                  return (
-                    <div className="space-y-2">
-                      {c.context && (
-                        <div>
-                          <p className="text-label text-op-gray uppercase">Por que agora</p>
-                          <p className="text-small text-op-white/80 leading-snug">{c.context}</p>
-                        </div>
-                      )}
-                      {c.main_risk && (
-                        <div>
-                          <p className="text-label text-op-gray uppercase">Maior risco</p>
-                          <p className="text-small text-op-white/80 leading-snug">{c.main_risk}</p>
-                        </div>
-                      )}
-                      {c.validation_signal && (
-                        <div>
-                          <p className="text-label text-op-gray uppercase">Como saberá que foi certa</p>
-                          <p className="text-small text-op-white/80 leading-snug">{c.validation_signal}</p>
-                        </div>
-                      )}
-                      {c.review_date && (
-                        <div>
-                          <p className="text-label text-op-gray uppercase">Revisar em</p>
-                          <p className="text-small text-op-white/80">
-                            {new Date(c.review_date).toLocaleDateString('pt-BR')}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+      {/* ── Entry display — Visão Operacional ou Lista Plana [REQ-VO-16..22] ── */}
+      {view === 'operational' && operationalView ? (
+        project === 'none' ? (
+          <p className="text-small text-op-gray text-center py-6">
+            Escolha um projeto para ver os registros.
+          </p>
+        ) : operationalView.groups.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-8">
+            <InboxIcon className="size-8 text-op-gray" />
+            <p className="text-small text-op-gray text-center">
+              Nenhum lançamento encontrado para os filtros selecionados.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {operationalView.groups.map((group, i) => (
+              <ProjectSection
+                key={group.project.id}
+                group={group}
+                defaultExpanded={i === 0}
+                renderEntry={(entry) => renderEntryCard(entry)}
+              />
+            ))}
+          </div>
+        )
+      ) : (
+        <ul className="space-y-2">
+          {deduped.length === 0 && (
+            <li className="text-small text-op-gray text-center py-6">
+              {project === 'none' ? 'Escolha um projeto para ver os registros.' : 'Nenhum registro.'}
+            </li>
+          )}
+          {deduped.map(({ entry: e, count }) => (
+            <li key={e.id}>
+              {renderEntryCard(e, count)}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {activeActionPlan && (
         <ActionPlanSheet
