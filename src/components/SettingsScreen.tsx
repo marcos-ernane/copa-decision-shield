@@ -11,6 +11,7 @@ import { openStripePortal } from '@/lib/stripe';
 import { setReadingMode, emitReadingModeChange } from '@/hooks/useReadingMode';
 import { GuestStorage } from '@/lib/guestStorage';
 import { PlanBadge } from './PlanBadge';
+import { RegistrationNudge } from './RegistrationNudge';
 import { UpgradeSheet } from './UpgradeSheet';
 import { TrialEndingSheet } from './TrialEndingSheet';
 import { enablePactGlobally, disablePactGlobally } from '@/lib/pact';
@@ -36,6 +37,7 @@ export function SettingsScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [upgrade, setUpgrade] = useState(false);
   const [p5Fab, setP5Fab] = useState(false);
+  const [showLoginNudge, setShowLoginNudge] = useState(false);
 
   function handleBack() {
     if (router.history.length > 1) {
@@ -123,7 +125,11 @@ export function SettingsScreen() {
                       ? 'Ver planos'
                       : 'Conhecer Plano Operador'}
               </Button>
-            ) : null}
+            ) : (
+              <Button className="w-full" onClick={() => setShowLoginNudge(true)}>
+                Criar conta / Fazer login
+              </Button>
+            )}
           </div>
         </Section>
 
@@ -222,6 +228,7 @@ export function SettingsScreen() {
       </main>
 
       <UpgradeSheet open={upgrade} onOpenChange={setUpgrade} />
+      <RegistrationNudge open={showLoginNudge} moment={1} onDismiss={() => setShowLoginNudge(false)} />
     </div>
   );
 }
