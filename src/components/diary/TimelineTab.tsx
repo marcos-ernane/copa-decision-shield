@@ -280,12 +280,15 @@ export function TimelineTab() {
       const byLen = [...group].sort(
         (a, b) => entryPreview(a.entry).trim().length - entryPreview(b.entry).trim().length,
       );
-      // Cada entrada deve ser prefixo da próxima com fronteira de palavra
+      // Cada entrada deve ser prefixo da próxima (qualquer espaço em branco como fronteira, NFC)
       let isChain = true;
       for (let i = 0; i < byLen.length - 1; i++) {
-        const s = entryPreview(byLen[i].entry).trim();
-        const l = entryPreview(byLen[i + 1].entry).trim();
-        if (!l.startsWith(s) || l[s.length] !== ' ') { isChain = false; break; }
+        const s = entryPreview(byLen[i].entry).trim().normalize('NFC');
+        const l = entryPreview(byLen[i + 1].entry).trim().normalize('NFC');
+        const after = l[s.length] ?? '';
+        if (s.length < 3 || !l.startsWith(s) || (after !== '' && /\S/.test(after))) {
+          isChain = false; break;
+        }
       }
       if (!isChain) continue;
 
@@ -294,10 +297,10 @@ export function TimelineTab() {
       const segs: string[] = [];
       let prev = '';
       for (const item of byLen) {
-        const seg = entryPreview(item.entry).trim().substring(prev.length).trim();
+        const seg = entryPreview(item.entry).trim().normalize('NFC').substring(prev.length).trim();
         if (seg) segs.push(seg);
         if (item !== longest) removed.add(item.entry.id);
-        prev = entryPreview(item.entry).trim();
+        prev = entryPreview(item.entry).trim().normalize('NFC');
       }
       if (segs.length > 1) segsMap.set(longest.entry.id, segs);
     }
