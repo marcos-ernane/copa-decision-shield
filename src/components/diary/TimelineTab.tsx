@@ -76,6 +76,7 @@ function entryPreview(e: Entry): string {
     (c.text as string) ||
     (c.fact_text as string) ||
     (c.action as string) ||
+    (c.main_bottleneck as string) ||  // structured_O
     (c.principle_text as string) ||
     (c.correct_version as string) ||
     '—'
