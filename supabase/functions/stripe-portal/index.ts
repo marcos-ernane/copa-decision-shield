@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    const { userId } = await req.json();
+    const { userId, returnUrl } = await req.json();
     if (!userId) return json({ error: 'Missing userId' }, 400);
 
     const { data: subRow } = await supabase
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${APP_URL}/settings`,
+      return_url: returnUrl ?? `${APP_URL}/settings`,
     });
 
     return json({ url: session.url });
