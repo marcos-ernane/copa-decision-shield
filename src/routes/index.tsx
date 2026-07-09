@@ -11,6 +11,7 @@ import { sortProjects } from '@/lib/projectState';
 import { ProjectCard } from '@/components/project/ProjectCard';
 import { PactContextBanner } from '@/components/pact/PactContextBanner';
 import { CommunityLink } from '@/components/project/CommunityLink';
+import { RegistrationNudge } from '@/components/RegistrationNudge';
 import { BottleneckBankSheet } from '@/components/project/BottleneckBankSheet';
 import { usePendingBottlenecks } from '@/hooks/usePendingBottlenecks';
 import {
@@ -40,6 +41,7 @@ function Home() {
   const [inboxCount, setInboxCount] = useState(0);
   const [showConcluded, setShowConcluded] = useState(false);
   const [showBottleneckBank, setShowBottleneckBank] = useState(false);
+  const [showDay7Nudge, setShowDay7Nudge] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [pausingId, setPausingId] = useState<string | null>(null);
   const [pauseReason, setPauseReason] = useState('');
@@ -81,6 +83,14 @@ function Home() {
       }
       setName(profile.display_name);
       setCommunityLink(profile.community_link ?? null);
+      // [REQ-AUTH-03] Momento 3: 7 dias como guest → nudge de cadastro (uma vez por sessão)
+      if (GuestStorage.daysSinceGuestStart() >= 7) {
+        const KEY = 'aop.nudge3_session_shown';
+        if (!sessionStorage.getItem(KEY)) {
+          sessionStorage.setItem(KEY, '1');
+          setShowDay7Nudge(true);
+        }
+      }
       void load();
     })();
   }, [navigate]);
@@ -298,6 +308,8 @@ function Home() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* [REQ-AUTH-03] Momento 3: nudge de cadastro após 7 dias como guest */}
+      <RegistrationNudge open={showDay7Nudge} moment={3} onDismiss={() => setShowDay7Nudge(false)} />
     </div>
   );
 }

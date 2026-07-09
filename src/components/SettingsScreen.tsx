@@ -11,7 +11,7 @@ import { openStripePortal } from '@/lib/stripe';
 import { setReadingMode, emitReadingModeChange } from '@/hooks/useReadingMode';
 import { GuestStorage } from '@/lib/guestStorage';
 import { PlanBadge } from './PlanBadge';
-import { RegistrationNudge } from './RegistrationNudge';
+import { LoginSheet } from './LoginSheet';
 import { UpgradeSheet } from './UpgradeSheet';
 import { TrialEndingSheet } from './TrialEndingSheet';
 import { enablePactGlobally, disablePactGlobally } from '@/lib/pact';
@@ -228,7 +228,7 @@ export function SettingsScreen() {
       </main>
 
       <UpgradeSheet open={upgrade} onOpenChange={setUpgrade} />
-      <RegistrationNudge open={showLoginNudge} moment={1} onDismiss={() => setShowLoginNudge(false)} />
+      <LoginSheet open={showLoginNudge} onDismiss={() => setShowLoginNudge(false)} />
     </div>
   );
 }
