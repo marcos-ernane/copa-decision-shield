@@ -76,7 +76,7 @@ function entryPreview(e: Entry): string {
     (c.text as string) ||
     (c.fact_text as string) ||
     (c.action as string) ||
-    (c.main_bottleneck as string) ||  // structured_O
+    (c.bottleneck as string) ||        // structured_O
     (c.principle_text as string) ||
     (c.correct_version as string) ||
     '—'
@@ -378,6 +378,9 @@ export function TimelineTab() {
           {(() => {
             const segs = segmentsMap.get(e.id);
             const isExp = expanded === e.id;
+            const c = e.content as Record<string, unknown>;
+
+            // Cadeia acumulativa (pass 2 dedup)
             if (segs && segs.length > 1) {
               const visible = isExp ? segs : segs.slice(0, 2);
               const hidden = isExp ? 0 : segs.length - 2;
@@ -395,6 +398,69 @@ export function TimelineTab() {
                 </div>
               );
             }
+
+            // structured_O — exibe R1 Recursos / R2 Ruídos / R3 Restrições
+            if (e.entry_type === 'structured_O') {
+              const rFields = [
+                { label: 'R1 — Recursos',    value: (c.resources as string) || '' },
+                { label: 'R2 — Ruídos',      value: (c.frictions as string) || '' },
+                { label: 'R3 — Restrições',  value: (c.bottleneck as string) || '' },
+              ].filter((f) => f.value.trim());
+              if (rFields.length > 0) {
+                return (
+                  <div className="mt-1 space-y-1.5">
+                    {rFields.map((f, i) => {
+                      const items = f.value.split('\n').filter(Boolean);
+                      const visible = isExp ? items : items.slice(0, 2);
+                      const extra = isExp ? 0 : items.length - 2;
+                      return (
+                        <div key={i} className={i > 0 ? 'pt-1 border-t border-op-gray/10' : ''}>
+                          <p className="text-label text-op-gray mb-0.5">{f.label}</p>
+                          {visible.map((item, j) => (
+                            <p key={j} className="text-small text-op-white/70 leading-snug pl-2">· {item}</p>
+                          ))}
+                          {extra > 0 && (
+                            <p className="text-label text-op-gray pl-2">+{extra} item{extra > 1 ? 'ns' : ''}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+            }
+
+            // structured_C — exibe Quadro 1 Fatos / Quadro 2 Interpretações / Quadro 3 Hipóteses
+            if (e.entry_type === 'structured_C') {
+              const cFields = [
+                { label: 'Fatos',           value: (c.fact_text as string) || '' },
+                { label: 'Interpretações',  value: (c.interpretation_text as string) || '' },
+                { label: 'Hipóteses',       value: (c.hypothesis_text as string) || '' },
+              ].filter((f) => f.value.trim());
+              if (cFields.length > 0) {
+                return (
+                  <div className="mt-1 space-y-1.5">
+                    {cFields.map((f, i) => {
+                      const items = f.value.split('\n').filter(Boolean);
+                      const visible = isExp ? items : items.slice(0, 1);
+                      const extra = isExp ? 0 : items.length - 1;
+                      return (
+                        <div key={i} className={i > 0 ? 'pt-1 border-t border-op-gray/10' : ''}>
+                          <p className="text-label text-op-gray mb-0.5">{f.label}</p>
+                          {visible.map((item, j) => (
+                            <p key={j} className="text-small text-op-white/70 leading-snug pl-2">· {item}</p>
+                          ))}
+                          {extra > 0 && (
+                            <p className="text-label text-op-gray pl-2">+{extra} item{extra > 1 ? 'ns' : ''}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+            }
+
             return (
               <p className={`text-small text-op-white/70 mt-0.5 ${isExp ? '' : 'line-clamp-2'}`}>
                 {entryPreview(e)}
