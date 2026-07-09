@@ -245,21 +245,66 @@ export function TimelineTab() {
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [entries, projects, project, scenario, layer, etype, imvSub, period, projectMap]);
 
-  // Deduplicação por conteúdo: agrupa entradas com mesmo tipo + projeto + texto.
-  // Mantém a mais recente (lista já está ordenada por data desc).
-  // O badge ×N informa quantas foram agrupadas sem apagar o histórico.
-  const deduped = useMemo(() => {
-    const seen = new Map<string, { entry: typeof filtered[0]; count: number }>();
+  // Deduplicação em dois passes:
+  // Passo 1 — exata: mesmo tipo + projeto + texto → mantém o mais recente, badge ×N.
+  // Passo 2 — contenção: quando entradas do mesmo tipo+projeto formam uma cadeia
+  //           cumulativa (cada uma é prefixo da seguinte), mantém só a mais completa
+  //           e expõe os incrementos como `segments` para exibição estruturada.
+  const { deduped, segmentsMap } = useMemo(() => {
+    // Passo 1
+    const seen = new Map<string, { entry: Entry; count: number }>();
     for (const e of filtered) {
       const key = `${e.entry_type}|${e.project_id}|${entryPreview(e).trim()}`;
       const existing = seen.get(key);
-      if (!existing) {
-        seen.set(key, { entry: e, count: 1 });
-      } else {
-        seen.set(key, { entry: existing.entry, count: existing.count + 1 });
-      }
+      if (!existing) seen.set(key, { entry: e, count: 1 });
+      else seen.set(key, { entry: existing.entry, count: existing.count + 1 });
     }
-    return [...seen.values()];
+    const pass1 = [...seen.values()];
+
+    // Passo 2 — agrupar por tipo+projeto e verificar cadeia de prefixos
+    const groups = new Map<string, typeof pass1>();
+    for (const item of pass1) {
+      const gk = `${item.entry.entry_type}|${item.entry.project_id}`;
+      const arr = groups.get(gk) ?? [];
+      arr.push(item);
+      groups.set(gk, arr);
+    }
+
+    const removed = new Set<string>();
+    const segsMap = new Map<string, string[]>();
+
+    for (const group of groups.values()) {
+      if (group.length < 2) continue;
+      // Ordena por comprimento do preview (crescente) para detectar cadeia
+      const byLen = [...group].sort(
+        (a, b) => entryPreview(a.entry).trim().length - entryPreview(b.entry).trim().length,
+      );
+      // Cada entrada deve ser prefixo da próxima com fronteira de palavra
+      let isChain = true;
+      for (let i = 0; i < byLen.length - 1; i++) {
+        const s = entryPreview(byLen[i].entry).trim();
+        const l = entryPreview(byLen[i + 1].entry).trim();
+        if (!l.startsWith(s) || l[s.length] !== ' ') { isChain = false; break; }
+      }
+      if (!isChain) continue;
+
+      // Mantém a mais longa; remove as demais; extrai segmentos incrementais
+      const longest = byLen[byLen.length - 1];
+      const segs: string[] = [];
+      let prev = '';
+      for (const item of byLen) {
+        const seg = entryPreview(item.entry).trim().substring(prev.length).trim();
+        if (seg) segs.push(seg);
+        if (item !== longest) removed.add(item.entry.id);
+        prev = entryPreview(item.entry).trim();
+      }
+      if (segs.length > 1) segsMap.set(longest.entry.id, segs);
+    }
+
+    return {
+      deduped: pass1.filter((item) => !removed.has(item.entry.id)),
+      segmentsMap: segsMap,
+    };
   }, [filtered]);
 
   const operationalView = useMemo(() => {
@@ -326,9 +371,32 @@ export function TimelineTab() {
               {projectName(e.project_id)}
             </p>
           )}
-          <p className={`text-small text-op-white/70 mt-0.5 ${expanded === e.id ? '' : 'line-clamp-2'}`}>
-            {entryPreview(e)}
-          </p>
+          {(() => {
+            const segs = segmentsMap.get(e.id);
+            const isExp = expanded === e.id;
+            if (segs && segs.length > 1) {
+              const visible = isExp ? segs : segs.slice(0, 2);
+              const hidden = isExp ? 0 : segs.length - 2;
+              return (
+                <div className="mt-1 space-y-1">
+                  {visible.map((seg, i) => (
+                    <div key={i} className={`flex items-start gap-1.5 ${i > 0 ? 'pt-1 border-t border-op-gray/10' : ''}`}>
+                      <span className="text-label text-op-gray shrink-0 mt-0.5 font-mono">{i + 1}.</span>
+                      <span className="text-small text-op-white/70">{seg}</span>
+                    </div>
+                  ))}
+                  {hidden > 0 && (
+                    <p className="text-label text-op-gray pl-5">+{hidden} etapa{hidden > 1 ? 's' : ''}</p>
+                  )}
+                </div>
+              );
+            }
+            return (
+              <p className={`text-small text-op-white/70 mt-0.5 ${isExp ? '' : 'line-clamp-2'}`}>
+                {entryPreview(e)}
+              </p>
+            );
+          })()}
           <div className="flex gap-1 mt-1 flex-wrap">
             {TYPE_LABEL[e.entry_type] && !isPhaseNative && (
               <span className="inline-flex items-center rounded-full border border-op-gray/30 bg-op-navy text-op-gray text-label px-2 py-0.5">
