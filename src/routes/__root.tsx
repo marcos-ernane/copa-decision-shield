@@ -215,8 +215,10 @@ function RootComponent() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (event === "SIGNED_IN" && session?.user) {
+        if (session?.user) {
           markWasAuthenticated();
+        }
+        if (event === "SIGNED_IN" && session?.user) {
           void migrateGuestToCloud(session.user.id);
         }
       },
