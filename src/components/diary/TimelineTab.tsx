@@ -582,6 +582,35 @@ export function TimelineTab() {
             </div>
             {expanded === e.id && (
               <div className="mt-3 pt-3 border-t border-border space-y-3">
+                {/* Ações — sempre no topo para fácil acesso */}
+                <div className="flex gap-3">
+                  {e.entry_type !== 'corrective' && (
+                    <Link
+                      to="/register/corrective/$entryId"
+                      params={{ entryId: e.id }}
+                      className="text-label text-[color:var(--color-brand-blue)] hover:underline"
+                    >
+                      Criar registro corretivo
+                    </Link>
+                  )}
+                  <EditZoneGuard
+                    zone="red"
+                    title="Arquivar registro?"
+                    description="Este registro ficará oculto no Timeline. Use o Registro Corretivo para corrigir o conteúdo."
+                    confirmLabel="Arquivar"
+                    onConfirm={async () => { await archiveEntry(e.id); void refresh(); }}
+                  >
+                    {(open) => (
+                      <button
+                        type="button"
+                        onClick={open}
+                        className="text-label text-muted-foreground hover:text-destructive"
+                      >
+                        Arquivar
+                      </button>
+                    )}
+                  </EditZoneGuard>
+                </div>
                 {/* PRD-IMG-01: thumbnails de fotos do cenário [REQ-IMG-13 / REQ-IMG-20] */}
                 {e.entry_type === 'structured_C' && userId && (() => {
                   const imgs = entryImagesMap[e.id];
@@ -693,35 +722,6 @@ export function TimelineTab() {
                     </div>
                   );
                 })()}
-                {/* Ações */}
-                <div className="flex gap-3">
-                  {e.entry_type !== 'corrective' && (
-                    <Link
-                      to="/register/corrective/$entryId"
-                      params={{ entryId: e.id }}
-                      className="text-label text-[color:var(--color-brand-blue)] hover:underline"
-                    >
-                      Criar registro corretivo
-                    </Link>
-                  )}
-                  <EditZoneGuard
-                    zone="red"
-                    title="Arquivar registro?"
-                    description="Este registro ficará oculto no Timeline. Use o Registro Corretivo para corrigir o conteúdo."
-                    confirmLabel="Arquivar"
-                    onConfirm={async () => { await archiveEntry(e.id); void refresh(); }}
-                  >
-                    {(open) => (
-                      <button
-                        type="button"
-                        onClick={open}
-                        className="text-label text-muted-foreground hover:text-destructive"
-                      >
-                        Arquivar
-                      </button>
-                    )}
-                  </EditZoneGuard>
-                </div>
               </div>
             )}
           </li>
