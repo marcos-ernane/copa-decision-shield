@@ -86,7 +86,12 @@ export async function uploadEntryImage(
     throw dbError;
   }
 
-  return data as EntryImage;
+  // Gera signed URL imediatamente para exibição no slot após o upload [REQ-IMG-21]
+  const { data: urlData } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(storagePath, SIGNED_URL_TTL);
+
+  return { ...(data as EntryImage), signed_url: urlData?.signedUrl ?? undefined };
 }
 
 // ---------------------------------------------------------------------------
