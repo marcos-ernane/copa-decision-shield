@@ -63,23 +63,24 @@ export function SettingsScreen() {
   }
 
   async function handleManageSubscription() {
-    const isTrial = authState === 'AUTHENTICATED_TRIAL';
+    const isPaidActive =
+      authState === 'AUTHENTICATED_ANNUAL' || authState === 'AUTHENTICATED_LIFETIME';
 
-    // Usuário em trial ou sem assinatura paga → mostra seletor de planos
-    if (!subscription?.stripe_subscription_id || isTrial) {
-      setUpgrade(true);
+    // Somente assinante anual/vitalício ativo → Stripe portal para gerenciar
+    if (isPaidActive) {
+      const success = await openStripePortal();
+      if (!success) {
+        toast.error('Não foi possível abrir o portal de assinatura.', {
+          description: 'Escolha ou altere seu plano abaixo.',
+          duration: 4000,
+        });
+        setUpgrade(true);
+      }
       return;
     }
 
-    // Usuário com assinatura PAGA ativa → abre portal do Stripe
-    const success = await openStripePortal();
-    if (!success) {
-      toast.error('Não foi possível abrir o portal de assinatura.', {
-        description: 'Escolha ou altere seu plano abaixo.',
-        duration: 4000,
-      });
-      setUpgrade(true);
-    }
+    // Todos os outros (free, trial expirado, trial ativo, guest) → escolher plano
+    setUpgrade(true);
   }
 
   async function togglePref(key: Pref, value: boolean) {
@@ -119,17 +120,15 @@ export function SettingsScreen() {
             {userId ? (
               <>
                 <Button
-                  variant={subscription?.stripe_subscription_id && authState !== 'AUTHENTICATED_TRIAL' ? 'outline' : 'default'}
+                  variant={authState === 'AUTHENTICATED_ANNUAL' || authState === 'AUTHENTICATED_LIFETIME' ? 'outline' : 'default'}
                   className="w-full"
                   onClick={() => void handleManageSubscription()}
                 >
-                  {authState === 'AUTHENTICATED_TRIAL'
-                    ? 'Escolher plano'
-                    : subscription?.stripe_subscription_id
-                      ? 'Gerenciar assinatura'
-                      : isPaid
-                        ? 'Ver planos'
-                        : 'Conhecer Plano Operador'}
+                  {authState === 'AUTHENTICATED_ANNUAL' || authState === 'AUTHENTICATED_LIFETIME'
+                    ? 'Gerenciar assinatura'
+                    : authState === 'AUTHENTICATED_TRIAL'
+                      ? 'Escolher plano'
+                      : 'Conhecer Plano Operador'}
                 </Button>
                 <Button
                   variant="ghost"
