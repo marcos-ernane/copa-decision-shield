@@ -19,6 +19,7 @@ import { Route as DiaryRouteImport } from './routes/diary'
 import { Route as CreativeRouteImport } from './routes/creative'
 import { Route as ConcludedRouteImport } from './routes/concluded'
 import { Route as CompassRouteImport } from './routes/compass'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as PanelIndexRouteImport } from './routes/panel.index'
@@ -103,6 +104,11 @@ const ConcludedRoute = ConcludedRouteImport.update({
 const CompassRoute = CompassRouteImport.update({
   id: '/compass',
   path: '/compass',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -284,6 +290,7 @@ const ProjectIdReviewEntryIdRoute = ProjectIdReviewEntryIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/compass': typeof CompassRouteWithChildren
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
@@ -330,6 +337,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
   '/decision/new': typeof DecisionNewRoute
@@ -374,6 +382,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/compass': typeof CompassRouteWithChildren
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
@@ -422,6 +431,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/compass'
     | '/concluded'
     | '/creative'
@@ -468,6 +478,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
     | '/concluded'
     | '/creative'
     | '/decision/new'
@@ -511,6 +522,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/login'
     | '/compass'
     | '/concluded'
     | '/creative'
@@ -558,6 +570,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
   CompassRoute: typeof CompassRouteWithChildren
   ConcludedRoute: typeof ConcludedRoute
   CreativeRoute: typeof CreativeRoute
@@ -580,6 +593,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -1000,6 +1020,7 @@ const ProjectIdRouteWithChildren = ProjectIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
   CompassRoute: CompassRouteWithChildren,
   ConcludedRoute: ConcludedRoute,
   CreativeRoute: CreativeRoute,

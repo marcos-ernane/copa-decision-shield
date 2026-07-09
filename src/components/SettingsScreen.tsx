@@ -57,6 +57,11 @@ export function SettingsScreen() {
       .then(({ data }) => setProfile((data as Profile | null) ?? null));
   }, [userId]);
 
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  }
+
   async function handleManageSubscription() {
     const isTrial = authState === 'AUTHENTICATED_TRIAL';
 
@@ -112,19 +117,28 @@ export function SettingsScreen() {
               <PlanBadge />
             </div>
             {userId ? (
-              <Button
-                variant={subscription?.stripe_subscription_id && authState !== 'AUTHENTICATED_TRIAL' ? 'outline' : 'default'}
-                className="w-full"
-                onClick={() => void handleManageSubscription()}
-              >
-                {authState === 'AUTHENTICATED_TRIAL'
-                  ? 'Escolher plano'
-                  : subscription?.stripe_subscription_id
-                    ? 'Gerenciar assinatura'
-                    : isPaid
-                      ? 'Ver planos'
-                      : 'Conhecer Plano Operador'}
-              </Button>
+              <>
+                <Button
+                  variant={subscription?.stripe_subscription_id && authState !== 'AUTHENTICATED_TRIAL' ? 'outline' : 'default'}
+                  className="w-full"
+                  onClick={() => void handleManageSubscription()}
+                >
+                  {authState === 'AUTHENTICATED_TRIAL'
+                    ? 'Escolher plano'
+                    : subscription?.stripe_subscription_id
+                      ? 'Gerenciar assinatura'
+                      : isPaid
+                        ? 'Ver planos'
+                        : 'Conhecer Plano Operador'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full text-op-gray hover:text-op-white"
+                  onClick={() => void handleSignOut()}
+                >
+                  Sair da conta
+                </Button>
+              </>
             ) : (
               <Button className="w-full" onClick={() => setShowLoginNudge(true)}>
                 Criar conta / Fazer login

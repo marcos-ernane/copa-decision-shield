@@ -4,6 +4,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { Plus, Settings as SettingsIcon, Inbox } from 'lucide-react';
 import { GuestStorage } from '@/lib/guestStorage';
+import { wasAuthenticated } from '@/lib/authFlags';
 import { getInboxCount } from '@/lib/universalCapture';
 import { supabase } from '@/lib/supabase';
 import { listProjects, listPrinciples, updateProject, listAllEntries } from '@/lib/projects';
@@ -78,7 +79,12 @@ function Home() {
       // Usuário guest: verifica onboarding no localStorage.
       const profile = GuestStorage.getProfile();
       if (!profile || !profile.onboarding_completed) {
-        navigate({ to: '/onboarding' });
+        // Usuário que já teve conta e saiu → tela de retorno, não onboarding.
+        if (wasAuthenticated()) {
+          navigate({ to: '/login' });
+        } else {
+          navigate({ to: '/onboarding' });
+        }
         return;
       }
       setName(profile.display_name);
