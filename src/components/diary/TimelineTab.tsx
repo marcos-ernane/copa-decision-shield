@@ -27,14 +27,19 @@ const SCENARIO_LABELS: Record<ScenarioType, string> = {
 };
 const LAYERS: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia', 'escala'];
 const ENTRY_TYPES = [
-  { v: 'structured_P', label: 'IMV' },
-  { v: 'pulse', label: 'Pulso' },
-  { v: 'structured_C', label: 'Análise' },
-  { v: 'structured_O', label: 'Organização' },
-  { v: 'structured_A', label: 'APA' },
-  { v: 'quick_review', label: 'Revisão' },
-  { v: 'corrective', label: 'Corretiva' },
-  { v: 'decision_record', label: 'Decisão' },
+  { v: 'structured_P',       label: 'IMV'         },
+  { v: 'pulse',              label: 'Pulso'        },
+  { v: 'structured_C',       label: 'Análise'      },
+  { v: 'structured_O',       label: 'Organização'  },
+  { v: 'structured_A',       label: 'APA'          },
+  { v: 'quick_review',       label: 'Revisão'      },
+  { v: 'corrective',         label: 'Corretiva'    },
+  { v: 'decision_record',    label: 'Decisão'      },
+  { v: 'copa_session',       label: 'COPA'         },
+  { v: 'protocol_5min',      label: '5 Min'        },
+  { v: 'creative_session',   label: 'Criativo'     },
+  { v: 'simulation_session', label: 'Simulação'    },
+  { v: 'passive',            label: 'Passivo'      },
 ] as const;
 const PERIODS = [
   { v: 7, label: '7 dias' },
