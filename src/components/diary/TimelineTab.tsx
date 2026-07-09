@@ -264,8 +264,8 @@ export function TimelineTab() {
 
   const operationalView = useMemo(() => {
     if (view !== 'operational') return null;
-    return buildOperationalView(filtered, projectMap);
-  }, [view, filtered, projectMap]);
+    return buildOperationalView(deduped.map((d) => d.entry), projectMap);
+  }, [view, deduped, projectMap]);
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? '—';
 
