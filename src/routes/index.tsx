@@ -260,7 +260,7 @@ function Home() {
               aria-expanded={showActive}
               aria-label="Expandir projetos ativos"
             >
-              <span className="text-label text-op-gray uppercase tracking-wide flex-1">
+              <span className="text-label uppercase tracking-wide flex-1 text-green-600">
                 Projetos ativos
               </span>
               {trueActive.length > 0 && (
