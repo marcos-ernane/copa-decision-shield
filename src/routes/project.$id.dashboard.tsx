@@ -321,13 +321,13 @@ function ProjectDashboard() {
   if (!project) return null;
 
   const currentState = computeProjectState(project, entries);
-  const stateDisplay = deriveProjectStatus(project, entries);
-  // Ciclo completo só é verdadeiro quando todos os structured_P têm APA correspondente.
-  // computeCopaProgress verifica apenas se os 4 tipos de entry existem no histórico,
-  // ignorando se o P mais recente já foi fechado — o que causa a contradição visual
-  // entre "Ciclo completo" e "CICLO ABERTO". openCycles corrige isso.
+  // openCycles calculado antes de stateDisplay e copaProgress para que ambos
+  // possam refletir corretamente a existência de structured_P sem APA vinculada.
   const openCycles = detectOpenCycles(entries);
-  const copaProgress = { ...computeCopaProgress(entries), allDone: computeCopaProgress(entries).allDone && openCycles.length === 0 };
+  const hasOpenCycles = openCycles.length > 0;
+  const stateDisplay = deriveProjectStatus(project, entries, hasOpenCycles);
+  const _rawProgress = computeCopaProgress(entries);
+  const copaProgress = { ..._rawProgress, allDone: _rawProgress.allDone && !hasOpenCycles };
 
   // Derivado de copaProgress.done para garantir consistência com "Onde Estou Agora".
   // Não usa weekly-reset do localStorage — reflete apenas registros reais no DB.

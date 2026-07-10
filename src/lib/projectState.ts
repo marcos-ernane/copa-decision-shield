@@ -118,6 +118,7 @@ export function computeCopaProgress(entries: Entry[]): {
 export function deriveProjectStatus(
   project: Project,
   projectEntries: Entry[],
+  hasOpenCycles = false,
 ): { icon: string; label: string; color: string } {
   const computedState = computeProjectState(project, projectEntries);
 
@@ -131,7 +132,8 @@ export function deriveProjectStatus(
   }
 
   const { allDone, lastDone } = computeCopaProgress(projectEntries);
-  if (allDone) return { icon: '◆', label: 'Ciclo completo', color: 'text-green-600' };
+  // "Ciclo completo" só quando todos os P têm APA correspondente (sem ciclos abertos).
+  if (allDone && !hasOpenCycles) return { icon: '◆', label: 'Ciclo completo', color: 'text-green-600' };
   switch (lastDone) {
     case 'A': return { icon: '◆', label: 'Aferindo', color: 'text-green-600' };
     case 'P': return { icon: '▶', label: 'Em Prova', color: 'text-green-600' };
