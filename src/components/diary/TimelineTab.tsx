@@ -276,33 +276,67 @@ export function TimelineTab() {
 
     for (const group of groups.values()) {
       if (group.length < 2) continue;
-      // Ordena por comprimento do preview (crescente) para detectar cadeia
-      const byLen = [...group].sort(
-        (a, b) => entryPreview(a.entry).trim().length - entryPreview(b.entry).trim().length,
-      );
-      // Cada entrada deve ser prefixo da próxima (qualquer espaço em branco como fronteira, NFC)
-      let isChain = true;
-      for (let i = 0; i < byLen.length - 1; i++) {
-        const s = entryPreview(byLen[i].entry).trim().normalize('NFC');
-        const l = entryPreview(byLen[i + 1].entry).trim().normalize('NFC');
-        const after = l[s.length] ?? '';
-        if (s.length < 3 || !l.startsWith(s) || (after !== '' && /\S/.test(after))) {
-          isChain = false; break;
+
+      // Helper normalizado para comparações
+      const pv = (item: typeof group[0]) => entryPreview(item.entry).trim().normalize('NFC');
+      const idToItem = new Map(group.map((g) => [g.entry.id, g]));
+
+      // Ordena por comprimento crescente
+      const byLen = [...group].sort((a, b) => pv(a).length - pv(b).length);
+
+      // Para cada entry, encontra o próximo mais longo do qual ela é prefixo com fronteira de palavra.
+      // Detecta sub-cadeias independentes no grupo — não exige que TODAS formem uma única cadeia.
+      const nextInChain = new Map<string, string>(); // id → id do próximo na cadeia
+      for (let i = 0; i < byLen.length; i++) {
+        const s = pv(byLen[i]);
+        if (s.length < 3) continue;
+        for (let j = i + 1; j < byLen.length; j++) {
+          const l = pv(byLen[j]);
+          const after = l[s.length] ?? '';
+          if (l.startsWith(s) && (after === '' || /\s/.test(after))) {
+            nextInChain.set(byLen[i].entry.id, byLen[j].entry.id);
+            break; // conecta ao próximo mais curto válido
+          }
         }
       }
-      if (!isChain) continue;
 
-      // Mantém a mais longa; remove as demais; extrai segmentos incrementais
-      const longest = byLen[byLen.length - 1];
-      const segs: string[] = [];
-      let prev = '';
-      for (const item of byLen) {
-        const seg = entryPreview(item.entry).trim().normalize('NFC').substring(prev.length).trim();
-        if (seg) segs.push(seg);
-        if (item !== longest) removed.add(item.entry.id);
-        prev = entryPreview(item.entry).trim().normalize('NFC');
+      if (nextInChain.size === 0) continue;
+
+      // Identifica raízes: entries com filho mas sem pai (ninguém aponta para elas)
+      const pointedTo = new Set(nextInChain.values());
+      const processed = new Set<string>();
+
+      for (const startItem of byLen) {
+        const startId = startItem.entry.id;
+        // Pula se já processada, sem filho, ou não é raiz (tem pai)
+        if (processed.has(startId) || !nextInChain.has(startId) || pointedTo.has(startId)) continue;
+
+        // Percorre a cadeia da raiz até o nó terminal
+        const chain: typeof group[0][] = [];
+        let curId: string | undefined = startId;
+        while (curId) {
+          const item = idToItem.get(curId);
+          if (!item || processed.has(curId)) break;
+          chain.push(item);
+          processed.add(curId);
+          curId = nextInChain.get(curId);
+        }
+
+        if (chain.length < 2) continue;
+
+        // Mantém o mais longo; remove os demais; extrai segmentos incrementais
+        const longest = chain[chain.length - 1];
+        const segs: string[] = [];
+        let prev = '';
+        for (const item of chain) {
+          const text = pv(item);
+          const seg = text.substring(prev.length).trim();
+          if (seg) segs.push(seg);
+          if (item !== longest) removed.add(item.entry.id);
+          prev = text;
+        }
+        if (segs.length > 1) segsMap.set(longest.entry.id, segs);
       }
-      if (segs.length > 1) segsMap.set(longest.entry.id, segs);
     }
 
     return {
