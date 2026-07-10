@@ -182,97 +182,6 @@ function Home() {
           Novo projeto
         </Link>
 
-        {concluded.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowConcluded((s) => !s)}
-                className="flex-1 flex items-center gap-2 text-small font-medium rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left transition-opacity hover:opacity-80 min-w-0"
-                style={{ color: 'var(--color-brand-red)' }}
-              >
-                <span className="uppercase tracking-wide flex-1">Projetos já concluídos</span>
-                <span className="text-label text-op-cyan shrink-0">Ver →</span>
-                <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none shrink-0">
-                  {concluded.length}
-                </span>
-                <span className={`text-label shrink-0 transition-transform duration-200 ${showConcluded ? 'text-op-white' : 'text-op-gray'}`}>
-                  {showConcluded ? '▾' : '▸'}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowHelpConcluded(true)}
-                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors shrink-0"
-                aria-label="O que são Projetos Concluídos?"
-              >
-                ⓘ
-              </button>
-            </div>
-            {showConcluded && (
-              <div className="space-y-3">
-                {concluded.map((p) => (
-                  <ProjectCard key={p.id} project={p} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {inboxCount > 0 && (
-          <Link
-            to="/inbox"
-            className="w-full flex items-center justify-between gap-3 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 hover:bg-op-navy-elevated transition-colors"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <Inbox className="size-4 text-op-cyan shrink-0" />
-              <div className="min-w-0">
-                <p className="text-small text-op-cyan font-medium">
-                  {inboxCount} {inboxCount === 1 ? 'captura pendente' : 'capturas pendentes'} no Inbox
-                </p>
-                <p className="text-label text-op-gray">Processar e transformar em COPA →</p>
-              </div>
-            </div>
-          </Link>
-        )}
-
-        {pendingBottlenecks.length > 0 && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowBottleneckBank(true)}
-              className="flex-1 flex items-center justify-between gap-3 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left hover:bg-op-navy-elevated transition-colors min-w-0"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-small text-op-cyan font-medium uppercase tracking-wide">Gargalos pendentes</p>
-                <p className="text-label text-op-gray truncate">
-                  {pendingBottlenecks.length !== 1
-                    ? 'Podem se transformar em novos projetos'
-                    : 'Pode se transformar em um novo projeto'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-label text-op-cyan">Ver →</span>
-                <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none">
-                  {pendingBottlenecks.length}
-                </span>
-                <span className="text-label text-op-gray">▸</span>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowHelpGargalos(true)}
-              className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors shrink-0"
-              aria-label="O que são Gargalos Pendentes?"
-            >
-              ⓘ
-            </button>
-          </div>
-        )}
-
-        {/* Pacto — presença contextual [PRD-ITEM-03 Etapa 4] */}
-        <PactContextBanner projects={projects} entries={entries} />
-
         {/* PROJETOS ATIVOS — colapsável */}
         <div className="space-y-1 pt-1">
           <div className="flex items-center gap-2">
@@ -331,6 +240,43 @@ function Home() {
           )}
         </div>
 
+        {/* Pacto — presença contextual [PRD-ITEM-03 Etapa 4] */}
+        <PactContextBanner projects={projects} entries={entries} />
+
+        {pendingBottlenecks.length > 0 && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowBottleneckBank(true)}
+              className="flex-1 flex items-center justify-between gap-3 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left hover:bg-op-navy-elevated transition-colors min-w-0"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-small text-op-cyan font-medium uppercase tracking-wide">Gargalos pendentes</p>
+                <p className="text-label text-op-gray truncate">
+                  {pendingBottlenecks.length !== 1
+                    ? 'Podem se transformar em novos projetos'
+                    : 'Pode se transformar em um novo projeto'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-label text-op-cyan">Ver →</span>
+                <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none">
+                  {pendingBottlenecks.length}
+                </span>
+                <span className="text-label text-op-gray">▸</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowHelpGargalos(true)}
+              className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors shrink-0"
+              aria-label="O que são Gargalos Pendentes?"
+            >
+              ⓘ
+            </button>
+          </div>
+        )}
+
         {/* PROJETOS PAUSADOS — colapsável */}
         {pausedProjects.length > 0 && (
           <div className="space-y-1">
@@ -379,6 +325,60 @@ function Home() {
               </div>
             )}
           </div>
+        )}
+
+        {concluded.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowConcluded((s) => !s)}
+                className="flex-1 flex items-center gap-2 text-small font-medium rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left transition-opacity hover:opacity-80 min-w-0"
+                style={{ color: 'var(--color-brand-red)' }}
+              >
+                <span className="uppercase tracking-wide flex-1">Projetos já concluídos</span>
+                <span className="text-label text-op-cyan shrink-0">Ver →</span>
+                <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none shrink-0">
+                  {concluded.length}
+                </span>
+                <span className={`text-label shrink-0 transition-transform duration-200 ${showConcluded ? 'text-op-white' : 'text-op-gray'}`}>
+                  {showConcluded ? '▾' : '▸'}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowHelpConcluded(true)}
+                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors shrink-0"
+                aria-label="O que são Projetos Concluídos?"
+              >
+                ⓘ
+              </button>
+            </div>
+            {showConcluded && (
+              <div className="space-y-3">
+                {concluded.map((p) => (
+                  <ProjectCard key={p.id} project={p} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {inboxCount > 0 && (
+          <Link
+            to="/inbox"
+            className="w-full flex items-center justify-between gap-3 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 hover:bg-op-navy-elevated transition-colors"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <Inbox className="size-4 text-op-cyan shrink-0" />
+              <div className="min-w-0">
+                <p className="text-small text-op-cyan font-medium">
+                  {inboxCount} {inboxCount === 1 ? 'captura pendente' : 'capturas pendentes'} no Inbox
+                </p>
+                <p className="text-label text-op-gray">Processar e transformar em COPA →</p>
+              </div>
+            </div>
+          </Link>
         )}
 
         <CommunityLink url={communityLink} />
