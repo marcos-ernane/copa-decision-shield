@@ -99,7 +99,7 @@ export function PactContextBanner({ projects, entries }: Props) {
             aria-label="Expandir pacto de hoje"
           >
             <span
-              className={`text-label uppercase tracking-wide flex-1 ${
+              className={`text-small font-medium uppercase tracking-wide flex-1 ${
                 allDone ? 'text-op-gray' : 'text-op-amber animate-pulse'
               }`}
             >
