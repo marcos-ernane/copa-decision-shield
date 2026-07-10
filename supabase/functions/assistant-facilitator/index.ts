@@ -95,11 +95,17 @@ const HELP_INSTRUCTION = `O usuário tem uma dúvida sobre como usar o app Opera
 Responda de forma clara, direta e prática com base no CONHECIMENTO DO APP acima.
 Para paralelos externos (Lean, PDCA, gestão de crise): use apenas para contextualizar — nunca como resposta principal.
 Ao explicar como acessar uma funcionalidade: mencione o caminho (máximo 2 toques da tela mencionada).
-Nunca invente funcionalidades. Se não souber: "Não tenho essa informação. Consulte a Bússola no app."
+
+REGRA CRÍTICA SOBRE EXISTÊNCIA DE FUNCIONALIDADES:
+- NUNCA afirme que uma funcionalidade não existe baseado apenas em ausência de informação — isso gera respostas incorretas e prejudica o usuário.
+- Só confirme que algo NÃO existe se o CONHECIMENTO DO APP declarar explicitamente que está fora de escopo ou não implementado.
+- Quando não encontrar informação sobre um recurso perguntado: responda "Não tenho essa informação detalhada. Explore o app ou consulte a Bússola para conferir." — nunca diga "o app não tem isso".
+- Nunca invente funcionalidades que não estão descritas acima.
 Máximo 4 frases.`;
 
 // Conhecimento estático de fallback — usado quando o banco está indisponível.
 // Mantém o assistente funcional mesmo sem conexão com a DB.
+// IMPORTANTE: manter sincronizado com as seções da app_knowledge_base sempre que houver atualizações.
 const STATIC_KNOWLEDGE_FALLBACK = `O APP: Operador de Precisão é um sistema de formação operacional. NÃO é organizador de tarefas, NÃO é chatbot, NÃO tem gamificação. O app protege decisões — quem decide é sempre o usuário. Funciona sem conta e offline para a maioria das funcionalidades.
 
 NAVEGAÇÃO: 4 abas — Início (projetos), Painel (indicadores), Bússola (método offline), Diário (histórico). Dois botões flutuantes fixos: COPA laranja e PRESSÃO vermelho. Máximo 2 toques para qualquer funcionalidade.
@@ -112,7 +118,9 @@ IMV: Ação reversível, barata, específica, mensurável. Precisa de métrica e
 
 MODO PRESSÃO: Próximo passo em 15 minutos. Reality Check opcional. Tela de 3s de respiro. Fato → Risco → Próxima ação. Sempre ilimitado.
 
-REGISTROS: Pulso (<30s), Formato C (análise), Formato O (Mapa 3R), Formato P (IMV), Formato A (APA), Registro Corretivo (corrige sem apagar).
+REGISTROS: Pulso (<30s), Formato C (4 passos: 3 quadros + passo opcional de FOTOS), Formato O (Mapa 3R), Formato P (IMV), Formato A (APA), Registro Corretivo (corrige sem apagar).
+
+FOTOS NO FORMATO C: Após salvar os 3 quadros do Formato C, aparece um 4º passo opcional para adicionar até 3 fotos do cenário (JPEG/PNG/WebP). Disponível para usuários autenticados, sem restrição de plano. As fotos aparecem na Timeline com badge de contagem e galeria expandível.
 
 DIÁRIO: Linha do Tempo com filtros, Banco de Princípios, Índice por Sintoma, Gargalos, Relatório Semanal, Manual do Operador (projetos concluídos).
 
@@ -122,7 +130,9 @@ BÚSSOLA: 100% offline. Protocolo de Bolso, Folha do Operador, Guia Diagnóstico
 
 PACTO SEMANAL: Rotina opcional C→O→P→A por projeto. Ativado pelo menu [•••] no Dashboard. Fases seguem ordem sequencial — fase só disponível se anterior concluída.
 
-PLANOS: Free=1 projeto ativo + 5 registros estruturados/mês. Annual=R$197/ano. Lifetime=R$497. Trial=14 dias completo. COPA e Pressão sempre ilimitados.`;
+PLANOS: Free=1 projeto ativo + 5 registros estruturados/mês. Annual=R$197/ano. Lifetime=R$497. Trial=14 dias completo. COPA e Pressão sempre ilimitados.
+
+INVENTÁRIO GERAL: O app tem — registro de texto e voz, fotos no Formato C, múltiplos formatos estruturados, COPA de Bolso, Modo Pressão, Protocolo 5min, Pacto Semanal, Plano de Execução da IMV, Diário com Timeline, Banco de Princípios com Principle Recall, Manual do Operador, Painel com índices e rubrica, Bússola offline, Linha de Base, Criatividade Funcional, Simulações, Prova de Transferência, Modo Leitura, Modo Guest sem conta, migração automática ao criar conta.`;
 
 // ============================================================
 // CACHE DINÂMICO DE CONHECIMENTO (memória da instância Edge Function)
