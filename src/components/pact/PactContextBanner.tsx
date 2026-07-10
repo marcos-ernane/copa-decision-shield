@@ -43,6 +43,7 @@ interface Props {
 export function PactContextBanner({ projects, entries }: Props) {
   const navigate = useNavigate();
   const [showHelp, setShowHelp] = useState(false);
+  const [showItems, setShowItems] = useState(false);
   const today = new Date().getDay();
   const weekStart = currentWeekStartISO();
 
@@ -88,21 +89,33 @@ export function PactContextBanner({ projects, entries }: Props) {
   return (
     <>
       <section className="space-y-1">
-        {/* Título: pulsante âmbar quando há pendentes + contador + botão de ajuda */}
+        {/* Linha do título — clicável para abrir/fechar a lista */}
         <div className="flex items-center gap-2">
-          <p
-            className={`text-label uppercase tracking-wide flex-1 ${
-              allDone ? 'text-op-gray' : 'text-op-amber animate-pulse'
-            }`}
+          <button
+            type="button"
+            onClick={() => setShowItems((s) => !s)}
+            className="flex items-center gap-2 flex-1 text-left min-w-0"
+            aria-expanded={showItems}
+            aria-label="Expandir pacto de hoje"
           >
-            {allDone ? 'Pacto de hoje — concluído' : 'Pacto de hoje'}
-          </p>
-
-          {pendingCount > 0 && (
-            <span className="text-label font-semibold text-op-amber bg-op-amber/10 border border-op-amber/30 rounded-full px-2 py-0.5 leading-none">
-              {pendingCount}
+            <span
+              className={`text-label uppercase tracking-wide flex-1 ${
+                allDone ? 'text-op-gray' : 'text-op-amber animate-pulse'
+              }`}
+            >
+              {allDone ? 'Pacto de hoje — concluído' : 'Pacto de hoje'}
             </span>
-          )}
+
+            {pendingCount > 0 && (
+              <span className="text-label font-semibold text-op-amber bg-op-amber/10 border border-op-amber/30 rounded-full px-2 py-0.5 leading-none shrink-0">
+                {pendingCount}
+              </span>
+            )}
+
+            <span className={`text-label shrink-0 transition-transform duration-200 ${showItems ? 'text-op-white' : 'text-op-gray'}`}>
+              {showItems ? '▾' : '▸'}
+            </span>
+          </button>
 
           <button
             type="button"
@@ -114,35 +127,37 @@ export function PactContextBanner({ projects, entries }: Props) {
           </button>
         </div>
 
-        {/* Lista compacta recuada — sem cartões, texto direto */}
-        <ul className="pl-2 space-y-0.5">
-          {items.map(({ project, phase, done }) => (
-            <li key={`${project.id}-${phase}`}>
-              <button
-                type="button"
-                onClick={() => handleClick({ project, phase, done })}
-                className="w-full flex items-center justify-between gap-3 py-1.5 px-1 text-left rounded-md hover:bg-op-navy/60 transition-colors"
-              >
-                <div className="flex items-start gap-1.5 min-w-0">
-                  <span className={`text-label shrink-0 mt-0.5 ${done ? 'text-op-gray/40' : 'text-op-amber'}`}>
-                    ·
-                  </span>
-                  <div className="min-w-0">
-                    <p className={`text-small leading-tight truncate ${done ? 'line-through text-muted-foreground' : 'text-op-white'}`}>
-                      {project.name}
-                    </p>
-                    <p className="text-label text-op-gray/70">{PHASE_LABEL[phase]}</p>
+        {/* Lista compacta recuada — visível somente quando expandida */}
+        {showItems && (
+          <ul className="pl-2 space-y-0.5 pt-0.5">
+            {items.map(({ project, phase, done }) => (
+              <li key={`${project.id}-${phase}`}>
+                <button
+                  type="button"
+                  onClick={() => handleClick({ project, phase, done })}
+                  className="w-full flex items-center justify-between gap-3 py-1.5 px-1 text-left rounded-md hover:bg-op-navy/60 transition-colors"
+                >
+                  <div className="flex items-start gap-1.5 min-w-0">
+                    <span className={`text-label shrink-0 mt-0.5 ${done ? 'text-op-gray/40' : 'text-op-amber'}`}>
+                      ·
+                    </span>
+                    <div className="min-w-0">
+                      <p className={`text-small leading-tight truncate ${done ? 'line-through text-muted-foreground' : 'text-op-white'}`}>
+                        {project.name}
+                      </p>
+                      <p className="text-label text-op-gray/70">{PHASE_LABEL[phase]}</p>
+                    </div>
                   </div>
-                </div>
-                {done ? (
-                  <span className="text-label text-op-gray/50 shrink-0">feito</span>
-                ) : (
-                  <span className="text-label text-op-amber shrink-0">fazer →</span>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
+                  {done ? (
+                    <span className="text-label text-op-gray/50 shrink-0">feito</span>
+                  ) : (
+                    <span className="text-label text-op-amber shrink-0">fazer →</span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* Sheet de ajuda */}
