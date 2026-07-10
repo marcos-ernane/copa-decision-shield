@@ -40,17 +40,25 @@ interface Props {
   entryPhases?: EntryPhases;
 }
 
+const PHASE_ORDER: PactPhase[] = ['capture', 'organize', 'prove', 'assess'];
+
 export function PactWeekView({ projectId, cycle, entryPhases }: Props) {
   const navigate = useNavigate();
-  const phases: PactPhase[] = ['capture', 'organize', 'prove', 'assess'];
   const today = new Date().getDay();
 
   function isDone(phase: PactPhase) {
     return entryPhases?.[phase] ?? false;
   }
 
-  const doneCount = phases.filter(isDone).length;
-  const allDone = doneCount === phases.length;
+  // Uma fase só está disponível para registro se todas as anteriores na ordem
+  // C→O→P→A já tiverem sido feitas. Sem isso, o dia configurado não é suficiente.
+  function isBlockedByPredecessor(phase: PactPhase): boolean {
+    const idx = PHASE_ORDER.indexOf(phase);
+    return PHASE_ORDER.slice(0, idx).some((prev) => !isDone(prev));
+  }
+
+  const doneCount = PHASE_ORDER.filter(isDone).length;
+  const allDone = doneCount === PHASE_ORDER.length;
 
   function handlePhaseClick(phase: PactPhase) {
     if (isDone(phase)) {
@@ -58,12 +66,14 @@ export function PactWeekView({ projectId, cycle, entryPhases }: Props) {
         to: '/diary',
         search: { projectId, type: PHASE_TO_ENTRY_TYPE[phase] } as never,
       });
-    } else {
-      void navigate({
-        to: '/register/structured',
-        search: { projectId, format: PHASE_TO_FORMAT[phase] } as never,
-      });
+      return;
     }
+    // Fase bloqueada pela predecessora — não navega
+    if (isBlockedByPredecessor(phase)) return;
+    void navigate({
+      to: '/register/structured',
+      search: { projectId, format: PHASE_TO_FORMAT[phase] } as never,
+    });
   }
 
   return (
@@ -77,7 +87,7 @@ export function PactWeekView({ projectId, cycle, entryPhases }: Props) {
               ? 'Semana completa!'
               : doneCount === 0
               ? 'Nenhuma fase feita ainda'
-              : `${doneCount} de ${phases.length} fases concluídas`}
+              : `${doneCount} de ${PHASE_ORDER.length} fases concluídas`}
           </p>
         </div>
         <Link
@@ -91,7 +101,7 @@ export function PactWeekView({ projectId, cycle, entryPhases }: Props) {
 
       {/* Barra de progresso */}
       <div className="flex gap-1">
-        {phases.map((phase) => (
+        {PHASE_ORDER.map((phase) => (
           <div
             key={phase}
             className={`h-1 flex-1 rounded-full transition-colors ${
@@ -105,21 +115,25 @@ export function PactWeekView({ projectId, cycle, entryPhases }: Props) {
 
       {/* Lista de fases */}
       <ul className="space-y-0.5">
-        {phases.map((phase) => {
+        {PHASE_ORDER.map((phase) => {
           const day = cycle[phase];
           const done = isDone(phase);
+          const blocked = !done && isBlockedByPredecessor(phase);
           const isToday = day.day_of_week === today;
+          // "hoje" só aparece se a fase está disponível (não bloqueada e não feita)
+          const availableToday = isToday && !done && !blocked;
 
           return (
             <li
               key={phase}
-              className={`rounded-md ${isToday && !done ? 'bg-[color:var(--color-op-navy-elevated)]' : ''}`}
+              className={`rounded-md ${availableToday ? 'bg-[color:var(--color-op-navy-elevated)]' : ''}`}
             >
               <button
                 type="button"
                 onClick={() => handlePhaseClick(phase)}
-                className="w-full flex items-center gap-3 px-1 py-2.5 text-left"
-                aria-label={`${PHASE_LABEL[phase]}: ${done ? 'concluído' : 'pendente'}`}
+                disabled={blocked}
+                className={`w-full flex items-center gap-3 px-1 py-2.5 text-left ${blocked ? 'opacity-40 cursor-not-allowed' : ''}`}
+                aria-label={`${PHASE_LABEL[phase]}: ${done ? 'concluído' : blocked ? 'aguardando fase anterior' : 'pendente'}`}
               >
                 {/* Indicador de status */}
                 <span
@@ -127,7 +141,7 @@ export function PactWeekView({ projectId, cycle, entryPhases }: Props) {
                     'inline-flex items-center justify-center size-5 rounded-full flex-shrink-0 transition-colors ' +
                     (done
                       ? 'bg-[color:var(--color-status-success,#16a34a)] text-white'
-                      : isToday
+                      : availableToday
                       ? 'border-2 border-foreground'
                       : 'border border-border')
                   }
@@ -141,9 +155,14 @@ export function PactWeekView({ projectId, cycle, entryPhases }: Props) {
                     <span className={`text-small font-medium ${done ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                       {PHASE_LABEL[phase]}
                     </span>
-                    {isToday && !done && (
+                    {availableToday && (
                       <span className="text-label px-1.5 py-0.5 rounded bg-op-amber text-op-black font-semibold">
                         hoje
+                      </span>
+                    )}
+                    {isToday && blocked && (
+                      <span className="text-label px-1.5 py-0.5 rounded bg-op-gray/20 text-op-gray">
+                        aguarda anterior
                       </span>
                     )}
                   </div>
