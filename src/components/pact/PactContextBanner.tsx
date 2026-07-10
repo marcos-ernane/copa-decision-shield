@@ -107,9 +107,12 @@ export function PactContextBanner({ projects, entries }: Props) {
             </span>
 
             {pendingCount > 0 && (
-              <span className="text-label font-semibold text-op-amber bg-op-amber/10 border border-op-amber/30 rounded-full px-2 py-0.5 leading-none shrink-0">
-                {pendingCount}
-              </span>
+              <>
+                <span className="text-label text-op-cyan shrink-0">Ver →</span>
+                <span className="text-label font-semibold text-op-amber bg-op-amber/10 border border-op-amber/30 rounded-full px-2 py-0.5 leading-none shrink-0">
+                  {pendingCount}
+                </span>
+              </>
             )}
 
             <span className={`text-label shrink-0 transition-transform duration-200 ${showItems ? 'text-op-white' : 'text-op-gray'}`}>
