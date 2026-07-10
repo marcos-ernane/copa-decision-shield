@@ -179,10 +179,17 @@ function Home() {
             <button
               type="button"
               onClick={() => setShowConcluded((s) => !s)}
-              className="w-full text-left text-small font-medium py-1 transition-opacity hover:opacity-80"
+              className="w-full flex items-center gap-2 text-small font-medium py-1 transition-opacity hover:opacity-80"
               style={{ color: 'var(--color-brand-red)' }}
             >
-              Projetos já concluídos ({concluded.length}) {showConcluded ? '−' : '+'}
+              <span>Projetos já concluídos</span>
+              <span
+                className="text-label font-semibold rounded-full px-2 py-0.5 leading-none border shrink-0"
+                style={{ backgroundColor: 'rgba(220,38,38,0.1)', borderColor: 'rgba(220,38,38,0.3)' }}
+              >
+                {concluded.length}
+              </span>
+              <span className="ml-auto">{showConcluded ? '−' : '+'}</span>
             </button>
             {showConcluded && (
               <div className="space-y-3">
@@ -218,16 +225,19 @@ function Home() {
             className="w-full flex items-center justify-between gap-3 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left hover:bg-op-navy-elevated transition-colors"
           >
             <div className="flex-1 min-w-0">
-              <p className="text-small text-op-cyan font-medium">
-                {pendingBottlenecks.length} gargalo{pendingBottlenecks.length !== 1 ? 's' : ''} pendente{pendingBottlenecks.length !== 1 ? 's' : ''}
-              </p>
+              <p className="text-small text-op-cyan font-medium">Gargalos pendentes</p>
               <p className="text-label text-op-gray truncate">
                 {pendingBottlenecks.length !== 1
-                  ? 'Podem se transformar em novos projetos →'
-                  : 'Pode se transformar em um novo projeto →'}
+                  ? 'Podem se transformar em novos projetos'
+                  : 'Pode se transformar em um novo projeto'}
               </p>
             </div>
-            <span className="text-label text-op-cyan shrink-0">Ver →</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-label text-op-cyan">Ver →</span>
+              <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none">
+                {pendingBottlenecks.length}
+              </span>
+            </div>
           </button>
         )}
 
