@@ -264,6 +264,7 @@ function ProjectDashboard() {
   const [pauseReason, setPauseReason] = useState('');
   const [isArchiving, setIsArchiving] = useState(false);
   const [showVelocitySheet, setShowVelocitySheet] = useState(false);
+  const [showAllCycles, setShowAllCycles] = useState(false);
   const [showIQISheet, setShowIQISheet] = useState(false);
   const [showActionPlanSheet, setShowActionPlanSheet] = useState(false);
 
@@ -648,7 +649,7 @@ function ProjectDashboard() {
           );
         })()}
 
-        {/* Ciclos Abertos de APA (PRD-ITEM-01) — mostra apenas o mais atrasado + contador */}
+        {/* Ciclos Abertos de APA (PRD-ITEM-01) — primeiro card sempre visível; restantes expansíveis */}
         {currentState !== 'paused' && currentState !== 'concluded' && currentState !== 'archived' &&
           (() => {
             const cycles = openCycles;
@@ -663,9 +664,25 @@ function ProjectDashboard() {
                   projectId={id}
                 />
                 {rest.length > 0 && (
-                  <p className="text-label text-op-gray text-center">
-                    + {rest.length} {rest.length === 1 ? 'outro ciclo aguarda' : 'outros ciclos aguardam'} resultado
-                  </p>
+                  <>
+                    {showAllCycles && rest.map((c) => (
+                      <OpenCycleCard
+                        key={c.imv.id}
+                        imv={c.imv}
+                        daysOpen={c.daysOpen}
+                        projectId={id}
+                      />
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setShowAllCycles((s) => !s)}
+                      className="w-full text-label text-op-cyan text-center py-1 hover:text-op-white transition-colors"
+                    >
+                      {showAllCycles
+                        ? 'Ocultar ciclos adicionais ▴'
+                        : `+ ${rest.length} ${rest.length === 1 ? 'outro ciclo aguarda' : 'outros ciclos aguardam'} resultado ▾`}
+                    </button>
+                  </>
                 )}
               </>
             );
