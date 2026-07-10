@@ -7,7 +7,7 @@ import { GuestStorage } from '@/lib/guestStorage';
 import { wasAuthenticated } from '@/lib/authFlags';
 import { getInboxCount } from '@/lib/universalCapture';
 import { supabase } from '@/lib/supabase';
-import { listProjects, listPrinciples, updateProject, listAllEntries } from '@/lib/projects';
+import { listProjects, listPrinciples, updateProject, listAllEntries, deleteProject } from '@/lib/projects';
 import { sortProjects } from '@/lib/projectState';
 import { ProjectCard } from '@/components/project/ProjectCard';
 import { PactContextBanner } from '@/components/pact/PactContextBanner';
@@ -50,6 +50,7 @@ function Home() {
   const [showBottleneckBank, setShowBottleneckBank] = useState(false);
   const [showDay7Nudge, setShowDay7Nudge] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pausingId, setPausingId] = useState<string | null>(null);
   const [pauseReason, setPauseReason] = useState('');
 
@@ -132,6 +133,13 @@ function Home() {
       state: 'archived',
     });
     setArchivingId(null);
+    void load();
+  }
+
+  async function handleDelete() {
+    if (!deletingId) return;
+    await deleteProject(deletingId);
+    setDeletingId(null);
     void load();
   }
 
@@ -233,6 +241,7 @@ function Home() {
                     onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
                     onArchive={() => setArchivingId(p.id)}
                     onPause={() => setPausingId(p.id)}
+                    onDelete={() => setDeletingId(p.id)}
                   />
                 ))
               )}
@@ -320,6 +329,7 @@ function Home() {
                     onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
                     onArchive={() => setArchivingId(p.id)}
                     onResume={() => void handleResume(p.id)}
+                    onDelete={() => setDeletingId(p.id)}
                   />
                 ))}
               </div>
@@ -647,6 +657,28 @@ function Home() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Dialog: Excluir projeto — permanente, remove todos os dados vinculados */}
+      <AlertDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir projeto permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todos os registros, princípios, capítulos e configurações deste projeto
+              serão apagados definitivamente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleDelete()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* [REQ-AUTH-03] Momento 3: nudge de cadastro após 7 dias como guest */}
       <RegistrationNudge open={showDay7Nudge} moment={3} onDismiss={() => setShowDay7Nudge(false)} />
     </div>

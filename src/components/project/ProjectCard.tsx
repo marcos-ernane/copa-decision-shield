@@ -26,9 +26,10 @@ interface Props {
   onArchive?: () => void;
   onPause?: () => void;
   onResume?: () => void;
+  onDelete?: () => void;
 }
 
-export function ProjectCard({ project, recallPrinciple, executionPlan, imvOverdue = false, onEdit, onConclude, onArchive, onPause, onResume }: Props) {
+export function ProjectCard({ project, recallPrinciple, executionPlan, imvOverdue = false, onEdit, onConclude, onArchive, onPause, onResume, onDelete }: Props) {
   const navigate = useNavigate();
   const entryType = determineEntryType(project);
   const days = daysSince(project.last_entry_at);
@@ -36,7 +37,7 @@ export function ProjectCard({ project, recallPrinciple, executionPlan, imvOverdu
   const showRecall =
     recallPrinciple &&
     (project.state === 'blocked' || project.state === 'new');
-  const showMenu = !!(onEdit || onConclude || onArchive || onPause || onResume);
+  const showMenu = !!(onEdit || onConclude || onArchive || onPause || onResume || onDelete);
 
   const cardTo =
     project.state === 'concluded' || project.state === 'archived'
@@ -134,6 +135,14 @@ export function ProjectCard({ project, recallPrinciple, executionPlan, imvOverdu
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="text-destructive" onClick={onArchive}>
                       Arquivar
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {onDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive" onClick={onDelete}>
+                      Excluir projeto
                     </DropdownMenuItem>
                   </>
                 )}
