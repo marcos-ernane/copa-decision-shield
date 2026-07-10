@@ -39,7 +39,9 @@ export function ProjectCard({ project, recallPrinciple, executionPlan, imvOverdu
   const showMenu = !!(onEdit || onConclude || onArchive || onPause || onResume);
 
   const cardTo =
-    entryType === 'direct'
+    project.state === 'concluded' || project.state === 'archived'
+      ? '/project/$id'
+      : entryType === 'direct'
       ? '/project/$id/dashboard'
       : entryType === 'new_cycle'
       ? '/project/$id/diagnosis'
