@@ -192,10 +192,13 @@ function Home() {
                 style={{ color: 'var(--color-brand-red)' }}
               >
                 <span className="uppercase tracking-wide flex-1">Projetos já concluídos</span>
+                <span className="text-label text-op-cyan shrink-0">Ver →</span>
                 <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none shrink-0">
                   {concluded.length}
                 </span>
-                <span className="shrink-0">{showConcluded ? '−' : '+'}</span>
+                <span className={`text-label shrink-0 transition-transform duration-200 ${showConcluded ? 'text-op-white' : 'text-op-gray'}`}>
+                  {showConcluded ? '▾' : '▸'}
+                </span>
               </button>
               <button
                 type="button"
