@@ -45,6 +45,7 @@ function Home() {
   const [showPaused, setShowPaused] = useState(false);
   const [showHelpActive, setShowHelpActive] = useState(false);
   const [showHelpPaused, setShowHelpPaused] = useState(false);
+  const [showHelpGargalos, setShowHelpGargalos] = useState(false);
   const [showBottleneckBank, setShowBottleneckBank] = useState(false);
   const [showDay7Nudge, setShowDay7Nudge] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
@@ -225,26 +226,36 @@ function Home() {
         )}
 
         {pendingBottlenecks.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowBottleneckBank(true)}
-            className="w-full flex items-center justify-between gap-3 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left hover:bg-op-navy-elevated transition-colors"
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-small text-op-cyan font-medium">Gargalos pendentes</p>
-              <p className="text-label text-op-gray truncate">
-                {pendingBottlenecks.length !== 1
-                  ? 'Podem se transformar em novos projetos'
-                  : 'Pode se transformar em um novo projeto'}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-label text-op-cyan">Ver →</span>
-              <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none">
-                {pendingBottlenecks.length}
-              </span>
-            </div>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowBottleneckBank(true)}
+              className="flex-1 flex items-center justify-between gap-3 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left hover:bg-op-navy-elevated transition-colors min-w-0"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-small text-op-cyan font-medium">Gargalos pendentes</p>
+                <p className="text-label text-op-gray truncate">
+                  {pendingBottlenecks.length !== 1
+                    ? 'Podem se transformar em novos projetos'
+                    : 'Pode se transformar em um novo projeto'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-label text-op-cyan">Ver →</span>
+                <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none">
+                  {pendingBottlenecks.length}
+                </span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowHelpGargalos(true)}
+              className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors shrink-0"
+              aria-label="O que são Gargalos Pendentes?"
+            >
+              ⓘ
+            </button>
+          </div>
         )}
 
         {/* Pacto — presença contextual [PRD-ITEM-03 Etapa 4] */}
@@ -360,6 +371,58 @@ function Home() {
 
         <CommunityLink url={communityLink} />
       </main>
+
+      {/* Help sheet: Gargalos Pendentes */}
+      {showHelpGargalos && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          onClick={() => setShowHelpGargalos(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">Gargalos Pendentes</h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que é</p>
+              <p className="text-body text-op-white">
+                Gargalos são os principais obstáculos identificados durante os seus registros COPA — fricções específicas que estavam impedindo o avanço de um projeto e foram nomeadas na fase de Organização ou Aferição. Quando superados, frequentemente revelam uma nova frente de trabalho.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">Como surgem</p>
+              <p className="text-body text-op-white">
+                Cada vez que você registra a fase de Organização (mapeando fricções) ou conclui uma Aferição (identificando o próximo gargalo), o app registra o principal obstáculo declarado. Se ele ainda não foi resolvido nem transformado em ação, aparece aqui como pendente.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que fazer com eles</p>
+              <p className="text-body text-op-white">
+                Toque em <span className="font-semibold">Ver →</span> para abrir o Banco de Gargalos. Lá você pode transformar um gargalo em um novo projeto, descartá-lo se não for mais relevante, ou mantê-lo como referência para uma decisão futura.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">Observação</p>
+              <p className="text-body text-op-white">
+                Gargalos pendentes não exigem ação imediata — são um convite à reflexão. O app os mantém visíveis para que você decida o momento certo de agir, sem pressão.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowHelpGargalos(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Help sheet: Projetos Ativos */}
       {showHelpActive && (
