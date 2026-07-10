@@ -275,15 +275,15 @@ function Home() {
 
         {/* PROJETOS ATIVOS — colapsável */}
         <div className="space-y-1 pt-1">
-          <div className="flex items-center gap-2 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setShowActive((s) => !s)}
-              className="flex items-center gap-2 flex-1 text-left min-w-0"
+              className="flex-1 flex items-center gap-2 text-small font-medium rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left hover:opacity-80 transition-opacity min-w-0"
               aria-expanded={showActive}
               aria-label="Expandir projetos ativos"
             >
-              <span className="text-small font-medium uppercase tracking-wide flex-1 text-green-600">
+              <span className="uppercase tracking-wide flex-1 text-green-600">
                 Projetos ativos
               </span>
               {trueActive.length > 0 && (
@@ -334,15 +334,15 @@ function Home() {
         {/* PROJETOS PAUSADOS — colapsável */}
         {pausedProjects.length > 0 && (
           <div className="space-y-1">
-            <div className="flex items-center gap-2 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setShowPaused((s) => !s)}
-                className="flex items-center gap-2 flex-1 text-left min-w-0"
+                className="flex-1 flex items-center gap-2 text-small font-medium rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left hover:opacity-80 transition-opacity min-w-0"
                 aria-expanded={showPaused}
                 aria-label="Expandir projetos pausados"
               >
-                <span className="text-small font-medium text-op-gray uppercase tracking-wide flex-1">
+                <span className="uppercase tracking-wide flex-1 text-op-gray">
                   Projetos pausados
                 </span>
                 <span className="text-label text-op-cyan shrink-0">Ver →</span>

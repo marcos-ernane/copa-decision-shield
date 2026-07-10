@@ -90,16 +90,16 @@ export function PactContextBanner({ projects, entries }: Props) {
     <>
       <section className="space-y-1">
         {/* Linha do título — clicável para abrir/fechar a lista */}
-        <div className="flex items-center gap-2 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setShowItems((s) => !s)}
-            className="flex items-center gap-2 flex-1 text-left min-w-0"
+            className="flex-1 flex items-center gap-2 text-small font-medium rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left hover:opacity-80 transition-opacity min-w-0"
             aria-expanded={showItems}
             aria-label="Expandir pacto de hoje"
           >
             <span
-              className={`text-small font-medium uppercase tracking-wide flex-1 ${
+              className={`uppercase tracking-wide flex-1 ${
                 allDone ? 'text-op-gray' : 'text-op-amber animate-pulse'
               }`}
             >
