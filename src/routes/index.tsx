@@ -43,6 +43,7 @@ function Home() {
   const [showConcluded, setShowConcluded] = useState(false);
   const [showActive, setShowActive] = useState(false);
   const [showPaused, setShowPaused] = useState(false);
+  const [showHelpConcluded, setShowHelpConcluded] = useState(false);
   const [showHelpActive, setShowHelpActive] = useState(false);
   const [showHelpPaused, setShowHelpPaused] = useState(false);
   const [showHelpGargalos, setShowHelpGargalos] = useState(false);
@@ -183,18 +184,28 @@ function Home() {
 
         {concluded.length > 0 && (
           <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => setShowConcluded((s) => !s)}
-              className="w-full flex items-center gap-2 text-small font-medium rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 transition-opacity hover:opacity-80"
-              style={{ color: 'var(--color-brand-red)' }}
-            >
-              <span className="uppercase tracking-wide flex-1">Projetos já concluídos</span>
-              <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none shrink-0">
-                {concluded.length}
-              </span>
-              <span className="shrink-0">{showConcluded ? '−' : '+'}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowConcluded((s) => !s)}
+                className="flex-1 flex items-center gap-2 text-small font-medium rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left transition-opacity hover:opacity-80 min-w-0"
+                style={{ color: 'var(--color-brand-red)' }}
+              >
+                <span className="uppercase tracking-wide flex-1">Projetos já concluídos</span>
+                <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none shrink-0">
+                  {concluded.length}
+                </span>
+                <span className="shrink-0">{showConcluded ? '−' : '+'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowHelpConcluded(true)}
+                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors shrink-0"
+                aria-label="O que são Projetos Concluídos?"
+              >
+                ⓘ
+              </button>
+            </div>
             {showConcluded && (
               <div className="space-y-3">
                 {concluded.map((p) => (
@@ -368,6 +379,58 @@ function Home() {
 
         <CommunityLink url={communityLink} />
       </main>
+
+      {/* Help sheet: Projetos Já Concluídos */}
+      {showHelpConcluded && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          onClick={() => setShowHelpConcluded(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">Projetos Já Concluídos</h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que é</p>
+              <p className="text-body text-op-white">
+                Projetos em que o Norte foi alcançado — o objetivo principal foi atingido. Cada projeto concluído gera automaticamente um capítulo no <span className="font-semibold">Manual do Operador</span>, preservando o que aconteceu, o que funcionou, o que não funcionou e o aprendizado extraído.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">Como concluir um projeto</p>
+              <p className="text-body text-op-white">
+                No Dashboard do projeto, acesse o menu <span className="font-semibold">···</span> no canto superior direito e escolha <span className="font-semibold">Concluir projeto</span>. O app guia por 3 telas: confirmação do Norte alcançado · o que aconteceu · prévia do capítulo gerado.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">Como navegar</p>
+              <p className="text-body text-op-white">
+                Toque em <span className="font-semibold">+</span> para expandir a lista. Toque em qualquer projeto para acessar o Dashboard — o histórico completo e o capítulo do Manual permanecem acessíveis e podem ser consultados a qualquer momento.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">Concluído vs. Arquivado</p>
+              <p className="text-body text-op-white">
+                Concluído significa que o Norte foi alcançado — há um capítulo documentado e princípios extraídos. Arquivado significa que o projeto foi encerrado sem atingir o Norte. Ambos preservam todos os dados, mas apenas os concluídos geram capítulo no Manual.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowHelpConcluded(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Help sheet: Gargalos Pendentes */}
       {showHelpGargalos && (
