@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, BotMessageSquare, Lightbulb } from 'lucide-react';
+import { Send, Loader2, BotMessageSquare, Lightbulb, ChevronDown } from 'lucide-react';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { BackButton } from '@/components/app/BackButton';
@@ -18,6 +18,72 @@ const SUGGESTED_QUESTIONS = [
   'Qual a diferença entre Modo Pressão e COPA?',
   'Como funciona o Banco de Princípios?',
   'O que é a Camada Operacional?',
+];
+
+const EXTENDED_QUESTIONS: Array<{ category: string; questions: string[] }> = [
+  {
+    category: 'Primeiros passos',
+    questions: [
+      'Por onde começo se é meu primeiro acesso ao app?',
+      'Posso usar o app sem criar uma conta?',
+      'O que é o Norte de um projeto e como definir bem?',
+    ],
+  },
+  {
+    category: 'Método COPA',
+    questions: [
+      'Qual a diferença entre Captura, Organização, Prova e Aferição no COPA?',
+      'Como sei qual formato de registro usar — C, O, P ou A?',
+      'Como saber se minha IMV está bem definida antes de salvar?',
+      'O que fazer quando não consigo definir uma IMV clara?',
+      'Como extrair um Princípio valioso numa Análise Pós-Ação (APA)?',
+    ],
+  },
+  {
+    category: 'Diagnóstico e contexto',
+    questions: [
+      'Como identificar qual Tipo de Cenário corresponde ao meu projeto?',
+      'O que é a Camada Operacional e como identificar a correta?',
+      'Como funciona a sequência de estados do projeto (Novo → Concluído)?',
+      'Por que meu projeto aparece como "Travado" e o que fazer?',
+    ],
+  },
+  {
+    category: 'Ferramentas e recursos',
+    questions: [
+      'O que é a Bússola e quando devo consultá-la?',
+      'Como usar o Protocolo de 5 Minutos em dias de baixa energia?',
+      'O que é a Tabela de Fricções e como ela me ajuda?',
+      'Para que serve a Folha do Operador?',
+      'O que é a Criatividade Funcional Guiada e quando usá-la?',
+      'Como ativar e usar o Pacto de Execução Semanal?',
+    ],
+  },
+  {
+    category: 'Painel e aprendizado',
+    questions: [
+      'Como funciona o Índice do Operador no Painel?',
+      'O que é a Linha de Base e por que fazer no início?',
+      'Como funciona o Principle Recall — quando o app sugere princípios?',
+      'O que é um Princípio Mestre e como consolidar um?',
+    ],
+  },
+  {
+    category: 'Histórico e progresso',
+    questions: [
+      'Como o Manual do Operador é gerado ao concluir um projeto?',
+      'O que é a Prova de Transferência e quando realizá-la?',
+      'Como corrigir um registro sem apagar o original?',
+    ],
+  },
+  {
+    category: 'Planos e acesso',
+    questions: [
+      'O que está disponível no plano gratuito e o que exige assinatura?',
+      'Quais os planos de assinatura disponíveis e seus preços?',
+      'O app funciona sem internet? O que fica disponível offline?',
+    ],
+  },
 ];
 
 // Fallback estático para quando o Edge Function não está disponível (dev local)
@@ -104,6 +170,7 @@ export function HelpCenterChat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showExtended, setShowExtended] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -164,6 +231,46 @@ export function HelpCenterChat() {
               {q}
             </button>
           ))}
+        </div>
+
+        {/* Lista expandível com 25 perguntas organizadas por categoria */}
+        <div className="mt-3">
+          <button
+            onClick={() => setShowExtended((prev) => !prev)}
+            className="flex items-center gap-1.5 text-label text-op-gray hover:text-op-white transition-colors"
+          >
+            <ChevronDown
+              className={`size-3.5 transition-transform duration-200 ${showExtended ? 'rotate-180' : ''}`}
+            />
+            {showExtended ? 'Ocultar sugestões' : 'Ver mais 25 perguntas que você pode fazer'}
+          </button>
+
+          {showExtended && (
+            <div className="mt-2 max-h-56 overflow-y-auto space-y-3 pr-1 pb-1">
+              {EXTENDED_QUESTIONS.map((group) => (
+                <div key={group.category}>
+                  <p className="text-label text-op-gray/60 uppercase tracking-wide mb-1 pl-1">
+                    {group.category}
+                  </p>
+                  <div className="space-y-1">
+                    {group.questions.map((q) => (
+                      <button
+                        key={q}
+                        onClick={() => {
+                          setShowExtended(false);
+                          void send(q);
+                        }}
+                        disabled={loading}
+                        className="w-full text-left text-label px-3 py-2 rounded-lg border border-op-gray/20 bg-op-navy/60 text-op-gray hover:text-op-white hover:border-op-cyan/30 hover:bg-op-navy transition-colors disabled:opacity-40"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
