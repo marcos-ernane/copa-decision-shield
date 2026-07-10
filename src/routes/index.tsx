@@ -43,6 +43,8 @@ function Home() {
   const [showConcluded, setShowConcluded] = useState(false);
   const [showActive, setShowActive] = useState(false);
   const [showPaused, setShowPaused] = useState(false);
+  const [showHelpActive, setShowHelpActive] = useState(false);
+  const [showHelpPaused, setShowHelpPaused] = useState(false);
   const [showBottleneckBank, setShowBottleneckBank] = useState(false);
   const [showDay7Nudge, setShowDay7Nudge] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
@@ -250,25 +252,38 @@ function Home() {
 
         {/* PROJETOS ATIVOS — colapsável */}
         <div className="space-y-1 pt-1">
-          <button
-            type="button"
-            onClick={() => setShowActive((s) => !s)}
-            className="w-full flex items-center gap-2 text-left py-1"
-            aria-expanded={showActive}
-            aria-label="Expandir projetos ativos"
-          >
-            <span className="text-label text-op-gray uppercase tracking-wide flex-1">
-              Projetos ativos
-            </span>
-            {trueActive.length > 0 && (
-              <span className="text-label font-semibold text-op-gray bg-op-gray/10 border border-op-gray/30 rounded-full px-2 py-0.5 leading-none shrink-0">
-                {trueActive.length}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowActive((s) => !s)}
+              className="flex items-center gap-2 flex-1 text-left min-w-0"
+              aria-expanded={showActive}
+              aria-label="Expandir projetos ativos"
+            >
+              <span className="text-label text-op-gray uppercase tracking-wide flex-1">
+                Projetos ativos
               </span>
-            )}
-            <span className={`text-label shrink-0 transition-transform duration-200 ${showActive ? 'text-op-white' : 'text-op-gray'}`}>
-              {showActive ? '▾' : '▸'}
-            </span>
-          </button>
+              {trueActive.length > 0 && (
+                <>
+                  <span className="text-label text-op-gray shrink-0">Ver →</span>
+                  <span className="text-label font-semibold text-op-gray bg-op-gray/10 border border-op-gray/30 rounded-full px-2 py-0.5 leading-none shrink-0">
+                    {trueActive.length}
+                  </span>
+                </>
+              )}
+              <span className={`text-label shrink-0 transition-transform duration-200 ${showActive ? 'text-op-white' : 'text-op-gray'}`}>
+                {showActive ? '▾' : '▸'}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowHelpActive(true)}
+              className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors shrink-0"
+              aria-label="O que são Projetos Ativos?"
+            >
+              ⓘ
+            </button>
+          </div>
 
           {showActive && (
             <div className="space-y-3 pt-1">
@@ -296,23 +311,34 @@ function Home() {
         {/* PROJETOS PAUSADOS — colapsável */}
         {pausedProjects.length > 0 && (
           <div className="space-y-1">
-            <button
-              type="button"
-              onClick={() => setShowPaused((s) => !s)}
-              className="w-full flex items-center gap-2 text-left py-1"
-              aria-expanded={showPaused}
-              aria-label="Expandir projetos pausados"
-            >
-              <span className="text-label text-op-gray uppercase tracking-wide flex-1">
-                Projetos pausados
-              </span>
-              <span className="text-label font-semibold text-op-gray bg-op-gray/10 border border-op-gray/30 rounded-full px-2 py-0.5 leading-none shrink-0">
-                {pausedProjects.length}
-              </span>
-              <span className={`text-label shrink-0 transition-transform duration-200 ${showPaused ? 'text-op-white' : 'text-op-gray'}`}>
-                {showPaused ? '▾' : '▸'}
-              </span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPaused((s) => !s)}
+                className="flex items-center gap-2 flex-1 text-left min-w-0"
+                aria-expanded={showPaused}
+                aria-label="Expandir projetos pausados"
+              >
+                <span className="text-label text-op-gray uppercase tracking-wide flex-1">
+                  Projetos pausados
+                </span>
+                <span className="text-label text-op-gray shrink-0">Ver →</span>
+                <span className="text-label font-semibold text-op-gray bg-op-gray/10 border border-op-gray/30 rounded-full px-2 py-0.5 leading-none shrink-0">
+                  {pausedProjects.length}
+                </span>
+                <span className={`text-label shrink-0 transition-transform duration-200 ${showPaused ? 'text-op-white' : 'text-op-gray'}`}>
+                  {showPaused ? '▾' : '▸'}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowHelpPaused(true)}
+                className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors shrink-0"
+                aria-label="O que são Projetos Pausados?"
+              >
+                ⓘ
+              </button>
+            </div>
 
             {showPaused && (
               <div className="space-y-3 pt-1">
@@ -334,6 +360,110 @@ function Home() {
 
         <CommunityLink url={communityLink} />
       </main>
+
+      {/* Help sheet: Projetos Ativos */}
+      {showHelpActive && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          onClick={() => setShowHelpActive(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">Projetos Ativos</h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que é</p>
+              <p className="text-body text-op-white">
+                Projetos em que você está trabalhando — capturando informações, organizando recursos, testando uma ação ou avaliando resultados. Cada projeto tem um Norte claro: a condição que indica que ele melhorou de verdade.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">Estados possíveis</p>
+              <p className="text-body text-op-white">
+                Um projeto ativo pode estar em diferentes fases: <span className="font-semibold">Novo</span> (sem registros ainda), <span className="font-semibold">Capturando</span>, <span className="font-semibold">Organizando</span>, <span className="font-semibold">Em teste</span> (com uma IMV ativa) ou <span className="font-semibold">Travado</span> (sem registro há mais de 7 dias). O app calcula o estado automaticamente com base nos seus registros — você não altera isso manualmente.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">Como navegar</p>
+              <p className="text-body text-op-white">
+                Toque em qualquer projeto para abrir o <span className="font-semibold">Dashboard</span>, que mostra a fase atual, o gargalo em foco, o progresso da semana e o histórico de registros. A partir do Dashboard você registra, analisa e pode concluir o projeto.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">Dica de uso</p>
+              <p className="text-body text-op-white">
+                Projetos travados aparecem no topo da lista — são os que mais precisam de atenção. Para pausar temporariamente, acesse o menu <span className="font-semibold">···</span> no Dashboard do projeto.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowHelpActive(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Help sheet: Projetos Pausados */}
+      {showHelpPaused && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          onClick={() => setShowHelpPaused(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">Projetos Pausados</h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que é</p>
+              <p className="text-body text-op-white">
+                Projetos temporariamente parados por uma razão declarada — aguardando resultado externo, dependência de terceiros ou qualquer impedimento que bloqueie o avanço agora. O motivo da pausa fica visível no card do projeto.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">Como pausar um projeto</p>
+              <p className="text-body text-op-white">
+                No Dashboard do projeto, acesse o menu <span className="font-semibold">···</span> no canto superior direito e escolha <span className="font-semibold">Pausar projeto</span>. Você informará o motivo da pausa, que ficará visível enquanto o projeto estiver nesse estado.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">Como retomar</p>
+              <p className="text-body text-op-white">
+                Expanda a lista de projetos pausados e toque em <span className="font-semibold">Retomar</span> no card do projeto. Ele voltará ao estado <span className="font-semibold">Novo</span> e reaparecerá entre os projetos ativos imediatamente.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">Pausado vs. Arquivado</p>
+              <p className="text-body text-op-white">
+                Pausado é temporário — você pretende retomar quando o impedimento passar. Arquivado é permanente, para projetos encerrados sem atingir o Norte. Nenhum dos dois apaga registros, princípios ou histórico.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowHelpPaused(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       <BottleneckBankSheet
         open={showBottleneckBank}
