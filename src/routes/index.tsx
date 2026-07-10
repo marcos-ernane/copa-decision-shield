@@ -41,6 +41,8 @@ function Home() {
   const [communityLink, setCommunityLink] = useState<string | null>(null);
   const [inboxCount, setInboxCount] = useState(0);
   const [showConcluded, setShowConcluded] = useState(false);
+  const [showActive, setShowActive] = useState(false);
+  const [showPaused, setShowPaused] = useState(false);
   const [showBottleneckBank, setShowBottleneckBank] = useState(false);
   const [showDay7Nudge, setShowDay7Nudge] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
@@ -146,6 +148,8 @@ function Home() {
   if (!ready) return null;
 
   const { active, concluded } = sortProjects(projects);
+  const trueActive = active.filter((p) => p.state !== 'paused');
+  const pausedProjects = active.filter((p) => p.state === 'paused');
 
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
@@ -244,27 +248,89 @@ function Home() {
         {/* Pacto — presença contextual [PRD-ITEM-03 Etapa 4] */}
         <PactContextBanner projects={projects} entries={entries} />
 
-        <p className="text-label text-op-gray uppercase tracking-wide pt-1">
-          Projetos ativos
-        </p>
+        {/* PROJETOS ATIVOS — colapsável */}
+        <div className="space-y-1 pt-1">
+          <button
+            type="button"
+            onClick={() => setShowActive((s) => !s)}
+            className="w-full flex items-center gap-2 text-left py-1"
+            aria-expanded={showActive}
+            aria-label="Expandir projetos ativos"
+          >
+            <span className="text-label text-op-gray uppercase tracking-wide flex-1">
+              Projetos ativos
+            </span>
+            {trueActive.length > 0 && (
+              <span className="text-label font-semibold text-op-gray bg-op-gray/10 border border-op-gray/30 rounded-full px-2 py-0.5 leading-none shrink-0">
+                {trueActive.length}
+              </span>
+            )}
+            <span className={`text-label shrink-0 transition-transform duration-200 ${showActive ? 'text-op-white' : 'text-op-gray'}`}>
+              {showActive ? '▾' : '▸'}
+            </span>
+          </button>
 
-        {active.length === 0 && (
-          <p className="text-small text-op-gray py-8 text-center">
-            Nenhum projeto em campo.
-          </p>
+          {showActive && (
+            <div className="space-y-3 pt-1">
+              {trueActive.length === 0 ? (
+                <p className="text-small text-op-gray py-8 text-center">
+                  Nenhum projeto em campo.
+                </p>
+              ) : (
+                trueActive.map((p) => (
+                  <ProjectCard
+                    key={p.id}
+                    project={p}
+                    recallPrinciple={principles[p.id]}
+                    onEdit={() => navigate({ to: '/project/$id/edit', params: { id: p.id } })}
+                    onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
+                    onArchive={() => setArchivingId(p.id)}
+                    onPause={() => setPausingId(p.id)}
+                  />
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* PROJETOS PAUSADOS — colapsável */}
+        {pausedProjects.length > 0 && (
+          <div className="space-y-1">
+            <button
+              type="button"
+              onClick={() => setShowPaused((s) => !s)}
+              className="w-full flex items-center gap-2 text-left py-1"
+              aria-expanded={showPaused}
+              aria-label="Expandir projetos pausados"
+            >
+              <span className="text-label text-op-gray uppercase tracking-wide flex-1">
+                Projetos pausados
+              </span>
+              <span className="text-label font-semibold text-op-gray bg-op-gray/10 border border-op-gray/30 rounded-full px-2 py-0.5 leading-none shrink-0">
+                {pausedProjects.length}
+              </span>
+              <span className={`text-label shrink-0 transition-transform duration-200 ${showPaused ? 'text-op-white' : 'text-op-gray'}`}>
+                {showPaused ? '▾' : '▸'}
+              </span>
+            </button>
+
+            {showPaused && (
+              <div className="space-y-3 pt-1">
+                {pausedProjects.map((p) => (
+                  <ProjectCard
+                    key={p.id}
+                    project={p}
+                    recallPrinciple={principles[p.id]}
+                    onEdit={() => navigate({ to: '/project/$id/edit', params: { id: p.id } })}
+                    onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
+                    onArchive={() => setArchivingId(p.id)}
+                    onResume={() => void handleResume(p.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         )}
-        {active.map((p) => (
-          <ProjectCard
-            key={p.id}
-            project={p}
-            recallPrinciple={principles[p.id]}
-            onEdit={() => navigate({ to: '/project/$id/edit', params: { id: p.id } })}
-            onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
-            onArchive={() => setArchivingId(p.id)}
-            onPause={p.state !== 'paused' ? () => setPausingId(p.id) : undefined}
-            onResume={p.state === 'paused' ? () => void handleResume(p.id) : undefined}
-          />
-        ))}
 
         <CommunityLink url={communityLink} />
       </main>
