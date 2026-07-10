@@ -186,17 +186,14 @@ function Home() {
             <button
               type="button"
               onClick={() => setShowConcluded((s) => !s)}
-              className="w-full flex items-center gap-2 text-small font-medium py-1 transition-opacity hover:opacity-80"
+              className="w-full flex items-center gap-2 text-small font-medium rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 transition-opacity hover:opacity-80"
               style={{ color: 'var(--color-brand-red)' }}
             >
-              <span>Projetos já concluídos</span>
-              <span
-                className="text-label font-semibold rounded-full px-2 py-0.5 leading-none border shrink-0"
-                style={{ backgroundColor: 'rgba(220,38,38,0.1)', borderColor: 'rgba(220,38,38,0.3)' }}
-              >
+              <span className="uppercase tracking-wide flex-1">Projetos já concluídos</span>
+              <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none shrink-0">
                 {concluded.length}
               </span>
-              <span className="ml-auto">{showConcluded ? '−' : '+'}</span>
+              <span className="shrink-0">{showConcluded ? '−' : '+'}</span>
             </button>
             {showConcluded && (
               <div className="space-y-3">
@@ -233,7 +230,7 @@ function Home() {
               className="flex-1 flex items-center justify-between gap-3 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 text-left hover:bg-op-navy-elevated transition-colors min-w-0"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-small text-op-cyan font-medium">Gargalos pendentes</p>
+                <p className="text-small text-op-cyan font-medium uppercase tracking-wide">Gargalos pendentes</p>
                 <p className="text-label text-op-gray truncate">
                   {pendingBottlenecks.length !== 1
                     ? 'Podem se transformar em novos projetos'
@@ -263,7 +260,7 @@ function Home() {
 
         {/* PROJETOS ATIVOS — colapsável */}
         <div className="space-y-1 pt-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3">
             <button
               type="button"
               onClick={() => setShowActive((s) => !s)}
@@ -276,8 +273,8 @@ function Home() {
               </span>
               {trueActive.length > 0 && (
                 <>
-                  <span className="text-label text-op-gray shrink-0">Ver →</span>
-                  <span className="text-label font-semibold text-op-gray bg-op-gray/10 border border-op-gray/30 rounded-full px-2 py-0.5 leading-none shrink-0">
+                  <span className="text-label text-op-cyan shrink-0">Ver →</span>
+                  <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none shrink-0">
                     {trueActive.length}
                   </span>
                 </>
@@ -322,7 +319,7 @@ function Home() {
         {/* PROJETOS PAUSADOS — colapsável */}
         {pausedProjects.length > 0 && (
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3">
               <button
                 type="button"
                 onClick={() => setShowPaused((s) => !s)}
@@ -333,8 +330,8 @@ function Home() {
                 <span className="text-label text-op-gray uppercase tracking-wide flex-1">
                   Projetos pausados
                 </span>
-                <span className="text-label text-op-gray shrink-0">Ver →</span>
-                <span className="text-label font-semibold text-op-gray bg-op-gray/10 border border-op-gray/30 rounded-full px-2 py-0.5 leading-none shrink-0">
+                <span className="text-label text-op-cyan shrink-0">Ver →</span>
+                <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none shrink-0">
                   {pausedProjects.length}
                 </span>
                 <span className={`text-label shrink-0 transition-transform duration-200 ${showPaused ? 'text-op-white' : 'text-op-gray'}`}>

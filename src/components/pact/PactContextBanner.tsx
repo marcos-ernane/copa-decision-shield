@@ -90,7 +90,7 @@ export function PactContextBanner({ projects, entries }: Props) {
     <>
       <section className="space-y-1">
         {/* Linha do título — clicável para abrir/fechar a lista */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3">
           <button
             type="button"
             onClick={() => setShowItems((s) => !s)}
@@ -109,7 +109,7 @@ export function PactContextBanner({ projects, entries }: Props) {
             {pendingCount > 0 && (
               <>
                 <span className="text-label text-op-cyan shrink-0">Ver →</span>
-                <span className="text-label font-semibold text-op-amber bg-op-amber/10 border border-op-amber/30 rounded-full px-2 py-0.5 leading-none shrink-0">
+                <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none shrink-0">
                   {pendingCount}
                 </span>
               </>
