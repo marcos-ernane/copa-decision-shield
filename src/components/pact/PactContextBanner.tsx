@@ -68,7 +68,8 @@ export function PactContextBanner({ projects, entries }: Props) {
 
   if (items.length === 0) return null;
 
-  const allDone = items.every((i) => i.done);
+  const pendingCount = items.filter((i) => !i.done).length;
+  const allDone = pendingCount === 0;
 
   function handleClick(item: PactItem) {
     if (item.done) {
@@ -86,12 +87,23 @@ export function PactContextBanner({ projects, entries }: Props) {
 
   return (
     <>
-      <section className="space-y-2">
-        {/* Título com botão de ajuda */}
+      <section className="space-y-1">
+        {/* Título: pulsante âmbar quando há pendentes + contador + botão de ajuda */}
         <div className="flex items-center gap-2">
-          <p className="text-label text-op-gray uppercase tracking-wide flex-1">
+          <p
+            className={`text-label uppercase tracking-wide flex-1 ${
+              allDone ? 'text-op-gray' : 'text-op-amber animate-pulse'
+            }`}
+          >
             {allDone ? 'Pacto de hoje — concluído' : 'Pacto de hoje'}
           </p>
+
+          {pendingCount > 0 && (
+            <span className="text-label font-semibold text-op-amber bg-op-amber/10 border border-op-amber/30 rounded-full px-2 py-0.5 leading-none">
+              {pendingCount}
+            </span>
+          )}
+
           <button
             type="button"
             onClick={() => setShowHelp(true)}
@@ -102,34 +114,35 @@ export function PactContextBanner({ projects, entries }: Props) {
           </button>
         </div>
 
-        {items.map(({ project, phase, done }) => (
-          <button
-            key={`${project.id}-${phase}`}
-            type="button"
-            onClick={() => handleClick({ project, phase, done })}
-            className={`w-full flex items-center justify-between gap-3 rounded-md border px-4 py-3 text-left transition-colors ${
-              done
-                ? 'border-op-gray/20 bg-op-navy/50 opacity-60'
-                : 'border-op-amber/30 bg-op-navy hover:bg-op-navy-elevated'
-            }`}
-          >
-            <div className="min-w-0">
-              <p
-                className={`text-small font-medium truncate ${
-                  done ? 'text-muted-foreground line-through' : 'text-op-white'
-                }`}
+        {/* Lista compacta recuada — sem cartões, texto direto */}
+        <ul className="pl-2 space-y-0.5">
+          {items.map(({ project, phase, done }) => (
+            <li key={`${project.id}-${phase}`}>
+              <button
+                type="button"
+                onClick={() => handleClick({ project, phase, done })}
+                className="w-full flex items-center justify-between gap-3 py-1.5 px-1 text-left rounded-md hover:bg-op-navy/60 transition-colors"
               >
-                {project.name}
-              </p>
-              <p className="text-label text-op-gray">{PHASE_LABEL[phase]}</p>
-            </div>
-            {done ? (
-              <span className="text-label text-op-gray shrink-0">feito</span>
-            ) : (
-              <span className="text-label text-op-amber shrink-0">fazer →</span>
-            )}
-          </button>
-        ))}
+                <div className="flex items-start gap-1.5 min-w-0">
+                  <span className={`text-label shrink-0 mt-0.5 ${done ? 'text-op-gray/40' : 'text-op-amber'}`}>
+                    ·
+                  </span>
+                  <div className="min-w-0">
+                    <p className={`text-small leading-tight truncate ${done ? 'line-through text-muted-foreground' : 'text-op-white'}`}>
+                      {project.name}
+                    </p>
+                    <p className="text-label text-op-gray/70">{PHASE_LABEL[phase]}</p>
+                  </div>
+                </div>
+                {done ? (
+                  <span className="text-label text-op-gray/50 shrink-0">feito</span>
+                ) : (
+                  <span className="text-label text-op-amber shrink-0">fazer →</span>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* Sheet de ajuda */}
@@ -159,7 +172,8 @@ export function PactContextBanner({ projects, entries }: Props) {
               <p className="text-body text-op-white">
                 Quando você registra a fase correspondente no dia configurado, o app marca
                 automaticamente como concluída — sem botão manual. Itens pendentes aparecem com
-                borda âmbar e "fazer →". Itens feitos aparecem riscados e esmaecidos.
+                "fazer →". Itens feitos aparecem riscados. O contador ao lado do título mostra
+                quantos ainda estão pendentes.
               </p>
             </div>
 
