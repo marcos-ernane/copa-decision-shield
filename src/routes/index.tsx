@@ -256,6 +256,7 @@ function Home() {
                 <span className="text-label font-semibold text-op-cyan bg-op-cyan/10 border border-op-cyan/30 rounded-full px-2 py-0.5 leading-none">
                   {pendingBottlenecks.length}
                 </span>
+                <span className="text-label text-op-gray">▸</span>
               </div>
             </button>
             <button
