@@ -7,7 +7,7 @@ import { GuestStorage } from './guestStorage';
 export type MigrationStatus =
   | { state: 'idle' }
   | { state: 'running'; step: string }
-  | { state: 'done'; counts: { projects: number; entries: number; principles: number } }
+  | { state: 'done'; counts: { projects: number; entries: number; principles: number; chapters: number } }
   | { state: 'error'; message: string };
 
 type Listener = (status: MigrationStatus) => void;
@@ -104,16 +104,50 @@ export async function migrateGuestToCloud(userId: string): Promise<void> {
 
     emit({ state: 'running', step: 'Sincronizando princípios' });
     const principles = GuestStorage.getPrinciples();
+    const principleIdMap = new Map<string, string>();
     for (const pr of principles) {
       const newProjectId = projectIdMap.get(pr.project_id);
       if (!newProjectId) continue;
-      await supabase.from('principles').insert({
+      const { data, error } = await supabase
+        .from('principles')
+        .insert({
+          project_id: newProjectId,
+          user_id: userId,
+          content: pr.content,
+          tags: pr.tags ?? [],
+          scenario_type: pr.scenario_type,
+          layer: pr.layer,
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      principleIdMap.set(pr.id, data.id);
+    }
+
+    emit({ state: 'running', step: 'Sincronizando capítulos' });
+    const chapters = GuestStorage.getChapters();
+    for (const ch of chapters) {
+      const newProjectId = projectIdMap.get(ch.project_id);
+      if (!newProjectId) continue;
+      const remappedPrinciples = (ch.principles ?? [])
+        .map((pid) => principleIdMap.get(pid))
+        .filter((id): id is string => !!id);
+      await supabase.from('chapters').insert({
         project_id: newProjectId,
         user_id: userId,
-        content: pr.content,
-        tags: pr.tags ?? [],
-        scenario_type: pr.scenario_type,
-        layer: pr.layer,
+        north_reached: ch.north_reached,
+        what_happened: ch.what_happened ?? null,
+        what_worked: ch.what_worked ?? null,
+        what_didnt_work: ch.what_didnt_work ?? null,
+        principles: remappedPrinciples,
+        restart_note: ch.restart_note ?? null,
+        final_note: ch.final_note ?? null,
+        predominant_scenario_type: ch.predominant_scenario_type ?? null,
+        predominant_layer: ch.predominant_layer ?? null,
+        accumulated_imvs: ch.accumulated_imvs ?? 0,
+        valid_principles_count: ch.valid_principles_count ?? 0,
+        discarded_patterns: ch.discarded_patterns ?? null,
+        evolved_bottleneck: ch.evolved_bottleneck ?? null,
       });
     }
 
@@ -152,6 +186,7 @@ export async function migrateGuestToCloud(userId: string): Promise<void> {
         projects: projects.length,
         entries: entries.length,
         principles: principles.length,
+        chapters: chapters.length,
       },
     });
   } catch (err) {
