@@ -69,6 +69,9 @@ export function PactContextBanner({ projects, entries }: Props) {
 
   if (items.length === 0) return null;
 
+  // Pendentes primeiro, feitos por último
+  items.sort((a, b) => Number(a.done) - Number(b.done));
+
   const pendingCount = items.filter((i) => !i.done).length;
   const allDone = pendingCount === 0;
 
