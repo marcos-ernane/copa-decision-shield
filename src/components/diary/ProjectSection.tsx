@@ -12,6 +12,7 @@ interface ProjectSectionProps {
   group: ProjectGroup;
   defaultExpanded: boolean;
   renderEntry: (entry: Entry) => React.ReactNode;
+  photosSlot?: React.ReactNode;
 }
 
 // ── Project status dot helpers ────────────────────────────────────────────────
@@ -50,7 +51,7 @@ function healthDotBg(color: HealthColor): string {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ProjectSection({ group, defaultExpanded, renderEntry }: ProjectSectionProps) {
+export function ProjectSection({ group, defaultExpanded, renderEntry, photosSlot }: ProjectSectionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [health, setHealth] = useState<ProjectHealth | null>(null);
   const { authState } = useAuthState();
@@ -136,9 +137,14 @@ export function ProjectSection({ group, defaultExpanded, renderEntry }: ProjectS
         <span className="text-[11px] text-op-gray">{stateLabel}</span>
       </div>
 
-      {/* Expanded body — 5 phase sections */}
+      {/* Expanded body — fotos + 5 phase sections */}
       {expanded && (
         <div className="bg-op-navy divide-y divide-op-gray/10">
+          {photosSlot && (
+            <div className="px-3 py-2.5">
+              {photosSlot}
+            </div>
+          )}
           {phases.map((phase, i) => (
             <div key={phase.phase}>
               {i > 0 && <div className="border-t border-op-gray/10 mx-3" />}

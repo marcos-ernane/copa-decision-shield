@@ -905,6 +905,7 @@ export function TimelineTab() {
                 group={group}
                 defaultExpanded={i === 0}
                 renderEntry={(entry) => renderEntryCard(entry, 1, true)}
+                photosSlot={userId ? <ProjectScenarioPhotos projectId={group.project.id} userId={userId} /> : undefined}
               />
             ))}
           </div>
