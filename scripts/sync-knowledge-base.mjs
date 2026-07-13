@@ -165,7 +165,7 @@ const supabaseHeaders = {
   Prefer: 'resolution=merge-duplicates',
 };
 
-const upsertUrl = `${SUPABASE_URL}/rest/v1/app_knowledge_base`;
+const upsertUrl = `${SUPABASE_URL}/rest/v1/app_knowledge_base?on_conflict=section`;
 
 const upsertResponse = await fetch(upsertUrl, {
   method: 'POST',
