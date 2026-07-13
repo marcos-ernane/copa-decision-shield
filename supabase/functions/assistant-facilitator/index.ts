@@ -132,8 +132,10 @@ Nunca afirme que uma funcionalidade não existe baseado apenas em ausência de i
 Nunca invente funcionalidades que não estejam descritas no CONHECIMENTO DO APP.
 Máximo 4 frases.`;
 
-// Fallback estático — ativo quando o banco Supabase está indisponível.
-// Mantém o assistente funcional offline. Sincronizar com app_knowledge_base a cada atualização relevante.
+// Fallback estático de emergência — ativo APENAS quando o banco Supabase está indisponível.
+// NÃO editar manualmente: o conteúdo authoritative vive no banco (app_knowledge_base),
+// populado automaticamente pelo GitHub Action que lê CLAUDE.md via Claude API.
+// Este fallback garante que o assistente continue funcional mesmo sem DB.
 const STATIC_KNOWLEDGE_FALLBACK = `O APP: Operador de Precisão é um sistema de formação operacional aplicado na realidade. NÃO é organizador de tarefas. NÃO é chatbot. NÃO tem gamificação (sem streaks, sem rankings). O app protege decisões — quem decide é sempre o usuário. Funciona sem conta (modo guest, dados salvos localmente) e offline para a maioria das funcionalidades.
 
 NAVEGAÇÃO: 4 abas no menu inferior — Início (projetos), Painel (indicadores), Bússola (método 100% offline), Diário (histórico). Dois botões flutuantes fixos em todas as telas: COPA laranja e PRESSÃO vermelho. Máximo 2 toques para qualquer funcionalidade. Menu inferior nunca esconde ao scrollar.
@@ -144,13 +146,13 @@ COPA DE BOLSO: Método completo em 90 segundos. C=Captura (fatos observáveis �
 
 IMV (Intervenção de Menor Valor): Ação reversível, barata, específica e mensurável. Campos obrigatórios: métrica, prazo, camada operacional. Regra de corte define próximo passo se IMV não confirmar hipótese. Após salvar IMV: convite opcional ao Plano de Execução (Como/Quem/Quando por fase).
 
-APA (Análise Pós-Ação / Formato A): Campo mais importante = Princípio Extraído (destaque com borda cyan). Outros campos: o que aconteceu, por que, decisão, custo oculto (opcional), próximo gargalo. Gera princípio salvo no Banco de Princípios.
+APA (Análise Pós-Ação / Formato A): Campo mais importante = Princípio Extraído (destaque com borda cyan). Outros campos: o que aconteceu, por que, decisão, custo oculto (opcional), próximo gargalo. Gera princípio salvo no Banco de Princípios. Possui seção de fotos: até 2 fotos de cenário Antes e Depois, opcionais.
 
 MODO PRESSÃO: Próximo passo em 15 minutos. Reality Check opcional antes de entrar. Tela de respiro 3 segundos. Fato → Risco → Próxima ação mínima. Sempre ilimitado em todos os planos.
 
-REGISTROS: Pulso (<30s — texto ou voz, classificação: fato/decisão/resultado/dúvida). Formato C (4 passos: Quadro 1=Fatos · Quadro 2=Interpretações · Quadro 3=Hipóteses · Passo 4=Fotos, opcional). Formato O (Mapa 3R: R1=Recursos disponíveis, R2=Fricções/obstáculos, R3=Gargalo principal). Formato P (IMV completa). Formato A (APA com princípio). Registro Corretivo (corrige sem apagar o original).
+REGISTROS: Pulso (<30s — texto ou voz, classificação: fato/decisão/resultado/dúvida). Formato C (4 passos: Quadro 1=Fatos · Quadro 2=Interpretações · Quadro 3=Hipóteses · Passo 4=Fotos opcionais). Formato O (Mapa 3R: R1=Recursos disponíveis, R2=Fricções/obstáculos, R3=Gargalo principal). Formato P (IMV completa). Formato A (APA com princípio + fotos opcionais). Registro Corretivo (corrige sem apagar o original).
 
-FOTOS NO FORMATO C: Após salvar os 3 quadros do Formato C, aparece um 4º passo opcional para adicionar até 3 fotos do cenário (JPEG/PNG/WebP, comprimidas automaticamente). Disponível para qualquer usuário autenticado — sem restrição de plano. Fotos armazenadas privativamente. Aparecem na Timeline com badge de contagem e galeria expandível ao tocar. Exclusivo do Formato C.
+FOTOS DE CENÁRIO (ANTES E DEPOIS): Disponíveis no Formato C (4º passo, após os 3 quadros) e no Formato A/APA (passo 2). Em cada formato: até 2 fotos de cenário Antes e até 2 fotos de cenário Depois (JPEG/PNG/WebP). Disponível para qualquer usuário autenticado — sem restrição de plano. Fotos armazenadas privativamente. No Diário (Timeline), aparece seção "Fotos Antes e Depois" por projeto, com botões de visualização e edição.
 
 PLANO DE EXECUÇÃO DA IMV: Sub-etapa opcional após salvar uma IMV. Convite: "Quer planejar como vai executar isso?". Cada fase tem Como (passo concreto), Quem (texto livre, sem notificação a terceiros) e Quando (prazo anterior ao da IMV). Status: pendente → concluída por marcação explícita. Fase vencida: campo Quando pode ser reaberto. Indicador visual no card do projeto (verde=saudável, âmbar=fase vencida, vermelho=IMV vencida). Exclusivo do COPA completo.
 
@@ -160,7 +162,7 @@ PAINEL: Índice do Operador (3 rings: Clareza/Execução/Aprendizado, nível ini
 
 BÚSSOLA (100% offline): Protocolo de Bolso (6 passos) · Folha do Operador (modo Rápido <3min ou Completo) · Guia Diagnóstico (5 passos interativos) · Tabela de Fricções (matriz 5×4) · Protocolo 5 Minutos (baixa energia, <60s) · Rotina de Manutenção (semanal/quinzenal/mensal) · Simulações do Operador (5 cenários, 2 gratuitos).
 
-PACTO SEMANAL: Rotina opcional por projeto. Padrão: Seg=Captura, Qua=Organização, Sex=Prova, Dom=Aferição. Personaliz ável. Ativado pelo menu [•••] no Dashboard. Lógica sequencial C→O→P→A: fase só disponível se predecessora foi concluída. Badge "hoje" quando disponível, "aguarda anterior" quando bloqueada.
+PACTO SEMANAL: Rotina opcional por projeto. Padrão: Seg=Captura, Qua=Organização, Sex=Prova, Dom=Aferição. Personalizável. Ativado pelo menu [•••] no Dashboard. Lógica sequencial C→O→P→A: fase só disponível se predecessora foi concluída. Badge "hoje" quando disponível, "aguarda anterior" quando bloqueada.
 
 LINHA DE BASE E RUBRICA: Diagnóstico inicial (≈12min). 7 competências × 0-5 = total 0-35: Observação, Inventário de Recursos, Diagnóstico, Criatividade Funcional, Proporcionalidade, Pressão, Ética Operacional. Comparável ao longo do tempo. Acessível pelo Painel.
 
@@ -172,13 +174,15 @@ MODO GUEST: App funciona sem conta. Dados salvos localmente. Ao criar conta: mig
 
 MODO LEITURA: Desativa registros e FABs. Mantém: Timeline, Princípios, Manual, Bússola completa, Dashboard (somente leitura). Banner no menu inferior quando ativo.
 
-INVENTÁRIO COMPLETO: O app tem — texto e voz, fotos no Formato C, COPA de Bolso, Modo Pressão, Pulso, Formatos C/O/P/A, Registro Corretivo, Plano de Execução da IMV, Pacto Semanal, Protocolo 5min, Criatividade Funcional Guiada, Bússola offline, Folha do Operador, Tabela de Fricções, Simulações, Linha de Base, Rubrica, Principle Recall, Banco de Princípios, Padrões do Operador, Prova de Transferência, Manual do Operador, exportação PDF, Modo Guest, migração automática, Modo Leitura.`;
+INVENTÁRIO COMPLETO: O app tem — texto e voz, fotos nos Formatos C e A, COPA de Bolso, Modo Pressão, Pulso, Formatos C/O/P/A, Registro Corretivo, Plano de Execução da IMV, Pacto Semanal, Protocolo 5min, Criatividade Funcional Guiada, Bússola offline, Folha do Operador, Tabela de Fricções, Simulações, Linha de Base, Rubrica, Principle Recall, Banco de Princípios, Padrões do Operador, Prova de Transferência, Manual do Operador, exportação PDF, Modo Guest, migração automática, Modo Leitura.`;
 
 // ============================================================
 // CACHE DINÂMICO DE CONHECIMENTO
 // A Edge Function lê a tabela app_knowledge_base a cada 1 hora (por instância).
-// Para atualizar o conhecimento da IA: UPDATE na tabela via migration SQL.
-// Nunca é necessário redeployar a função para atualizar o conteúdo.
+// Para atualizar o conhecimento da IA: edite CLAUDE.md e faça push para o branch.
+// O GitHub Action (.github/workflows/sync-knowledge-base.yml) lê CLAUDE.md,
+// chama a Claude API e faz upsert automático na tabela. Redeployar a Edge Function
+// não é necessário para atualizar o conteúdo — apenas para mudanças no código.
 // ============================================================
 
 let _knowledgeCache: { content: string; fetchedAt: number } | null = null;
