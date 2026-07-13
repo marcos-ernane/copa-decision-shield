@@ -2,14 +2,16 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { X, CircleHelp, Plus, ChevronDown, ListChecks } from 'lucide-react';
+import { X, CircleHelp, Plus, ChevronDown, ListChecks, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceInput } from '@/components/copa/VoiceInput';
-import { saveStructuredP, savePassive, updateEntryExecutionPlan, type StructuredPContent } from '@/lib/register';
+import { saveStructuredP, savePassive, updateEntryExecutionPlan, type StructuredPContent, type CostBenefitData } from '@/lib/register';
 import { createPlan } from '@/lib/executionPlan';
 import { updateProject } from '@/lib/projects';
+import { formatCurrency } from '@/lib/costBenefit';
 import { ExecutionPlanInvite } from '@/components/copa/ExecutionPlanInvite';
+import { CostBenefitSheet } from '@/components/register/CostBenefitSheet';
 import { StepDots } from './StepDots';
 import type { Entry } from '@/types/database';
 import {
@@ -285,6 +287,11 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const [metricHelp, setMetricHelp] = useState(false);
   const [cutRuleHelp, setCutRuleHelp] = useState(false);
   const [deadlineHelp, setDeadlineHelp] = useState(false);
+  const [showCostBenefit, setShowCostBenefit] = useState(false);
+  const [costBenefitData, setCostBenefitData] = useState<CostBenefitData | undefined>(
+    initialData?.cost_benefit,
+  );
+  const [confirmCheapChange, setConfirmCheapChange] = useState(false);
 
   const hasChanges =
     action.trim() !== (initialData?.action ?? '') ||
@@ -309,6 +316,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
       deadline: deadline || null,
       cut_rule: cutRule.trim(),
       layer,
+      ...(costBenefitData ? { cost_benefit: costBenefitData } : {}),
     }, scenarioType);
     if (updateLayer && layer) {
       await updateProject(projectId, { current_layer: layer });
@@ -637,9 +645,33 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               </button>
             </div>
             <p className="text-[11px] text-op-gray mb-1">Exige pouco investimento, tempo e esforço.</p>
-            <YesNo value={cheap} onChange={setCheap} />
+            <YesNo
+              value={cheap}
+              onChange={(val) => {
+                if (cheap === false && val === true && costBenefitData) {
+                  setConfirmCheapChange(true);
+                } else {
+                  setCheap(val);
+                }
+              }}
+            />
             {cheap === false && (
-              <p className="text-small mt-1" style={{ color: '#f97316' }}>Tem custo relevante sendo assumido aqui.</p>
+              <>
+                <p className="text-small mt-1" style={{ color: '#f97316' }}>Tem custo relevante sendo assumido aqui.</p>
+                <button
+                  type="button"
+                  onClick={() => setShowCostBenefit(true)}
+                  className="flex items-center gap-1 mt-2 text-label text-brand-blue hover:underline"
+                >
+                  <BarChart2 className="size-3.5" />
+                  {costBenefitData ? 'Ver análise de custo/benefício →' : 'Analisar custo/benefício →'}
+                </button>
+                {costBenefitData && (
+                  <p className="text-[11px] text-op-gray mt-1">
+                    {costBenefitData.relacao} · {formatCurrency(costBenefitData.total_custo)}
+                  </p>
+                )}
+              </>
             )}
           </div>
           <div>
@@ -935,6 +967,45 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    {/* Diálogo de confirmação — Apagar análise de custo/benefício ao marcar Barato = SIM */}
+    <AlertDialog open={confirmCheapChange} onOpenChange={(v) => { if (!v) setConfirmCheapChange(false); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Apagar análise de custo/benefício?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Marcar "Barato" como SIM vai apagar a análise de custo/benefício salva. Essa ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setConfirmCheapChange(false)}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive hover:bg-destructive/90"
+            onClick={() => {
+              setCheap(true);
+              setCostBenefitData(undefined);
+              setConfirmCheapChange(false);
+            }}
+          >
+            Apagar e marcar SIM
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* CostBenefitSheet */}
+    {showCostBenefit && (
+      <CostBenefitSheet
+        isOpen={showCostBenefit}
+        onClose={() => setShowCostBenefit(false)}
+        onSave={(data) => {
+          setCostBenefitData(data);
+          setShowCostBenefit(false);
+        }}
+        initialData={costBenefitData}
+        imvTitle={action}
+      />
+    )}
 
 </>
   );
