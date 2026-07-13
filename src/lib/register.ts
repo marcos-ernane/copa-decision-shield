@@ -77,6 +77,32 @@ export interface ActionPlan {
   generated_at: string;     // ISO timestamp da geração
 }
 
+export interface CostItem {
+  id: string;
+  nome: string;
+  valor: number;
+  grau: 1 | 2 | 3 | 4 | 5;
+}
+
+export interface BenefitItem {
+  id: string;
+  descricao: string;
+  grau: 1 | 2 | 3 | 4 | 5;
+}
+
+export type CostBenefitRelacao = 'FAVORÁVEL' | 'EQUILIBRADO' | 'DESFAVORÁVEL';
+
+export interface CostBenefitData {
+  custos: CostItem[];
+  beneficios: BenefitItem[];
+  total_custo: number;
+  grau_medio_custo: number;
+  grau_medio_beneficio: number;
+  relacao: CostBenefitRelacao;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface StructuredPContent {
   action: string;
   reversible: boolean | null;
@@ -90,6 +116,7 @@ export interface StructuredPContent {
   ethical_check?: string | null;
   execution_plan?: ExecutionPlan;
   action_plan?: ActionPlan;
+  cost_benefit?: CostBenefitData;
 }
 
 export interface StructuredAContent {
