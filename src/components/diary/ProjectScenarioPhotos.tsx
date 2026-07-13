@@ -156,7 +156,7 @@ export function ProjectScenarioPhotos({ projectId, userId }: Props) {
           onClick={handleCloseRegister}
         >
           <div
-            className="w-full bg-op-navy rounded-t-2xl p-4 space-y-4"
+            className="w-full bg-op-navy rounded-t-2xl p-4 space-y-4 max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">

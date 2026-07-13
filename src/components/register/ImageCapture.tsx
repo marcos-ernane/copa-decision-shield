@@ -117,12 +117,12 @@ export function ImageCapture({ entryId, userId, maxPhotos = 2, label }: Props) {
           {images.map((img, idx) => (
             <div
               key={img.id}
-              className="relative aspect-square rounded-md overflow-hidden bg-op-navy-elevated"
+              className="relative aspect-square rounded-md bg-op-navy-elevated"
             >
               {img.signed_url ? (
                 <button
                   type="button"
-                  className="w-full h-full"
+                  className="w-full h-full rounded-md overflow-hidden"
                   onClick={() => setViewerUrl(img.signed_url!)}
                   aria-label={`Ver foto ${idx + 1} em tela cheia`}
                 >
@@ -133,21 +133,22 @@ export function ImageCapture({ entryId, userId, maxPhotos = 2, label }: Props) {
                   />
                 </button>
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
+                <div className="w-full h-full rounded-md overflow-hidden flex items-center justify-center">
                   <ImageOff className="size-5 text-op-gray" />
                 </div>
               )}
+              {/* Botão excluir fora do overflow-hidden — área de toque 44×44px */}
               <button
                 type="button"
-                className="absolute top-1 right-1 rounded-full bg-black/60 p-0.5 hover:bg-black/80 transition-colors"
+                className="absolute top-1 right-1 rounded-full bg-black/70 p-2 hover:bg-black/90 transition-colors z-10"
                 onClick={() => handleDelete(img)}
                 disabled={deletingId === img.id}
                 aria-label="Remover foto"
               >
                 {deletingId === img.id ? (
-                  <Loader2 className="size-3.5 text-op-white animate-spin" />
+                  <Loader2 className="size-4 text-op-white animate-spin" />
                 ) : (
-                  <X className="size-3.5 text-op-white" />
+                  <X className="size-4 text-op-white" />
                 )}
               </button>
             </div>
