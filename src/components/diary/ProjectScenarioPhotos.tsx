@@ -71,6 +71,9 @@ export function ProjectScenarioPhotos({ projectId, userId }: Props) {
         </button>
 
         {/* Botões de primeiro registro (só quando ainda sem fotos) */}
+        {((!hasAntesPhotos && result.antes.entryId) || (!hasDepoisPhotos && result.depois.entryId)) && (
+          <span className="text-label text-op-gray shrink-0">Fotos:</span>
+        )}
         {!hasAntesPhotos && result.antes.entryId && (
           <button
             type="button"
