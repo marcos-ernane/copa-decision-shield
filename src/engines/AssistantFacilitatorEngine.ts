@@ -104,7 +104,7 @@ export async function askFacilitator(
       if (hit && hit.expiresAt > Date.now()) return hit.value;
     }
 
-    const timeoutMs = isHelp ? 12000 : 3000;
+    const timeoutMs = isHelp ? 22000 : 3000;
     const suggestion = await invokeFunction(trigger, context, timeoutMs);
 
     if (!isHelp) {
