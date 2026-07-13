@@ -73,7 +73,7 @@ Indexes: user_id, state, scenario_type, current_layer.
 id UUID PK, project_id UUID FK, user_id UUID FK
 entry_type TEXT CHECK IN (
   'pulse'             -- <30s: {text, fact_text, interpretation_text, classification, input_method, has_mixed_interpretation}
-  'structured_C'      -- {fact_text, interpretation_text, hypothesis_text, imv_possible}
+  'structured_C'      -- {fact_text, interpretation_text, hypothesis_text, imv_possible, photo_urls?: string[]}
   'structured_O'      -- {resources, frictions, main_bottleneck}
   'structured_P'      -- {action, layer_at_entry, reversible, cheap, specific, measurable, metric, deadline,
                       --  cut_rule, situational_fit, situational_fit_response, ethical_check, ethical_check_response,
@@ -448,13 +448,13 @@ Campo texto/voz + classificação obrigatória: fato observado / decisão / resu
 Motor detecta interpretações → badge suave (não bloqueia) [REQ-REG-02]
 
 ### Registro Estruturado — 4 Formatos
-**Formato C (structured_C):** 4 quadros: fatos observados · interpretações separadas · hipóteses testáveis · IMV possível (opcional)
+**Formato C (structured_C):** 4 passos: Quadro 1=fatos observados · Quadro 2=interpretações separadas · Quadro 3=hipóteses testáveis · Passo 4=Fotos de cenário opcionais (até 2 fotos Antes + até 2 fotos Depois, JPEG/PNG/WebP, sem restrição de plano)
 
 **Formato O (structured_O):** Mapa 3R: recursos disponíveis · fricções/obstáculos · gargalo principal
 
 **Formato P (structured_P):** ação + reversível/barato/específico/mensurável + Métrica (OBRIGATÓRIA) + prazo + regra de corte + camada + campo ético opcional + campo `execution_plan` opcional (ver Seção 37). O campo `execution_plan` é adicionado ao `content` JSONB após o convite da Tela 3.5 — não é um novo `entry_type`. [REQ-PLANEXEC-19]
 
-**Formato A (APA — structured_A):** o que aconteceu + por que + **Princípio extraído** (destaque visual: borda cyan, label azul — campo mais importante) + decisão + O que funcionou sem criar dano (v3.0) + repeat_rule + cut_rule_next + next_bottleneck
+**Formato A (APA — structured_A):** o que aconteceu + por que + **Princípio extraído** (destaque visual: borda cyan, label azul — campo mais importante) + decisão + O que funcionou sem criar dano (v3.0) + repeat_rule + cut_rule_next + next_bottleneck + Fotos de cenário opcionais (até 2 fotos Antes + até 2 fotos Depois, mesmo padrão do Formato C)
 
 **[REQ-REG-04]** Campo princípio extraído: destaque visual especial (borda cyan, label "O aprendizado desta análise:" azul).
 **[REQ-REG-05]** IA nunca substitui texto da APA sem ação explícita.
