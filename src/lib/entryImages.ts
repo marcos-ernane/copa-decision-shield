@@ -180,3 +180,66 @@ export async function getEntryImageCounts(
     {},
   );
 }
+
+// ---------------------------------------------------------------------------
+// getProjectScenarioImages
+// Retorna as fotos do Cenário Antes (structured_C mais recente com fotos) e
+// do Cenário Depois (structured_A mais recente com fotos) para um projeto.
+// Também retorna os entryIds das entradas mais recentes de cada tipo para
+// permitir o registro de fotos retroativo via Diário.
+// ---------------------------------------------------------------------------
+export interface ProjectScenarioPhotosResult {
+  antes: { entryId: string | null; images: EntryImage[] };
+  depois: { entryId: string | null; images: EntryImage[] };
+}
+
+export async function getProjectScenarioImages(
+  projectId: string,
+): Promise<ProjectScenarioPhotosResult> {
+  const empty: ProjectScenarioPhotosResult = {
+    antes: { entryId: null, images: [] },
+    depois: { entryId: null, images: [] },
+  };
+
+  try {
+    const [{ data: cEntries, error: cErr }, { data: aEntries, error: aErr }] = await Promise.all([
+      supabase
+        .from('entries')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('entry_type', 'structured_C')
+        .order('created_at', { ascending: false })
+        .limit(5),
+      supabase
+        .from('entries')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('entry_type', 'structured_A')
+        .order('created_at', { ascending: false })
+        .limit(5),
+    ]);
+
+    if (cErr || aErr) return empty;
+
+    const cIds = (cEntries ?? []).map((e: { id: string }) => e.id);
+    const aIds = (aEntries ?? []).map((e: { id: string }) => e.id);
+    const allIds = [...cIds, ...aIds];
+
+    const counts = allIds.length > 0 ? await getEntryImageCounts(allIds) : {};
+
+    const latestCWithPhotos = cIds.find((id) => (counts[id] ?? 0) > 0) ?? null;
+    const latestAWithPhotos = aIds.find((id) => (counts[id] ?? 0) > 0) ?? null;
+
+    const [antesImages, depoisImages] = await Promise.all([
+      latestCWithPhotos ? listEntryImages(latestCWithPhotos) : Promise.resolve([]),
+      latestAWithPhotos ? listEntryImages(latestAWithPhotos) : Promise.resolve([]),
+    ]);
+
+    return {
+      antes: { entryId: latestCWithPhotos ?? cIds[0] ?? null, images: antesImages },
+      depois: { entryId: latestAWithPhotos ?? aIds[0] ?? null, images: depoisImages },
+    };
+  } catch {
+    return empty;
+  }
+}

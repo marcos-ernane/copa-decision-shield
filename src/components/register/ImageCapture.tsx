@@ -1,7 +1,6 @@
-// PRD-IMG-01 v1.0 — Registro Visual de Cenário
-// Captura, exibição e remoção de imagens vinculadas a uma entry structured_C.
-// Apenas usuários autenticados — verificado pelo componente pai antes de renderizar.
-// O upload nunca bloqueia o botão de salvar do Formato C — é sempre opcional.
+// PRD-IMG-01 v1.1 — Registro Visual de Cenário
+// Suporta maxPhotos (padrão 2) e label descritivo para Cenário Antes/Depois.
+// Estado vazio: botão compacto único em vez de slots vazios.
 
 import { useState, useEffect, useRef } from 'react';
 import { Camera, X, ImageOff, Loader2 } from 'lucide-react';
@@ -12,17 +11,18 @@ import {
   type EntryImage,
 } from '@/lib/entryImages';
 
-const MAX_IMAGES = 3; // [REQ-IMG-03]
 const ACCEPT = 'image/jpeg,image/png,image/webp'; // [REQ-IMG-19]
 
 interface Props {
   entryId: string;
   userId: string;
+  maxPhotos?: number; // padrão 2
+  label?: string;     // ex: "Cenário Antes" | "Cenário Depois"
 }
 
 type UploadError = 'quota' | 'failed' | null;
 
-export function ImageCapture({ entryId, userId }: Props) {
+export function ImageCapture({ entryId, userId, maxPhotos = 2, label }: Props) {
   const [images, setImages] = useState<EntryImage[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -31,13 +31,12 @@ export function ImageCapture({ entryId, userId }: Props) {
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Carrega imagens existentes ao montar [REQ-IMG-21]
   useEffect(() => {
     let active = true;
     setLoadingList(true);
     listEntryImages(entryId)
       .then((imgs) => { if (active) setImages(imgs); })
-      .catch(() => { /* falha silenciosa — galeria exibida vazia */ })
+      .catch(() => { /* falha silenciosa */ })
       .finally(() => { if (active) setLoadingList(false); });
     return () => { active = false; };
   }, [entryId]);
@@ -49,23 +48,17 @@ export function ImageCapture({ entryId, userId }: Props) {
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    // Reset para permitir reenvio do mesmo arquivo após erro
     e.target.value = '';
-
     if (!file) return;
-
-    // Limite client-side — segunda camada é o trigger no BD [REQ-IMG-09]
-    if (images.length >= MAX_IMAGES) return;
+    if (images.length >= maxPhotos) return;
 
     setUploading(true);
     setUploadError(null);
     try {
-      const sortOrder = images.length; // 0, 1 ou 2
-      const uploaded = await uploadEntryImage(file, entryId, userId, sortOrder);
+      const uploaded = await uploadEntryImage(file, entryId, userId, images.length);
       setImages((prev) => [...prev, uploaded]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
-      // [REQ-IMG-08] Nunca exibir erro técnico — sempre fallback visual amigável
       setUploadError(msg === 'STORAGE_QUOTA_EXCEEDED' ? 'quota' : 'failed');
     } finally {
       setUploading(false);
@@ -78,116 +71,110 @@ export function ImageCapture({ entryId, userId }: Props) {
       await deleteEntryImage(img.id, img.storage_path);
       setImages((prev) => prev.filter((i) => i.id !== img.id));
     } catch {
-      // falha silenciosa — usuário pode tentar novamente
+      /* falha silenciosa */
     } finally {
       setDeletingId(null);
     }
   }
 
-  // Grade com exatamente 3 slots: preenchidos → próximo (add/spinner) → inativos
-  const slots = Array.from({ length: MAX_IMAGES }, (_, idx) => idx);
+  const gridCols = maxPhotos <= 2 ? 'grid-cols-2' : 'grid-cols-3';
 
   return (
     <div className="space-y-2">
       <p className="text-small font-semibold text-op-white">
-        Fotos do cenário{' '}
-        <span className="text-op-gray font-normal">(opcional)</span>
+        {label ? (
+          <>Fotos do cenário <span className="text-op-gray font-normal">· {label} · opcional</span></>
+        ) : (
+          <>Fotos do cenário <span className="text-op-gray font-normal">(opcional)</span></>
+        )}
       </p>
 
       {loadingList ? (
-        <div className="flex items-center justify-center h-20">
-          <Loader2 className="size-5 text-op-gray animate-spin" />
+        <div className="flex items-center justify-center h-12">
+          <Loader2 className="size-4 text-op-gray animate-spin" />
         </div>
+      ) : images.length === 0 ? (
+        /* Estado vazio: botão compacto único — sem slots vazios ocupando espaço */
+        <button
+          type="button"
+          onClick={openPicker}
+          disabled={uploading}
+          className="w-full flex items-center gap-2.5 px-4 py-3 rounded-md border border-dashed border-op-gray/40 bg-op-navy hover:border-op-gray/70 hover:bg-op-navy-elevated transition-colors disabled:opacity-40"
+          aria-label={`Adicionar foto${label ? ` — ${label}` : ''}`}
+        >
+          {uploading ? (
+            <Loader2 className="size-4 text-op-gray animate-spin shrink-0" />
+          ) : (
+            <Camera className="size-4 text-op-gray shrink-0" />
+          )}
+          <span className="text-small text-op-gray">
+            {label ? `${label} — toque para adicionar` : 'Toque para adicionar foto'}
+          </span>
+        </button>
       ) : (
-        <div className="grid grid-cols-3 gap-2">
-          {slots.map((idx) => {
-            const img = images[idx];
-            const isNextSlot = idx === images.length;
-            const isUploading = uploading && isNextSlot;
-
-            // Slot com imagem salva — thumbnail + botão remover
-            if (img) {
-              return (
-                <div
-                  key={img.id}
-                  className="relative aspect-square rounded-md overflow-hidden bg-op-navy-elevated"
-                >
-                  {img.signed_url ? (
-                    <button
-                      type="button"
-                      className="w-full h-full"
-                      onClick={() => setViewerUrl(img.signed_url!)}
-                      aria-label={`Ver foto ${idx + 1} em tela cheia`}
-                    >
-                      <img
-                        src={img.signed_url}
-                        alt={`Foto ${idx + 1} do cenário`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <ImageOff className="size-5 text-op-gray" />
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    className="absolute top-1 right-1 rounded-full bg-black/60 p-0.5 hover:bg-black/80 transition-colors"
-                    onClick={() => handleDelete(img)}
-                    disabled={deletingId === img.id}
-                    aria-label="Remover foto"
-                  >
-                    {deletingId === img.id ? (
-                      <Loader2 className="size-3.5 text-op-white animate-spin" />
-                    ) : (
-                      <X className="size-3.5 text-op-white" />
-                    )}
-                  </button>
-                </div>
-              );
-            }
-
-            // Slot de upload em progresso
-            if (isUploading) {
-              return (
-                <div
-                  key={`uploading-${idx}`}
-                  className="aspect-square rounded-md border border-dashed border-op-gray/40 bg-op-navy flex items-center justify-center"
-                >
-                  <Loader2 className="size-5 text-op-gray animate-spin" />
-                </div>
-              );
-            }
-
-            // Próximo slot disponível — botão de adicionar
-            if (isNextSlot) {
-              return (
+        /* Com fotos: grid + botão de adicionar se abaixo do limite */
+        <div className={`grid ${gridCols} gap-2`}>
+          {images.map((img, idx) => (
+            <div
+              key={img.id}
+              className="relative aspect-square rounded-md overflow-hidden bg-op-navy-elevated"
+            >
+              {img.signed_url ? (
                 <button
-                  key={`add-${idx}`}
                   type="button"
-                  onClick={openPicker}
-                  disabled={uploading}
-                  className="aspect-square rounded-md border border-dashed border-op-gray/40 bg-op-navy flex flex-col items-center justify-center gap-1 hover:border-op-gray/70 hover:bg-op-navy-elevated transition-colors disabled:opacity-40"
-                  aria-label="Adicionar foto"
+                  className="w-full h-full"
+                  onClick={() => setViewerUrl(img.signed_url!)}
+                  aria-label={`Ver foto ${idx + 1} em tela cheia`}
                 >
-                  <Camera className="size-5 text-op-gray" />
-                  <span className="text-label text-op-gray">Adicionar</span>
+                  <img
+                    src={img.signed_url}
+                    alt={`Foto ${idx + 1} do cenário`}
+                    className="w-full h-full object-cover"
+                  />
                 </button>
-              );
-            }
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <ImageOff className="size-5 text-op-gray" />
+                </div>
+              )}
+              <button
+                type="button"
+                className="absolute top-1 right-1 rounded-full bg-black/60 p-0.5 hover:bg-black/80 transition-colors"
+                onClick={() => handleDelete(img)}
+                disabled={deletingId === img.id}
+                aria-label="Remover foto"
+              >
+                {deletingId === img.id ? (
+                  <Loader2 className="size-3.5 text-op-white animate-spin" />
+                ) : (
+                  <X className="size-3.5 text-op-white" />
+                )}
+              </button>
+            </div>
+          ))}
 
-            // Slots futuros — indicador inativo (comunica o limite de 3)
-            return (
-              <div
-                key={`empty-${idx}`}
-                className="aspect-square rounded-md border border-dashed border-op-gray/20 bg-op-navy/40"
-              />
-            );
-          })}
+          {/* Slot de upload em progresso */}
+          {uploading && (
+            <div className="aspect-square rounded-md border border-dashed border-op-gray/40 bg-op-navy flex items-center justify-center">
+              <Loader2 className="size-5 text-op-gray animate-spin" />
+            </div>
+          )}
+
+          {/* Botão adicionar — só aparece se abaixo do limite e não carregando */}
+          {!uploading && images.length < maxPhotos && (
+            <button
+              type="button"
+              onClick={openPicker}
+              className="aspect-square rounded-md border border-dashed border-op-gray/40 bg-op-navy flex flex-col items-center justify-center gap-1 hover:border-op-gray/70 hover:bg-op-navy-elevated transition-colors"
+              aria-label="Adicionar foto"
+            >
+              <Camera className="size-5 text-op-gray" />
+              <span className="text-label text-op-gray">Adicionar</span>
+            </button>
+          )}
         </div>
       )}
 
-      {/* Mensagem de erro amigável — nunca técnica [REQ-IMG-08] */}
       {uploadError && (
         <p className="text-label" style={{ color: 'var(--color-brand-amber)' }}>
           {uploadError === 'quota'
@@ -196,7 +183,6 @@ export function ImageCapture({ entryId, userId }: Props) {
         </p>
       )}
 
-      {/* Input oculto — sem capture attr para permitir câmera e galeria [REQ-IMG-14] */}
       <input
         ref={fileInputRef}
         type="file"
@@ -206,7 +192,6 @@ export function ImageCapture({ entryId, userId }: Props) {
         aria-hidden="true"
       />
 
-      {/* Visualizador fullscreen [REQ-IMG-20] */}
       {viewerUrl && (
         <div
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"

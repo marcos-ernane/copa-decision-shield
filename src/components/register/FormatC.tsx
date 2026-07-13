@@ -367,7 +367,7 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
       {step === 3 ? (
         <div className="space-y-4">
           {activeEntryId && step3UserId ? (
-            <ImageCapture entryId={activeEntryId} userId={step3UserId} />
+            <ImageCapture entryId={activeEntryId} userId={step3UserId} maxPhotos={2} label="Cenário Antes" />
           ) : null}
           <Button className="w-full" onClick={onSaved}>
             Concluir

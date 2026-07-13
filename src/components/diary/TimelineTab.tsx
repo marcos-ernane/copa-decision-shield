@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { Inbox as InboxIcon, Camera, X, LayoutList, List } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
+import { Inbox as InboxIcon, X, LayoutList, List } from 'lucide-react';
 import { Link, useSearch } from '@tanstack/react-router';
 import { buildOperationalView } from '@/lib/operationalView';
 import { ProjectSection } from './ProjectSection';
@@ -15,7 +15,7 @@ import { EditZoneGuard } from '@/components/EditZoneGuard';
 import { supabase } from '@/lib/supabase';
 import { GuestStorage } from '@/lib/guestStorage';
 import { useAuthState } from '@/lib/planLimits';
-import { listEntryImages, getEntryImageCounts, type EntryImage } from '@/lib/entryImages';
+import { ProjectScenarioPhotos } from './ProjectScenarioPhotos';
 
 const SCENARIOS: ScenarioType[] = ['fluxo', 'processo', 'oferta', 'relacionamento', 'pressao'];
 const SCENARIO_LABELS: Record<ScenarioType, string> = {
@@ -152,11 +152,7 @@ export function TimelineTab() {
     return saved === 'operational' || saved === 'flat' ? saved : 'operational';
   });
 
-  // PRD-IMG-01 — estado de imagens na Timeline [REQ-PLANEXEC-20]
   const { userId } = useAuthState();
-  const [imageCounts, setImageCounts] = useState<Record<string, number>>({});
-  const [entryImagesMap, setEntryImagesMap] = useState<Record<string, EntryImage[]>>({});
-  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -352,32 +348,15 @@ export function TimelineTab() {
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? '—';
 
-  // PRD-IMG-01: carrega contagem de imagens para entries structured_C visíveis (uma query em lote)
-  useEffect(() => {
-    if (!userId) return;
-    const ids = deduped
-      .filter(({ entry }) => entry.entry_type === 'structured_C')
-      .map(({ entry }) => entry.id);
-    if (ids.length === 0) return;
-    let active = true;
-    getEntryImageCounts(ids)
-      .then((counts) => { if (active) setImageCounts((prev) => ({ ...prev, ...counts })); })
-      .catch(() => { /* falha silenciosa */ });
-    return () => { active = false; };
-  }, [deduped, userId]);
-
-  // PRD-IMG-01: carrega imagens completas (com signed URLs) ao expandir uma entry structured_C
-  useEffect(() => {
-    if (!expanded || !userId) return;
-    const expandedEntry = deduped.find(({ entry: e }) => e.id === expanded)?.entry;
-    if (expandedEntry?.entry_type !== 'structured_C') return;
-    if (entryImagesMap[expanded]) return; // já carregado
-    let active = true;
-    listEntryImages(expanded)
-      .then((imgs) => { if (active) setEntryImagesMap((prev) => ({ ...prev, [expanded]: imgs })); })
-      .catch(() => { /* falha silenciosa */ });
-    return () => { active = false; };
-  }, [expanded, userId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // firstOccurrenceByProject: entryId da primeira entrada de cada projeto na lista deduped.
+  // Usado para renderizar a seção de fotos uma única vez por projeto no flat view.
+  const firstOccurrenceByProject = useMemo(() => {
+    const map = new Map<string, string>(); // projectId → first entryId
+    for (const { entry } of deduped) {
+      if (!map.has(entry.project_id)) map.set(entry.project_id, entry.id);
+    }
+    return map;
+  }, [deduped]);
 
   function handleViewChange(newView: DiaryView) {
     setView(newView);
@@ -543,20 +522,6 @@ export function TimelineTab() {
                 </span>
               ) : null;
             })()}
-            {/* PRD-IMG-01: chip de fotos — visível na linha de tags [REQ-IMG-13] */}
-            {e.entry_type === 'structured_C' && userId && (imageCounts[e.id] ?? 0) > 0 && (
-              <span
-                className="inline-flex items-center gap-1 rounded-full text-label px-2 py-0.5"
-                style={{
-                  backgroundColor: 'rgba(14,165,233,0.12)',
-                  color: 'var(--color-brand-cyan)',
-                  border: '1px solid rgba(14,165,233,0.35)',
-                }}
-              >
-                <Camera className="size-3 shrink-0" />
-                {imageCounts[e.id]} foto{imageCounts[e.id] > 1 ? 's' : ''} · toque para ver
-              </span>
-            )}
           </div>
           {/* Fases do plano de execução inline (REQ-PLANEXEC-20) */}
           {e.entry_type === 'structured_P' && (() => {
@@ -615,37 +580,6 @@ export function TimelineTab() {
                 )}
               </EditZoneGuard>
             </div>
-            {/* PRD-IMG-01: thumbnails de fotos do cenário [REQ-IMG-13 / REQ-IMG-20] */}
-            {e.entry_type === 'structured_C' && userId && (() => {
-              const imgs = entryImagesMap[e.id];
-              if (!imgs || imgs.length === 0) return null;
-              return (
-                <div className="space-y-1.5">
-                  <p className="text-label text-op-gray uppercase tracking-wide">Fotos do cenário</p>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {imgs.map((img) => (
-                      img.signed_url ? (
-                        <button
-                          key={img.id}
-                          type="button"
-                          className="aspect-square rounded-md overflow-hidden"
-                          onClick={() => setViewerUrl(img.signed_url!)}
-                          aria-label="Ver foto em tela cheia"
-                        >
-                          <img
-                            src={img.signed_url}
-                            alt="Foto do cenário"
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ) : (
-                        <div key={img.id} className="aspect-square rounded-md bg-op-navy-elevated" />
-                      )
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
             {/* Cadeia de causa raiz — accordion (REQ-RC-18) */}
             {e.entry_type === 'structured_C' && (() => {
               const chain = (e.content as { root_cause_chain?: RootCauseChain }).root_cause_chain;
@@ -983,9 +917,17 @@ export function TimelineTab() {
             </li>
           )}
           {deduped.map(({ entry: e, count }) => (
-            <li key={e.id}>
-              {renderEntryCard(e, count)}
-            </li>
+            <Fragment key={e.id}>
+              {/* Seção de fotos Antes/Depois — uma vez por projeto, antes da primeira entry */}
+              {firstOccurrenceByProject.get(e.project_id) === e.id && userId && (
+                <li>
+                  <ProjectScenarioPhotos projectId={e.project_id} userId={userId} />
+                </li>
+              )}
+              <li>
+                {renderEntryCard(e, count)}
+              </li>
+            </Fragment>
           ))}
         </ul>
       )}
@@ -998,31 +940,6 @@ export function TimelineTab() {
         />
       )}
 
-      {/* PRD-IMG-01: visualizador fullscreen de fotos da Timeline [REQ-IMG-20] */}
-      {viewerUrl && (
-        <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
-          onClick={() => setViewerUrl(null)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Visualizador de foto"
-        >
-          <img
-            src={viewerUrl}
-            alt="Foto do cenário em tela cheia"
-            className="max-w-full max-h-full object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
-          <button
-            type="button"
-            className="absolute top-4 right-4 rounded-full bg-black/60 p-2 hover:bg-black/80 transition-colors"
-            onClick={() => setViewerUrl(null)}
-            aria-label="Fechar visualizador"
-          >
-            <X className="size-5 text-white" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }

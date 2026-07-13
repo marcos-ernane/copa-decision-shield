@@ -2,14 +2,15 @@
 // REQ-REG-04: PrincipleHighlight. REQ-REG-05: IA nunca substitui sem ação.
 // 5 passos sequenciais.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { X, CircleHelp, Plus, ChevronDown } from 'lucide-react';
+import { X, CircleHelp, Plus, ChevronDown, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { BookAnchorHint } from '@/components/copa/BookAnchorHint';
 import { saveStructuredA, type StructuredAContent } from '@/lib/register';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
+import { uploadEntryImage } from '@/lib/entryImages';
 import { PrincipleHighlight } from './PrincipleHighlight';
 import { RegistrationNudge } from '@/components/RegistrationNudge';
 import { StepDots } from './StepDots';
@@ -25,6 +26,7 @@ interface Props {
   step: number;
   isReviewing?: boolean;
   linkedTo?: string | null;
+  userId?: string | null;
 }
 
 const TOTAL_STEPS = 5;
@@ -138,7 +140,7 @@ Ele escreve:
 Somente depois ele investiga as possíveis causas.
 É exatamente essa disciplina que transforma experiência em inteligência operacional.`;
 
-export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing, linkedTo }: Props) {
+export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing, linkedTo, userId }: Props) {
   const [factItems, setFactItems] = useState<string[]>(() => toItems(initialData?.fact_text));
   const [interpItems, setInterpItems] = useState<string[]>(() => toItems(initialData?.interpretation_text));
   const fact = fromItems(factItems);
@@ -153,6 +155,27 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [loadingAiSuggestion, setLoadingAiSuggestion] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Fotos do Cenário Depois — acumuladas como File e enviadas após salvar a entry
+  const [pendingPhotos, setPendingPhotos] = useState<Array<{ file: File; previewUrl: string }>>([]);
+  const photoFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Limpa object URLs ao desmontar
+  useEffect(() => {
+    return () => { pendingPhotos.forEach((p) => URL.revokeObjectURL(p.previewUrl)); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handlePhotoAdd(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || pendingPhotos.length >= 2) return;
+    const previewUrl = URL.createObjectURL(file);
+    setPendingPhotos((prev) => [...prev, { file, previewUrl }]);
+  }
+
+  function handlePhotoRemove(idx: number) {
+    URL.revokeObjectURL(pendingPhotos[idx].previewUrl);
+    setPendingPhotos((prev) => prev.filter((_, i) => i !== idx));
+  }
   const [nudge, setNudge] = useState(false);
   const [showDecisionPrompt, setShowDecisionPrompt] = useState(false);
   const navigate = useNavigate();
@@ -190,7 +213,7 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
 
   async function save() {
     setSaving(true);
-    const { isFirstPrinciple } = await saveStructuredA(projectId, {
+    const { entry, isFirstPrinciple } = await saveStructuredA(projectId, {
       fact_text: fact.trim(),
       interpretation_text: interp.trim(),
       principle_text: principle.trim(),
@@ -201,6 +224,14 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
       cut_rule_next: cutNext.trim(),
       next_bottleneck: nextBottleneck.trim(),
     }, scenarioType, currentLayer, linkedTo ?? null);
+    // Upload das fotos do Cenário Depois (silencioso — falha não bloqueia)
+    if (pendingPhotos.length > 0 && userId) {
+      await Promise.allSettled(
+        pendingPhotos.map((p, i) => uploadEntryImage(p.file, entry.id, userId, i)),
+      );
+      pendingPhotos.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+      setPendingPhotos([]);
+    }
     setSaving(false);
     if (isFirstPrinciple) {
       setNudge(true);
@@ -318,31 +349,89 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
       )}
 
       {step === 2 && (
-        <PrincipleHighlight>
-          <VoiceInput
-            value={principle}
-            onChange={setPrinciple}
-            placeholder="Uma frase que você levaria para qualquer outro projeto."
-            rows={2}
-          />
-          {loadingAiSuggestion && !aiSuggestion && (
-            <p className="text-small text-op-gray">Facilitador analisando…</p>
-          )}
-          {aiSuggestion && (
-            <div className="rounded-md bg-op-navy border border-op-gray/30 p-2 text-small text-op-white">
-              <p className="text-op-gray mb-1">Sugestão de reformulação (opcional):</p>
-              {aiSuggestion}
-              <div className="mt-2 flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => setPrinciple(aiSuggestion)}>
-                  Aplicar
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => setAiSuggestion(null)}>
-                  Ignorar
-                </Button>
+        <>
+          <PrincipleHighlight>
+            <VoiceInput
+              value={principle}
+              onChange={setPrinciple}
+              placeholder="Uma frase que você levaria para qualquer outro projeto."
+              rows={2}
+            />
+            {loadingAiSuggestion && !aiSuggestion && (
+              <p className="text-small text-op-gray">Facilitador analisando…</p>
+            )}
+            {aiSuggestion && (
+              <div className="rounded-md bg-op-navy border border-op-gray/30 p-2 text-small text-op-white">
+                <p className="text-op-gray mb-1">Sugestão de reformulação (opcional):</p>
+                {aiSuggestion}
+                <div className="mt-2 flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setPrinciple(aiSuggestion)}>
+                    Aplicar
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setAiSuggestion(null)}>
+                    Ignorar
+                  </Button>
+                </div>
               </div>
+            )}
+          </PrincipleHighlight>
+
+          {/* Fotos do Cenário Depois — opcional, apenas usuários autenticados */}
+          {userId && (
+            <div className="space-y-2">
+              <p className="text-small font-semibold text-op-white">
+                Fotos do cenário{' '}
+                <span className="text-op-gray font-normal">· Cenário Depois · opcional</span>
+              </p>
+              {pendingPhotos.length === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => photoFileInputRef.current?.click()}
+                  className="w-full flex items-center gap-2.5 px-4 py-3 rounded-md border border-dashed border-op-gray/40 bg-op-navy hover:border-op-gray/70 hover:bg-op-navy-elevated transition-colors"
+                  aria-label="Adicionar foto — Cenário Depois"
+                >
+                  <Camera className="size-4 text-op-gray shrink-0" />
+                  <span className="text-small text-op-gray">Cenário Depois — toque para adicionar</span>
+                </button>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {pendingPhotos.map((p, i) => (
+                    <div key={i} className="relative aspect-square rounded-md overflow-hidden bg-op-navy-elevated">
+                      <img src={p.previewUrl} alt={`Foto ${i + 1} do cenário`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        className="absolute top-1 right-1 rounded-full bg-black/60 p-0.5 hover:bg-black/80 transition-colors"
+                        onClick={() => handlePhotoRemove(i)}
+                        aria-label="Remover foto"
+                      >
+                        <X className="size-3.5 text-op-white" />
+                      </button>
+                    </div>
+                  ))}
+                  {pendingPhotos.length < 2 && (
+                    <button
+                      type="button"
+                      onClick={() => photoFileInputRef.current?.click()}
+                      className="aspect-square rounded-md border border-dashed border-op-gray/40 bg-op-navy flex flex-col items-center justify-center gap-1 hover:border-op-gray/70 hover:bg-op-navy-elevated transition-colors"
+                      aria-label="Adicionar foto"
+                    >
+                      <Camera className="size-5 text-op-gray" />
+                      <span className="text-label text-op-gray">Adicionar</span>
+                    </button>
+                  )}
+                </div>
+              )}
+              <input
+                ref={photoFileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={handlePhotoAdd}
+                aria-hidden="true"
+              />
             </div>
           )}
-        </PrincipleHighlight>
+        </>
       )}
 
       {step === 3 && (
