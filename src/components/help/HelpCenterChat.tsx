@@ -337,7 +337,7 @@ export function HelpCenterChat() {
           </button>
         </div>
         <p className="text-label text-op-gray text-center mt-2">
-          ✦ IA · ○ base local — indicado por mensagem
+          Fonte indicada abaixo de cada resposta: ✦ IA ou ○ base local
         </p>
         <button
           onClick={() => setShowFeedback(true)}
