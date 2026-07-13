@@ -68,7 +68,8 @@ export type EntryTypeDB =
   | 'pressure_session'
   | 'protocol_5min'
   | 'creative_session'
-  | 'simulation_session';
+  | 'simulation_session'
+  | 'inbox';
 
 export interface Entry {
   id: string;
@@ -85,6 +86,7 @@ export interface Entry {
   layer_at_entry: OperationalLayer | null;
   ai_assist_used: boolean;
   ai_assist_type: string | null;
+  inbox_processed?: boolean;
   created_at: string;
 }
 

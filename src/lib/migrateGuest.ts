@@ -7,7 +7,7 @@ import { GuestStorage } from './guestStorage';
 export type MigrationStatus =
   | { state: 'idle' }
   | { state: 'running'; step: string }
-  | { state: 'done'; counts: { projects: number; entries: number; principles: number } }
+  | { state: 'done'; counts: { projects: number; entries: number; principles: number; chapters: number } }
   | { state: 'error'; message: string };
 
 type Listener = (status: MigrationStatus) => void;
@@ -67,32 +67,115 @@ export async function migrateGuestToCloud(userId: string): Promise<void> {
 
     emit({ state: 'running', step: 'Sincronizando registros' });
     const entries = GuestStorage.getEntries();
+    // Mapa de IDs locais → IDs Supabase (necessário para linked_to de quick_review e corrective)
+    const entryIdMap = new Map<string, string>();
+    // Primeira passagem: inserir entradas sem linked_to para popular o mapa
     for (const e of entries) {
       const newProjectId = projectIdMap.get(e.project_id);
       if (!newProjectId) continue;
-      await supabase.from('entries').insert({
-        project_id: newProjectId,
-        user_id: userId,
-        entry_type: e.entry_type,
-        content: e.content,
-        copa_phase: e.copa_phase,
-        scenario_type_at_entry: e.scenario_type_at_entry,
-        layer_at_entry: e.layer_at_entry,
-      });
+      const { data, error } = await supabase
+        .from('entries')
+        .insert({
+          project_id: newProjectId,
+          user_id: userId,
+          entry_type: e.entry_type,
+          content: e.content,
+          copa_phase: e.copa_phase,
+          is_clean_fact: e.is_clean_fact,
+          scenario_type_at_entry: e.scenario_type_at_entry,
+          layer_at_entry: e.layer_at_entry,
+          classification: e.classification ?? null,
+          ai_assist_used: e.ai_assist_used ?? false,
+          ai_assist_type: e.ai_assist_type ?? null,
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      entryIdMap.set(e.id, data.id);
+    }
+    // Segunda passagem: atualizar linked_to para entradas que referenciam outras
+    for (const e of entries) {
+      if (!e.linked_to) continue;
+      const newEntryId = entryIdMap.get(e.id);
+      const newLinkedId = entryIdMap.get(e.linked_to);
+      if (!newEntryId || !newLinkedId) continue;
+      await supabase.from('entries').update({ linked_to: newLinkedId }).eq('id', newEntryId);
     }
 
     emit({ state: 'running', step: 'Sincronizando princípios' });
     const principles = GuestStorage.getPrinciples();
+    const principleIdMap = new Map<string, string>();
     for (const pr of principles) {
       const newProjectId = projectIdMap.get(pr.project_id);
       if (!newProjectId) continue;
-      await supabase.from('principles').insert({
+      const { data, error } = await supabase
+        .from('principles')
+        .insert({
+          project_id: newProjectId,
+          user_id: userId,
+          content: pr.content,
+          tags: pr.tags ?? [],
+          scenario_type: pr.scenario_type,
+          layer: pr.layer,
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      principleIdMap.set(pr.id, data.id);
+    }
+
+    emit({ state: 'running', step: 'Sincronizando capítulos' });
+    const chapters = GuestStorage.getChapters();
+    for (const ch of chapters) {
+      const newProjectId = projectIdMap.get(ch.project_id);
+      if (!newProjectId) continue;
+      const remappedPrinciples = (ch.principles ?? [])
+        .map((pid) => principleIdMap.get(pid))
+        .filter((id): id is string => !!id);
+      await supabase.from('chapters').insert({
         project_id: newProjectId,
         user_id: userId,
-        content: pr.content,
-        tags: pr.tags ?? [],
-        scenario_type: pr.scenario_type,
-        layer: pr.layer,
+        north_reached: ch.north_reached,
+        what_happened: ch.what_happened ?? null,
+        what_worked: ch.what_worked ?? null,
+        what_didnt_work: ch.what_didnt_work ?? null,
+        principles: remappedPrinciples,
+        restart_note: ch.restart_note ?? null,
+        final_note: ch.final_note ?? null,
+        predominant_scenario_type: ch.predominant_scenario_type ?? null,
+        predominant_layer: ch.predominant_layer ?? null,
+        accumulated_imvs: ch.accumulated_imvs ?? 0,
+        valid_principles_count: ch.valid_principles_count ?? 0,
+        discarded_patterns: ch.discarded_patterns ?? null,
+        evolved_bottleneck: ch.evolved_bottleneck ?? null,
+      });
+    }
+
+    emit({ state: 'running', step: 'Sincronizando inbox' });
+    const inboxEntries = GuestStorage.getInboxEntries();
+    for (const e of inboxEntries) {
+      await supabase.from('entries').insert({
+        user_id: userId,
+        project_id: null,
+        entry_type: 'inbox',
+        content: e.content,
+        inbox_processed: e.inbox_processed,
+        is_clean_fact: false,
+      });
+    }
+
+    emit({ state: 'running', step: 'Sincronizando decisões' });
+    const decisionRecords = GuestStorage.getDecisionRecords();
+    for (const dr of decisionRecords) {
+      const newProjectId = dr.project_id ? (projectIdMap.get(dr.project_id) ?? null) : null;
+      await supabase.from('entries').insert({
+        user_id: userId,
+        project_id: newProjectId,
+        entry_type: 'decision_record',
+        content: dr.content,
+        scenario_type_at_entry: dr.scenario_type_at_entry ?? null,
+        layer_at_entry: dr.layer_at_entry ?? null,
+        is_clean_fact: false,
       });
     }
 
@@ -103,6 +186,7 @@ export async function migrateGuestToCloud(userId: string): Promise<void> {
         projects: projects.length,
         entries: entries.length,
         principles: principles.length,
+        chapters: chapters.length,
       },
     });
   } catch (err) {

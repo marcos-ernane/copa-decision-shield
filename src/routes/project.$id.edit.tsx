@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { getProject, updateProject } from '@/lib/projects';
@@ -78,6 +79,7 @@ function EditProject() {
           <p className="text-label uppercase tracking-wide text-op-gray">Editar projeto</p>
           <h1 className="text-heading text-op-white">{name}</h1>
         </div>
+        <CloseButton className="ml-auto" />
       </header>
 
       <main className="flex-1 px-6 py-6 max-w-md mx-auto w-full space-y-6">

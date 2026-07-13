@@ -1,11 +1,14 @@
-// Formato C — Análise de Situação. 3 quadros em passos sequenciais.
+// Formato C — Análise de Situação. 3 quadros em passos sequenciais + step 3: fotos (opcional).
 
-import { useState } from 'react';
-import { Plus, X, ChevronDown, CircleHelp } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, X, ChevronDown, CircleHelp, Search, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
-import { saveStructuredC, type StructuredCContent } from '@/lib/register';
+import { saveStructuredC, type StructuredCContent, type RootCauseChain } from '@/lib/register';
+import { supabase } from '@/lib/supabase';
+import { RootCauseFlow } from './RootCauseFlow';
 import { StepDots } from './StepDots';
+import { ImageCapture } from './ImageCapture';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 interface Props {
@@ -17,6 +20,10 @@ interface Props {
   initialData?: StructuredCContent | null;
   step: number;
   isReviewing?: boolean;
+  // PRD-IMG-01: userId presente → step 3 (fotos) habilitado; null/undefined → guest, pula step 3
+  userId?: string | null;
+  // ID da entry structured_C mais recente (para exibir fotos em modo revisão/back-navigation)
+  initialEntryId?: string | null;
 }
 
 const TOTAL_STEPS = 3;
@@ -194,7 +201,7 @@ Separar observação de interpretação.
 
 Essa capacidade é o fundamento de todo o COPA. Se os fatos forem capturados de forma imprecisa, os recursos, ruídos, restrições, hipóteses, IMVs e aferições serão construídos sobre uma percepção distorcida da realidade. Por isso, a qualidade da captura começa pela qualidade dos fatos registrados.`;
 
-export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing }: Props) {
+export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing, userId, initialEntryId }: Props) {
   const [factItems, setFactItems] = useState<string[]>(() => toItems(initialData?.fact_text));
   const [interpItems, setInterpItems] = useState<string[]>(() => toItems(initialData?.interpretation_text));
   const [hypItems, setHypItems] = useState<string[]>(() => toItems(initialData?.hypothesis_text));
@@ -202,6 +209,47 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [showFactsHelp, setShowFactsHelp] = useState(false);
   const [showInterpHelp, setShowInterpHelp] = useState(false);
   const [showHypsHelp, setShowHypsHelp] = useState(false);
+  const [rootCauseChain, setRootCauseChain] = useState<RootCauseChain | undefined>(undefined);
+  const [inRootCauseFlow, setInRootCauseFlow] = useState(false);
+  // PRD-IMG-01: ID da entry recém-salva nesta sessão (sobrepõe initialEntryId no step 3)
+  const [savedEntryId, setSavedEntryId] = useState<string | null>(null);
+  // PRD-IMG-01: userId confirmado para o step 3. Três caminhos de resolução:
+  //   1. Prop userId já disponível no mount (useAuthState() do pai já carregou)
+  //   2. Prop userId resolve depois do mount (useAuthState() ainda carregava)
+  //   3. Fallback: getSession() diretamente quando entra no step 3
+  const [step3UserId, setStep3UserId] = useState<string | null>(userId ?? null);
+  // true quando a verificação de auth para o step 3 foi concluída (independente do resultado)
+  const [step3AuthChecked, setStep3AuthChecked] = useState<boolean>(() => !!userId);
+  // ref estável para onSaved — evita stale closure no efeito de auto-skip
+  const onSavedRef = useRef(onSaved);
+  onSavedRef.current = onSaved;
+
+  // Caminho 2: prop userId resolve depois do mount (pai re-renderiza com useAuthState() resolvido)
+  useEffect(() => {
+    if (!userId) return;
+    setStep3UserId(userId);
+    setStep3AuthChecked(true);
+  }, [userId]);
+
+  // Caminho 3: ao entrar no step 3, faz verificação definitiva se ainda não resolvido
+  useEffect(() => {
+    if (step !== 3 || step3AuthChecked) return;
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      const id = data.session?.user.id ?? null;
+      setStep3UserId(id);
+      setStep3AuthChecked(true);
+    });
+    return () => { active = false; };
+  }, [step, step3AuthChecked]);
+
+  // Auto-skip: guest confirmado → pula step 3 automaticamente [REQ-IMG-15]
+  useEffect(() => {
+    if (step === 3 && step3AuthChecked && !step3UserId) {
+      onSavedRef.current();
+    }
+  }, [step, step3AuthChecked, step3UserId]);
 
   const fact = fromItems(factItems);
   const interp = fromItems(interpItems);
@@ -214,16 +262,25 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
 
   async function save() {
     setSaving(true);
-    await saveStructuredC(projectId, {
-      fact_text: fact,
-      interpretation_text: interp,
-      hypothesis_text: hyp,
-    }, scenarioType, currentLayer);
-    setSaving(false);
-    onSaved();
+    try {
+      const entry = await saveStructuredC(projectId, {
+        fact_text: fact,
+        interpretation_text: interp,
+        hypothesis_text: hyp,
+        ...(rootCauseChain && { root_cause_chain: rootCauseChain }),
+      }, scenarioType, currentLayer);
+      setSavedEntryId(entry.id);
+      // PRD-IMG-01: sempre avança para step 3 — a verificação de auth fica no step 3 [REQ-IMG-15]
+      onNextStep();
+    } finally {
+      setSaving(false);
+    }
   }
 
   const isLastStep = step === TOTAL_STEPS - 1;
+
+  // ID ativo para o step 3: prioriza o recém-salvo, fallback para o existente (revisão/back-nav)
+  const activeEntryId = savedEntryId ?? initialEntryId ?? null;
 
   return (
     <>
@@ -306,93 +363,136 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
       </div>
     )}
     <div className="space-y-4">
-      <StepDots current={step} total={TOTAL_STEPS} />
-
-      {step === 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-small font-semibold text-op-white">Quadro 1 — Fatos observados</p>
-            <button
-              type="button"
-              onClick={() => setShowFactsHelp(true)}
-              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
-            >
-              <CircleHelp className="size-3.5" />
-              Ajuda
-            </button>
-          </div>
-          <TopicList
-            items={factItems}
-            onChange={setFactItems}
-            placeholder="O que você somente observou sem opinar ou justificar."
-            addLabel="+ Adicionar Fatos"
-          />
-        </div>
-      )}
-
-      {step === 1 && (
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-small font-semibold text-op-white">Quadro 2 — Interpretações</p>
-            <button
-              type="button"
-              onClick={() => setShowInterpHelp(true)}
-              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
-            >
-              <CircleHelp className="size-3.5" />
-              Ajuda
-            </button>
-          </div>
-          <TopicList
-            items={interpItems}
-            onChange={setInterpItems}
-            placeholder="O que você já conclui mesmo sem verificar."
-            addLabel="+ Adicionar Interpretações"
-          />
-        </div>
-      )}
-
-      {step === 2 && (
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-small font-semibold text-op-white">Quadro 3 — Hipóteses testáveis</p>
-            <button
-              type="button"
-              onClick={() => setShowHypsHelp(true)}
-              className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
-            >
-              <CircleHelp className="size-3.5" />
-              Ajuda
-            </button>
-          </div>
-          <TopicList
-            items={hypItems}
-            onChange={setHypItems}
-            placeholder="O que poderia ser verdade e precisa mexer para o fato mudar."
-            addLabel="+ Adicionar Hipóteses"
-          />
-        </div>
-      )}
-
-      {isLastStep ? (
-        <div className="space-y-2">
-          <Button className="w-full" disabled={!fact.trim() || saving || (isReviewing && !hasChanges)} onClick={save}>
-            {saving ? 'Salvando…' : isReviewing ? 'Salvar nova versão' : 'Salvar'}
+      {/* PRD-IMG-01 — Step 3: Fotos do cenário (opcional, apenas autenticados) */}
+      {step === 3 ? (
+        <div className="space-y-4">
+          {activeEntryId && step3UserId ? (
+            <ImageCapture entryId={activeEntryId} userId={step3UserId} maxPhotos={2} label="Cenário Antes" />
+          ) : null}
+          <Button className="w-full" onClick={onSaved}>
+            Concluir
           </Button>
-          {isReviewing && (
-            <Button variant="outline" className="w-full" disabled={hasChanges} onClick={onNextStep}>
-              Avançar sem salvar →
+        </div>
+      ) : step === 2 && inRootCauseFlow ? (
+        <RootCauseFlow
+          factText={fact}
+          onComplete={(chain) => {
+            setRootCauseChain(chain);
+            setInRootCauseFlow(false);
+          }}
+          onSkip={() => setInRootCauseFlow(false)}
+        />
+      ) : (
+        <>
+          <StepDots current={step} total={TOTAL_STEPS} />
+
+          {step === 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-small font-semibold text-op-white">Quadro 1 — Fatos observados</p>
+                <button
+                  type="button"
+                  onClick={() => setShowFactsHelp(true)}
+                  className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+                >
+                  <CircleHelp className="size-3.5" />
+                  Ajuda
+                </button>
+              </div>
+              <TopicList
+                items={factItems}
+                onChange={setFactItems}
+                placeholder="O que você somente observou sem opinar ou justificar."
+                addLabel="+ Adicionar Fatos"
+              />
+            </div>
+          )}
+
+          {step === 1 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-small font-semibold text-op-white">Quadro 2 — Interpretações</p>
+                <button
+                  type="button"
+                  onClick={() => setShowInterpHelp(true)}
+                  className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+                >
+                  <CircleHelp className="size-3.5" />
+                  Ajuda
+                </button>
+              </div>
+              <TopicList
+                items={interpItems}
+                onChange={setInterpItems}
+                placeholder="O que você já conclui mesmo sem verificar."
+                addLabel="+ Adicionar Interpretações"
+              />
+            </div>
+          )}
+
+          {step === 2 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-small font-semibold text-op-white">Quadro 3 — Hipóteses testáveis</p>
+                <button
+                  type="button"
+                  onClick={() => setShowHypsHelp(true)}
+                  className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+                >
+                  <CircleHelp className="size-3.5" />
+                  Ajuda
+                </button>
+              </div>
+              <TopicList
+                items={hypItems}
+                onChange={setHypItems}
+                placeholder="O que poderia ser verdade e precisa mexer para o fato mudar."
+                addLabel="+ Adicionar Hipóteses"
+              />
+              {/* Botão de entrada opcional para investigação de causa raiz */}
+              <div className="border-t border-op-gray/20 mt-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setInRootCauseFlow(true)}
+                  className="flex items-center gap-2 text-label text-op-gray hover:text-op-white transition-colors w-full justify-center py-2"
+                >
+                  {rootCauseChain ? (
+                    <>
+                      <CheckCircle className="size-4" style={{ color: 'var(--color-brand-green)' }} />
+                      <span style={{ color: 'var(--color-brand-green)' }}>Causa raiz investigada</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search className="size-4" />
+                      Investigar causa raiz (opcional)
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isLastStep ? (
+            <div className="space-y-2">
+              <Button className="w-full" disabled={!fact.trim() || saving || (isReviewing && !hasChanges)} onClick={save}>
+                {saving ? 'Salvando…' : isReviewing ? 'Salvar nova versão' : 'Salvar'}
+              </Button>
+              {isReviewing && (
+                <Button variant="outline" className="w-full" disabled={hasChanges} onClick={onNextStep}>
+                  Avançar sem salvar →
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Button
+              className="w-full"
+              disabled={step === 0 ? !fact.trim() : false}
+              onClick={onNextStep}
+            >
+              Próximo
             </Button>
           )}
-        </div>
-      ) : (
-        <Button
-          className="w-full"
-          disabled={step === 0 ? !fact.trim() : false}
-          onClick={onNextStep}
-        >
-          Próximo
-        </Button>
+        </>
       )}
     </div>
     </>

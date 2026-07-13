@@ -5,10 +5,10 @@
 import { GuestStorage, guestId } from './guestStorage';
 import { supabase } from './supabase';
 import { triggerIndexUpdate } from './indexUpdate';
-import { markPhaseComplete } from './pact';
 import type { Entry, Principle } from '@/types/database';
 import type {
   EntryType,
+  ExecutionPlan,
   OperationalLayer,
   ScenarioType,
 } from '@/types/app';
@@ -40,17 +40,41 @@ export interface PulseContent {
   has_mixed_interpretation: boolean;
 }
 
+export interface RootCauseStep {
+  question: string;
+  answer: string;
+  step_number: number; // 1 a 5
+}
+
+export interface RootCauseChain {
+  steps: RootCauseStep[];
+  root_cause: string;
+  completed: boolean;
+  steps_taken: number; // 1-5
+}
+
 export interface StructuredCContent {
   fact_text: string;
   interpretation_text: string;
   hypothesis_text: string;
   imv_possible?: string;
+  root_cause_chain?: RootCauseChain;
 }
 
 export interface StructuredOContent {
   resources: string;
   frictions: string;
   bottleneck: string;
+}
+
+export interface ActionPlan {
+  what: string;             // O quê — da action da IMV (primeira linha)
+  why: string;              // Por quê — do project.current_bottleneck
+  how: string;              // Como — da metric
+  when: string;             // Quando — deadline formatado DD/MM/AAAA
+  who_is_affected: string;  // Quem é afetado — do ethical_check (ou 'Não especificado')
+  how_much: string;         // Quanto custa — do cut_rule (ou 'Não especificado')
+  generated_at: string;     // ISO timestamp da geração
 }
 
 export interface StructuredPContent {
@@ -64,6 +88,8 @@ export interface StructuredPContent {
   cut_rule: string;
   layer: OperationalLayer | null;
   ethical_check?: string | null;
+  execution_plan?: ExecutionPlan;
+  action_plan?: ActionPlan;
 }
 
 export interface StructuredAContent {
@@ -81,6 +107,24 @@ export interface StructuredAContent {
 export interface CorrectiveContent {
   correct_version: string;
   why_previous_was_imprecise: string;
+}
+
+export type QuickReviewExpectation = 'yes' | 'partial' | 'no';
+
+export interface QuickReviewContent {
+  what_happened: string;             // max 300 chars, obrigatório
+  met_expectation: QuickReviewExpectation; // obrigatório
+  next_step: string;                 // max 200 chars, obrigatório
+  elevated_to_apa: boolean;
+  linked_structured_p_id: string;   // UUID do structured_P de origem
+}
+
+export interface DecisionRecordContent {
+  decision: string;           // A decisão em uma frase — obrigatório, máx 200 chars
+  context: string;            // Por que agora — obrigatório, máx 400 chars
+  main_risk: string;          // Maior risco — obrigatório, máx 300 chars
+  validation_signal: string;  // Sinal de que foi certa — obrigatório, máx 300 chars
+  review_date?: string;       // Quando revisar — opcional, ISO date
 }
 
 async function insertEntry(args: {
@@ -118,10 +162,25 @@ async function insertEntry(args: {
     created_at: now,
   };
 
+  function dispatchEntrySaved(saved: Entry) {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('aop:entry-saved', {
+          detail: {
+            projectId: saved.project_id,
+            copaPhase: saved.copa_phase,
+            entryType: saved.entry_type,
+          },
+        }),
+      );
+    }
+  }
+
   if (!session) {
     GuestStorage.addEntry(entry);
     GuestStorage.updateProject(args.projectId, { last_entry_at: now });
     triggerIndexUpdate();
+    dispatchEntrySaved(entry);
     return entry;
   }
 
@@ -146,7 +205,9 @@ async function insertEntry(args: {
   if (error) throw error;
   await supabase.from('projects').update({ last_entry_at: now }).eq('id', args.projectId);
   triggerIndexUpdate();
-  return data as Entry;
+  const saved = data as Entry;
+  dispatchEntrySaved(saved);
+  return saved;
 }
 
 // ---------- Pulse ----------
@@ -177,7 +238,7 @@ export async function saveStructuredC(
   scenarioType?: ScenarioType | null,
   layerAtEntry?: OperationalLayer | null,
 ): Promise<Entry> {
-  const entry = await insertEntry({
+  return insertEntry({
     projectId,
     entry_type: 'structured_C',
     content: content as unknown as Record<string, unknown>,
@@ -186,8 +247,6 @@ export async function saveStructuredC(
     scenario_type_at_entry: scenarioType ?? null,
     layer_at_entry: layerAtEntry ?? null,
   });
-  void markPhaseComplete(projectId, 'capture').catch(() => {});
-  return entry;
 }
 
 export async function saveStructuredO(
@@ -196,7 +255,7 @@ export async function saveStructuredO(
   scenarioType?: ScenarioType | null,
   layerAtEntry?: OperationalLayer | null,
 ): Promise<Entry> {
-  const entry = await insertEntry({
+  return insertEntry({
     projectId,
     entry_type: 'structured_O',
     content: content as unknown as Record<string, unknown>,
@@ -205,8 +264,6 @@ export async function saveStructuredO(
     scenario_type_at_entry: scenarioType ?? null,
     layer_at_entry: layerAtEntry ?? null,
   });
-  void markPhaseComplete(projectId, 'organize').catch(() => {});
-  return entry;
 }
 
 export async function saveStructuredP(
@@ -214,7 +271,7 @@ export async function saveStructuredP(
   content: StructuredPContent,
   scenarioType?: ScenarioType | null,
 ): Promise<Entry> {
-  const entry = await insertEntry({
+  return insertEntry({
     projectId,
     entry_type: 'structured_P',
     content: content as unknown as Record<string, unknown>,
@@ -223,8 +280,6 @@ export async function saveStructuredP(
     copa_phase: 'P',
     scenario_type_at_entry: scenarioType ?? null,
   });
-  void markPhaseComplete(projectId, 'prove').catch(() => {});
-  return entry;
 }
 
 // Salva APA e — se houver principle_text — cria entrada em `principles`.
@@ -234,17 +289,18 @@ export async function saveStructuredA(
   content: StructuredAContent,
   scenarioType?: ScenarioType | null,
   layerAtEntry?: OperationalLayer | null,
+  linkedTo?: string | null,
 ): Promise<{ entry: Entry; principle: Principle | null; isFirstPrinciple: boolean }> {
   const entry = await insertEntry({
     projectId,
     entry_type: 'structured_A',
     content: content as unknown as Record<string, unknown>,
     is_clean_fact: false,
+    linked_to: linkedTo ?? null,
     scenario_type_at_entry: scenarioType ?? null,
     layer_at_entry: layerAtEntry ?? null,
     copa_phase: 'A',
   });
-  void markPhaseComplete(projectId, 'assess').catch(() => {});
 
   if (!content.principle_text.trim()) {
     return { entry, principle: null, isFirstPrinciple: false };
@@ -308,6 +364,38 @@ export async function saveStructuredA(
   return { entry, principle, isFirstPrinciple };
 }
 
+// ---------- Execution Plan ----------
+
+export async function updateEntryExecutionPlan(
+  entryId: string,
+  plan: ExecutionPlan,
+): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    const entries = GuestStorage.getEntries();
+    const entry = entries.find((e) => e.id === entryId);
+    if (!entry) return;
+    GuestStorage.updateEntry(entryId, {
+      content: { ...entry.content, execution_plan: plan },
+    });
+    return;
+  }
+
+  const { data: current, error: fetchError } = await supabase
+    .from('entries')
+    .select('content')
+    .eq('id', entryId)
+    .single();
+  if (fetchError || !current) return;
+
+  const { error } = await supabase
+    .from('entries')
+    .update({ content: { ...(current.content as Record<string, unknown>), execution_plan: plan } })
+    .eq('id', entryId);
+  if (error) throw error;
+}
+
 // ---------- Corrective ----------
 
 export async function saveCorrective(
@@ -321,6 +409,27 @@ export async function saveCorrective(
     content: content as unknown as Record<string, unknown>,
     is_clean_fact: false,
     linked_to: originalEntryId,
+  });
+}
+
+// ---------- Quick Review (PRD-ITEM-01 v2.0) ----------
+
+export async function saveQuickReview(
+  projectId: string,
+  linkedStructuredPId: string,
+  content: QuickReviewContent,
+  scenarioType?: ScenarioType | null,
+  layerAtEntry?: OperationalLayer | null,
+): Promise<Entry> {
+  return insertEntry({
+    projectId,
+    entry_type: 'quick_review',
+    content: content as unknown as Record<string, unknown>,
+    is_clean_fact: true,
+    linked_to: linkedStructuredPId,
+    copa_phase: 'A',
+    scenario_type_at_entry: scenarioType ?? null,
+    layer_at_entry: layerAtEntry ?? null,
   });
 }
 

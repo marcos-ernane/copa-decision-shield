@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { CreativeDiverge } from './CreativeDiverge';
 import { CreativeFunction } from './CreativeFunction';
 import { CreativeConverge } from './CreativeConverge';
@@ -45,6 +46,7 @@ export function CreativeShell() {
         <header className="flex items-center gap-2 px-4 py-3 border-b border-op-gray/30 sticky top-0 bg-op-black z-10">
           <BackButton onClick={handleBack} />
           <p className="text-label uppercase tracking-wide text-op-gray">{STEP_LABELS[step]}</p>
+          <CloseButton className="ml-auto" />
         </header>
       <CreativeDiverge
         initialFunction={fn}
@@ -68,6 +70,7 @@ export function CreativeShell() {
         <header className="flex items-center gap-2 px-4 py-3 border-b border-op-gray/30 sticky top-0 bg-op-black z-10">
           <BackButton onClick={handleBack} />
           <p className="text-label uppercase tracking-wide text-op-gray">{STEP_LABELS[step]}</p>
+          <CloseButton className="ml-auto" />
         </header>
       <CreativeFunction
         alternatives={alternatives}
@@ -87,6 +90,7 @@ export function CreativeShell() {
         <header className="flex items-center gap-2 px-4 py-3 border-b border-op-gray/30 sticky top-0 bg-op-black z-10">
           <BackButton onClick={handleBack} />
           <p className="text-label uppercase tracking-wide text-op-gray">{STEP_LABELS[step]}</p>
+          <CloseButton className="ml-auto" />
         </header>
       <CreativeConverge
         alternatives={alternatives}

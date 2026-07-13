@@ -28,8 +28,8 @@ interface FilterChip {
 }
 
 const FILTER_CHIPS: FilterChip[] = [
-  { key: 'gargalos',     label: 'Gargalos',           entryType: 'structured_O',    displayField: 'bottleneck' },
-  { key: 'friccoes',     label: 'Fricções',            entryType: 'structured_O',    displayField: 'frictions' },
+  { key: 'friccoes',     label: 'R2-Ruídos',           entryType: 'structured_O',    displayField: 'frictions' },
+  { key: 'gargalos',     label: 'R3-Restrições',       entryType: 'structured_O',    displayField: 'bottleneck' },
   { key: 'pressao',      label: 'Pressão',             entryType: 'pressure_session', displayField: 'fact' },
   { key: 'funcionou',    label: 'O que funcionou',     entryType: 'structured_A',    displayField: 'what_worked' },
   { key: 'irreversiveis',label: 'Ações irreversíveis', entryType: 'structured_P',
@@ -281,10 +281,10 @@ export function SymptomIndex() {
       {/* Resultados agrupados por projeto */}
       {results.groups.map((g) => (
         <div key={g.projectId} className="space-y-2">
-          <h3 className="text-heading text-foreground">{pname(g.projectId)}</h3>
+          <h3 className="text-body font-semibold text-op-white">{pname(g.projectId)}</h3>
           <ul className="space-y-1">
             {g.items.slice(0, 8).map((it) => (
-              <li key={it.id} className="rounded-md border border-op-gray/30 bg-op-navy p-2 text-small text-op-white">
+              <li key={it.id} className="rounded-md border border-op-gray/30 bg-op-navy p-2 text-small text-op-white/70">
                 <span className="text-label text-op-gray mr-2">
                   {it.kind === 'principle' ? 'princípio' : 'registro'}
                 </span>

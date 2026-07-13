@@ -2,8 +2,9 @@
 
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronRight, MoreVertical, Info } from 'lucide-react';
+import { ChevronRight, MoreVertical, Info, Gavel } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -24,17 +25,28 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { getProject, listEntries, listPrinciples, updateProject } from '@/lib/projects';
+import { listDecisionRecords } from '@/lib/decisionRecord';
+import type { DecisionRecord } from '@/lib/decisionRecord';
+import { updateEntryExecutionPlan } from '@/lib/register';
+import { ActionPlanSheet } from '@/components/project/ActionPlanSheet';
+import type { ActionPlan } from '@/lib/register';
+import { detectOpenCycles } from '@/lib/openCycle';
+import { OpenCycleCard } from '@/components/project/OpenCycleCard';
 import { computeProjectState, deriveProjectStatus, daysSince } from '@/lib/projectState';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import { IMVProgressBar } from '@/components/project/IMVProgressBar';
+import { ExecutionPlanView } from '@/components/copa/ExecutionPlanView';
 import { AccumulatedCapacityCard } from '@/components/project/AccumulatedCapacityCard';
 import { ProjectStateIcon } from '@/components/project/ProjectStateIcon';
 import { PactWeekView } from '@/components/pact/PactWeekView';
 import { PactReturnSheet } from '@/components/pact/PactReturnSheet';
 import { checkPactReturn, getCycle } from '@/lib/pact';
 import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
+import { ProjectHealthBadge } from '@/components/project/ProjectHealthBadge';
+import { useAuthState } from '@/lib/planLimits';
 import type { Project, Entry, Principle } from '@/types/database';
+import type { ExecutionPlan } from '@/types/app';
 
 const COPA_PHASE_ORDER = ['C', 'O', 'P', 'A'] as const;
 
@@ -241,23 +253,28 @@ const CRITERIA_LABELS: Record<string, string> = {
 function ProjectDashboard() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const { authState } = useAuthState();
   const [project, setProject] = useState<Project | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [principles, setPrinciples] = useState<Principle[]>([]);
+  const [decisionRecords, setDecisionRecords] = useState<DecisionRecord[]>([]);
   const [northExpanded, setNorthExpanded] = useState(false);
   const [returnSheet, setReturnSheet] = useState(false);
   const [isPausing, setIsPausing] = useState(false);
   const [pauseReason, setPauseReason] = useState('');
   const [isArchiving, setIsArchiving] = useState(false);
   const [showVelocitySheet, setShowVelocitySheet] = useState(false);
+  const [showAllCycles, setShowAllCycles] = useState(false);
   const [showIQISheet, setShowIQISheet] = useState(false);
+  const [showActionPlanSheet, setShowActionPlanSheet] = useState(false);
 
   useEffect(() => {
     void (async () => {
-      const [p, e, pr] = await Promise.all([
+      const [p, e, pr, dr] = await Promise.all([
         getProject(id),
         listEntries(id),
         listPrinciples(id),
+        listDecisionRecords(id),
       ]);
       if (!p) {
         navigate({ to: '/' });
@@ -266,6 +283,7 @@ function ProjectDashboard() {
       setProject(p);
       setEntries(e);
       setPrinciples(pr);
+      setDecisionRecords(dr);
       if (checkPactReturn(p)) setReturnSheet(true);
       // Limpa field_reading antigo que continha alertas transientes concatenados.
       const clean = sanitizeFieldReading(p.field_reading);
@@ -304,8 +322,13 @@ function ProjectDashboard() {
   if (!project) return null;
 
   const currentState = computeProjectState(project, entries);
-  const stateDisplay = deriveProjectStatus(project, entries);
-  const copaProgress = computeCopaProgress(entries);
+  // openCycles calculado antes de stateDisplay e copaProgress para que ambos
+  // possam refletir corretamente a existência de structured_P sem APA vinculada.
+  const openCycles = detectOpenCycles(entries);
+  const hasOpenCycles = openCycles.length > 0;
+  const stateDisplay = deriveProjectStatus(project, entries, hasOpenCycles);
+  const _rawProgress = computeCopaProgress(entries);
+  const copaProgress = { ..._rawProgress, allDone: _rawProgress.allDone && !hasOpenCycles };
 
   // Derivado de copaProgress.done para garantir consistência com "Onde Estou Agora".
   // Não usa weekly-reset do localStorage — reflete apenas registros reais no DB.
@@ -329,7 +352,7 @@ function ProjectDashboard() {
 
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
-    structured: entries.filter((e) => e.entry_type !== 'pulse').length,
+    structured: entries.filter((e) => e.entry_type !== 'pulse' && e.entry_type !== 'decision_record').length,
     imvs: entries.filter((e) => e.entry_type === 'structured_P').length,
     apas: entries.filter((e) => e.entry_type === 'structured_A').length,
     principles: principles.length,
@@ -372,6 +395,33 @@ function ProjectDashboard() {
     if (pDeadline === todayStr) return 'today';
     return null;
   })();
+
+  // Plano de execução da IMV mais recente com plan habilitado
+  const activeEntryWithPlan = [...entries]
+    .filter((e) => e.entry_type === 'structured_P')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .find((e) => (e.content as { execution_plan?: { enabled?: boolean } }).execution_plan?.enabled);
+  const activePlan = activeEntryWithPlan
+    ? (activeEntryWithPlan.content as { execution_plan: ExecutionPlan }).execution_plan
+    : null;
+  const activeEntryImvAction = activeEntryWithPlan
+    ? (activeEntryWithPlan.content as { action?: string }).action ?? ''
+    : '';
+  const activeEntryImvDeadline = activeEntryWithPlan
+    ? (activeEntryWithPlan.content as { deadline?: string | null }).deadline ?? null
+    : null;
+
+  // IMV mais recente com action_plan gerado
+  const activeEntryWithActionPlan = [...entries]
+    .filter((e) => e.entry_type === 'structured_P')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .find((e) => (e.content as { action_plan?: unknown }).action_plan);
+  const activeActionPlan = activeEntryWithActionPlan
+    ? (activeEntryWithActionPlan.content as { action_plan: ActionPlan }).action_plan
+    : null;
+  const activeActionPlanImv = activeEntryWithActionPlan
+    ? (activeEntryWithActionPlan.content as { action?: string }).action ?? ''
+    : '';
 
   const motorAlert: { message: string; cta?: { label: string; onClick: () => void } } | null = (() => {
     const isTerminal = currentState === 'paused' || currentState === 'concluded' || currentState === 'archived';
@@ -472,6 +522,7 @@ function ProjectDashboard() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <CloseButton className="ml-2" />
       </header>
 
       <main className="px-6 py-6 space-y-6 max-w-md mx-auto">
@@ -502,6 +553,9 @@ function ProjectDashboard() {
             {project.current_layer && <LayerChip layer={project.current_layer} />}
           </div>
         </section>
+
+        {/* Indicador de Saúde do Projeto — PRD-ITEM-02 */}
+        <ProjectHealthBadge projectId={id} authState={authState} />
 
         {/* Onde estou agora */}
         {(() => {
@@ -594,6 +648,92 @@ function ProjectDashboard() {
             </section>
           );
         })()}
+
+        {/* Ciclos Abertos de APA (PRD-ITEM-01) — primeiro card sempre visível; restantes expansíveis */}
+        {currentState !== 'paused' && currentState !== 'concluded' && currentState !== 'archived' &&
+          (() => {
+            const cycles = openCycles;
+            if (cycles.length === 0) return null;
+            const [first, ...rest] = cycles;
+            return (
+              <>
+                <OpenCycleCard
+                  key={first.imv.id}
+                  imv={first.imv}
+                  daysOpen={first.daysOpen}
+                  projectId={id}
+                />
+                {rest.length > 0 && (
+                  <>
+                    {showAllCycles && rest.map((c) => (
+                      <OpenCycleCard
+                        key={c.imv.id}
+                        imv={c.imv}
+                        daysOpen={c.daysOpen}
+                        projectId={id}
+                      />
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setShowAllCycles((s) => !s)}
+                      className="w-full text-label text-op-cyan text-center py-1 hover:text-op-white transition-colors"
+                    >
+                      {showAllCycles
+                        ? 'Ocultar ciclos adicionais ▴'
+                        : `+ ${rest.length} ${rest.length === 1 ? 'outro ciclo aguarda' : 'outros ciclos aguardam'} resultado ▾`}
+                    </button>
+                  </>
+                )}
+              </>
+            );
+          })()
+        }
+
+        {/* Plano de Execução da IMV (REQ-PLANEXEC-21, 25) */}
+        {activePlan?.enabled && activeEntryWithPlan && (
+          <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
+            <h2 className="text-label text-op-gray uppercase">Plano de Execução</h2>
+            <ExecutionPlanView
+              plan={activePlan}
+              imvAction={activeEntryImvAction}
+              imvDeadline={activeEntryImvDeadline}
+              imvOverdue={imvDeadlineStatus === 'expired'}
+              cycleComplete={copaProgress.allDone}
+              onUpdate={async (newPlan: ExecutionPlan) => {
+                await updateEntryExecutionPlan(activeEntryWithPlan.id, newPlan);
+                setEntries((prev) =>
+                  prev.map((e) =>
+                    e.id === activeEntryWithPlan.id
+                      ? { ...e, content: { ...e.content, execution_plan: newPlan } }
+                      : e,
+                  ),
+                );
+              }}
+            />
+          </section>
+        )}
+
+        {/* Plano de Ação 5W2H — IMV ativa */}
+        {activeActionPlan && (
+          <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-2">
+            <h2 className="text-label text-op-gray uppercase">Plano de Ação 5W2H</h2>
+            <p className="text-small text-op-white/70 line-clamp-1">{activeActionPlanImv}</p>
+            <button
+              type="button"
+              onClick={() => setShowActionPlanSheet(true)}
+              className="text-label text-[color:var(--color-brand-blue)] hover:underline"
+            >
+              Ver plano completo →
+            </button>
+          </section>
+        )}
+        {showActionPlanSheet && activeActionPlan && (
+          <ActionPlanSheet
+            plan={activeActionPlan}
+            imvTitle={activeActionPlanImv}
+            onClose={() => setShowActionPlanSheet(false)}
+          />
+        )}
 
         {/* Velocidade — Transição entre as fases */}
         {showVelocityCard && (
@@ -895,6 +1035,42 @@ function ProjectDashboard() {
             </button>
           </div>
         </section>
+
+        {/* Decisões Registradas */}
+        {decisionRecords.length > 0 && (
+          <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
+            <h2 className="text-label text-op-gray uppercase">Decisões Registradas</h2>
+            <div className="space-y-2">
+              {decisionRecords.slice(0, 3).map((dr) => (
+                <div key={dr.id} className="space-y-0.5">
+                  <p className="text-small text-op-white line-clamp-1">
+                    {dr.content.decision}
+                  </p>
+                  <p className="text-label text-op-gray">
+                    {new Date(dr.created_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              ))}
+            </div>
+            {decisionRecords.length > 3 && (
+              <button
+                type="button"
+                onClick={() => void navigate({ to: '/diary', search: { projectId: id, type: 'decision_record' } as never })}
+                className="text-label text-[color:var(--color-brand-blue)] hover:underline"
+              >
+                Ver todas ({decisionRecords.length}) →
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => void navigate({ to: '/decision/new', search: { projectId: id } as never })}
+              className="flex items-center gap-1.5 text-label text-op-gray hover:text-op-white transition-colors"
+            >
+              <Gavel className="size-3.5" />
+              Nova decisão
+            </button>
+          </section>
+        )}
 
         {/* Capacidade Acumulada */}
         <AccumulatedCapacityCard

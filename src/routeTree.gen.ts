@@ -19,13 +19,16 @@ import { Route as DiaryRouteImport } from './routes/diary'
 import { Route as CreativeRouteImport } from './routes/creative'
 import { Route as ConcludedRouteImport } from './routes/concluded'
 import { Route as CompassRouteImport } from './routes/compass'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as PanelIndexRouteImport } from './routes/panel.index'
 import { Route as CompassIndexRouteImport } from './routes/compass.index'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
+import { Route as SettingsHelpRouteImport } from './routes/settings.help'
 import { Route as RegisterStructuredRouteImport } from './routes/register.structured'
 import { Route as RegisterPulseRouteImport } from './routes/register.pulse'
+import { Route as DecisionNewRouteImport } from './routes/decision.new'
 import { Route as ProjectNewRouteImport } from './routes/project.new'
 import { Route as ProjectIdRouteImport } from './routes/project.$id'
 import { Route as PressureSplatRouteImport } from './routes/pressure.$'
@@ -50,6 +53,8 @@ import { Route as ProjectIdDiagnosisRouteImport } from './routes/project.$id.dia
 import { Route as ProjectIdDashboardRouteImport } from './routes/project.$id.dashboard'
 import { Route as ProjectIdConcludeRouteImport } from './routes/project.$id.conclude'
 import { Route as ProjectIdCapacityRouteImport } from './routes/project.$id.capacity'
+import { Route as ProjectIdPlanDetailRouteImport } from './routes/project.$id.plan-detail'
+import { Route as ProjectIdReviewEntryIdRouteImport } from './routes/project.$id.review.$entryId'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -101,6 +106,11 @@ const CompassRoute = CompassRouteImport.update({
   path: '/compass',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -126,6 +136,11 @@ const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsHelpRoute = SettingsHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const RegisterStructuredRoute = RegisterStructuredRouteImport.update({
   id: '/register/structured',
   path: '/register/structured',
@@ -134,6 +149,11 @@ const RegisterStructuredRoute = RegisterStructuredRouteImport.update({
 const RegisterPulseRoute = RegisterPulseRouteImport.update({
   id: '/register/pulse',
   path: '/register/pulse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DecisionNewRoute = DecisionNewRouteImport.update({
+  id: '/decision/new',
+  path: '/decision/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectNewRoute = ProjectNewRouteImport.update({
@@ -257,9 +277,20 @@ const ProjectIdCapacityRoute = ProjectIdCapacityRouteImport.update({
   path: '/capacity',
   getParentRoute: () => ProjectIdRoute,
 } as any)
+const ProjectIdPlanDetailRoute = ProjectIdPlanDetailRouteImport.update({
+  id: '/plan-detail',
+  path: '/plan-detail',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
+const ProjectIdReviewEntryIdRoute = ProjectIdReviewEntryIdRouteImport.update({
+  id: '/review/$entryId',
+  path: '/review/$entryId',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/compass': typeof CompassRouteWithChildren
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
@@ -285,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/panel/transfer': typeof PanelTransferRoute
   '/pressure/$': typeof PressureSplatRoute
   '/project/$id': typeof ProjectIdRouteWithChildren
+  '/decision/new': typeof DecisionNewRoute
   '/project/new': typeof ProjectNewRoute
   '/register/pulse': typeof RegisterPulseRoute
   '/register/structured': typeof RegisterStructuredRoute
@@ -299,12 +331,16 @@ export interface FileRoutesByFullPath {
   '/project/$id/edit': typeof ProjectIdEditRoute
   '/project/$id/pact': typeof ProjectIdPactRoute
   '/project/$id/sheet': typeof ProjectIdSheetRoute
+  '/project/$id/plan-detail': typeof ProjectIdPlanDetailRoute
+  '/project/$id/review/$entryId': typeof ProjectIdReviewEntryIdRoute
   '/register/corrective/$entryId': typeof RegisterCorrectiveEntryIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
+  '/decision/new': typeof DecisionNewRoute
   '/diary': typeof DiaryRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/pressure': typeof PressureRouteWithChildren
@@ -339,14 +375,18 @@ export interface FileRoutesByTo {
   '/project/$id/edit': typeof ProjectIdEditRoute
   '/project/$id/pact': typeof ProjectIdPactRoute
   '/project/$id/sheet': typeof ProjectIdSheetRoute
+  '/project/$id/plan-detail': typeof ProjectIdPlanDetailRoute
+  '/project/$id/review/$entryId': typeof ProjectIdReviewEntryIdRoute
   '/register/corrective/$entryId': typeof RegisterCorrectiveEntryIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/compass': typeof CompassRouteWithChildren
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
+  '/decision/new': typeof DecisionNewRoute
   '/diary': typeof DiaryRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/panel': typeof PanelRouteWithChildren
@@ -383,12 +423,15 @@ export interface FileRoutesById {
   '/project/$id/edit': typeof ProjectIdEditRoute
   '/project/$id/pact': typeof ProjectIdPactRoute
   '/project/$id/sheet': typeof ProjectIdSheetRoute
+  '/project/$id/plan-detail': typeof ProjectIdPlanDetailRoute
+  '/project/$id/review/$entryId': typeof ProjectIdReviewEntryIdRoute
   '/register/corrective/$entryId': typeof RegisterCorrectiveEntryIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/compass'
     | '/concluded'
     | '/creative'
@@ -408,6 +451,7 @@ export interface FileRouteTypes {
     | '/compass/sheet'
     | '/compass/sheets'
     | '/compass/simulations'
+    | '/decision/new'
     | '/diary/$'
     | '/panel/baseline'
     | '/panel/rubric'
@@ -428,12 +472,16 @@ export interface FileRouteTypes {
     | '/project/$id/edit'
     | '/project/$id/pact'
     | '/project/$id/sheet'
+    | '/project/$id/plan-detail'
+    | '/project/$id/review/$entryId'
     | '/register/corrective/$entryId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
     | '/concluded'
     | '/creative'
+    | '/decision/new'
     | '/diary'
     | '/onboarding'
     | '/pressure'
@@ -468,13 +516,17 @@ export interface FileRouteTypes {
     | '/project/$id/edit'
     | '/project/$id/pact'
     | '/project/$id/sheet'
+    | '/project/$id/plan-detail'
+    | '/project/$id/review/$entryId'
     | '/register/corrective/$entryId'
   id:
     | '__root__'
     | '/'
+    | '/login'
     | '/compass'
     | '/concluded'
     | '/creative'
+    | '/decision/new'
     | '/diary'
     | '/onboarding'
     | '/panel'
@@ -511,14 +563,18 @@ export interface FileRouteTypes {
     | '/project/$id/edit'
     | '/project/$id/pact'
     | '/project/$id/sheet'
+    | '/project/$id/plan-detail'
+    | '/project/$id/review/$entryId'
     | '/register/corrective/$entryId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
   CompassRoute: typeof CompassRouteWithChildren
   ConcludedRoute: typeof ConcludedRoute
   CreativeRoute: typeof CreativeRoute
+  DecisionNewRoute: typeof DecisionNewRoute
   DiaryRoute: typeof DiaryRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   PanelRoute: typeof PanelRouteWithChildren
@@ -537,6 +593,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -654,6 +717,13 @@ declare module '@tanstack/react-router' {
       path: '/register/pulse'
       fullPath: '/register/pulse'
       preLoaderRoute: typeof RegisterPulseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/decision/new': {
+      id: '/decision/new'
+      path: '/decision/new'
+      fullPath: '/decision/new'
+      preLoaderRoute: typeof DecisionNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/project/new': {
@@ -824,6 +894,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectIdCapacityRouteImport
       parentRoute: typeof ProjectIdRoute
     }
+    '/project/$id/plan-detail': {
+      id: '/project/$id/plan-detail'
+      path: '/plan-detail'
+      fullPath: '/project/$id/plan-detail'
+      preLoaderRoute: typeof ProjectIdPlanDetailRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
+    '/project/$id/review/$entryId': {
+      id: '/project/$id/review/$entryId'
+      path: '/review/$entryId'
+      fullPath: '/project/$id/review/$entryId'
+      preLoaderRoute: typeof ProjectIdReviewEntryIdRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
   }
 }
 
@@ -892,11 +976,13 @@ const PressureRouteWithChildren = PressureRoute._addFileChildren(
 
 interface SettingsRouteChildren {
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
+  SettingsHelpRoute: typeof SettingsHelpRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsNotificationsRoute: SettingsNotificationsRoute,
+  SettingsHelpRoute: SettingsHelpRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
 
@@ -912,6 +998,8 @@ interface ProjectIdRouteChildren {
   ProjectIdEditRoute: typeof ProjectIdEditRoute
   ProjectIdPactRoute: typeof ProjectIdPactRoute
   ProjectIdSheetRoute: typeof ProjectIdSheetRoute
+  ProjectIdPlanDetailRoute: typeof ProjectIdPlanDetailRoute
+  ProjectIdReviewEntryIdRoute: typeof ProjectIdReviewEntryIdRoute
 }
 
 const ProjectIdRouteChildren: ProjectIdRouteChildren = {
@@ -922,6 +1010,8 @@ const ProjectIdRouteChildren: ProjectIdRouteChildren = {
   ProjectIdEditRoute: ProjectIdEditRoute,
   ProjectIdPactRoute: ProjectIdPactRoute,
   ProjectIdSheetRoute: ProjectIdSheetRoute,
+  ProjectIdPlanDetailRoute: ProjectIdPlanDetailRoute,
+  ProjectIdReviewEntryIdRoute: ProjectIdReviewEntryIdRoute,
 }
 
 const ProjectIdRouteWithChildren = ProjectIdRoute._addFileChildren(
@@ -930,9 +1020,11 @@ const ProjectIdRouteWithChildren = ProjectIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
   CompassRoute: CompassRouteWithChildren,
   ConcludedRoute: ConcludedRoute,
   CreativeRoute: CreativeRoute,
+  DecisionNewRoute: DecisionNewRoute,
   DiaryRoute: DiaryRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   PanelRoute: PanelRouteWithChildren,

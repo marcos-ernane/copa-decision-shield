@@ -76,7 +76,8 @@ entry_type TEXT CHECK IN (
   'structured_C'      -- {fact_text, interpretation_text, hypothesis_text, imv_possible}
   'structured_O'      -- {resources, frictions, main_bottleneck}
   'structured_P'      -- {action, layer_at_entry, reversible, cheap, specific, measurable, metric, deadline,
-                      --  cut_rule, situational_fit, situational_fit_response, ethical_check, ethical_check_response}
+                      --  cut_rule, situational_fit, situational_fit_response, ethical_check, ethical_check_response,
+                      --  execution_plan?: {enabled, phases:[{id,how,who,deadline,status,completed_at,reopen_history}]}}
   'structured_A'      -- {what_happened, why, fact_text, principle_text, decision, repeat_rule,
                       --  cut_rule_next, next_bottleneck, hidden_cost, ai_reformulation_used, ai_reformulation_text}
   'passive'           -- capturado automaticamente
@@ -241,6 +242,7 @@ export type AuthState =
   /project/:id/sheet          -- v3.0
   /project/:id/pact           -- v3.0
   /project/:id/capacity       -- v3.0
+  /project/:id/plan-detail    -- Plano de Execução (REQ-PLANEXEC-26)
 
   /copa (COPAShell)
     index → COPAEntryAlignment
@@ -399,6 +401,13 @@ type SuggestionState = 'no_history' | 'partial_history' | 'rich_history';
 // rich_history (>=5): 2 personalizadas + ação fixa #3; v3.0 usa tipo+camada+fase
 ```
 
+**Tela 3.5 — Convite ao Plano de Execução (opcional, Seção 37):** imediatamente após salvar a IMV na Tela 3, exibe convite no mesmo padrão do Entry Alignment:
+> "Quer planejar como vai executar isso?"
+> [PLANEJAR EXECUÇÃO] · [PULAR]
+- Exibido uma única vez por IMV. Pular não altera o fluxo para a Tela 4.
+- Exclusivo do COPA completo — Modo Pressão, Protocolo 5min e COPA de Bolso NÃO recebem esta sub-etapa.
+- Ver Seção 37 para especificação completa. [REQ-PLANEXEC-01 a 03]
+
 **Tela 4 — Aferição:** sinal de sucesso + prazo do resultado + **regra de corte** ("Se até [data] não acontecer [X]...")
 
 Ao concluir: agendar notificação para prazo + salvar `copa_session` + vincular projeto + atualizar `last_entry_at`.
@@ -443,7 +452,7 @@ Motor detecta interpretações → badge suave (não bloqueia) [REQ-REG-02]
 
 **Formato O (structured_O):** Mapa 3R: recursos disponíveis · fricções/obstáculos · gargalo principal
 
-**Formato P (structured_P):** ação + reversível/barato/específico/mensurável + Métrica (OBRIGATÓRIA) + prazo + regra de corte + camada + campo ético opcional
+**Formato P (structured_P):** ação + reversível/barato/específico/mensurável + Métrica (OBRIGATÓRIA) + prazo + regra de corte + camada + campo ético opcional + campo `execution_plan` opcional (ver Seção 37). O campo `execution_plan` é adicionado ao `content` JSONB após o convite da Tela 3.5 — não é um novo `entry_type`. [REQ-PLANEXEC-19]
 
 **Formato A (APA — structured_A):** o que aconteceu + por que + **Princípio extraído** (destaque visual: borda cyan, label azul — campo mais importante) + decisão + O que funcionou sem criar dano (v3.0) + repeat_rule + cut_rule_next + next_bottleneck
 
@@ -485,6 +494,8 @@ Referência ao original (exibido, não editável) + "O que estava incorreto" + "
 
 **Manual do Operador:** lista de ChapterCards (nome + data + badge Norte + tipo + camada predominante). ChapterDetail: Norte original · o que aconteceu · IMVs positivas · IMVs descartadas · padrões descartados · gargalo que evoluiu · princípios extraídos · "Se eu recomeçasse..." · nota final editável.
 
+**Plano de Execução na Timeline:** entradas `structured_P` com `execution_plan.enabled = true` exibem as fases do plano inline no card da Timeline, respeitando todos os filtros existentes (Período, Cenário, Camada, Tipo de Entrada) sem filtros adicionais. [REQ-PLANEXEC-20]
+
 **[REQ-DIARY-01]** Exportação PDF via jsPDF + html2canvas com Capacitor Share API.
 
 ---
@@ -515,6 +526,14 @@ Norte após APA concluída · tipo de bloqueio em COPA concluído · resultado d
 
 ### Zona Vermelha (bloqueada — sempre oferece Registro Corretivo)
 Data/hora de qualquer registro · fase COPA em registro concluído · conteúdo de Capítulo salvo · classificação de urgência no Modo Pressão · score da Linha de Base após geração do relatório
+
+### Zonas Temporais do Plano de Execução da IMV (extensão da Seção 13 para fases)
+**[REQ-PLANEXEC-09]** Fase dentro do prazo → edição livre de Como, Quem e Quando (equivalente Zona Verde).
+**[REQ-PLANEXEC-10]** Fase com prazo vencido e não concluída → Como e Quem bloqueados. Único caminho disponível: reabertura do campo Quando.
+**[REQ-PLANEXEC-11]** Após reabertura de prazo → fase retorna ao estado "dentro do prazo", campos Como e Quem voltam editáveis.
+**[REQ-PLANEXEC-12]** Reabertura apresenta exclusivamente o campo Quando — sem acesso a Como/Quem até nova data ser confirmada.
+**[REQ-PLANEXEC-13]** Novo prazo deve ser anterior ao prazo-limite da IMV principal (mesma validação de criação). Se não houver espaço temporal, informa claramente.
+**[REQ-PLANEXEC-14]** Toda reabertura registrada em `reopen_history` da fase: prazo anterior, novo prazo, data/hora do ajuste. Histórico interno — não exibido em destaque na UI, disponível para extensão futura do PatternEngine.
 
 ---
 
@@ -652,6 +671,9 @@ fontFamily: { sans: ['Inter','SF Pro Display','system-ui','sans-serif'], mono: [
 ### Componentes Globais Críticos (v3.0)
 `<VoiceInput />` · `<FABButton />` · `<ProjectStateIcon />` · `<IMVProgressBar />` · `<PrincipleCard />` · `<PaywallGate />` · `<RegistrationNudge />` · `<EditZoneGuard zone='green'|'yellow'|'red' />` · `<SuggestionSheet />` · `<BookAnchorHint />` · `<AIReformulation />` · `<PrincipleRecallPrompt />` · `<QualitativeEvolution />` · `<EntryAlignmentScreen />` · `<PressureRealityCheckScreen />` · `<ScenarioTypeChip />` · `<LayerChip />` · `<BaselineProgressBar />` · `<PactWeekView />` · `<AccumulatedCapacityCard />` · `<FrictionMatrixCell />` · `<OperatorSheetField />` · `<CompassSection />` · `<TransferProofStep />`
 
+**Componentes do Plano de Execução da IMV (Seção 37):**
+`<ExecutionPlanInvite />` · `<ExecutionPlanView />` · `<ExecutionPhaseCard />` · `<ExecutionPhaseForm />` · `<ExecutionProgressBar />`
+
 ### Princípios Visuais Invioláveis
 1. Mobile first — 375px
 2. Uma ação por tela
@@ -730,6 +752,8 @@ Princípios-base v3.0 adicionados: "Tipo antes de agir" · "Camada antes de plan
 | Protocolo 5 Minutos | 5 etapas para baixa energia: tipo, fato, fricção, micro-ação, sinal |
 | Capacidade Acumulada | IMVs testadas, princípios válidos, padrões descartados, gargalo que evoluiu |
 | Ética Operacional | Campo opcional em IMVs/APAs: custo oculto das ações |
+| Plano de Execução da IMV | Sub-etapa opcional da Fase [P]: fases com Como/Quem/Quando para orientar a execução de uma IMV entre sua definição e o registro do resultado (APA) |
+| Fase do Plano de Execução | Unidade do plano: Como (passo concreto) + Quem (texto livre, opcional) + Quando (prazo anterior ao prazo da IMV) + status pendente/concluída |
 
 ---
 
@@ -741,6 +765,7 @@ Princípios-base v3.0 adicionados: "Tipo antes de agir" · "Camada antes de plan
 - S12=Comunidade+ModoLeitura · S13=LinhaDeBase · S14=Pacto · S15=Folha+Bússola
 - S16=Fricções+Protocolo5min · S17=Manutenção · S18=Criatividade · S19=Simulações
 - S20=GuiaDiagnóstico · S21=ProvaTransferência · S22=ÉticaOperacional · S23=Engines finais
+- **S24=PlanoExecuçãoIMV** (Seção 37) — pendente de implementação
 
 ---
 
@@ -999,6 +1024,12 @@ Pergunta central: "Isso resolve sem destruir? Quem paga o custo oculto?"
 - **Parcial — Seção 34:** `compass.simulations.tsx` existe
 
 ### Pendente / Incompleto
+- **Seção 37:** Plano de Execução da IMV — **pendente de implementação (S24)**
+  - Tipos: `ExecutionPhase`, `ExecutionPlan` em `src/types/`
+  - Lib: `src/lib/executionPlan.ts`
+  - Componentes: `ExecutionPlanInvite`, `ExecutionPlanView`, `ExecutionPhaseCard`, `ExecutionPhaseForm`, `ExecutionProgressBar` em `src/components/copa/` e `src/components/project/`
+  - Rota: `src/routes/project.$id.plan-detail.tsx`
+  - Arquivos tocados: `src/lib/register.ts` (StructuredPContent), `src/components/register/FormatP.tsx` (convite pós-save), `src/routes/project.$id.dashboard.tsx` (indicador), `src/components/project/ProjectCard.tsx` (indicador), `src/components/diary/TimelineTab.tsx` (fases inline)
 - **Seção 13:** Sistema de Edição 3 Zonas — `<EditZoneGuard />` pode estar parcial
 - **Seção 14:** Notificações push — configuração existe, lembretes do Pacto pendentes
 - **Seção 19:** Comunidade Externa — campo `community_link` no schema, UI pode estar pendente
@@ -1009,6 +1040,153 @@ Pergunta central: "Isso resolve sem destruir? Quem paga o custo oculto?"
 - **Seção 32:** Prova de Transferência — placeholder, relatório de consistência por IA pendente
 - **Seção 35:** Guia Diagnóstico — `compass.guide.tsx` existe, fluxo interativo completo pendente
 - **Seção 36:** Ética Operacional — campos éticos podem estar implementados nos formulários, auditoria completa pendente
+
+---
+
+## Plano de Execução da IMV (Seção 37)
+
+Sub-etapa opcional da Fase [P] do COPA completo. Orienta o operador sobre *como* avançar a execução de uma IMV já calibrada, entre sua definição (Tela 3) e o registro do resultado (APA, Tela 4). Não é um gerenciador de tarefas — é vinculada a uma única IMV e não se repete em outros canais.
+
+**Princípios de design (extensão dos Princípios Invioláveis):**
+- Opcionalidade explícita — nunca obrigatória, segue padrão do Entry Alignment [REQ-COPA-00]
+- A IMV não se duplica — o campo "Como" de cada fase descreve *como* executar, nunca *o quê* (já definido na IMV, exibido como cabeçalho fixo)
+- Proporcionalidade — campo "Como" limitado a 80-120 caracteres recomendados
+- Escopo único — exclusivo do COPA completo; Modo Pressão, Protocolo 5min e COPA de Bolso não recebem esta sub-etapa
+- Hierarquia de prazos — prazo da IMV é soberano; nenhuma fase pode ter prazo igual ou posterior
+- Sem colaboração — "Quem" é texto livre informativo, sem convite, conta ou notificação a terceiros
+
+### 37.1 Gatilho de Ativação
+
+**[REQ-PLANEXEC-01]** Imediatamente após salvar a IMV na Tela 3 do COPA completo, exibe convite opcional:
+> "Quer planejar como vai executar isso?"
+> [PLANEJAR EXECUÇÃO] · [PULAR]
+
+**[REQ-PLANEXEC-02]** Pular não altera nenhum comportamento existente. Não bloqueia a navegação para Tela 4.
+
+**[REQ-PLANEXEC-03]** Convite exibido uma única vez por IMV. Não repetido em visitas posteriores se o usuário pulou.
+
+### 37.2 Estrutura de uma Fase
+
+**[REQ-PLANEXEC-04]** Cada fase contém:
+
+| Campo | Descrição | Editabilidade |
+|---|---|---|
+| **IMV (cabeçalho fixo)** | Texto da ação da IMV (não editável aqui — segue regras da Seção 13) | Somente leitura |
+| **Como** | Passo concreto desta fase — frase curta, 80-120 chars recomendados | Zona Verde / bloqueado se vencida |
+| **Quem** | Responsável. Texto livre, opcional. Sem conta ou notificação | Zona Verde / bloqueado se vencida |
+| **Quando** | Prazo da fase — obrigatoriamente anterior ao prazo-limite da IMV | Zona Verde; reabertura se vencida |
+
+**[REQ-PLANEXEC-05]** Sem limite rígido de quantidade de fases no MVP.
+
+**[REQ-PLANEXEC-06]** Status inicial: `pendente`. Passa a `concluída` exclusivamente por marcação explícita do usuário. Vencimento de prazo **nunca** altera status automaticamente.
+
+### 37.3 Validação de Prazo
+
+**[REQ-PLANEXEC-07]** Na criação ou edição do campo "Quando": validação em tempo real que a data é anterior ao prazo-limite da IMV. Se falhar: campo não salvo + mensagem clara (ex.: "O prazo desta etapa deve ser anterior ao prazo final da IMV: [data]").
+
+**[REQ-PLANEXEC-08]** A mesma validação se aplica na reabertura de prazo de fase vencida.
+
+### 37.4 Zonas de Edição por Estado Temporal (ver também Seção 13)
+
+**[REQ-PLANEXEC-09]** Fase dentro do prazo → Como, Quem e Quando editáveis livremente (Zona Verde).
+
+**[REQ-PLANEXEC-10]** Fase vencida não concluída → Como e Quem bloqueados. Único caminho: reabertura do Quando.
+
+**[REQ-PLANEXEC-11]** Após reabertura → fase retorna a "dentro do prazo", Como e Quem voltam editáveis.
+
+### 37.5 Reabertura de Prazo (Fase Vencida)
+
+**[REQ-PLANEXEC-12]** Ao tentar editar fase vencida: apresenta exclusivamente opção de ajustar o campo Quando.
+
+**[REQ-PLANEXEC-13]** Novo prazo validado conforme [REQ-PLANEXEC-07]. Se IMV próxima do vencimento sem espaço temporal, informa claramente ao usuário.
+
+**[REQ-PLANEXEC-14]** Toda reabertura registrada em `reopen_history` da fase: `{ previous_deadline, new_deadline, changed_at }`. Histórico interno — não exibido em destaque na UI, persistido para extensão futura do PatternEngine.
+
+### 37.6 Hierarquia de Avisos de Prazo
+
+**[REQ-PLANEXEC-15]** Máximo 1 aviso de prazo por vez na tela do projeto, por ordem de prioridade:
+1. IMV vencida — usa fluxo de aviso já existente. Prioridade máxima.
+2. Fase do plano de execução vencida — exibido apenas se IMV principal ainda no prazo.
+3. Nenhum aviso — quando não há pendência.
+
+**[REQ-PLANEXEC-16]** Aviso visual na tela do projeto, sem nova notificação push. Coerente com [REQ-NOTIF-02].
+
+### 37.7 Ajuda Contextual por Fase
+
+**[REQ-PLANEXEC-17]** Cada fase exibe botão/ícone de ajuda com orientação sobre o propósito daquela fase no plano de execução (não sobre o método COPA em geral).
+
+**[REQ-PLANEXEC-18]** Implementação visual preferida: `<BookAnchorHint />` estático (11px), por ser instrucional/estática e mais barato de implementar. Segue o princípio "IA invisível por padrão".
+
+### 37.8 Integração com o Diário
+
+**[REQ-PLANEXEC-19]** As fases NÃO geram novo `entry_type`. São persistidas dentro do `content` da entry `structured_P` existente, no campo `execution_plan`.
+
+**[REQ-PLANEXEC-20]** Fases exibidas na Timeline como parte do card da entry `structured_P` à qual pertencem, respeitando os filtros existentes (Período, Cenário, Camada, Tipo de Entrada) sem filtros adicionais.
+
+### 37.9 Indicador "Execução da IMV"
+
+**[REQ-PLANEXEC-21]** Novo indicador visual no ProjectCard (HomeScreen) e no ProjectDashboard, complementar ao `<IMVProgressBar />` existente.
+
+**[REQ-PLANEXEC-22]** Label: **"Execução da IMV"**.
+
+**[REQ-PLANEXEC-23]** Cálculo:
+```
+progresso = fases_concluidas (status = 'concluída') / total_de_fases_da_imv_ativa
+```
+Vencimento de prazo nunca incrementa este contador.
+
+**[REQ-PLANEXEC-24]** Estados visuais (paleta Seção 17):
+| Situação | Cor | Token |
+|---|---|---|
+| Avanço saudável, sem pendência | Verde / Azul | `brand-green` / `brand-blue` |
+| Existe fase vencida, IMV no prazo | Âmbar | `brand-amber` |
+| IMV principal vencida | Vermelho | `brand-red` |
+
+**[REQ-PLANEXEC-25]** Indicador exibido APENAS quando `execution_plan.enabled = true`. Se o usuário pulou o convite, indicador simplesmente não aparece — nunca vazio ou zerado.
+
+**[REQ-PLANEXEC-26]** Tela de memória de cálculo em `/project/:id/plan-detail`: quantas fases existem, concluídas, vencidas e significado de cada cor. Padrão visual de `/panel/index-detail`.
+
+### 37.10 Navegação
+
+**[REQ-PLANEXEC-27]** Toda tela do fluxo (criação de fase, edição, ajuda, reabertura, memória de cálculo) exibe botão "Voltar" no canto superior esquerdo, padrão visual já estabelecido no app.
+
+**[REQ-PLANEXEC-28]** Botão "Voltar" retorna à tela anterior imediata — nunca à Home, nunca direto ao Dashboard. Conforme [REQ-NAV-03].
+
+### 37.11 Persistência e Modelo de Dados
+
+**[REQ-PLANEXEC-29]** Persistência dual Supabase/GuestStorage, igual ao restante do app. Migração automática ao criar conta.
+
+```typescript
+interface ExecutionPhase {
+  id: string;
+  how: string;                    // Como — passo concreto
+  who: string | null;             // Quem — texto livre, opcional
+  deadline: string;               // Quando — ISO, anterior ao deadline da IMV
+  status: 'pendente' | 'concluída';
+  completed_at: string | null;
+  reopen_history: Array<{
+    previous_deadline: string;
+    new_deadline: string;
+    changed_at: string;
+  }>;
+}
+
+interface ExecutionPlan {
+  enabled: boolean;
+  phases: ExecutionPhase[];
+}
+
+// Adicionado ao StructuredPContent existente (src/lib/register.ts):
+// execution_plan?: ExecutionPlan
+```
+
+### 37.12 Fora de Escopo (Explicitamente)
+
+- Notificação a terceiros referenciados em "Quem"
+- Expansão para Modo Pressão, Protocolo 5min ou COPA de Bolso
+- Novo `entry_type` — as fases vivem dentro de `structured_P`
+- Análise automática de padrões de reabertura pelo PatternEngine (dados persistidos para uso futuro)
+- Limite rígido de quantidade de fases
 
 ---
 

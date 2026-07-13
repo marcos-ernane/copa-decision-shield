@@ -55,16 +55,16 @@ function buildDefaultCycle(project: Project): WeeklyCycle {
     last_completed_at: null,
   });
   return {
-    capture: make('capture', project.pact_day_capture || DEFAULT_DAYS.capture),
-    organize: make('organize', project.pact_day_organize || DEFAULT_DAYS.organize),
-    prove: make('prove', project.pact_day_prove || DEFAULT_DAYS.prove),
-    assess: make('assess', project.pact_day_assess || DEFAULT_DAYS.assess),
+    capture: make('capture', project.pact_day_capture ?? DEFAULT_DAYS.capture),
+    organize: make('organize', project.pact_day_organize ?? DEFAULT_DAYS.organize),
+    prove: make('prove', project.pact_day_prove ?? DEFAULT_DAYS.prove),
+    assess: make('assess', project.pact_day_assess ?? DEFAULT_DAYS.assess),
     week_start: currentWeekStartISO(),
   };
 }
 
 // Segunda-feira 00:00 local da semana corrente.
-function currentWeekStartISO(): string {
+export function currentWeekStartISO(): string {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   const dow = d.getDay(); // 0=Dom..6=Sáb
@@ -242,6 +242,32 @@ export async function markAllPhasesComplete(projectId: string): Promise<void> {
   };
   writeCycle(projectId, next);
   await updateProject(projectId, { pact_last_cycle_at: now });
+}
+
+// Listener global — dispara markPhaseComplete quando uma entry estruturada é salva
+// em projeto com Pacto ativo, somente se hoje é o dia configurado para aquela fase.
+// [REQ-PACT-12] Usa fuso horário local do dispositivo (getDay()).
+if (typeof window !== 'undefined') {
+  window.addEventListener('aop:entry-saved', (e: Event) => {
+    const detail = (e as CustomEvent<{
+      projectId: string;
+      copaPhase: string | null;
+      entryType: string;
+    }>).detail;
+    const { projectId, copaPhase } = detail;
+    if (!copaPhase || !['C', 'O', 'P', 'A'].includes(copaPhase)) return;
+    const phase = pactPhaseFromCopa(copaPhase as CopaPhase);
+    const today = new Date().getDay();
+    void (async () => {
+      try {
+        const project = await getProject(projectId);
+        if (!project?.pact_enabled) return;
+        const cycle = getCycle(project);
+        if (cycle[phase].day_of_week !== today) return;
+        await markPhaseComplete(projectId, phase);
+      } catch { /* silencioso — nunca quebra o fluxo de registro */ }
+    })();
+  });
 }
 
 export { PHASES };

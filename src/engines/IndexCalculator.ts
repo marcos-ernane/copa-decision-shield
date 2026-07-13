@@ -83,13 +83,18 @@ function applySmoothing(curr: number, prev: number | undefined, sameDay: boolean
 }
 
 export function calculateIndex(
-  entries: Entry[],
+  allEntries: Entry[],
   principles: Principle[],
   projects: Project[],
 ): IndexResult {
   const today = new Date().toISOString().slice(0, 10);
   const prev = readSmooth();
   const sameDay = prev?.date === today;
+
+  // Inbox e decision_record não contribuem para nenhum score — excluídos inclusive do guarda mínimo
+  const entries = allEntries.filter(
+    (e) => e.entry_type !== 'inbox' && e.entry_type !== 'decision_record',
+  );
 
   // Congelamento total: nenhum projeto ativo
   const hasActive = projects.some(
@@ -128,19 +133,28 @@ export function calculateIndex(
   // ---------- Execução ----------
   const pEntries = entries.filter((e) => e.entry_type === 'structured_P');
   const aEntries = entries.filter((e) => e.entry_type === 'structured_A');
-  let execution = pEntries.length === 0 ? 0 : pct(aEntries.length, pEntries.length);
+  // quick_review conta como 0.7 de uma APA completa (PRD-ITEM-01)
+  const qrEntries = entries.filter((e) => e.entry_type === 'quick_review');
+  const effectiveACount = aEntries.length + qrEntries.length * 0.7;
+  let execution = pEntries.length === 0 ? 0 : pct(effectiveACount, pEntries.length);
 
   const now = Date.now();
   let stalePenalty = 0;
   for (const p of pEntries) {
     const pTime = new Date(p.created_at).getTime();
-    const hasFollowup = aEntries.some(
+    const hasApa = aEntries.some(
       (a) =>
         a.project_id === p.project_id &&
         new Date(a.created_at).getTime() > pTime &&
         new Date(a.created_at).getTime() - pTime <= 7 * 86400000,
     );
-    if (!hasFollowup && now - pTime > 7 * 86400000) stalePenalty += 5;
+    const hasQuickReview = qrEntries.some(
+      (qr) =>
+        qr.linked_to === p.id &&
+        new Date(qr.created_at).getTime() > pTime &&
+        new Date(qr.created_at).getTime() - pTime <= 7 * 86400000,
+    );
+    if (!hasApa && !hasQuickReview && now - pTime > 7 * 86400000) stalePenalty += 5;
   }
   execution = clamp(execution - stalePenalty);
 

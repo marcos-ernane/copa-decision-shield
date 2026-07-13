@@ -3,6 +3,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { getBaselineHistory, SCORE_KEYS, SCORE_LABELS, parseScores } from '@/lib/baseline';
 import type { BaselineAssessment } from '@/types/database';
 
@@ -18,6 +19,7 @@ function PanelBaselinePage() {
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
         <BackButton />
         <h1 className="text-heading text-foreground">Linha de base — histórico</h1>
+        <CloseButton className="ml-auto" />
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">

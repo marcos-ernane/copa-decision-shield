@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Share2, Check } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
@@ -120,6 +121,7 @@ export function OperatorSheetScreen({
             Completo
           </button>
         </div>
+        <CloseButton className="ml-2" />
       </header>
 
       <main ref={sheetRef} className="px-4 py-5 space-y-6 max-w-md mx-auto bg-background">

@@ -16,7 +16,7 @@ export function usePendingBottlenecks(entries: Entry[], projects: Project[]) {
   );
 
   const pending = useMemo<PendingBottleneck[]>(() => {
-    return entries
+    const mapped = entries
       .filter((e) => {
         if (e.entry_type !== 'structured_A') return false;
         const text = (e.content as { next_bottleneck?: string })?.next_bottleneck?.trim();
@@ -34,6 +34,14 @@ export function usePendingBottlenecks(entries: Entry[], projects: Project[]) {
         };
       })
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    // Deduplicar por projeto + texto (case-insensitive): mantém o mais recente
+    const seen = new Map<string, PendingBottleneck>();
+    for (const b of mapped) {
+      const key = `${b.projectId}|${b.text.toLowerCase()}`;
+      if (!seen.has(key)) seen.set(key, b);
+    }
+    return [...seen.values()];
   }, [entries, projects, dismissed]);
 
   const dismiss = useCallback((entryId: string) => {

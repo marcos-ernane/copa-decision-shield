@@ -4,6 +4,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import {
   SCORE_KEYS,
   SCORE_LABELS,
@@ -81,6 +82,7 @@ export function BaselineAssessmentFlow() {
             {step < 7 ? `Etapa ${step} de 6` : 'Resultado'}
           </h1>
         </div>
+        <CloseButton className="ml-auto" />
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-24">

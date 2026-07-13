@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { Search, Trash2 } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -69,6 +70,7 @@ function ConcludedProjectsScreen() {
           <BackButton />
           <h1 className="text-heading text-foreground flex-1">Projetos Concluídos</h1>
           <span className="text-small text-muted-foreground">{projects.length}</span>
+          <CloseButton className="ml-2" />
         </div>
       </header>
 

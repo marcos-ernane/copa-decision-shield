@@ -29,6 +29,8 @@ export async function startCheckout(
         priceId: STRIPE_PRICES[priceKey],
         userId: session.user.id,
         isTrial: options.isTrial ?? false,
+        successUrl: `${window.location.origin}/settings?checkout=success`,
+        cancelUrl: `${window.location.origin}/settings?checkout=cancelled`,
       },
     });
 
@@ -62,7 +64,10 @@ export async function openStripePortal(): Promise<boolean> {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return false;
     const { data, error } = await supabase.functions.invoke('stripe-portal', {
-      body: { userId: session.user.id },
+      body: {
+        userId: session.user.id,
+        returnUrl: `${window.location.origin}/settings`,
+      },
     });
     if (error) return false;
     const url = (data as { url?: string; error?: string } | null)?.url;

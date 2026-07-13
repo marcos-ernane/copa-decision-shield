@@ -5,8 +5,10 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
+import { processInboxEntry } from '@/lib/universalCapture';
 import { CheckCircle2, Lock, ArrowRight, CircleHelp, X } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 
 // Total de passos por formato (passo final = índice TOTAL_STEPS - 1)
 const FORMAT_STEPS: Record<'C' | 'O' | 'P' | 'A', number> = { C: 4, O: 3, P: 4, A: 5 };
@@ -15,10 +17,14 @@ import { FormatC } from './FormatC';
 import { FormatO } from './FormatO';
 import { FormatP } from './FormatP';
 import { FormatA } from './FormatA';
+import { PrincipleHint } from './PrincipleHint';
 import { useProjectPicker } from '@/hooks/useProjectPicker';
-import { getProject, listEntries } from '@/lib/projects';
+import { getProject, listEntries, listPrinciples, updatePrincipleRecall } from '@/lib/projects';
+import { useAuthState } from '@/lib/planLimits';
+import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
+import type { SuggestionResult } from '@/engines/SuggestionEngine';
 import type { StructuredCContent, StructuredOContent, StructuredPContent, StructuredAContent } from '@/lib/register';
-import type { Project, Entry } from '@/types/database';
+import type { Project, Entry, Principle } from '@/types/database';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 type Format = 'C' | 'O' | 'P' | 'A';
@@ -123,6 +129,12 @@ function fmtDeadline(ymd: string): string {
   return `${d}/${m}/${y}`;
 }
 
+function lastEntryId(entries: Entry[], type: string): string | null {
+  return [...entries]
+    .filter((e) => e.entry_type === type)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]?.id ?? null;
+}
+
 function lastContent<T>(entries: Entry[], type: string): T | null {
   const sorted = [...entries]
     .filter((e) => e.entry_type === type)
@@ -145,19 +157,43 @@ export function StructuredRegister() {
   const navigate = useNavigate();
   const router = useRouter();
   const { projectId, setProjectId, projects } = useProjectPicker();
-  const search = useSearch({ strict: false }) as { format?: 'C' | 'O' | 'P' | 'A' };
+  const { userId } = useAuthState();
+  const search = useSearch({ strict: false }) as {
+    format?: 'C' | 'O' | 'P' | 'A';
+    linkedTo?: string;
+    inboxEntryId?: string;
+    inboxText?: string;
+  };
   const [format, setFormat] = useState<Format>('C');
   const [currentStep, setCurrentStep] = useState(0);
   const [projectData, setProjectData] = useState<Project | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [phaseHelp, setPhaseHelp] = useState<Format | null>(null);
+  const [principles, setPrinciples] = useState<Principle[]>([]);
+  const [suggestedPrinciple, setSuggestedPrinciple] = useState<SuggestionResult | null>(null);
+  // Contexto de quick_review pré-existente para pré-preencher FormatA
+  const [linkedQuickReviewFact, setLinkedQuickReviewFact] = useState<string | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
     void (async () => {
-      const [p, es] = await Promise.all([getProject(projectId), listEntries(projectId)]);
+      const [p, es, prs] = await Promise.all([
+        getProject(projectId),
+        listEntries(projectId),
+        listPrinciples(projectId),
+      ]);
       setProjectData(p ?? null);
       setEntries(es);
+      setPrinciples(prs);
+      // Pré-carrega contexto de quick_review se linkedTo presente e formato='A'
+      if (search.linkedTo) {
+        const qr = es.find(
+          (e) => e.entry_type === 'quick_review' && e.linked_to === search.linkedTo,
+        );
+        setLinkedQuickReviewFact(
+          qr ? ((qr.content as { what_happened?: string }).what_happened ?? null) : null,
+        );
+      }
       // Se um formato foi solicitado via URL (ex: Pacto da semana), usa ele.
       // Caso contrário, auto-detecta a próxima fase pendente.
       if (search.format) {
@@ -174,7 +210,20 @@ export function StructuredRegister() {
       }
       setCurrentStep(0);
     })();
-  }, [projectId, search.format]);
+  }, [projectId, search.format, search.linkedTo]);
+
+  // Recalcula sugestão de princípio ao mudar de fase — fire-and-forget, não bloqueia UI.
+  useEffect(() => {
+    if (!projectData || principles.length === 0) {
+      setSuggestedPrinciple(null);
+      return;
+    }
+    const result = suggestPrincipleForProject(projectData, principles);
+    setSuggestedPrinciple(result);
+    if (result) {
+      updatePrincipleRecall(result.principle.id).catch(console.error);
+    }
+  }, [format, projectData, principles]);
 
   if (!projectId) {
     return <ProjectPicker projects={projects} onPick={setProjectId} />;
@@ -224,15 +273,13 @@ export function StructuredRegister() {
     }
   }
 
-  // Recarrega entries sem avançar de fase — usado pelo auto-save silencioso do FormatP.
-  async function handleAutoSaved() {
-    if (!projectId) return;
-    const newEntries = await listEntries(projectId);
-    setEntries(newEntries);
-  }
-
   async function onSaved() {
     if (!projectId) return;
+    // Se veio do Inbox, marcar como processado após a primeira fase (C) salva.
+    if (format === 'C' && search.inboxEntryId) {
+      void processInboxEntry(search.inboxEntryId);
+      window.dispatchEvent(new CustomEvent('aop:inbox-updated'));
+    }
     const newEntries = await listEntries(projectId);
     setEntries(newEntries);
     const newStatuses = computeStatuses(newEntries);
@@ -285,6 +332,7 @@ export function StructuredRegister() {
           <p className="text-label text-op-gray uppercase tracking-wide">Nome</p>
           <p className="text-heading text-op-white">{projectData?.name ?? '…'}</p>
         </div>
+        <CloseButton className="ml-auto" />
       </header>
 
       <div className="space-y-4 p-4">
@@ -377,6 +425,9 @@ export function StructuredRegister() {
           </div>
         )}
 
+        {/* [REQ-PM-10] PrincipleHint — antes do switch de format, uma vez por fase */}
+        <PrincipleHint suggestion={suggestedPrinciple} currentPhase={format} />
+
         {/* Formulários — key muda ao trocar fase ou ao ter novo entry salvo */}
         {format === 'C' && (
           <FormatC
@@ -388,7 +439,15 @@ export function StructuredRegister() {
             onNextStep={handleNextStep}
             step={currentStep}
             isReviewing={isReviewing}
-            initialData={statuses['C'] === 'done' ? lastContent<StructuredCContent>(entries, 'structured_C') : null}
+            userId={userId}
+            initialEntryId={lastEntryId(entries, 'structured_C')}
+            initialData={
+              statuses['C'] === 'done'
+                ? lastContent<StructuredCContent>(entries, 'structured_C')
+                : search.inboxText
+                ? { fact_text: search.inboxText, interpretation_text: '', hypothesis_text: '' }
+                : null
+            }
           />
         )}
         {format === 'O' && (
@@ -412,7 +471,6 @@ export function StructuredRegister() {
             currentProjectLayer={currentLayer}
             onSaved={onSaved}
             onNextStep={handleNextStep}
-            onAutoSaved={handleAutoSaved}
             onGoToStep={setCurrentStep}
             step={currentStep}
             isReviewing={isReviewing}
@@ -429,7 +487,25 @@ export function StructuredRegister() {
             onNextStep={handleNextStep}
             step={currentStep}
             isReviewing={isReviewing}
-            initialData={statuses['A'] === 'done' ? lastContent<StructuredAContent>(entries, 'structured_A') : null}
+            userId={userId}
+            linkedTo={search.linkedTo ?? null}
+            initialData={
+              statuses['A'] === 'done'
+                ? lastContent<StructuredAContent>(entries, 'structured_A')
+                : linkedQuickReviewFact
+                ? {
+                    fact_text: linkedQuickReviewFact,
+                    interpretation_text: '',
+                    principle_text: '',
+                    decision: '',
+                    what_worked: '',
+                    hidden_cost: null,
+                    repeat_rule: '',
+                    cut_rule_next: '',
+                    next_bottleneck: '',
+                  }
+                : null
+            }
           />
         )}
       </div>

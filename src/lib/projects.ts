@@ -69,6 +69,31 @@ export async function listPrinciples(projectId: string): Promise<Principle[]> {
   return (data ?? []) as Principle[];
 }
 
+export async function updatePrincipleRecall(principleId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    const current = GuestStorage.getPrinciples().find((p) => p.id === principleId);
+    if (!current) return;
+    GuestStorage.updatePrinciple(principleId, {
+      recall_count: (current.recall_count ?? 0) + 1,
+      last_recalled_at: new Date().toISOString(),
+    });
+    return;
+  }
+  const { data } = await supabase
+    .from('principles')
+    .select('recall_count')
+    .eq('id', principleId)
+    .maybeSingle();
+  await supabase
+    .from('principles')
+    .update({
+      recall_count: ((data as { recall_count?: number } | null)?.recall_count ?? 0) + 1,
+      last_recalled_at: new Date().toISOString(),
+    })
+    .eq('id', principleId);
+}
+
 export interface NewProjectInput {
   name: string;
   north: string;
@@ -159,7 +184,11 @@ export async function deleteProject(id: string): Promise<void> {
     GuestStorage.deleteProject(id);
     return;
   }
-  // Remove capítulo gerado e o projeto (FK cascade cuida de entries/principles se configurado)
+  // Limpeza explícita de todos os registros vinculados ao projeto para evitar órfãos.
+  // entries e principles dependem de ON DELETE CASCADE no Supabase; os demais são limpos aqui.
+  await supabase.from('notification_configs').delete().eq('project_id', id);
+  await supabase.from('operator_sheets').delete().eq('project_id', id);
+  await supabase.from('baseline_assessments').delete().eq('project_id', id);
   await supabase.from('chapters').delete().eq('project_id', id);
   const { error } = await supabase.from('projects').delete().eq('id', id);
   if (error) throw error;

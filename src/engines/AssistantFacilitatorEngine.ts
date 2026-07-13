@@ -16,7 +16,8 @@ export type FacilitatorTrigger =
   | 'PRESSURE_REALITY_CHECK'
   | 'PRESSURE_ABUSE_PATTERN'
   | 'CREATIVE_DIVERGE_SUPPORT'
-  | 'TRANSFER_CONSISTENCY_REPORT';
+  | 'TRANSFER_CONSISTENCY_REPORT'
+  | 'HELP_CENTER_QUERY';
 
 const PAID_TRIGGERS: FacilitatorTrigger[] = [
   'SUGGESTION_BUTTON_COPA_PROVE',
@@ -48,6 +49,43 @@ async function userIsPaid(): Promise<boolean> {
   }
 }
 
+const FUNCTIONS_URL = 'https://nvkjzdhpjrbaietwcnmg.supabase.co/functions/v1/assistant-facilitator';
+const ANON_KEY = 'sb_publishable_UEenS-933goX-Wg4UUlN5A_KK7-pnIL';
+
+async function invokeFunction(
+  trigger: FacilitatorTrigger,
+  context: Record<string, unknown>,
+  timeoutMs: number,
+): Promise<string | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(FUNCTIONS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${ANON_KEY}`,
+        'apikey': ANON_KEY,
+      },
+      body: JSON.stringify({ trigger, context }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.warn('[Facilitator] HTTP', res.status, body.slice(0, 300));
+      return null;
+    }
+    const json = await res.json() as { suggestion?: string | null };
+    console.info('[Facilitator] response →', json?.suggestion ? 'AI text received' : 'null suggestion');
+    return json?.suggestion ?? null;
+  } catch (err) {
+    console.warn('[Facilitator] fetch error:', err);
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function askFacilitator(
   trigger: FacilitatorTrigger,
   context: Record<string, unknown>,
@@ -58,21 +96,20 @@ export async function askFacilitator(
       if (!paid) return null;
     }
 
+    const isHelp = trigger === 'HELP_CENTER_QUERY';
     const key = trigger + ':' + JSON.stringify(context);
-    const hit = cache.get(key);
-    if (hit && hit.expiresAt > Date.now()) return hit.value;
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
+    if (!isHelp) {
+      const hit = cache.get(key);
+      if (hit && hit.expiresAt > Date.now()) return hit.value;
+    }
 
-    const { data, error } = await supabase.functions.invoke('assistant-facilitator', {
-      body: { trigger, context },
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-    if (error) return null;
-    const suggestion = (data as { suggestion?: string | null } | null)?.suggestion ?? null;
-    cache.set(key, { value: suggestion, expiresAt: Date.now() + FIFTEEN_MIN });
+    const timeoutMs = isHelp ? 12000 : 3000;
+    const suggestion = await invokeFunction(trigger, context, timeoutMs);
+
+    if (!isHelp) {
+      cache.set(key, { value: suggestion, expiresAt: Date.now() + FIFTEEN_MIN });
+    }
     return suggestion;
   } catch {
     return null;

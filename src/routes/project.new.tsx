@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { GuestStorage } from '@/lib/guestStorage';
 import { CircleHelp, X } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { createProject } from '@/lib/projects';
@@ -131,6 +132,7 @@ function NewProject() {
         <header className="flex items-center gap-2 px-4 py-3 border-b border-op-gray/20 bg-op-navy">
           <BackButton />
           <h1 className="text-heading text-op-white">Novo projeto</h1>
+          <CloseButton className="ml-auto" />
         </header>
 
         <main className="flex-1 px-6 py-6 max-w-md mx-auto w-full space-y-6">

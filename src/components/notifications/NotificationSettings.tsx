@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import {
@@ -99,6 +100,7 @@ export function NotificationSettings() {
         <div className="flex items-center gap-2 px-4 py-3">
           <BackButton />
           <h1 className="text-heading text-foreground">Notificações</h1>
+          <CloseButton className="ml-auto" />
         </div>
       </header>
 

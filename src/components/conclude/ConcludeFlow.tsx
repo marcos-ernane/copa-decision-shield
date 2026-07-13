@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { getProject, listEntries, listPrinciples } from '@/lib/projects';
 import {
   runPreConcludeChecks,
@@ -85,6 +86,7 @@ export function ConcludeFlow({ projectId }: Props) {
             <p className="text-label uppercase tracking-wide text-muted-foreground">Concluir projeto</p>
             <h1 className="text-heading text-foreground">{project.name}</h1>
           </div>
+          <CloseButton className="ml-auto" />
         </div>
       </header>
 

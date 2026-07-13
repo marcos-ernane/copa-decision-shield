@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { useRouter } from '@tanstack/react-router';
 import { SIMULATIONS } from '@/data/simulations';
 import { SimulationCard } from './SimulationCard';
@@ -20,6 +21,7 @@ export function SimulationLibrary() {
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
         <BackButton />
         <h1 className="text-heading text-foreground">Simulações do Operador</h1>
+        <CloseButton className="ml-auto" />
       </header>
 
       <main className="px-4 py-6 max-w-md mx-auto space-y-4">

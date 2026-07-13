@@ -11,12 +11,15 @@ import { openStripePortal } from '@/lib/stripe';
 import { setReadingMode, emitReadingModeChange } from '@/hooks/useReadingMode';
 import { GuestStorage } from '@/lib/guestStorage';
 import { PlanBadge } from './PlanBadge';
+import { LoginSheet } from './LoginSheet';
 import { UpgradeSheet } from './UpgradeSheet';
 import { TrialEndingSheet } from './TrialEndingSheet';
 import { enablePactGlobally, disablePactGlobally } from '@/lib/pact';
 import { isProtocol5FabEnabled, setProtocol5FabEnabled } from '@/components/app/Fabs';
 import type { Profile } from '@/types/database';
 import { ChevronRight } from 'lucide-react';
+import { BackButton } from '@/components/app/BackButton';
+import { useNavigate, useRouter } from '@tanstack/react-router';
 
 type Pref = 'entry_alignment_enabled' | 'book_anchors_enabled' | 'reading_mode_enabled' | 'compass_enabled';
 
@@ -28,10 +31,21 @@ const PREFS: { key: Pref; label: string }[] = [
 ];
 
 export function SettingsScreen() {
+  const navigate = useNavigate();
+  const router = useRouter();
   const { userId, email, authState, subscription } = useAuthState();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [upgrade, setUpgrade] = useState(false);
   const [p5Fab, setP5Fab] = useState(false);
+  const [showLoginNudge, setShowLoginNudge] = useState(false);
+
+  function handleBack() {
+    if (router.history.length > 1) {
+      router.history.back();
+    } else {
+      void navigate({ to: '/' });
+    }
+  }
 
   useEffect(() => {
     setP5Fab(isProtocol5FabEnabled());
@@ -43,24 +57,30 @@ export function SettingsScreen() {
       .then(({ data }) => setProfile((data as Profile | null) ?? null));
   }, [userId]);
 
-  async function handleManageSubscription() {
-    const isTrial = authState === 'AUTHENTICATED_TRIAL';
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  }
 
-    // Usuário em trial ou sem assinatura paga → mostra seletor de planos
-    if (!subscription?.stripe_subscription_id || isTrial) {
-      setUpgrade(true);
+  async function handleManageSubscription() {
+    const isPaidActive =
+      authState === 'AUTHENTICATED_ANNUAL' || authState === 'AUTHENTICATED_LIFETIME';
+
+    // Somente assinante anual/vitalício ativo → Stripe portal para gerenciar
+    if (isPaidActive) {
+      const success = await openStripePortal();
+      if (!success) {
+        toast.error('Não foi possível abrir o portal de assinatura.', {
+          description: 'Escolha ou altere seu plano abaixo.',
+          duration: 4000,
+        });
+        setUpgrade(true);
+      }
       return;
     }
 
-    // Usuário com assinatura PAGA ativa → abre portal do Stripe
-    const success = await openStripePortal();
-    if (!success) {
-      toast.error('Não foi possível abrir o portal de assinatura.', {
-        description: 'Escolha ou altere seu plano abaixo.',
-        duration: 4000,
-      });
-      setUpgrade(true);
-    }
+    // Todos os outros (free, trial expirado, trial ativo, guest) → escolher plano
+    setUpgrade(true);
   }
 
   async function togglePref(key: Pref, value: boolean) {
@@ -82,7 +102,8 @@ export function SettingsScreen() {
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <TrialEndingSheet />
-      <header className="px-4 pt-8 pb-4">
+      <header className="px-4 pt-6 pb-4 flex items-center gap-3">
+        <BackButton onClick={handleBack} />
         <h1 className="text-display text-op-white">Configurações</h1>
       </header>
 
@@ -97,20 +118,31 @@ export function SettingsScreen() {
               <PlanBadge />
             </div>
             {userId ? (
-              <Button
-                variant={subscription?.stripe_subscription_id && authState !== 'AUTHENTICATED_TRIAL' ? 'outline' : 'default'}
-                className="w-full"
-                onClick={() => void handleManageSubscription()}
-              >
-                {authState === 'AUTHENTICATED_TRIAL'
-                  ? 'Escolher plano'
-                  : subscription?.stripe_subscription_id
+              <>
+                <Button
+                  variant={authState === 'AUTHENTICATED_ANNUAL' || authState === 'AUTHENTICATED_LIFETIME' ? 'outline' : 'default'}
+                  className="w-full"
+                  onClick={() => void handleManageSubscription()}
+                >
+                  {authState === 'AUTHENTICATED_ANNUAL' || authState === 'AUTHENTICATED_LIFETIME'
                     ? 'Gerenciar assinatura'
-                    : isPaid
-                      ? 'Ver planos'
+                    : authState === 'AUTHENTICATED_TRIAL'
+                      ? 'Escolher plano'
                       : 'Conhecer Plano Operador'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full text-op-gray hover:text-op-white"
+                  onClick={() => void handleSignOut()}
+                >
+                  Sair da conta
+                </Button>
+              </>
+            ) : (
+              <Button className="w-full" onClick={() => setShowLoginNudge(true)}>
+                Criar conta / Fazer login
               </Button>
-            ) : null}
+            )}
           </div>
         </Section>
 
@@ -209,6 +241,7 @@ export function SettingsScreen() {
       </main>
 
       <UpgradeSheet open={upgrade} onOpenChange={setUpgrade} />
+      <LoginSheet open={showLoginNudge} onDismiss={() => setShowLoginNudge(false)} />
     </div>
   );
 }

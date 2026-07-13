@@ -6,9 +6,12 @@ import { X, CircleHelp, Plus, ChevronDown, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceInput } from '@/components/copa/VoiceInput';
-import { saveStructuredP, savePassive, type StructuredPContent } from '@/lib/register';
+import { saveStructuredP, savePassive, updateEntryExecutionPlan, type StructuredPContent } from '@/lib/register';
+import { createPlan } from '@/lib/executionPlan';
 import { updateProject } from '@/lib/projects';
+import { ExecutionPlanInvite } from '@/components/copa/ExecutionPlanInvite';
 import { StepDots } from './StepDots';
+import type { Entry } from '@/types/database';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -82,7 +85,6 @@ interface Props {
   currentProjectLayer?: OperationalLayer | null;
   onSaved: () => void;
   onNextStep: () => void;
-  onAutoSaved?: () => Promise<void>;
   onGoToStep?: (step: number) => void;
   initialData?: StructuredPContent | null;
   step: number;
@@ -257,7 +259,7 @@ function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boole
   );
 }
 
-export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onAutoSaved, onGoToStep, initialData, step, isReviewing }: Props) {
+export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onGoToStep, initialData, step, isReviewing }: Props) {
   const [actionItems, setActionItems] = useState<string[]>(() => toItems(initialData?.action));
   const action = fromItems(actionItems);
   const [reversible, setReversible] = useState<boolean | null>(initialData?.reversible ?? null);
@@ -277,6 +279,8 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const [pauseReason, setPauseReason] = useState('');
   const [isArchiving, setIsArchiving] = useState(false);
   const [interruptSaving, setInterruptSaving] = useState(false);
+  const [savedEntry, setSavedEntry] = useState<Entry | null>(null);
+  const [showInvite, setShowInvite] = useState(false);
   const [criteriaHelp, setCriteriaHelp] = useState<CriteriaHelpKey | null>(null);
   const [metricHelp, setMetricHelp] = useState(false);
   const [cutRuleHelp, setCutRuleHelp] = useState(false);
@@ -295,7 +299,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
 
   async function performSave(updateLayer: boolean) {
     setSaving(true);
-    await saveStructuredP(projectId, {
+    const entry = await saveStructuredP(projectId, {
       action: action.trim(),
       reversible,
       cheap,
@@ -310,6 +314,12 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
       await updateProject(projectId, { current_layer: layer });
     }
     setSaving(false);
+    // Convite ao Plano de Execução apenas em IMVs novas (REQ-PLANEXEC-06)
+    if (!isReviewing) {
+      setSavedEntry(entry);
+      setShowInvite(true);
+      return;
+    }
     onSaved();
   }
 
@@ -318,25 +328,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
     await performSave(layerChanged);
   }
 
-  // No passo 2 (Métrica + Prazo) em modo revisão, salva silenciosamente antes de avançar
-  // para que o prazo novo já esteja no banco ao verificar o bloqueio do Formato A.
-  async function handleProximo() {
-    if (isReviewing && step === 2 && onAutoSaved) {
-      setSaving(true);
-      await saveStructuredP(projectId, {
-        action: action.trim(),
-        reversible,
-        cheap,
-        specific,
-        measurable,
-        metric: metric.trim(),
-        deadline: deadline || null,
-        cut_rule: cutRule.trim(),
-        layer,
-        }, scenarioType);
-      await onAutoSaved();
-      setSaving(false);
-    }
+  function handleProximo() {
     onNextStep();
   }
 
@@ -391,6 +383,22 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
 
   return (
     <>
+      {/* Convite ao Plano de Execução (REQ-PLANEXEC-06) */}
+      {showInvite && savedEntry && (
+        <ExecutionPlanInvite
+          imvAction={action}
+          onSkip={() => {
+            setShowInvite(false);
+            onSaved();
+          }}
+          onPlan={async () => {
+            await updateEntryExecutionPlan(savedEntry.id, createPlan());
+            setShowInvite(false);
+            onSaved();
+          }}
+        />
+      )}
+
       {/* Bottom sheet de ajuda da IMV */}
       {imvHelp && (
         <div
@@ -782,17 +790,10 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               </p>
             </div>
           )}
-          {isReviewing && deadline && isDeadlineExpired && (
-            <div className="space-y-2">
-              {!imvBlocked && (
-                <Button variant="outline" className="w-full" onClick={handleAjustarIMV}>
-                  Ajustar a IMV
-                </Button>
-              )}
-              <Button variant="outline" className="w-full" onClick={() => setShowInterruptMenu(true)}>
-                Interromper Projeto
-              </Button>
-            </div>
+          {isReviewing && deadline && isDeadlineExpired && !imvBlocked && (
+            <Button variant="outline" className="w-full" onClick={handleAjustarIMV}>
+              Ajustar a IMV
+            </Button>
           )}
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -836,6 +837,11 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
           {isReviewing && (
             <Button variant="outline" className="w-full" disabled={hasChanges} onClick={onNextStep}>
               Avançar sem salvar →
+            </Button>
+          )}
+          {isReviewing && deadline && isDeadlineExpired && (
+            <Button variant="outline" className="w-full" onClick={() => setShowInterruptMenu(true)}>
+              Interromper Projeto
             </Button>
           )}
         </div>

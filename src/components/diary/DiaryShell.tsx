@@ -1,13 +1,15 @@
-import { useState, type ReactNode } from 'react';
-import { useNavigate, Link } from '@tanstack/react-router';
+import { useState, useEffect, type ReactNode } from 'react';
+import { useNavigate, useRouterState, useSearch, Link } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { TimelineTab } from './TimelineTab';
 import { PrinciplesTab } from './PrinciplesTab';
 import { SymptomIndex } from './SymptomIndex';
+import { GargalosTab } from './GargalosTab';
 import { WeeklyReport } from './WeeklyReport';
 import { OperatorManual } from '@/components/manual/OperatorManual';
 
-export type DiaryTab = 'timeline' | 'principles' | 'symptoms' | 'weekly' | 'manual';
+export type DiaryTab = 'timeline' | 'principles' | 'symptoms' | 'gargalos' | 'weekly' | 'manual';
 
 interface Props {
   active: DiaryTab;
@@ -15,24 +17,46 @@ interface Props {
   children?: ReactNode;
 }
 
-const TABS: Array<{ id: DiaryTab; label: string; to: string }> = [
-  { id: 'timeline', label: 'Linha do tempo', to: '/diary' },
-  { id: 'principles', label: 'Princípios', to: '/diary/principles' },
-  { id: 'symptoms', label: 'Sintomas', to: '/diary/symptoms' },
-  { id: 'weekly', label: 'Semana', to: '/diary/weekly' },
-  { id: 'manual', label: 'Manual', to: '/diary/manual' },
+const TABS: Array<{ id: DiaryTab; label: string }> = [
+  { id: 'timeline', label: 'Linha do tempo' },
+  { id: 'principles', label: 'Princípios' },
+  { id: 'symptoms', label: 'Sintomas' },
+  { id: 'gargalos', label: 'Gargalos' },
+  { id: 'weekly', label: 'Semana' },
+  { id: 'manual', label: 'Manual' },
 ];
 
-export function DiaryShell({ active, children }: Props) {
+export function DiaryShell({ active: _active, children }: Props) {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<DiaryTab>(active);
+  const routerState = useRouterState();
+  const pathname = routerState.location.pathname;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const search = useSearch({ strict: false }) as { principleId?: string };
+
+  const activeFromUrl: DiaryTab =
+    pathname.includes('/principles') ? 'principles' :
+    pathname.includes('/symptoms') ? 'symptoms' :
+    pathname.includes('/gargalos') ? 'gargalos' :
+    pathname.includes('/weekly') ? 'weekly' :
+    pathname.includes('/manual') ? 'manual' :
+    // [REQ-PM-11] Quando principleId está presente, abre direto na aba de princípios
+    search.principleId ? 'principles' :
+    'timeline';
+
+  const [tab, setTab] = useState<DiaryTab>(activeFromUrl);
+
+  useEffect(() => { setTab(activeFromUrl); }, [activeFromUrl]);
 
   function go(id: DiaryTab) {
     setTab(id);
-    const target = TABS.find((t) => t.id === id);
-    if (target) {
-      if (id === 'timeline') navigate({ to: '/diary' });
-      else navigate({ to: '/diary/$', params: { _splat: id === 'manual' ? 'manual' : id === 'principles' ? 'principles' : id === 'symptoms' ? 'symptoms' : 'weekly' } });
+    if (id === 'timeline') navigate({ to: '/diary' });
+    else {
+      const splat = id === 'manual' ? 'manual'
+        : id === 'principles' ? 'principles'
+        : id === 'symptoms' ? 'symptoms'
+        : id === 'gargalos' ? 'gargalos'
+        : 'weekly';
+      navigate({ to: '/diary/$', params: { _splat: splat } });
     }
   }
 
@@ -42,6 +66,7 @@ export function DiaryShell({ active, children }: Props) {
         <div className="flex items-center gap-2 px-4 py-3">
           <BackButton />
           <h1 className="text-heading text-foreground">Diário do operador</h1>
+          <CloseButton className="ml-auto" />
         </div>
         <nav className="flex overflow-x-auto px-2 gap-1 pb-2">
           {TABS.map((t) => (
@@ -61,6 +86,7 @@ export function DiaryShell({ active, children }: Props) {
             {tab === 'timeline' && <TimelineTab />}
             {tab === 'principles' && <PrinciplesTab />}
             {tab === 'symptoms' && <SymptomIndex />}
+            {tab === 'gargalos' && <GargalosTab />}
             {tab === 'weekly' && <WeeklyReport />}
             {tab === 'manual' && <OperatorManual />}
           </>

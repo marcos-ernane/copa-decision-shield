@@ -34,21 +34,21 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
 
   return (
     <div className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2">
+      {project && (
+        <p className="text-body font-semibold text-op-white truncate">
+          {project.name}
+        </p>
+      )}
       {editing ? (
         <VoiceInput value={text} onChange={setText} rows={3} />
       ) : (
-        <p className="text-small text-op-white">
+        <p className="text-small text-op-white/70">
           {principle.is_master_principle && <span className="text-[color:var(--color-brand-amber)] mr-1">★</span>}
           {principle.content}
         </p>
       )}
 
       <div className="flex flex-wrap gap-1">
-        {project && (
-          <span className="text-label px-2 py-0.5 rounded-full bg-[var(--color-surface-1)] text-foreground">
-            {project.name}
-          </span>
-        )}
         {principle.scenario_type && <ScenarioTypeChip type={principle.scenario_type} />}
         {principle.layer && <LayerChip layer={principle.layer} />}
       </div>
@@ -60,7 +60,7 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
               onClick={async () => { await persist({ content: text.trim() }); setEditing(false); }}
               className="text-[color:var(--color-brand-blue)] hover:underline"
             >Salvar</button>
-            <button onClick={() => { setText(principle.content); setEditing(false); }} className="text-muted-foreground">
+            <button onClick={() => { setText(principle.content); setEditing(false); }} className="text-op-gray hover:underline">
               Cancelar
             </button>
           </>
@@ -77,7 +77,7 @@ export function PrincipleCard({ principle, project, onChange }: Props) {
               onConfirm={() => persist({ is_archived: true })}
             >
               {(open) => (
-                <button onClick={open} className="text-muted-foreground hover:underline">
+                <button onClick={open} className="text-op-gray hover:underline">
                   Arquivar
                 </button>
               )}

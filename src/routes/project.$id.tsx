@@ -34,6 +34,13 @@ function ProjectEntryRouter() {
         navigate({ to: '/' });
         return;
       }
+
+      // Projetos concluídos vão direto ao Manual do Diário
+      if (p.state === 'concluded') {
+        void navigate({ to: '/diary/manual', replace: true });
+        return;
+      }
+
       const entry = determineEntryType(p);
       if (entry === 'direct') {
         navigate({ to: '/project/$id/dashboard', params: { id }, replace: true });

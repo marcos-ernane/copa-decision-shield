@@ -1,13 +1,14 @@
-// BottomNav — 4 abas fixas (REQ-NAV-05). Nunca esconde ao scroll (REQ-NAV-02).
+// BottomNav — 5 abas fixas (REQ-NAV-05). Nunca esconde ao scroll (REQ-NAV-02).
 
 import { Link } from '@tanstack/react-router';
-import { Home, LayoutGrid, Compass, BookOpen } from 'lucide-react';
+import { Home, LayoutGrid, Compass, BookOpen, BotMessageSquare } from 'lucide-react';
 
-const TABS: { to: '/' | '/panel' | '/compass' | '/diary'; label: string; icon: typeof Home; exact: boolean }[] = [
+const TABS: { to: '/' | '/panel' | '/compass' | '/diary' | '/settings/help'; label: string; icon: typeof Home; exact: boolean }[] = [
   { to: '/', label: 'Início', icon: Home, exact: true },
   { to: '/panel', label: 'Painel', icon: LayoutGrid, exact: false },
   { to: '/compass', label: 'Bússola', icon: Compass, exact: false },
   { to: '/diary', label: 'Diário', icon: BookOpen, exact: false },
+  { to: '/settings/help', label: 'Ajuda IA', icon: BotMessageSquare, exact: false },
 ];
 
 export function BottomNav() {

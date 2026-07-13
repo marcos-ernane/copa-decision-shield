@@ -10,6 +10,7 @@ import {
 import { useEffect, useLayoutEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { migrateGuestToCloud } from "@/lib/migrateGuest";
+import { markWasAuthenticated } from "@/lib/authFlags";
 import { MigrationIndicator } from "@/components/MigrationIndicator";
 import { AppShell } from "@/components/app/AppShell";
 import { PassiveTracker } from "@/components/PassiveTracker";
@@ -214,6 +215,9 @@ function RootComponent() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (session?.user) {
+          markWasAuthenticated();
+        }
         if (event === "SIGNED_IN" && session?.user) {
           void migrateGuestToCloud(session.user.id);
         }

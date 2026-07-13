@@ -29,14 +29,23 @@ function AuthCallbackPage() {
         setError(error.message);
         return;
       }
+      const handleSuccess = () => {
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage({ type: 'aop:oauth-success' }, window.location.origin);
+          window.close();
+        } else {
+          navigate({ to: '/' });
+        }
+      };
+
       if (data.session) {
-        navigate({ to: '/' });
+        handleSuccess();
       } else {
         // Aguarda detectSessionInUrl processar o hash
         const { data: sub } = supabase.auth.onAuthStateChange((event) => {
           if (event === 'SIGNED_IN') {
             sub.subscription.unsubscribe();
-            navigate({ to: '/' });
+            handleSuccess();
           }
         });
         setTimeout(() => {

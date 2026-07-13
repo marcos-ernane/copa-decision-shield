@@ -2,6 +2,7 @@
 
 import { useRouter } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 
 const STEPS = [
   { n: 1, t: 'NOMEIE O TIPO', d: 'Fluxo / Processo / Oferta / Relacionamento / Pressão' },
@@ -24,6 +25,7 @@ export function PocketProtocol() {
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-black z-10">
         <BackButton />
         <h1 className="text-heading text-foreground">Protocolo de Bolso</h1>
+        <CloseButton className="ml-auto" />
       </header>
       <main className="px-4 py-5 max-w-md mx-auto space-y-6">
         <p className="text-small text-muted-foreground italic">"Quando não sei por onde começar"</p>

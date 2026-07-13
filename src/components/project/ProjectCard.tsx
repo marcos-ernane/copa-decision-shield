@@ -1,8 +1,10 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { MoreVertical } from 'lucide-react';
 import type { Project, Principle } from '@/types/database';
+import type { ExecutionPlan } from '@/types/app';
 import { ProjectStateIcon } from './ProjectStateIcon';
 import { ScenarioTypeChip } from './ScenarioTypeChip';
+import { ExecutionProgressBar } from './ExecutionProgressBar';
 import { STATE_DISPLAY, daysSince, determineEntryType } from '@/lib/projectState';
 import {
   DropdownMenu,
@@ -15,15 +17,19 @@ import {
 interface Props {
   project: Project;
   recallPrinciple?: Principle | null;
+  /** Plano de execução da IMV ativa — quando fornecido exibe indicador (REQ-PLANEXEC-21, 25). */
+  executionPlan?: ExecutionPlan | null;
+  imvOverdue?: boolean;
   /** Quando fornecido, exibe o botão [•••] no card (Seção 12.1 do PRD). */
   onEdit?: () => void;
   onConclude?: () => void;
   onArchive?: () => void;
   onPause?: () => void;
   onResume?: () => void;
+  onDelete?: () => void;
 }
 
-export function ProjectCard({ project, recallPrinciple, onEdit, onConclude, onArchive, onPause, onResume }: Props) {
+export function ProjectCard({ project, recallPrinciple, executionPlan, imvOverdue = false, onEdit, onConclude, onArchive, onPause, onResume, onDelete }: Props) {
   const navigate = useNavigate();
   const entryType = determineEntryType(project);
   const days = daysSince(project.last_entry_at);
@@ -31,10 +37,12 @@ export function ProjectCard({ project, recallPrinciple, onEdit, onConclude, onAr
   const showRecall =
     recallPrinciple &&
     (project.state === 'blocked' || project.state === 'new');
-  const showMenu = !!(onEdit || onConclude || onArchive || onPause || onResume);
+  const showMenu = !!(onEdit || onConclude || onArchive || onPause || onResume || onDelete);
 
   const cardTo =
-    entryType === 'direct'
+    project.state === 'concluded' || project.state === 'archived'
+      ? '/project/$id'
+      : entryType === 'direct'
       ? '/project/$id/dashboard'
       : entryType === 'new_cycle'
       ? '/project/$id/diagnosis'
@@ -69,6 +77,17 @@ export function ProjectCard({ project, recallPrinciple, onEdit, onConclude, onAr
           <span className="text-label text-op-gray">· {days}d sem registro</span>
         )}
       </div>
+      {/* Indicador compacto de execução (REQ-PLANEXEC-21, 25) */}
+      {executionPlan?.enabled && (
+        <div className="mt-2">
+          <ExecutionProgressBar
+            plan={executionPlan}
+            imvOverdue={imvOverdue}
+            projectId={project.id}
+            compact
+          />
+        </div>
+      )}
     </>
   );
 
@@ -116,6 +135,14 @@ export function ProjectCard({ project, recallPrinciple, onEdit, onConclude, onAr
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="text-destructive" onClick={onArchive}>
                       Arquivar
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {onDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive" onClick={onDelete}>
+                      Excluir projeto
                     </DropdownMenuItem>
                   </>
                 )}

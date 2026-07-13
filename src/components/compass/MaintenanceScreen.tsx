@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useNavigate } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import {
@@ -40,6 +41,7 @@ export function MaintenanceScreen() {
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-black z-10">
         <BackButton />
         <h1 className="text-heading text-foreground">Rotina de Manutenção</h1>
+        <CloseButton className="ml-auto" />
       </header>
 
       <div className="px-4 py-3 border-b border-border max-w-md mx-auto">

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useNavigate } from '@tanstack/react-router';
 import { FileText } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
@@ -54,6 +55,7 @@ export function SheetHistoryScreen() {
         <BackButton />
         <h1 className="text-heading text-foreground flex-1">Folhas salvas</h1>
         <Button size="sm" onClick={() => navigate({ to: '/compass/sheet' })}>Nova</Button>
+        <CloseButton className="ml-2" />
       </header>
 
       <div className="px-4 py-3 space-y-3 border-b border-border">
