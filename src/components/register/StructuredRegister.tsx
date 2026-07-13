@@ -487,6 +487,7 @@ export function StructuredRegister() {
             onNextStep={handleNextStep}
             step={currentStep}
             isReviewing={isReviewing}
+            userId={userId}
             linkedTo={search.linkedTo ?? null}
             initialData={
               statuses['A'] === 'done'
