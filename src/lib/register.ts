@@ -391,6 +391,38 @@ export async function saveStructuredA(
   return { entry, principle, isFirstPrinciple };
 }
 
+// ---------- Cost Benefit ----------
+
+export async function updateEntryCostBenefit(
+  entryId: string,
+  costBenefit: CostBenefitData,
+): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    const entries = GuestStorage.getEntries();
+    const entry = entries.find((e) => e.id === entryId);
+    if (!entry) return;
+    GuestStorage.updateEntry(entryId, {
+      content: { ...entry.content, cost_benefit: costBenefit },
+    });
+    return;
+  }
+
+  const { data: current, error: fetchError } = await supabase
+    .from('entries')
+    .select('content')
+    .eq('id', entryId)
+    .single();
+  if (fetchError || !current) return;
+
+  const { error } = await supabase
+    .from('entries')
+    .update({ content: { ...(current.content as Record<string, unknown>), cost_benefit: costBenefit } })
+    .eq('id', entryId);
+  if (error) throw error;
+}
+
 // ---------- Execution Plan ----------
 
 export async function updateEntryExecutionPlan(

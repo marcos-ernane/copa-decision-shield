@@ -2,7 +2,7 @@
 
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronRight, MoreVertical, Info, Gavel } from 'lucide-react';
+import { ChevronRight, MoreVertical, Info, Gavel, BarChart2 } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
@@ -27,9 +27,10 @@ import { Input } from '@/components/ui/input';
 import { getProject, listEntries, listPrinciples, updateProject } from '@/lib/projects';
 import { listDecisionRecords } from '@/lib/decisionRecord';
 import type { DecisionRecord } from '@/lib/decisionRecord';
-import { updateEntryExecutionPlan } from '@/lib/register';
+import { updateEntryExecutionPlan, type ActionPlan, type CostBenefitData } from '@/lib/register';
+import { formatCurrency, corRelacao } from '@/lib/costBenefit';
 import { ActionPlanSheet } from '@/components/project/ActionPlanSheet';
-import type { ActionPlan } from '@/lib/register';
+import { CostBenefitSheet } from '@/components/register/CostBenefitSheet';
 import { detectOpenCycles } from '@/lib/openCycle';
 import { OpenCycleCard } from '@/components/project/OpenCycleCard';
 import { computeProjectState, deriveProjectStatus, daysSince } from '@/lib/projectState';
@@ -267,6 +268,7 @@ function ProjectDashboard() {
   const [showAllCycles, setShowAllCycles] = useState(false);
   const [showIQISheet, setShowIQISheet] = useState(false);
   const [showActionPlanSheet, setShowActionPlanSheet] = useState(false);
+  const [showCostBenefitSheet, setShowCostBenefitSheet] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -421,6 +423,18 @@ function ProjectDashboard() {
     : null;
   const activeActionPlanImv = activeEntryWithActionPlan
     ? (activeEntryWithActionPlan.content as { action?: string }).action ?? ''
+    : '';
+
+  // IMV mais recente com cost_benefit preenchido
+  const activeEntryWithCostBenefit = [...entries]
+    .filter((e) => e.entry_type === 'structured_P')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .find((e) => (e.content as { cost_benefit?: unknown }).cost_benefit);
+  const activeCostBenefitData = activeEntryWithCostBenefit
+    ? (activeEntryWithCostBenefit.content as { cost_benefit: CostBenefitData }).cost_benefit
+    : null;
+  const activeCostBenefitImv = activeEntryWithCostBenefit
+    ? (activeEntryWithCostBenefit.content as { action?: string }).action ?? ''
     : '';
 
   const motorAlert: { message: string; cta?: { label: string; onClick: () => void } } | null = (() => {
@@ -732,6 +746,35 @@ function ProjectDashboard() {
             plan={activeActionPlan}
             imvTitle={activeActionPlanImv}
             onClose={() => setShowActionPlanSheet(false)}
+          />
+        )}
+
+        {/* Análise de Custo/Benefício — IMV ativa */}
+        {activeCostBenefitData && (
+          <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-2">
+            <h2 className="text-label text-op-gray uppercase">Custo / Benefício</h2>
+            <p className="text-small text-op-white/70 line-clamp-1">{activeCostBenefitImv}</p>
+            <button
+              type="button"
+              onClick={() => setShowCostBenefitSheet(true)}
+              className="flex items-center gap-1 text-label text-brand-blue hover:underline"
+            >
+              <BarChart2 className="size-3.5" />
+              Ver análise de custo/benefício
+            </button>
+            <p className={`text-[11px] ${corRelacao(activeCostBenefitData.relacao)}`}>
+              {activeCostBenefitData.relacao} · {formatCurrency(activeCostBenefitData.total_custo)}
+            </p>
+          </section>
+        )}
+        {showCostBenefitSheet && activeCostBenefitData && (
+          <CostBenefitSheet
+            isOpen={showCostBenefitSheet}
+            onClose={() => setShowCostBenefitSheet(false)}
+            onSave={() => {}}
+            initialData={activeCostBenefitData}
+            imvTitle={activeCostBenefitImv}
+            readOnly
           />
         )}
 

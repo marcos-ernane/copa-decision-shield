@@ -1,14 +1,17 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
-import { Inbox as InboxIcon, X, LayoutList, List } from 'lucide-react';
+import { Inbox as InboxIcon, X, LayoutList, List, BarChart2 } from 'lucide-react';
 import { Link, useSearch } from '@tanstack/react-router';
 import { buildOperationalView } from '@/lib/operationalView';
 import { ProjectSection } from './ProjectSection';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
 import type { ScenarioType, OperationalLayer, ExecutionPlan } from '@/types/app';
-import type { RootCauseChain, ActionPlan } from '@/lib/register';
+import type { RootCauseChain, ActionPlan, CostBenefitData } from '@/lib/register';
+import { updateEntryCostBenefit } from '@/lib/register';
+import { formatCurrency, corRelacao } from '@/lib/costBenefit';
 import { getPhaseTimeState } from '@/lib/executionPlan';
 import { ActionPlanSheet } from '@/components/project/ActionPlanSheet';
+import { CostBenefitSheet } from '@/components/register/CostBenefitSheet';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import { EditZoneGuard } from '@/components/EditZoneGuard';
@@ -145,6 +148,7 @@ export function TimelineTab() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [expandedChain, setExpandedChain] = useState<string | null>(null);
   const [activeActionPlan, setActiveActionPlan] = useState<{ plan: ActionPlan; imv: string } | null>(null);
+  const [activeCostBenefit, setActiveCostBenefit] = useState<{ entryId: string; data: CostBenefitData; imv: string } | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<DiaryView>(() => {
@@ -626,6 +630,27 @@ export function TimelineTab() {
                 </button>
               );
             })()}
+            {/* Análise de Custo/Benefício */}
+            {e.entry_type === 'structured_P' && (() => {
+              const cb = (e.content as { cost_benefit?: CostBenefitData }).cost_benefit;
+              if (!cb) return null;
+              const imv = (e.content as { action?: string }).action ?? '';
+              return (
+                <div className="mt-1 space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setActiveCostBenefit({ entryId: e.id, data: cb, imv })}
+                    className="flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
+                  >
+                    <BarChart2 className="size-3.5" />
+                    Ver análise de custo/benefício
+                  </button>
+                  <span className={`text-[11px] ${corRelacao(cb.relacao)}`}>
+                    {cb.relacao} · {formatCurrency(cb.total_custo)}
+                  </span>
+                </div>
+              );
+            })()}
             {/* Decisão Importante — campos detalhados */}
             {e.entry_type === 'decision_record' && (() => {
               const c = e.content as { decision?: string; context?: string; main_risk?: string; validation_signal?: string; review_date?: string };
@@ -938,6 +963,19 @@ export function TimelineTab() {
           plan={activeActionPlan.plan}
           imvTitle={activeActionPlan.imv}
           onClose={() => setActiveActionPlan(null)}
+        />
+      )}
+
+      {activeCostBenefit && (
+        <CostBenefitSheet
+          isOpen
+          onClose={() => setActiveCostBenefit(null)}
+          onSave={async (updated) => {
+            await updateEntryCostBenefit(activeCostBenefit.entryId, updated);
+            setActiveCostBenefit(null);
+          }}
+          initialData={activeCostBenefit.data}
+          imvTitle={activeCostBenefit.imv}
         />
       )}
 
