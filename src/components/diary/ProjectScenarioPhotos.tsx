@@ -1,7 +1,7 @@
 // Seção de fotos Antes/Depois por projeto no Diário.
-// Aparece uma vez por projeto na Lista Plana da Timeline.
+// Aparece uma vez por projeto na Timeline (Visão Operacional e Lista).
 // Botão ativo se há fotos; inativo (muted) se nenhuma foto registrada.
-// Botões "+ Antes" e "+ Depois" para registrar fotos retroativamente via ImageCapture.
+// Botões "+ Antes" e "+ Depois" para primeiro registro; "Editar" para gerenciar fotos existentes.
 
 import { useEffect, useState } from 'react';
 import { Camera, X } from 'lucide-react';
@@ -32,10 +32,15 @@ export function ProjectScenarioPhotos({ projectId, userId }: Props) {
     return () => { active = false; };
   }, [projectId]);
 
-  // Recarrega fotos após fechar o painel de registro
   function handleCloseRegister() {
     setRegisteringScenario(null);
     getProjectScenarioImages(projectId).then(setResult).catch(() => null);
+  }
+
+  function handleEdit(scenario: 'antes' | 'depois') {
+    setShowViewer(false);
+    setViewerUrl(null);
+    setRegisteringScenario(scenario);
   }
 
   if (!loaded) return null;
@@ -65,7 +70,7 @@ export function ProjectScenarioPhotos({ projectId, userId }: Props) {
             : 'Sem fotos de cenário'}
         </button>
 
-        {/* Botões de registro retroativo */}
+        {/* Botões de primeiro registro (só quando ainda sem fotos) */}
         {!hasAntesPhotos && result.antes.entryId && (
           <button
             type="button"
@@ -88,32 +93,31 @@ export function ProjectScenarioPhotos({ projectId, userId }: Props) {
 
       {/* Visualizador — Antes e Depois em tela cheia */}
       {showViewer && (
-        <div
-          className="fixed inset-0 z-50 bg-op-navy flex flex-col"
-          onClick={() => { setShowViewer(false); setViewerUrl(null); }}
-        >
-          <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-op-gray/20" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 bg-op-navy flex flex-col">
+          <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-op-gray/20">
             <p className="text-small font-semibold text-op-white">Fotos do cenário</p>
             <button
               type="button"
               onClick={() => { setShowViewer(false); setViewerUrl(null); }}
-              className="rounded-full bg-op-navy-elevated p-1.5"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-op-gray/30 bg-op-navy-elevated text-small text-op-gray hover:text-op-white hover:border-op-gray/60 transition-colors"
               aria-label="Fechar"
             >
-              <X className="size-4 text-op-gray" />
+              Fechar <X className="size-3.5" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-6" onClick={(e) => e.stopPropagation()}>
+          <div className="flex-1 overflow-y-auto p-4 space-y-6">
             <ScenarioSection
               label="Cenário Antes"
               images={result.antes.images}
               onImageClick={setViewerUrl}
+              onEdit={result.antes.entryId ? () => handleEdit('antes') : undefined}
             />
             <ScenarioSection
               label="Cenário Depois"
               images={result.depois.images}
               onImageClick={setViewerUrl}
+              onEdit={result.depois.entryId ? () => handleEdit('depois') : undefined}
             />
           </div>
         </div>
@@ -136,16 +140,16 @@ export function ProjectScenarioPhotos({ projectId, userId }: Props) {
           />
           <button
             type="button"
-            className="absolute top-4 right-4 rounded-full bg-black/60 p-2 hover:bg-black/80 transition-colors"
+            className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-black/60 text-small text-white hover:bg-black/80 transition-colors"
             onClick={() => setViewerUrl(null)}
             aria-label="Fechar"
           >
-            <X className="size-5 text-white" />
+            Fechar <X className="size-3.5" />
           </button>
         </div>
       )}
 
-      {/* Bottom-sheet de registro de fotos retroativo */}
+      {/* Bottom-sheet de edição de fotos */}
       {registeringScenario && (
         <div
           className="fixed inset-0 z-50 flex items-end bg-black/50"
@@ -162,10 +166,10 @@ export function ProjectScenarioPhotos({ projectId, userId }: Props) {
               <button
                 type="button"
                 onClick={handleCloseRegister}
-                className="p-1 rounded-md hover:bg-op-navy-elevated"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-op-gray/30 bg-op-navy-elevated text-small text-op-gray hover:text-op-white hover:border-op-gray/60 transition-colors"
                 aria-label="Fechar"
               >
-                <X className="size-5 text-op-gray" />
+                Fechar <X className="size-3.5" />
               </button>
             </div>
             {registeringScenario === 'antes' && result.antes.entryId && (
@@ -202,16 +206,29 @@ function ScenarioSection({
   label,
   images,
   onImageClick,
+  onEdit,
 }: {
   label: string;
   images: EntryImage[];
   onImageClick: (url: string) => void;
+  onEdit?: () => void;
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-label font-semibold uppercase tracking-wide" style={{ color: 'var(--color-brand-cyan)' }}>
-        {label}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-label font-semibold uppercase tracking-wide" style={{ color: 'var(--color-brand-cyan)' }}>
+          {label}
+        </p>
+        {onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="text-label text-op-gray hover:text-op-white px-2 py-1 rounded border border-op-gray/30 hover:border-op-gray/60 transition-colors"
+          >
+            Editar
+          </button>
+        )}
+      </div>
       {images.length > 0 ? (
         <div className="grid grid-cols-2 gap-2">
           {images.map((img) =>
