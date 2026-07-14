@@ -73,11 +73,26 @@ export interface LeverItem {
   no_count: number;                  // quantidade de NÃOs — calculado
 }
 
+// Inventário 4D — 3 itens por dimensão (limite rígido do livro)
+export interface Inventory4DItems {
+  item1: string;
+  item2: string;
+  item3: string;
+}
+
+export interface Inventory4D {
+  density:   Inventory4DItems;   // D — Densidade: o que tem muito?
+  direction: Inventory4DItems;   // D — Direção: para onde se move?
+  delay:     Inventory4DItems;   // D — Demora: onde existe espera?
+  desire:    Inventory4DItems;   // D — Desejo: o que as pessoas querem?
+}
+
 export interface StructuredOContent {
   resources: string;
   frictions: string;
   bottleneck: string;
-  lever_filter?: LeverItem[];        // Filtro de Alavanca — opcional, máx 5 itens
+  lever_filter?: LeverItem[];    // Filtro de Alavanca — PRD-MOD-02
+  inventory_4d?: Inventory4D;   // Inventário 4D — PRD-MOD-03
 }
 
 export interface ActionPlan {
