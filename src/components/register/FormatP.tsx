@@ -610,10 +610,10 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               <button
                 type="button"
                 onClick={() => setIsLeverSuggestion(false)}
-                className="shrink-0 text-op-gray hover:text-op-white transition-colors"
-                aria-label="Fechar sugestão"
+                className="shrink-0 text-[11px] font-medium hover:opacity-70 transition-opacity"
+                style={{ color: '#DC2626' }}
               >
-                <X className="size-3.5" />
+                Descartar
               </button>
             </div>
           )}
