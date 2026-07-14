@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
-import { Inbox as InboxIcon, X, LayoutList, List, BarChart2 } from 'lucide-react';
+import { Inbox as InboxIcon, X, LayoutList, List, BarChart2, Filter } from 'lucide-react';
 import { Link, useSearch } from '@tanstack/react-router';
 import { buildOperationalView } from '@/lib/operationalView';
 import { ProjectSection } from './ProjectSection';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
 import type { ScenarioType, OperationalLayer, ExecutionPlan } from '@/types/app';
-import type { RootCauseChain, ActionPlan, CostBenefitData } from '@/lib/register';
+import type { RootCauseChain, ActionPlan, CostBenefitData, LeverItem } from '@/lib/register';
 import { updateEntryCostBenefit } from '@/lib/register';
 import { formatCurrency, corRelacao } from '@/lib/costBenefit';
 import { getPhaseTimeState } from '@/lib/executionPlan';
@@ -416,35 +416,62 @@ export function TimelineTab() {
               );
             }
 
-            // structured_O — exibe R1 Recursos / R2 Ruídos / R3 Restrições
+            // structured_O — exibe R1 Recursos / R2 Ruídos / R3 Restrições + Filtro de Alavanca
             if (e.entry_type === 'structured_O') {
               const rFields = [
                 { label: 'R1 — Recursos',    value: (c.resources as string) || '' },
                 { label: 'R2 — Ruídos',      value: (c.frictions as string) || '' },
                 { label: 'R3 — Restrições',  value: (c.bottleneck as string) || '' },
               ].filter((f) => f.value.trim());
-              if (rFields.length > 0) {
-                return (
-                  <div className="mt-1 space-y-1.5">
-                    {rFields.map((f, i) => {
-                      const items = f.value.split('\n').filter(Boolean);
-                      const visible = isExp ? items : items.slice(0, 2);
-                      const extra = isExp ? 0 : items.length - 2;
-                      return (
-                        <div key={i} className={i > 0 ? 'pt-1 border-t border-op-gray/10' : ''}>
-                          <p className="text-label text-op-gray mb-0.5">{f.label}</p>
-                          {visible.map((item, j) => (
-                            <p key={j} className="text-small text-op-white/70 leading-snug pl-2">· {item}</p>
-                          ))}
-                          {extra > 0 && (
-                            <p className="text-label text-op-gray pl-2">+{extra} item{extra > 1 ? 'ns' : ''}</p>
-                          )}
+              const leverFilter = (c as { lever_filter?: LeverItem[] }).lever_filter;
+              return (
+                <div className="mt-1 space-y-1.5">
+                  {rFields.map((f, i) => {
+                    const items = f.value.split('\n').filter(Boolean);
+                    const visible = isExp ? items : items.slice(0, 2);
+                    const extra = isExp ? 0 : items.length - 2;
+                    return (
+                      <div key={i} className={i > 0 ? 'pt-1 border-t border-op-gray/10' : ''}>
+                        <p className="text-label text-op-gray mb-0.5">{f.label}</p>
+                        {visible.map((item, j) => (
+                          <p key={j} className="text-small text-op-white/70 leading-snug pl-2">· {item}</p>
+                        ))}
+                        {extra > 0 && (
+                          <p className="text-label text-op-gray pl-2">+{extra} item{extra > 1 ? 'ns' : ''}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {leverFilter && leverFilter.length > 0 && (
+                    <div className="pt-1 border-t border-op-gray/10">
+                      <p className="text-[10px] text-op-gray uppercase tracking-wide mb-1">FILTRO DE ALAVANCA</p>
+                      {(isExp ? leverFilter : leverFilter.slice(0, 2)).map((lf) => (
+                        <div key={lf.id} className="flex items-center gap-2 pl-2 mb-0.5">
+                          <span className="text-small text-op-white/70 flex-1 leading-snug truncate">{lf.idea}</span>
+                          <span className={`text-label font-semibold flex-shrink-0 ${
+                            lf.result === 'lever' ? 'text-brand-green'
+                            : lf.result === 'noise' ? 'text-brand-red'
+                            : 'text-op-gray'
+                          }`}>
+                            {lf.result === 'lever' ? 'ALAVANCA' : lf.result === 'noise' ? 'RUÍDO' : '—'}
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
-                );
-              }
+                      ))}
+                      {!isExp && leverFilter.length > 2 && (
+                        <p className="text-label text-op-gray pl-2">+{leverFilter.length - 2} {leverFilter.length - 2 === 1 ? 'ideia' : 'ideias'}</p>
+                      )}
+                      <Link
+                        to="/lever-filter"
+                        search={{ entryId: e.id }}
+                        className="flex items-center gap-1 mt-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
+                      >
+                        <Filter className="size-3.5" />
+                        Ver filtro completo
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
             }
 
             // structured_C — exibe Quadro 1 Fatos / Quadro 2 Interpretações / Quadro 3 Hipóteses

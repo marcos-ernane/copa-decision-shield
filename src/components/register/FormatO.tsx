@@ -2,12 +2,13 @@
 // Cada campo usa lista de tópicos: "+" adiciona item, item anterior comprime.
 
 import { useState } from 'react';
-import { Plus, X, ChevronDown, CircleHelp } from 'lucide-react';
+import { Plus, X, ChevronDown, CircleHelp, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
-import { saveStructuredO, type StructuredOContent } from '@/lib/register';
+import { saveStructuredO, type StructuredOContent, type LeverItem } from '@/lib/register';
 import { StepDots } from './StepDots';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
+import { useNavigate } from '@tanstack/react-router';
 
 interface Props {
   projectId: string;
@@ -16,6 +17,7 @@ interface Props {
   onSaved: () => void;
   onNextStep: () => void;
   initialData?: StructuredOContent | null;
+  initialEntryId?: string | null;
   step: number;
   isReviewing?: boolean;
 }
@@ -130,12 +132,15 @@ function TopicList({ items, onChange, placeholder, addLabel = 'Adicionar tópico
   );
 }
 
-export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing }: Props) {
+export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, initialEntryId, step, isReviewing }: Props) {
+  const navigate = useNavigate();
   const [resourceItems, setResourceItems] = useState<string[]>(() => toItems(initialData?.resources));
   const [frictionItems, setFrictionItems] = useState<string[]>(() => toItems(initialData?.frictions));
   const [bottleneckItems, setBottleneckItems] = useState<string[]>(() => toItems(initialData?.bottleneck));
   const [saving, setSaving] = useState(false);
   const [helpKey, setHelpKey] = useState<HelpKey | null>(null);
+
+  const leverFilterData: LeverItem[] | undefined = initialData?.lever_filter;
 
   const resourcesFilled = resourceItems.some((s) => s.trim());
   const frictionsFilled = frictionItems.some((s) => s.trim());
@@ -272,6 +277,23 @@ export function FormatO({ projectId, scenarioType, currentLayer, onSaved, onNext
             addLabel="Adicionar restrições"
           />
         </div>
+      )}
+
+      {isLastStep && (
+        <button
+          type="button"
+          onClick={() => void navigate({
+            to: '/lever-filter',
+            search: { projectId, ...(initialEntryId ? { entryId: initialEntryId } : {}) },
+          })}
+          className="flex items-center gap-1 mt-2 text-label text-brand-blue hover:underline"
+        >
+          <Filter className="size-3.5" />
+          {leverFilterData?.length
+            ? `Filtro aplicado (${leverFilterData.length} ${leverFilterData.length === 1 ? 'ideia avaliada' : 'ideias avaliadas'}) →`
+            : 'Filtrar ideias antes da IMV (opcional) →'
+          }
+        </button>
       )}
 
       {isLastStep ? (

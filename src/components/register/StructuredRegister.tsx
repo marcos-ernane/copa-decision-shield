@@ -461,6 +461,7 @@ export function StructuredRegister() {
             step={currentStep}
             isReviewing={isReviewing}
             initialData={statuses['O'] === 'done' ? lastContent<StructuredOContent>(entries, 'structured_O') : null}
+            initialEntryId={lastEntryId(entries, 'structured_O')}
           />
         )}
         {format === 'P' && (
