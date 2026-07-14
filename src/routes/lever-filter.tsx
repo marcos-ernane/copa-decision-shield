@@ -9,6 +9,8 @@ import { calcLeverResult, corResultado } from '@/lib/leverFilter';
 import { GuestStorage, guestId } from '@/lib/guestStorage';
 import { supabase } from '@/lib/supabase';
 import { useReadingMode } from '@/hooks/useReadingMode';
+import { listProjects, listEntries } from '@/lib/projects';
+import type { Project } from '@/types/database';
 
 // ──────────────────────────────────────
 // Help content — 1 principal + 5 perguntas
@@ -118,8 +120,12 @@ function makeItem(): LeverItem {
 // Screen
 // ──────────────────────────────────────
 function LeverFilterScreen() {
-  const { entryId } = Route.useSearch();
+  const { entryId: urlEntryId } = Route.useSearch();
   const readingMode = useReadingMode();
+
+  // effectiveEntryId: vem da URL (fluxo FormatO) ou é resolvido ao selecionar projeto (modo avulso)
+  const [effectiveEntryId, setEffectiveEntryId] = useState<string | undefined>(urlEntryId);
+  const isAvulso = !urlEntryId;
 
   const [items,      setItems]      = useState<LeverItem[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -127,9 +133,56 @@ function LeverFilterScreen() {
   const [helpKey,    setHelpKey]    = useState<HelpKey | null>(null);
   const [saving,     setSaving]     = useState(false);
 
-  // Carrega entry estruturada_O para bottleneck e lever_filter existente
+  // ── Modo avulso: seletor de projeto ──
+  const [projects,           setProjects]           = useState<Project[]>([]);
+  const [loadingProjects,    setLoadingProjects]    = useState(false);
+  const [selectedProjectId,  setSelectedProjectId]  = useState<string>('');
+  const [selectedProjectName,setSelectedProjectName]= useState<string>('');
+  const [noOEntry,           setNoOEntry]           = useState(false); // projeto sem structured_O
+
   useEffect(() => {
-    if (!entryId) return;
+    if (!isAvulso) return;
+    setLoadingProjects(true);
+    listProjects().then((projs) => {
+      setProjects(projs.filter((p) => !['archived', 'concluded'].includes(p.state)));
+      setLoadingProjects(false);
+    });
+  }, [isAvulso]);
+
+  // Quando projeto selecionado: busca structured_O mais recente para contexto e entryId
+  useEffect(() => {
+    if (!selectedProjectId) {
+      setEffectiveEntryId(undefined);
+      setBottleneck('');
+      setNoOEntry(false);
+      setItems([]);
+      return;
+    }
+    const proj = projects.find((p) => p.id === selectedProjectId);
+    setSelectedProjectName(proj?.name ?? '');
+
+    listEntries(selectedProjectId).then((entries) => {
+      const oEntry = entries.find((e) => e.entry_type === 'structured_O');
+      if (oEntry) {
+        setEffectiveEntryId(oEntry.id);
+        setNoOEntry(false);
+        const c = oEntry.content as Record<string, unknown>;
+        setBottleneck((c.bottleneck as string) ?? '');
+        const lf = c.lever_filter as LeverItem[] | undefined;
+        if (lf && lf.length > 0) setItems(lf);
+        else setItems([]);
+      } else {
+        setEffectiveEntryId(undefined);
+        setNoOEntry(true);
+        setBottleneck('');
+        setItems([]);
+      }
+    });
+  }, [selectedProjectId, projects]);
+
+  // Carrega entry por URL (fluxo FormatO linkado)
+  useEffect(() => {
+    if (!urlEntryId) return;
     async function load() {
       const { data: { session } } = await supabase.auth.getSession();
       let content: Record<string, unknown> | null = null;
@@ -137,11 +190,11 @@ function LeverFilterScreen() {
         const { data } = await supabase
           .from('entries')
           .select('content')
-          .eq('id', entryId)
+          .eq('id', urlEntryId)
           .single();
         content = (data?.content as Record<string, unknown>) ?? null;
       } else {
-        const entry = GuestStorage.getEntries().find((e) => e.id === entryId);
+        const entry = GuestStorage.getEntries().find((e) => e.id === urlEntryId);
         content = (entry?.content as Record<string, unknown>) ?? null;
       }
       if (!content) return;
@@ -150,7 +203,7 @@ function LeverFilterScreen() {
       if (lf && lf.length > 0) setItems(lf);
     }
     void load();
-  }, [entryId]);
+  }, [urlEntryId]);
 
   // ── Item helpers ──
   function updateItem(id: string, patch: Partial<LeverItem>) {
@@ -180,8 +233,8 @@ function LeverFilterScreen() {
   async function handleSave() {
     setSaving(true);
     try {
-      if (entryId && items.length > 0) {
-        await updateEntryLeverFilter(entryId, items);
+      if (effectiveEntryId && items.length > 0) {
+        await updateEntryLeverFilter(effectiveEntryId, items);
       }
     } finally {
       setSaving(false);
@@ -194,8 +247,8 @@ function LeverFilterScreen() {
     if (saving) return;
     setSaving(true);
     try {
-      if (entryId && items.length > 0) {
-        await updateEntryLeverFilter(entryId, items);
+      if (effectiveEntryId && items.length > 0) {
+        await updateEntryLeverFilter(effectiveEntryId, items);
       }
     } finally {
       setSaving(false);
@@ -232,6 +285,44 @@ function LeverFilterScreen() {
       {/* ── Body ── */}
       <div className="flex-1 px-4 py-4 max-w-md mx-auto w-full space-y-4">
 
+        {/* ── Seletor de projeto (modo avulso — Bússola) ── */}
+        {isAvulso && (
+          <div
+            className="rounded-lg border border-op-gray/20 p-3 space-y-2"
+            style={{ backgroundColor: '#0F1923' }}
+          >
+            <p className="text-label text-op-gray uppercase tracking-wide">
+              Para qual projeto?
+            </p>
+            {loadingProjects ? (
+              <p className="text-small text-op-gray">Carregando projetos…</p>
+            ) : projects.length === 0 ? (
+              <p className="text-small text-op-gray italic">
+                Nenhum projeto ativo encontrado.
+              </p>
+            ) : (
+              <select
+                className="w-full rounded-lg px-3 py-2 text-body text-op-white border border-op-gray/30 focus:outline-none focus:border-brand-blue"
+                style={{ backgroundColor: '#1B2A4A' }}
+                value={selectedProjectId}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+              >
+                <option value="">— Selecione um projeto —</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {noOEntry && selectedProjectId && (
+              <p className="text-small leading-snug" style={{ color: '#D97706' }}>
+                Este projeto ainda não tem um Formato O (Organização). Para salvar o filtro aqui, registre um Formato O primeiro.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* ── Instrução + âncora contextual ── */}
         <div className="space-y-3">
           {/* Regra de ouro — sempre visível */}
@@ -249,7 +340,7 @@ function LeverFilterScreen() {
           </div>
 
           {/* Âncora: gargalo que o usuário quer superar */}
-          {entryId && (
+          {effectiveEntryId && (
             <div
               className="rounded-lg p-3 border-l-2"
               style={{ backgroundColor: '#1B2A4A', borderLeftColor: '#2563EB' }}
@@ -436,9 +527,27 @@ function LeverFilterScreen() {
             {items.length === 1 ? 'ideia passou' : 'ideias passaram'} o filtro
           </p>
         )}
-        <Button className="w-full" onClick={handleSave} disabled={saving}>
-          {saving ? 'Salvando…' : 'Salvar e voltar ao projeto'}
-        </Button>
+        {isAvulso && !selectedProjectId ? (
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={() => window.history.back()}
+          >
+            Fechar sem salvar
+          </Button>
+        ) : isAvulso && noOEntry ? (
+          <Button className="w-full" disabled>
+            Selecione um projeto com Formato O para salvar
+          </Button>
+        ) : (
+          <Button className="w-full" onClick={handleSave} disabled={saving}>
+            {saving
+              ? 'Salvando…'
+              : isAvulso
+              ? `Salvar em "${selectedProjectName}"`
+              : 'Salvar e voltar ao projeto'}
+          </Button>
+        )}
       </div>
 
       {/* ── Help bottom sheet ── */}
