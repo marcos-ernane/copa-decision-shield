@@ -145,7 +145,7 @@ function Inventory4DAvulso() {
 
       {/* Rodapé */}
       <div
-        className="fixed bottom-16 left-0 right-0 px-4 py-4 border-t border-op-gray/20"
+        className="fixed bottom-16 left-0 right-0 px-4 py-4 border-t border-op-gray/20 z-50"
         style={{ backgroundColor: '#070C12' }}
       >
         <div className="flex gap-3 max-w-md mx-auto">
