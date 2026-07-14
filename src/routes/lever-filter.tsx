@@ -120,12 +120,13 @@ function makeItem(): LeverItem {
 // Screen
 // ──────────────────────────────────────
 function LeverFilterScreen() {
-  const { entryId: urlEntryId } = Route.useSearch();
+  const { entryId: urlEntryId, projectId: urlProjectId } = Route.useSearch();
   const readingMode = useReadingMode();
 
   // effectiveEntryId: vem da URL (fluxo FormatO) ou é resolvido ao selecionar projeto (modo avulso)
   const [effectiveEntryId, setEffectiveEntryId] = useState<string | undefined>(urlEntryId);
-  const isAvulso = !urlEntryId;
+  // isAvulso: só quando não há nenhum contexto de projeto na URL (acesso puro pela Bússola)
+  const isAvulso = !urlEntryId && !urlProjectId;
 
   const [items,      setItems]      = useState<LeverItem[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -179,6 +180,21 @@ function LeverFilterScreen() {
       }
     });
   }, [selectedProjectId, projects]);
+
+  // Quando FormatO ainda não foi salvo: projectId na URL mas sem entryId — carrega structured_O do projeto
+  useEffect(() => {
+    if (!urlProjectId || urlEntryId) return;
+    listEntries(urlProjectId).then((entries) => {
+      const oEntry = entries.find((e) => e.entry_type === 'structured_O');
+      if (oEntry) {
+        setEffectiveEntryId(oEntry.id);
+        const c = oEntry.content as Record<string, unknown>;
+        setBottleneck((c.bottleneck as string) ?? '');
+        const lf = c.lever_filter as LeverItem[] | undefined;
+        if (lf && lf.length > 0) setItems(lf);
+      }
+    });
+  }, [urlProjectId, urlEntryId]);
 
   // Carrega entry por URL (fluxo FormatO linkado)
   useEffect(() => {
