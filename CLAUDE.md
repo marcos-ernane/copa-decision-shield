@@ -1023,6 +1023,14 @@ Pergunta central: "Isso resolve sem destruir? Quem paga o custo oculto?"
 - **Parcial — Seção 33:** `creative.tsx` existe, `src/lib/creative.ts` existe
 - **Parcial — Seção 34:** `compass.simulations.tsx` existe
 
+- **Seção 38:** Análise de Custo/Benefício — **implementado (PRD-CB-01)**
+  - Tipos: `CostItem`, `BenefitItem`, `CostBenefitRelacao`, `CostBenefitData` em `src/lib/register.ts`
+  - Lib: `src/lib/costBenefit.ts` (cálculos, formatação, cores)
+  - Componente: `src/components/register/CostBenefitSheet.tsx` (bottom-sheet, help screen, readOnly mode)
+  - Integrado em: `src/components/register/FormatP.tsx` (botão pós chip-barato, AlertDialog, spread condicional)
+  - Leitura no Dashboard: `src/routes/project.$id.dashboard.tsx` (seção "Custo / Benefício", readOnly)
+  - Editável na Timeline: `src/components/diary/TimelineTab.tsx` (botão + `updateEntryCostBenefit`)
+
 ### Pendente / Incompleto
 - **Seção 37:** Plano de Execução da IMV — **pendente de implementação (S24)**
   - Tipos: `ExecutionPhase`, `ExecutionPlan` em `src/types/`
@@ -1187,6 +1195,151 @@ interface ExecutionPlan {
 - Novo `entry_type` — as fases vivem dentro de `structured_P`
 - Análise automática de padrões de reabertura pelo PatternEngine (dados persistidos para uso futuro)
 - Limite rígido de quantidade de fases
+
+---
+
+## Análise de Custo/Benefício (Seção 38)
+
+Sub-etapa opcional do Formato P (IMV) do Registro Estruturado e do COPA de Bolso. Permite ao operador registrar e calcular a relação entre custos e benefícios de uma IMV que marcou o campo "Reversível" como **NÃO** (campo `cheap = false`).
+
+**Princípios de design:**
+- Totalmente opcional — nunca obrigatória para salvar a IMV
+- Ativada apenas via botão explícito — o sheet nunca abre automaticamente
+- Campo `cheap`, componente `YesNo` e chip laranja existentes NÃO foram alterados — o botão é adicionado após o chip
+- Dados persistidos no campo JSONB `cost_benefit` dentro do `content` da entry `structured_P` — sem nova tabela SQL
+- Plano pago não é exigido — disponível em todos os planos
+
+### 38.1 Gatilho de Ativação
+
+**[REQ-CB-01]** O botão "Analisar custo/benefício →" (ícone `BarChart2`) aparece SOMENTE quando `cheap === false` (IMV não reversível).
+
+**[REQ-CB-02]** Clicar no botão abre o `CostBenefitSheet` (bottom-sheet). Não abre automaticamente.
+
+**[REQ-CB-03]** Se o usuário muda `cheap` de NÃO para SIM enquanto já existe análise salva, exibe `AlertDialog` de confirmação antes de apagar os dados.
+
+**[REQ-CB-04]** Ao salvar a IMV (`performSave`), os dados de custo/benefício são incluídos no `content` como `cost_benefit` (spread condicional — só inclui se existir análise).
+
+### 38.2 Estrutura de Custos
+
+**[REQ-CB-05]** Cada custo (`CostItem`) contém:
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | string | UUID gerado na criação |
+| `nome` | string | Nome do custo (texto livre) |
+| `valor` | number | Valor monetário em R$ (≥ 0) |
+| `grau` | 1 \| 2 \| 3 \| 4 \| 5 | Grau de impacto (1=muito baixo, 5=muito alto) |
+
+**[REQ-CB-06]** Cores do grau de custo:
+- Grau 1-2 → `brand-green` (custo baixo = positivo)
+- Grau 3 → `brand-amber` (custo moderado)
+- Grau 4-5 → `brand-red` (custo alto = negativo)
+
+### 38.3 Estrutura de Benefícios
+
+**[REQ-CB-07]** Cada benefício (`BenefitItem`) contém:
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | string | UUID gerado na criação |
+| `descricao` | string | Descrição do benefício (texto livre) |
+| `grau` | 1 \| 2 \| 3 \| 4 \| 5 | Grau de impacto esperado (1=muito baixo, 5=muito alto) |
+
+**[REQ-CB-08]** Cores do grau de benefício (escala invertida em relação ao custo):
+- Grau 1-2 → `brand-red` (benefício baixo = negativo)
+- Grau 3 → `brand-amber` (benefício moderado)
+- Grau 4-5 → `brand-green` (benefício alto = positivo)
+
+### 38.4 Cálculo da Relação
+
+**[REQ-CB-09]** Cálculo automático ao adicionar/remover itens:
+```typescript
+total_custo = soma dos valores monetários de todos os CostItem
+grau_medio_custo = média dos graus de todos os CostItem
+grau_medio_beneficio = média dos graus de todos os BenefitItem
+delta = grau_medio_beneficio - grau_medio_custo
+relacao = delta >= 1.0 ? 'FAVORÁVEL' : delta <= -1.0 ? 'DESFAVORÁVEL' : 'EQUILIBRADO'
+```
+
+**[REQ-CB-10]** Cores da relação:
+- `FAVORÁVEL` → `brand-green`
+- `EQUILIBRADO` → `brand-amber`
+- `DESFAVORÁVEL` → `brand-red`
+
+**[REQ-CB-11]** A relação é exibida no rodapé do sheet APENAS quando há pelo menos 1 custo completo e 1 benefício completo.
+
+### 38.5 Interface CostBenefitSheet
+
+**[REQ-CB-12]** Bottom-sheet com overlay escuro, drag handle, área scrollável e rodapé fixo:
+- Cabeçalho: título "Análise de Custo/Benefício" + ícone de ajuda (abre help screen)
+- IMV exibida como cabeçalho fixo não editável (contexto)
+- Seção "Custos": lista de custos com nome, valor R$ e seletor de grau (círculos 1-5)
+- Seção "Benefícios": lista de benefícios com descrição e seletor de grau (círculos 1-5)
+- Botões para adicionar novo custo / novo benefício
+- Rodapé: total R$, relação calculada, botão [SALVAR ANÁLISE]
+
+**[REQ-CB-13]** Help screen: tela fullscreen dentro do sheet (sobrepõe o sheet) explicando cada campo. Botão X para fechar e retornar ao sheet.
+
+**[REQ-CB-14]** Modo somente leitura (`readOnly`): campos desabilitados, cursor default nos círculos, botão Salvar oculto. Usado no Dashboard.
+
+### 38.6 Integração com o Dashboard
+
+**[REQ-CB-15]** O ProjectDashboard exibe seção "Custo / Benefício" se a entry `structured_P` mais recente com `cost_benefit` definido existir.
+
+**[REQ-CB-16]** O Dashboard abre o `CostBenefitSheet` em modo `readOnly` (somente visualização).
+
+**[REQ-CB-17]** Resumo exibido no Dashboard antes de abrir o sheet: relação (com cor), total em R$.
+
+### 38.7 Integração com a Timeline (Diário)
+
+**[REQ-CB-18]** Entradas `structured_P` que possuem `cost_benefit` exibem botão "Ver análise de custo/benefício" (ícone `BarChart2`) e resumo (relação + total) na Timeline.
+
+**[REQ-CB-19]** O sheet aberto a partir da Timeline é editável (não readOnly). Salvar chama `updateEntryCostBenefit(entryId, newData)` com persistência dual Supabase/GuestStorage.
+
+### 38.8 Persistência e Modelo de Dados
+
+**[REQ-CB-20]** Persistência dual Supabase/GuestStorage, igual ao restante do app. Migração automática ao criar conta.
+
+```typescript
+// src/lib/register.ts
+
+export interface CostItem {
+  id: string;
+  nome: string;
+  valor: number;
+  grau: 1 | 2 | 3 | 4 | 5;
+}
+
+export interface BenefitItem {
+  id: string;
+  descricao: string;
+  grau: 1 | 2 | 3 | 4 | 5;
+}
+
+export type CostBenefitRelacao = 'FAVORÁVEL' | 'EQUILIBRADO' | 'DESFAVORÁVEL';
+
+export interface CostBenefitData {
+  custos: CostItem[];
+  beneficios: BenefitItem[];
+  total_custo: number;           // soma dos valores monetários
+  grau_medio_custo: number;      // média dos graus dos custos
+  grau_medio_beneficio: number;  // média dos graus dos benefícios
+  relacao: CostBenefitRelacao;   // calculado pelo delta
+  created_at: string;            // ISO — primeira vez que foi salvo
+  updated_at: string;            // ISO — última atualização
+}
+
+// Adicionado ao StructuredPContent existente:
+// cost_benefit?: CostBenefitData
+```
+
+**[REQ-CB-21]** `updateEntryCostBenefit(entryId, costBenefit)` — função em `src/lib/register.ts` que atualiza o campo `cost_benefit` dentro do `content` JSONB da entry sem sobrescrever os demais campos.
+
+### 38.9 Fora de Escopo (Explicitamente)
+
+- Análise de custo/benefício no Modo Pressão ou Protocolo 5 minutos
+- Relatório comparativo entre múltiplas IMVs
+- Categorias fixas de custo (o campo `nome` é texto livre)
+- Moedas diferentes de R$ (BRL fixo)
+- Integração com Stripe ou cálculos financeiros do negócio
 
 ---
 
