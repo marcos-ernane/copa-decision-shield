@@ -8,6 +8,7 @@ import { updateEntryLeverFilter } from '@/lib/register';
 import { calcLeverResult, corResultado } from '@/lib/leverFilter';
 import { GuestStorage, guestId } from '@/lib/guestStorage';
 import { supabase } from '@/lib/supabase';
+import { useReadingMode } from '@/hooks/useReadingMode';
 
 // ──────────────────────────────────────
 // Help content — 1 principal + 5 perguntas
@@ -118,6 +119,7 @@ function makeItem(): LeverItem {
 // ──────────────────────────────────────
 function LeverFilterScreen() {
   const { entryId } = Route.useSearch();
+  const readingMode = useReadingMode();
 
   const [items,      setItems]      = useState<LeverItem[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -191,7 +193,7 @@ function LeverFilterScreen() {
   const passedCount = items.filter((i) => i.result === 'lever').length;
 
   return (
-    <div className="flex flex-col min-h-screen pb-36" style={{ backgroundColor: '#070C12' }}>
+    <div className="flex flex-col min-h-screen pb-48" style={{ backgroundColor: '#070C12' }}>
 
       {/* ── Header ── */}
       <header
@@ -362,9 +364,9 @@ function LeverFilterScreen() {
         )}
       </div>
 
-      {/* ── Rodapé fixo ── */}
+      {/* ── Rodapé fixo — bottom-16 para limpar BottomNav (h-16); bottom-28 em Modo Leitura (ReadingModeBanner adiciona ~36px acima do nav) ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 px-4 py-4 border-t border-op-gray/20 space-y-3"
+        className={`fixed ${readingMode ? 'bottom-28' : 'bottom-16'} left-0 right-0 px-4 py-4 border-t border-op-gray/20 space-y-3`}
         style={{ backgroundColor: '#070C12' }}
       >
         {items.length > 0 && (
