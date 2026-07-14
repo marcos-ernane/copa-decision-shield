@@ -6,7 +6,7 @@ import { ProjectSection } from './ProjectSection';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
 import type { ScenarioType, OperationalLayer, ExecutionPlan } from '@/types/app';
-import type { RootCauseChain, ActionPlan, CostBenefitData, LeverItem } from '@/lib/register';
+import type { RootCauseChain, ActionPlan, CostBenefitData, LeverItem, Inventory4D } from '@/lib/register';
 import { updateEntryCostBenefit } from '@/lib/register';
 import { formatCurrency, corRelacao } from '@/lib/costBenefit';
 import { getPhaseTimeState } from '@/lib/executionPlan';
@@ -416,14 +416,54 @@ export function TimelineTab() {
               );
             }
 
-            // structured_O — exibe R1 Recursos / R2 Ruídos / R3 Restrições + Filtro de Alavanca
+            // structured_O — Inventário 4D (se existir) ou Mapa 3R + Filtro de Alavanca
             if (e.entry_type === 'structured_O') {
+              const inv4d = (c as { inventory_4d?: Inventory4D }).inventory_4d;
+              const leverFilter = (c as { lever_filter?: LeverItem[] }).lever_filter;
+
+              if (inv4d) {
+                // ── Modo 4D ──
+                const INV_LABELS: Array<{ key: keyof Inventory4D; label: string }> = [
+                  { key: 'density',   label: 'D — Densidade'  },
+                  { key: 'direction', label: 'D — Direção'    },
+                  { key: 'delay',     label: 'D — Demora'     },
+                  { key: 'desire',    label: 'D — Desejo'     },
+                ];
+                const inv4dFields = INV_LABELS.map(({ key, label }) => ({
+                  label,
+                  value: [inv4d[key].item1, inv4d[key].item2, inv4d[key].item3]
+                    .filter(Boolean)
+                    .join('\n'),
+                })).filter((f) => f.value.trim());
+
+                return (
+                  <div className="mt-1 space-y-1.5">
+                    {inv4dFields.map((f, i) => {
+                      const items = f.value.split('\n').filter(Boolean);
+                      const visible = isExp ? items : items.slice(0, 2);
+                      const extra = isExp ? 0 : items.length - 2;
+                      return (
+                        <div key={i} className={i > 0 ? 'pt-1 border-t border-op-gray/10' : ''}>
+                          <p className="text-label text-op-gray mb-0.5">{f.label}</p>
+                          {visible.map((item, j) => (
+                            <p key={j} className="text-small text-op-white/70 leading-snug pl-2">· {item}</p>
+                          ))}
+                          {extra > 0 && (
+                            <p className="text-label text-op-gray pl-2">+{extra} item{extra > 1 ? 'ns' : ''}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+
+              // ── Modo 3R ──
               const rFields = [
                 { label: 'R1 — Recursos',    value: (c.resources as string) || '' },
                 { label: 'R2 — Ruídos',      value: (c.frictions as string) || '' },
                 { label: 'R3 — Restrições',  value: (c.bottleneck as string) || '' },
               ].filter((f) => f.value.trim());
-              const leverFilter = (c as { lever_filter?: LeverItem[] }).lever_filter;
               return (
                 <div className="mt-1 space-y-1.5">
                   {rFields.map((f, i) => {
@@ -515,6 +555,19 @@ export function TimelineTab() {
             {TYPE_LABEL[e.entry_type] && !isPhaseNative && (
               <span className="inline-flex items-center rounded-full border border-op-gray/30 bg-op-navy text-op-gray text-label px-2 py-0.5">
                 {TYPE_LABEL[e.entry_type]}
+              </span>
+            )}
+            {/* Badge Inventário 4D — diferencia visualmente do Mapa 3R [REQ-4D-14] */}
+            {e.entry_type === 'structured_O' && (e.content as { inventory_4d?: Inventory4D }).inventory_4d && (
+              <span
+                className="inline-flex items-center rounded-full text-label px-2 py-0.5"
+                style={{
+                  backgroundColor: 'rgba(14,165,233,0.10)',
+                  color: 'var(--color-brand-cyan, #0EA5E9)',
+                  border: '1px solid rgba(14,165,233,0.30)',
+                }}
+              >
+                Inventário 4D
               </span>
             )}
             {e.entry_type === 'inbox' && (

@@ -44,6 +44,7 @@ import { Route as CompassPocketRouteImport } from './routes/compass.pocket'
 import { Route as CompassMaintenanceRouteImport } from './routes/compass.maintenance'
 import { Route as CompassGuideRouteImport } from './routes/compass.guide'
 import { Route as CompassFrictionRouteImport } from './routes/compass.friction'
+import { Route as CompassInventory4dRouteImport } from './routes/compass.inventory4d'
 import { Route as BaselineNewRouteImport } from './routes/baseline.new'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as RegisterCorrectiveEntryIdRouteImport } from './routes/register.corrective.$entryId'
@@ -233,6 +234,11 @@ const CompassFrictionRoute = CompassFrictionRouteImport.update({
   path: '/friction',
   getParentRoute: () => CompassRoute,
 } as any)
+const CompassInventory4dRoute = CompassInventory4dRouteImport.update({
+  id: '/inventory4d',
+  path: '/inventory4d',
+  getParentRoute: () => CompassRoute,
+} as any)
 const BaselineNewRoute = BaselineNewRouteImport.update({
   id: '/baseline/new',
   path: '/baseline/new',
@@ -313,6 +319,7 @@ export interface FileRoutesByFullPath {
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
   '/compass/guide': typeof CompassGuideRoute
+  '/compass/inventory4d': typeof CompassInventory4dRoute
   '/compass/maintenance': typeof CompassMaintenanceRoute
   '/compass/pocket': typeof CompassPocketRoute
   '/compass/sheet': typeof CompassSheetRoute
@@ -359,6 +366,7 @@ export interface FileRoutesByTo {
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
   '/compass/guide': typeof CompassGuideRoute
+  '/compass/inventory4d': typeof CompassInventory4dRoute
   '/compass/maintenance': typeof CompassMaintenanceRoute
   '/compass/pocket': typeof CompassPocketRoute
   '/compass/sheet': typeof CompassSheetRoute
@@ -408,6 +416,7 @@ export interface FileRoutesById {
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
   '/compass/guide': typeof CompassGuideRoute
+  '/compass/inventory4d': typeof CompassInventory4dRoute
   '/compass/maintenance': typeof CompassMaintenanceRoute
   '/compass/pocket': typeof CompassPocketRoute
   '/compass/sheet': typeof CompassSheetRoute
@@ -457,6 +466,7 @@ export interface FileRouteTypes {
     | '/baseline/new'
     | '/compass/friction'
     | '/compass/guide'
+    | '/compass/inventory4d'
     | '/compass/maintenance'
     | '/compass/pocket'
     | '/compass/sheet'
@@ -503,6 +513,7 @@ export interface FileRouteTypes {
     | '/baseline/new'
     | '/compass/friction'
     | '/compass/guide'
+    | '/compass/inventory4d'
     | '/compass/maintenance'
     | '/compass/pocket'
     | '/compass/sheet'
@@ -551,6 +562,7 @@ export interface FileRouteTypes {
     | '/baseline/new'
     | '/compass/friction'
     | '/compass/guide'
+    | '/compass/inventory4d'
     | '/compass/maintenance'
     | '/compass/pocket'
     | '/compass/sheet'
@@ -838,6 +850,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompassGuideRouteImport
       parentRoute: typeof CompassRoute
     }
+    '/compass/inventory4d': {
+      id: '/compass/inventory4d'
+      path: '/inventory4d'
+      fullPath: '/compass/inventory4d'
+      preLoaderRoute: typeof CompassInventory4dRouteImport
+      parentRoute: typeof CompassRoute
+    }
     '/compass/friction': {
       id: '/compass/friction'
       path: '/friction'
@@ -935,6 +954,7 @@ declare module '@tanstack/react-router' {
 interface CompassRouteChildren {
   CompassFrictionRoute: typeof CompassFrictionRoute
   CompassGuideRoute: typeof CompassGuideRoute
+  CompassInventory4dRoute: typeof CompassInventory4dRoute
   CompassMaintenanceRoute: typeof CompassMaintenanceRoute
   CompassPocketRoute: typeof CompassPocketRoute
   CompassSheetRoute: typeof CompassSheetRoute
@@ -946,6 +966,7 @@ interface CompassRouteChildren {
 const CompassRouteChildren: CompassRouteChildren = {
   CompassFrictionRoute: CompassFrictionRoute,
   CompassGuideRoute: CompassGuideRoute,
+  CompassInventory4dRoute: CompassInventory4dRoute,
   CompassMaintenanceRoute: CompassMaintenanceRoute,
   CompassPocketRoute: CompassPocketRoute,
   CompassSheetRoute: CompassSheetRoute,

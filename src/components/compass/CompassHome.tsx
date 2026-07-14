@@ -12,6 +12,7 @@ import {
   RotateCw,
   Play,
   Zap,
+  LayoutGrid,
 } from 'lucide-react';
 import { CompassSection } from './CompassSection';
 import { PaywallGate } from '@/components/PaywallGate';
@@ -22,6 +23,7 @@ const SECTIONS = [
   { to: '/compass/guide', icon: Compass, title: 'Guia Diagnóstico', description: 'Nomear tipo → camada → fricção → IMV' },
   { to: '/diary', icon: ListOrdered, title: 'Índice por Sintoma', description: 'Buscar pelo que você sente' },
   { to: '/compass/friction', icon: Grid2X2, title: 'Tabela de Fricções', description: 'Matriz tipo × camada' },
+  { to: '/compass/inventory4d', icon: LayoutGrid, title: 'Inventário 4D', description: 'Leitura de cenário com restrição — Densidade, Direção, Demora, Desejo' },
   { to: '/lever-filter', icon: Filter, title: 'Filtro de Alavanca', description: 'Avalie ideias com as 5 perguntas antes de criar uma IMV' },
   { to: '/protocol5', icon: Clock, title: 'Protocolo 5 Minutos', description: 'Para dias de baixa energia' },
   { to: '/creative', icon: Zap, title: 'Criatividade Funcional', description: 'Divergir com método, convergir com precisão', paid: true as const },
