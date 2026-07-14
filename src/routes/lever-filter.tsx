@@ -215,21 +215,43 @@ function LeverFilterScreen() {
       {/* ── Body ── */}
       <div className="flex-1 px-4 py-4 max-w-md mx-auto w-full space-y-4">
 
-        {/* Sub-header: gargalo como âncora contextual */}
-        {(bottleneck || entryId) && (
+        {/* ── Instrução + âncora contextual ── */}
+        <div className="space-y-3">
+          {/* Regra de ouro — sempre visível */}
           <div
-            className="rounded-lg p-3 border-l-2"
-            style={{
-              backgroundColor: 'var(--color-surface-1, #1e293b)',
-              borderLeftColor: 'var(--color-brand-blue, #2563EB)',
-            }}
+            className="rounded-lg px-3 py-2.5"
+            style={{ backgroundColor: '#0F1923' }}
           >
-            <p className="text-[10px] text-op-gray uppercase tracking-wide mb-1">GARGALO ATUAL</p>
             <p className="text-small text-op-white/80 leading-snug">
-              {bottleneck || '—'}
+              Responda as 5 perguntas para cada ideia.{' '}
+              <span className="text-brand-red font-medium">2 ou mais NÃOs</span>
+              {' '}= ruído agora.{' '}
+              <span className="text-brand-green font-medium">0 ou 1 NÃO</span>
+              {' '}= alavanca real.
             </p>
           </div>
-        )}
+
+          {/* Âncora: gargalo que o usuário quer superar */}
+          {entryId && (
+            <div
+              className="rounded-lg p-3 border-l-2"
+              style={{ backgroundColor: '#1B2A4A', borderLeftColor: '#2563EB' }}
+            >
+              <p className="text-[10px] text-op-gray uppercase tracking-wide mb-1.5">
+                Avaliando ideias para superar:
+              </p>
+              {bottleneck ? (
+                <p className="text-small text-op-white font-medium leading-snug">
+                  {bottleneck}
+                </p>
+              ) : (
+                <p className="text-small text-op-gray italic leading-snug">
+                  Gargalo não preenchido no R3 do Formato O.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* ── Lista de itens ── */}
         <div className="space-y-2">
