@@ -61,10 +61,23 @@ export interface StructuredCContent {
   root_cause_chain?: RootCauseChain;
 }
 
+export interface LeverItem {
+  id: string;                        // UUID gerado no cliente
+  idea: string;                      // a ideia avaliada — obrigatório, máx 150 chars
+  impact: boolean | null;            // Q1: muda o resultado de verdade?
+  control: boolean | null;           // Q2: consigo executar com recursos que tenho?
+  effort: boolean | null;            // Q3: esforço proporcional ao ganho?
+  repeatability: boolean | null;     // Q4: pode virar padrão?
+  measurement: boolean | null;       // Q5: consigo medir sem autoengano?
+  result: 'lever' | 'noise' | 'incomplete'; // calculado
+  no_count: number;                  // quantidade de NÃOs — calculado
+}
+
 export interface StructuredOContent {
   resources: string;
   frictions: string;
   bottleneck: string;
+  lever_filter?: LeverItem[];        // Filtro de Alavanca — opcional, máx 5 itens
 }
 
 export interface ActionPlan {
