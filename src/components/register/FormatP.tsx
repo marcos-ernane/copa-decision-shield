@@ -262,7 +262,17 @@ function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boole
 }
 
 export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onGoToStep, initialData, step, isReviewing }: Props) {
-  const [actionItems, setActionItems] = useState<string[]>(() => toItems(initialData?.action));
+  // Lê sugestão do Filtro de Alavanca (uso único — remove do sessionStorage imediatamente)
+  const [leverSuggestion] = useState<string | null>(() => {
+    if (initialData?.action) return null;
+    const s = sessionStorage.getItem('__leverSuggestion');
+    if (s) sessionStorage.removeItem('__leverSuggestion');
+    return s;
+  });
+  const [isLeverSuggestion, setIsLeverSuggestion] = useState(!!leverSuggestion);
+  const [actionItems, setActionItems] = useState<string[]>(() =>
+    leverSuggestion ? [leverSuggestion] : toItems(initialData?.action),
+  );
   const action = fromItems(actionItems);
   const [reversible, setReversible] = useState<boolean | null>(initialData?.reversible ?? null);
   const [cheap, setCheap] = useState<boolean | null>(initialData?.cheap ?? null);
@@ -563,6 +573,24 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               Ajuda
             </button>
           </div>
+          {isLeverSuggestion && (
+            <div
+              className="flex items-start gap-2 rounded-md px-3 py-2 mb-2"
+              style={{ backgroundColor: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.25)' }}
+            >
+              <p className="text-[11px] flex-1 leading-snug" style={{ color: '#16A34A' }}>
+                Sugestão do Filtro de Alavanca — edite abaixo para transformar em IMV completa (adicione métrica, prazo e critérios).
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsLeverSuggestion(false)}
+                className="shrink-0 text-op-gray hover:text-op-white transition-colors"
+                aria-label="Fechar sugestão"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          )}
           <TopicList
             items={actionItems}
             onChange={setActionItems}

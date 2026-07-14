@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
 import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
-import { CircleHelp, X, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
+import { CircleHelp, X, ChevronDown, ChevronUp, Plus, Trash2, ArrowRight } from 'lucide-react';
 import type { LeverItem } from '@/lib/register';
 import { updateEntryLeverFilter } from '@/lib/register';
 import { calcLeverResult, corResultado } from '@/lib/leverFilter';
@@ -189,6 +189,23 @@ function LeverFilterScreen() {
     }
   }
 
+  // ── Usar ideia como base da IMV ──
+  async function handleUseAsIMV(item: LeverItem) {
+    if (saving) return;
+    setSaving(true);
+    try {
+      if (entryId && items.length > 0) {
+        await updateEntryLeverFilter(entryId, items);
+      }
+    } finally {
+      setSaving(false);
+    }
+    if (item.idea.trim()) {
+      sessionStorage.setItem('__leverSuggestion', item.idea.trim());
+    }
+    window.history.back();
+  }
+
   // ── Derived ──
   const passedCount = items.filter((i) => i.result === 'lever').length;
 
@@ -350,10 +367,28 @@ function LeverFilterScreen() {
                     {result !== 'incomplete' && (
                       <p className={`text-small font-semibold ${corResultado(result)}`}>
                         {result === 'lever'
-                          ? `ALAVANCA — ${item.no_count <= 1 ? item.no_count : 1} NÃO. Use como base da IMV.`
+                          ? `ALAVANCA — ${item.no_count <= 1 ? item.no_count : 1} NÃO. Pronta para virar IMV.`
                           : `RUÍDO — ${item.no_count} NÃOs. Descarte agora.`
                         }
                       </p>
+                    )}
+
+                    {/* CTA — só aparece para ALAVANCA */}
+                    {result === 'lever' && (
+                      <button
+                        type="button"
+                        onClick={() => void handleUseAsIMV(item)}
+                        disabled={saving}
+                        className="w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-small font-medium border transition-colors disabled:opacity-50"
+                        style={{
+                          color: '#16A34A',
+                          borderColor: 'rgba(22,163,74,0.35)',
+                          backgroundColor: 'rgba(22,163,74,0.07)',
+                        }}
+                      >
+                        <ArrowRight className="size-3.5" />
+                        Usar esta ideia como base da IMV
+                      </button>
                     )}
 
                     {/* Lixeira */}
