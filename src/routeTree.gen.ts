@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReadingModeRouteImport } from './routes/reading-mode'
+import { Route as LeverFilterRouteImport } from './routes/lever-filter'
 import { Route as Protocol5RouteImport } from './routes/protocol5'
 import { Route as PressureRouteImport } from './routes/pressure'
 import { Route as PanelRouteImport } from './routes/panel'
@@ -66,6 +67,12 @@ const ReadingModeRoute = ReadingModeRouteImport.update({
   path: '/reading-mode',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LeverFilterRoute = LeverFilterRouteImport.update({
+  id: '/lever-filter',
+  path: '/lever-filter',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
 const Protocol5Route = Protocol5RouteImport.update({
   id: '/protocol5',
   path: '/protocol5',
@@ -295,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
+  '/lever-filter': typeof LeverFilterRoute
   '/onboarding': typeof OnboardingRoute
   '/panel': typeof PanelRouteWithChildren
   '/pressure': typeof PressureRouteWithChildren
@@ -342,6 +350,7 @@ export interface FileRoutesByTo {
   '/creative': typeof CreativeRoute
   '/decision/new': typeof DecisionNewRoute
   '/diary': typeof DiaryRouteWithChildren
+  '/lever-filter': typeof LeverFilterRoute
   '/onboarding': typeof OnboardingRoute
   '/pressure': typeof PressureRouteWithChildren
   '/protocol5': typeof Protocol5Route
@@ -388,6 +397,7 @@ export interface FileRoutesById {
   '/creative': typeof CreativeRoute
   '/decision/new': typeof DecisionNewRoute
   '/diary': typeof DiaryRouteWithChildren
+  '/lever-filter': typeof LeverFilterRoute
   '/onboarding': typeof OnboardingRoute
   '/panel': typeof PanelRouteWithChildren
   '/pressure': typeof PressureRouteWithChildren
@@ -436,6 +446,7 @@ export interface FileRouteTypes {
     | '/concluded'
     | '/creative'
     | '/diary'
+    | '/lever-filter'
     | '/onboarding'
     | '/panel'
     | '/pressure'
@@ -483,6 +494,7 @@ export interface FileRouteTypes {
     | '/creative'
     | '/decision/new'
     | '/diary'
+    | '/lever-filter'
     | '/onboarding'
     | '/pressure'
     | '/protocol5'
@@ -528,6 +540,7 @@ export interface FileRouteTypes {
     | '/creative'
     | '/decision/new'
     | '/diary'
+    | '/lever-filter'
     | '/onboarding'
     | '/panel'
     | '/pressure'
@@ -576,6 +589,7 @@ export interface RootRouteChildren {
   CreativeRoute: typeof CreativeRoute
   DecisionNewRoute: typeof DecisionNewRoute
   DiaryRoute: typeof DiaryRouteWithChildren
+  LeverFilterRoute: typeof LeverFilterRoute
   OnboardingRoute: typeof OnboardingRoute
   PanelRoute: typeof PanelRouteWithChildren
   PressureRoute: typeof PressureRouteWithChildren
@@ -612,6 +626,13 @@ declare module '@tanstack/react-router' {
       path: '/reading-mode'
       fullPath: '/reading-mode'
       preLoaderRoute: typeof ReadingModeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lever-filter': {
+      id: '/lever-filter'
+      path: '/lever-filter'
+      fullPath: '/lever-filter'
+      preLoaderRoute: typeof LeverFilterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/protocol5': {
@@ -1026,6 +1047,7 @@ const rootRouteChildren: RootRouteChildren = {
   CreativeRoute: CreativeRoute,
   DecisionNewRoute: DecisionNewRoute,
   DiaryRoute: DiaryRouteWithChildren,
+  LeverFilterRoute: LeverFilterRoute,
   OnboardingRoute: OnboardingRoute,
   PanelRoute: PanelRouteWithChildren,
   PressureRoute: PressureRouteWithChildren,
