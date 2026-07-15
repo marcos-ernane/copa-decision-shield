@@ -128,15 +128,18 @@ function LeverFilterScreen() {
   // isAvulso: só quando não há nenhum contexto de projeto na URL (acesso puro pela Bússola)
   const isAvulso = !urlEntryId && !urlProjectId;
 
-  const [items,      setItems]      = useState<LeverItem[]>(() => {
+  const [preseeded] = useState<{ id: string; idea: string } | null>(() => {
     const idea = sessionStorage.getItem('__recombinationIdea');
     if (idea) {
       sessionStorage.removeItem('__recombinationIdea');
-      return [{ ...makeItem(), idea }];
+      return { id: guestId(), idea };
     }
-    return [];
+    return null;
   });
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [items,      setItems]      = useState<LeverItem[]>(() =>
+    preseeded ? [{ ...makeItem(), id: preseeded.id, idea: preseeded.idea }] : []
+  );
+  const [expandedId, setExpandedId] = useState<string | null>(preseeded?.id ?? null);
   const [bottleneck, setBottleneck] = useState<string>('');
   const [helpKey,    setHelpKey]    = useState<HelpKey | null>(null);
   const [saving,     setSaving]     = useState(false);
