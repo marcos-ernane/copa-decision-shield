@@ -1,8 +1,8 @@
 // Formato O — Mapa 3R (padrão) ou Inventário 4D (alternativo). Toggle no topo.
 // PRD-MOD-03: toggle persiste em localStorage 'aop.formato_o.modo'.
 
-import { useState } from 'react';
-import { Plus, X, ChevronDown, CircleHelp, Filter } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Plus, X, ChevronDown, CircleHelp, Filter, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import {
@@ -10,7 +10,9 @@ import {
   type StructuredOContent,
   type LeverItem,
   type Inventory4D,
+  type RecombinationItem,
 } from '@/lib/register';
+import { extractResourceList } from '@/lib/recombination';
 import { StepDots } from './StepDots';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 import { useNavigate } from '@tanstack/react-router';
@@ -19,7 +21,7 @@ interface Props {
   projectId: string;
   scenarioType?: ScenarioType | null;
   currentLayer?: OperationalLayer | null;
-  onSaved: () => void;
+  onSaved: (content?: StructuredOContent) => void;
   onNextStep: () => void;
   initialData?: StructuredOContent | null;
   initialEntryId?: string | null;
@@ -66,6 +68,10 @@ const ALL_HELP = {
   DESIRE: {
     title: 'D — Desejo',
     text: 'Desejo é motivação real. O que as pessoas envolvidas querem evitar — dor, risco, constrangimento? O que querem obter — resultado, reconhecimento, alívio? O desejo move ou paralisa o cenário.',
+  },
+  RECOMBINATION: {
+    title: 'O que é Recombinação?',
+    text: 'Criatividade aqui não é inspiração — é recombinação do que já existe. Combine dois ou mais recursos que você já mapeou para criar uma ideia de intervenção.\n\nEscreva cada ideia em uma frase. Até 5 combinações. Depois escolha a que vai virar IMV.\n\nO limite de 5 não é arbitrário: mais do que isso você está dispersando, não convergindo.',
   },
 } as const;
 
@@ -231,17 +237,41 @@ export function FormatO({
   const [saving, setSaving] = useState(false);
   const [helpKey, setHelpKey] = useState<HelpKey | null>(null);
 
+  // ── Estado Recombinação ──
+  const [recombinations, setRecombinations] = useState<RecombinationItem[]>(
+    () => initialData?.recombinations ?? [],
+  );
+
   const leverFilterData: LeverItem[] | undefined = initialData?.lever_filter;
+
+  // ── Lista de recursos reativa (3R ou 4D) ──
+  const resourceList = useMemo(
+    () => extractResourceList({
+      resources: modo === '3r' ? fromItems(resourceItems) : undefined,
+      inventory_4d: modo === '4d' ? {
+        density:   { item1: densityItems[0],   item2: densityItems[1],   item3: densityItems[2]   },
+        direction: { item1: directionItems[0], item2: directionItems[1], item3: directionItems[2] },
+        delay:     { item1: delayItems[0],     item2: delayItems[1],     item3: delayItems[2]     },
+        desire:    { item1: desireItems[0],    item2: desireItems[1],    item3: desireItems[2]    },
+      } : undefined,
+    }),
+    [modo, resourceItems, densityItems, directionItems, delayItems, desireItems],
+  );
 
   // ── Derivados 3R ──
   const resourcesFilled  = resourceItems.some((s) => s.trim());
   const frictionsFilled  = frictionItems.some((s) => s.trim());
   const bottleneckFilled = bottleneckItems.some((s) => s.trim());
 
+  const hasRecombinationsChanged =
+    JSON.stringify(recombinations.filter((r) => r.idea.trim())) !==
+    JSON.stringify((initialData?.recombinations ?? []).filter((r) => r.idea.trim()));
+
   const hasChanges3R =
     fromItems(resourceItems)  !== (initialData?.resources  ?? '') ||
     fromItems(frictionItems)  !== (initialData?.frictions  ?? '') ||
-    fromItems(bottleneckItems) !== (initialData?.bottleneck ?? '');
+    fromItems(bottleneckItems) !== (initialData?.bottleneck ?? '') ||
+    hasRecombinationsChanged;
 
   // ── Derivados 4D ──
   const has4DContent =
@@ -263,9 +293,31 @@ export function FormatO({
     delayItems[2]     !== (initial4D?.delay.item3     ?? '') ||
     desireItems[0]    !== (initial4D?.desire.item1    ?? '') ||
     desireItems[1]    !== (initial4D?.desire.item2    ?? '') ||
-    desireItems[2]    !== (initial4D?.desire.item3    ?? '');
+    desireItems[2]    !== (initial4D?.desire.item3    ?? '') ||
+    hasRecombinationsChanged;
 
   const hasChanges = modo === '3r' ? hasChanges3R : hasChanges4D;
+
+  // ── Helpers de Recombinação ──
+  function addRecombination() {
+    if (recombinations.length >= 5) return;
+    setRecombinations((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), idea: '', selected: false },
+    ]);
+  }
+
+  function updateRecombination(id: string, idea: string) {
+    setRecombinations((prev) => prev.map((r) => r.id === id ? { ...r, idea } : r));
+  }
+
+  function removeRecombination(id: string) {
+    setRecombinations((prev) => prev.filter((r) => r.id !== id));
+  }
+
+  function selectRecombination(id: string) {
+    setRecombinations((prev) => prev.map((r) => ({ ...r, selected: r.id === id })));
+  }
 
   const missingResourcesAndFrictions =
     modo === '3r' &&
@@ -321,9 +373,19 @@ export function FormatO({
         bottleneck: fromItems(bottleneckItems),
       };
     }
+    // Inclui recombinações no content se houver ao menos uma preenchida
+    const filledRecombinations = recombinations.filter((r) => r.idea.trim());
+    const selectedRec = filledRecombinations.find((r) => r.selected);
+    if (filledRecombinations.length > 0) {
+      content = {
+        ...content,
+        recombinations: filledRecombinations,
+        ...(selectedRec ? { selected_recombination: selectedRec.idea } : {}),
+      };
+    }
     await saveStructuredO(projectId, content, scenarioType, currentLayer);
     setSaving(false);
-    onSaved();
+    onSaved(content);
   }
 
   const isLastStep = step === TOTAL_STEPS - 1;
@@ -544,23 +606,6 @@ export function FormatO({
               </div>
             )}
 
-            {/* Filtro de Alavanca — só no 3R, step final */}
-            {isLastStep && (
-              <button
-                type="button"
-                onClick={() => void navigate({
-                  to: '/lever-filter',
-                  search: { projectId, ...(initialEntryId ? { entryId: initialEntryId } : {}) },
-                })}
-                className="flex items-center gap-1 mt-2 text-label text-brand-blue hover:underline"
-              >
-                <Filter className="size-3.5" />
-                {leverFilterData?.length
-                  ? `Filtro aplicado (${leverFilterData.length} ${leverFilterData.length === 1 ? 'ideia avaliada' : 'ideias avaliadas'}) →`
-                  : 'Filtrar ideias antes da IMV (opcional) →'
-                }
-              </button>
-            )}
           </>
         )}
 
@@ -695,6 +740,157 @@ export function FormatO({
               </div>
             )}
           </>
+        )}
+
+        {/* ── Bloco Recombinação — último step de ambos os modos [PRD-MOD-04] ── */}
+        {isLastStep && (
+          <div className="border-t border-op-gray/20 mt-2 pt-4 space-y-3">
+
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-label text-op-gray uppercase tracking-wide">RECOMBINAÇÃO</p>
+                <p className="text-[12px] text-op-gray">
+                  Combine os recursos para criar ideias de intervenção
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHelpKey('RECOMBINATION')}
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+              >
+                <CircleHelp className="size-3.5" />
+                Ajuda
+              </button>
+            </div>
+
+            {/* Matéria-prima — chips somente leitura */}
+            <div>
+              <p className="text-[11px] text-op-gray mb-2">Seus recursos disponíveis:</p>
+              {resourceList.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {resourceList.map((r, i) => (
+                    <span
+                      key={i}
+                      className="rounded-full px-2 py-0.5 text-[12px] text-op-white/80 border border-op-gray/30 bg-op-navy-elevated"
+                    >
+                      {r}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[12px] text-op-gray italic">
+                  Preencha os campos acima para ver seus recursos aqui.
+                </p>
+              )}
+            </div>
+
+            {/* Campos de recombinação */}
+            {recombinations.length > 0 && (
+              <div className="space-y-2">
+                {recombinations.map((item, idx) => (
+                  <div key={item.id} className="flex items-start gap-2">
+                    <span className="text-[13px] font-bold shrink-0 pt-2.5 text-[color:var(--color-brand-blue)]">
+                      {idx + 1}
+                    </span>
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        maxLength={200}
+                        value={item.idea}
+                        onChange={(e) => updateRecombination(item.id, e.target.value)}
+                        placeholder="Combine dois ou mais recursos em uma intervenção..."
+                        className="w-full rounded-md px-3 py-2 text-body text-op-white bg-op-navy border border-op-gray/30 focus:outline-none focus:border-brand-blue placeholder:text-op-gray/40"
+                      />
+                      {item.idea.length > 160 && (
+                        <span className="absolute right-2 top-2.5 text-[11px] text-op-gray pointer-events-none">
+                          {item.idea.length}/200
+                        </span>
+                      )}
+                    </div>
+                    {item.selected && (
+                      <span className="shrink-0 mt-2 rounded-full px-2 py-0.5 text-[11px] border"
+                        style={{
+                          color: 'var(--color-brand-green)',
+                          borderColor: 'color-mix(in srgb, var(--color-brand-green) 40%, transparent)',
+                          backgroundColor: 'color-mix(in srgb, var(--color-brand-green) 12%, transparent)',
+                        }}
+                      >
+                        IMV ↗
+                      </span>
+                    )}
+                    {recombinations.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeRecombination(item.id)}
+                        className="shrink-0 mt-2.5 text-op-gray hover:text-destructive transition-colors"
+                        aria-label="Remover combinação"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Botão adicionar */}
+            {recombinations.length < 5 && (
+              <button
+                type="button"
+                onClick={addRecombination}
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-small hover:bg-accent transition-colors rounded-md border border-dashed border-op-gray/30 text-[color:var(--color-brand-blue)]"
+              >
+                <Plus className="size-4" />
+                Adicionar combinação
+              </button>
+            )}
+
+            {/* Seleção da melhor ideia */}
+            {recombinations.some((r) => r.idea.trim()) && (
+              <div className="space-y-2 pt-1">
+                <p className="text-[13px] font-bold text-op-white">Qual vai virar IMV?</p>
+                <div className="space-y-1.5">
+                  {recombinations.filter((r) => r.idea.trim()).map((item) => (
+                    <label key={item.id} className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="recombination-select"
+                        checked={item.selected}
+                        onChange={() => selectRecombination(item.id)}
+                        className="mt-1"
+                        style={{ accentColor: 'var(--color-brand-blue)' }}
+                      />
+                      <span className="text-small text-op-white">{item.idea}</span>
+                    </label>
+                  ))}
+                </div>
+                {recombinations.some((r) => r.selected && r.idea.trim()) && (
+                  <p className="text-[12px]" style={{ color: 'var(--color-brand-green)' }}>
+                    Esta ideia será pré-preenchida no Formato P.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Filtro de Alavanca — só 3R, após Recombinação [PRD-MOD-02] ── */}
+        {isLastStep && modo === '3r' && (
+          <button
+            type="button"
+            onClick={() => void navigate({
+              to: '/lever-filter',
+              search: { projectId, ...(initialEntryId ? { entryId: initialEntryId } : {}) },
+            })}
+            className="flex items-center gap-1 text-label hover:underline text-[color:var(--color-brand-blue)]"
+          >
+            <Filter className="size-3.5" />
+            {leverFilterData?.length
+              ? `Filtro aplicado (${leverFilterData.length} ${leverFilterData.length === 1 ? 'ideia avaliada' : 'ideias avaliadas'}) →`
+              : 'Filtrar ideias antes da IMV (opcional) →'
+            }
+          </button>
         )}
 
         {/* ── Botões de navegação / save ── */}
