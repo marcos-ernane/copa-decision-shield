@@ -44,6 +44,7 @@ import { Route as CompassSheetRouteImport } from './routes/compass.sheet'
 import { Route as CompassPocketRouteImport } from './routes/compass.pocket'
 import { Route as CompassMaintenanceRouteImport } from './routes/compass.maintenance'
 import { Route as CompassInventory4dRouteImport } from './routes/compass.inventory4d'
+import { Route as CompassRecombinationRouteImport } from './routes/compass.recombination'
 import { Route as CompassGuideRouteImport } from './routes/compass.guide'
 import { Route as CompassFrictionRouteImport } from './routes/compass.friction'
 import { Route as BaselineNewRouteImport } from './routes/baseline.new'
@@ -234,6 +235,11 @@ const CompassInventory4dRoute = CompassInventory4dRouteImport.update({
   path: '/inventory4d',
   getParentRoute: () => CompassRoute,
 } as any)
+const CompassRecombinationRoute = CompassRecombinationRouteImport.update({
+  id: '/recombination',
+  path: '/recombination',
+  getParentRoute: () => CompassRoute,
+} as any)
 const CompassGuideRoute = CompassGuideRouteImport.update({
   id: '/guide',
   path: '/guide',
@@ -326,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/compass/friction': typeof CompassFrictionRoute
   '/compass/guide': typeof CompassGuideRoute
   '/compass/inventory4d': typeof CompassInventory4dRoute
+  '/compass/recombination': typeof CompassRecombinationRoute
   '/compass/maintenance': typeof CompassMaintenanceRoute
   '/compass/pocket': typeof CompassPocketRoute
   '/compass/sheet': typeof CompassSheetRoute
@@ -374,6 +381,7 @@ export interface FileRoutesByTo {
   '/compass/friction': typeof CompassFrictionRoute
   '/compass/guide': typeof CompassGuideRoute
   '/compass/inventory4d': typeof CompassInventory4dRoute
+  '/compass/recombination': typeof CompassRecombinationRoute
   '/compass/maintenance': typeof CompassMaintenanceRoute
   '/compass/pocket': typeof CompassPocketRoute
   '/compass/sheet': typeof CompassSheetRoute
@@ -426,6 +434,7 @@ export interface FileRoutesById {
   '/compass/friction': typeof CompassFrictionRoute
   '/compass/guide': typeof CompassGuideRoute
   '/compass/inventory4d': typeof CompassInventory4dRoute
+  '/compass/recombination': typeof CompassRecombinationRoute
   '/compass/maintenance': typeof CompassMaintenanceRoute
   '/compass/pocket': typeof CompassPocketRoute
   '/compass/sheet': typeof CompassSheetRoute
@@ -479,6 +488,7 @@ export interface FileRouteTypes {
     | '/compass/friction'
     | '/compass/guide'
     | '/compass/inventory4d'
+    | '/compass/recombination'
     | '/compass/maintenance'
     | '/compass/pocket'
     | '/compass/sheet'
@@ -527,6 +537,7 @@ export interface FileRouteTypes {
     | '/compass/friction'
     | '/compass/guide'
     | '/compass/inventory4d'
+    | '/compass/recombination'
     | '/compass/maintenance'
     | '/compass/pocket'
     | '/compass/sheet'
@@ -578,6 +589,7 @@ export interface FileRouteTypes {
     | '/compass/friction'
     | '/compass/guide'
     | '/compass/inventory4d'
+    | '/compass/recombination'
     | '/compass/maintenance'
     | '/compass/pocket'
     | '/compass/sheet'
@@ -882,6 +894,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompassInventory4dRouteImport
       parentRoute: typeof CompassRoute
     }
+    '/compass/recombination': {
+      id: '/compass/recombination'
+      path: '/recombination'
+      fullPath: '/compass/recombination'
+      preLoaderRoute: typeof CompassRecombinationRouteImport
+      parentRoute: typeof CompassRoute
+    }
     '/compass/guide': {
       id: '/compass/guide'
       path: '/guide'
@@ -987,6 +1006,7 @@ interface CompassRouteChildren {
   CompassFrictionRoute: typeof CompassFrictionRoute
   CompassGuideRoute: typeof CompassGuideRoute
   CompassInventory4dRoute: typeof CompassInventory4dRoute
+  CompassRecombinationRoute: typeof CompassRecombinationRoute
   CompassMaintenanceRoute: typeof CompassMaintenanceRoute
   CompassPocketRoute: typeof CompassPocketRoute
   CompassSheetRoute: typeof CompassSheetRoute
@@ -999,6 +1019,7 @@ const CompassRouteChildren: CompassRouteChildren = {
   CompassFrictionRoute: CompassFrictionRoute,
   CompassGuideRoute: CompassGuideRoute,
   CompassInventory4dRoute: CompassInventory4dRoute,
+  CompassRecombinationRoute: CompassRecombinationRoute,
   CompassMaintenanceRoute: CompassMaintenanceRoute,
   CompassPocketRoute: CompassPocketRoute,
   CompassSheetRoute: CompassSheetRoute,

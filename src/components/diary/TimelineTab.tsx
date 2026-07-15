@@ -6,7 +6,7 @@ import { ProjectSection } from './ProjectSection';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
 import type { ScenarioType, OperationalLayer, ExecutionPlan } from '@/types/app';
-import type { RootCauseChain, ActionPlan, CostBenefitData, LeverItem, Inventory4D } from '@/lib/register';
+import type { RootCauseChain, ActionPlan, CostBenefitData, LeverItem, Inventory4D, RecombinationItem } from '@/lib/register';
 import { updateEntryCostBenefit } from '@/lib/register';
 import { formatCurrency, corRelacao } from '@/lib/costBenefit';
 import { getPhaseTimeState } from '@/lib/executionPlan';
@@ -454,6 +454,7 @@ export function TimelineTab() {
             if (e.entry_type === 'structured_O') {
               const inv4d = (c as { inventory_4d?: Inventory4D }).inventory_4d;
               const leverFilter = (c as { lever_filter?: LeverItem[] }).lever_filter;
+              const recombinations = (c as { recombinations?: RecombinationItem[] }).recombinations?.filter((r) => r.idea.trim()) ?? null;
 
               if (inv4d) {
                 // ── Modo 4D ──
@@ -494,6 +495,25 @@ export function TimelineTab() {
                         +{hiddenFields} dimensão{hiddenFields > 1 ? 'ões' : ''}
                       </p>
                     )}
+                    {isExp && recombinations && recombinations.length > 0 && (
+                      <div className="pt-1 border-t border-op-gray/10">
+                        <p className="text-[10px] text-op-gray uppercase tracking-wide mb-1">Recombinação</p>
+                        {recombinations.map((rec, i) => (
+                          <div key={rec.id} className="flex items-start gap-2 pl-2 mb-0.5">
+                            <span className="text-label text-op-gray shrink-0 mt-0.5">{i + 1}.</span>
+                            <span
+                              className={`text-small flex-1 leading-snug ${rec.selected ? 'font-medium' : 'text-op-white/70'}`}
+                              style={rec.selected ? { color: '#16A34A' } : undefined}
+                            >
+                              {rec.idea}
+                            </span>
+                            {rec.selected && (
+                              <span className="text-label font-semibold shrink-0" style={{ color: '#16A34A' }}>✓</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               }
@@ -530,6 +550,25 @@ export function TimelineTab() {
                     <p className="text-label text-op-gray">
                       +{hiddenRFields} campo{hiddenRFields > 1 ? 's' : ''}
                     </p>
+                  )}
+                  {isExp && recombinations && recombinations.length > 0 && (
+                    <div className="pt-1 border-t border-op-gray/10">
+                      <p className="text-[10px] text-op-gray uppercase tracking-wide mb-1">Recombinação</p>
+                      {recombinations.map((rec, i) => (
+                        <div key={rec.id} className="flex items-start gap-2 pl-2 mb-0.5">
+                          <span className="text-label text-op-gray shrink-0 mt-0.5">{i + 1}.</span>
+                          <span
+                            className={`text-small flex-1 leading-snug ${rec.selected ? 'font-medium' : 'text-op-white/70'}`}
+                            style={rec.selected ? { color: '#16A34A' } : undefined}
+                          >
+                            {rec.idea}
+                          </span>
+                          {rec.selected && (
+                            <span className="text-label font-semibold shrink-0" style={{ color: '#16A34A' }}>✓</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
                   {isExp && leverFilter && leverFilter.length > 0 && (
                     <div className="pt-1 border-t border-op-gray/10">
