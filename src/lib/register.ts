@@ -525,6 +525,20 @@ export async function updateEntryLeverFilter(
 
 // ---------- Selected Recombination ----------
 
+// Upsert: se a ideia já existe em recombinations, marca como selecionada.
+// Se não existe (foi digitada diretamente no Filtro de Alavanca), insere como nova entrada selecionada.
+function applySelectedRecombination(
+  existing: RecombinationItem[],
+  selectedIdea: string,
+): RecombinationItem[] {
+  const trimmed = selectedIdea.trim();
+  const alreadyExists = existing.some((r) => r.idea.trim() === trimmed);
+  const base = alreadyExists
+    ? existing
+    : [...existing, { id: crypto.randomUUID(), idea: trimmed, selected: false }];
+  return base.map((r) => ({ ...r, selected: r.idea.trim() === trimmed }));
+}
+
 export async function updateEntrySelectedRecombination(
   entryId: string,
   selectedIdea: string,
@@ -541,7 +555,7 @@ export async function updateEntrySelectedRecombination(
       content: {
         ...content,
         selected_recombination: selectedIdea,
-        recombinations: recs.map((r) => ({ ...r, selected: r.idea === selectedIdea })),
+        recombinations: applySelectedRecombination(recs, selectedIdea),
       },
     });
     return;
@@ -562,7 +576,7 @@ export async function updateEntrySelectedRecombination(
       content: {
         ...content,
         selected_recombination: selectedIdea,
-        recombinations: recs.map((r) => ({ ...r, selected: r.idea === selectedIdea })),
+        recombinations: applySelectedRecombination(recs, selectedIdea),
       },
     })
     .eq('id', entryId);
