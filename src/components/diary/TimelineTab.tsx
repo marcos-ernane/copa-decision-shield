@@ -388,7 +388,7 @@ export function TimelineTab() {
             )}
             {e.entry_type === 'structured_O' && (
               <span className="ml-auto">
-                {isExp
+                {expanded === e.id
                   ? <ChevronDown className="size-3.5 text-op-gray" />
                   : <ChevronRight className="size-3.5 text-op-gray" />}
               </span>
