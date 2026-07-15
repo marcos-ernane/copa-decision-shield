@@ -515,6 +515,38 @@ export async function updateEntryLeverFilter(
   if (error) throw error;
 }
 
+// ---------- Inventory 4D ----------
+
+export async function updateEntryInventory4d(
+  entryId: string,
+  inventory4d: Inventory4D,
+): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    const entries = GuestStorage.getEntries();
+    const entry = entries.find((e) => e.id === entryId);
+    if (!entry) return;
+    GuestStorage.updateEntry(entryId, {
+      content: { ...entry.content, inventory_4d: inventory4d },
+    });
+    return;
+  }
+
+  const { data: current, error: fetchError } = await supabase
+    .from('entries')
+    .select('content')
+    .eq('id', entryId)
+    .single();
+  if (fetchError || !current) return;
+
+  const { error } = await supabase
+    .from('entries')
+    .update({ content: { ...(current.content as Record<string, unknown>), inventory_4d: inventory4d } })
+    .eq('id', entryId);
+  if (error) throw error;
+}
+
 // ---------- Corrective ----------
 
 export async function saveCorrective(
