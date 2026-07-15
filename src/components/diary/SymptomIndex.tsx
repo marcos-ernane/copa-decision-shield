@@ -48,11 +48,24 @@ function tokenize(text: string): string[] {
     .filter((t) => t.length > 2);
 }
 
+// Tokenizer para a query do usuário: aceita 2+ chars para live search.
+function tokenizeQuery(text: string): string[] {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length > 1);
+}
+
 function score(text: string, terms: string[]): number {
   if (terms.length === 0) return 0;
   const tokens = tokenize(text);
   let hits = 0;
-  for (const t of tokens) if (terms.includes(t)) hits++;
+  for (const t of tokens) {
+    if (terms.some((term) => t === term || t.startsWith(term))) hits++;
+  }
   return hits;
 }
 
@@ -118,7 +131,7 @@ export function SymptomIndex() {
 
   const results = useMemo(() => {
     const chip = FILTER_CHIPS.find((c) => c.key === activeChip) ?? null;
-    const terms = tokenize(query);
+    const terms = tokenizeQuery(query);
     const hasFilter = chip !== null || terms.length > 0;
     type Item = { projectId: string; kind: 'entry' | 'principle'; id: string; text: string; score: number; createdAt: string };
     if (!hasFilter) return { groups: [] as Array<{ projectId: string; items: Item[] }> };
