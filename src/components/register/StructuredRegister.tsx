@@ -39,9 +39,9 @@ const PHASE_LABEL_TOP: Record<Format, string> = {
 
 const PHASE_LABEL_BOTTOM: Record<Format, string> = {
   C: 'Análise da situação',
-  O: 'Mapa 3R',
-  P: 'Definição de IMV para testar',
-  A: 'Análise pós-ação do teste',
+  O: 'Mapa 3R e Inventário 4D',
+  P: 'Definição de IMV + Ações',
+  A: 'Análise pós-ação da IMV',
 };
 
 const PHASE_NAMES: Record<Format, string> = {
