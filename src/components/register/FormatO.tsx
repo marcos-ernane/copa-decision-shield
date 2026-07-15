@@ -533,7 +533,7 @@ export function FormatO({
             {step === 0 && (
               <div>
                 <div className="flex items-center justify-between mb-0.5">
-                  <p className="text-small font-medium">R1 — Recursos</p>
+                  <p className="text-small font-medium text-op-white">R1 — Recursos</p>
                   <button
                     type="button"
                     onClick={() => setHelpKey('R1')}
@@ -558,7 +558,7 @@ export function FormatO({
             {step === 1 && (
               <div>
                 <div className="flex items-center justify-between mb-0.5">
-                  <p className="text-small font-medium">R2 — Ruídos</p>
+                  <p className="text-small font-medium text-op-white">R2 — Ruídos</p>
                   <button
                     type="button"
                     onClick={() => setHelpKey('R2')}
@@ -584,7 +584,7 @@ export function FormatO({
             {step === 2 && (
               <div>
                 <div className="flex items-center justify-between mb-0.5">
-                  <p className="text-small font-medium">R3 — Restrições</p>
+                  <p className="text-small font-medium text-op-white">R3 — Restrições</p>
                   <button
                     type="button"
                     onClick={() => setHelpKey('R3')}
@@ -747,13 +747,8 @@ export function FormatO({
           <div className="space-y-3">
 
             {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-label text-op-gray uppercase tracking-wide">RECOMBINAÇÃO</p>
-                <p className="text-[12px] text-op-gray">
-                  Combine os recursos para criar ideias de intervenção
-                </p>
-              </div>
+            <div className="flex items-center justify-between mb-0.5">
+              <p className="text-small font-medium text-op-white">Recombinação</p>
               <button
                 type="button"
                 onClick={() => setHelpKey('RECOMBINATION')}
@@ -763,10 +758,13 @@ export function FormatO({
                 Ajuda
               </button>
             </div>
+            <p className="text-small text-muted-foreground">
+              Combine os recursos para criar ideias de intervenção
+            </p>
 
             {/* Matéria-prima — chips somente leitura */}
             <div>
-              <p className="text-[11px] text-op-gray mb-2">Seus recursos disponíveis:</p>
+              <p className="text-label text-op-gray mb-2">Seus recursos disponíveis:</p>
               {resourceList.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {resourceList.map((r, i) => (
