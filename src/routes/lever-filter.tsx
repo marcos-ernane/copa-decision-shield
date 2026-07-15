@@ -1,10 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
 import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { CircleHelp, X, ChevronDown, ChevronUp, Plus, Trash2, ArrowRight } from 'lucide-react';
 import type { LeverItem } from '@/lib/register';
-import { updateEntryLeverFilter } from '@/lib/register';
+import { updateEntryLeverFilter, updateEntrySelectedRecombination } from '@/lib/register';
 import { calcLeverResult, corResultado } from '@/lib/leverFilter';
 import { GuestStorage, guestId } from '@/lib/guestStorage';
 import { supabase } from '@/lib/supabase';
@@ -122,6 +122,7 @@ function makeItem(): LeverItem {
 function LeverFilterScreen() {
   const { entryId: urlEntryId, projectId: urlProjectId } = Route.useSearch();
   const readingMode = useReadingMode();
+  const navigate = useNavigate();
 
   // effectiveEntryId: vem da URL (fluxo FormatO) ou é resolvido ao selecionar projeto (modo avulso)
   const [effectiveEntryId, setEffectiveEntryId] = useState<string | undefined>(urlEntryId);
@@ -277,13 +278,21 @@ function LeverFilterScreen() {
       if (effectiveEntryId && items.length > 0) {
         await updateEntryLeverFilter(effectiveEntryId, items);
       }
+      // Marca a recombinação escolhida como selecionada no registro [O] Organização
+      if (effectiveEntryId && item.idea.trim()) {
+        await updateEntrySelectedRecombination(effectiveEntryId, item.idea.trim());
+      }
     } finally {
       setSaving(false);
     }
     if (item.idea.trim()) {
       sessionStorage.setItem('__leverSuggestion', item.idea.trim());
     }
-    window.history.back();
+    // Navega diretamente para a etapa [P] Prova onde a IMV é definida
+    void navigate({
+      to: '/register/structured',
+      search: { format: 'P' as const, projectId: undefined, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined },
+    });
   }
 
   // ── Derived ──

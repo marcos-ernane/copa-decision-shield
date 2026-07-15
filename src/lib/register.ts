@@ -523,6 +523,52 @@ export async function updateEntryLeverFilter(
   if (error) throw error;
 }
 
+// ---------- Selected Recombination ----------
+
+export async function updateEntrySelectedRecombination(
+  entryId: string,
+  selectedIdea: string,
+): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    const entries = GuestStorage.getEntries();
+    const entry = entries.find((e) => e.id === entryId);
+    if (!entry) return;
+    const content = entry.content as Record<string, unknown>;
+    const recs = (content.recombinations as RecombinationItem[] | undefined) ?? [];
+    GuestStorage.updateEntry(entryId, {
+      content: {
+        ...content,
+        selected_recombination: selectedIdea,
+        recombinations: recs.map((r) => ({ ...r, selected: r.idea === selectedIdea })),
+      },
+    });
+    return;
+  }
+
+  const { data: current, error: fetchError } = await supabase
+    .from('entries')
+    .select('content')
+    .eq('id', entryId)
+    .single();
+  if (fetchError || !current) return;
+
+  const content = current.content as Record<string, unknown>;
+  const recs = (content.recombinations as RecombinationItem[] | undefined) ?? [];
+  const { error } = await supabase
+    .from('entries')
+    .update({
+      content: {
+        ...content,
+        selected_recombination: selectedIdea,
+        recombinations: recs.map((r) => ({ ...r, selected: r.idea === selectedIdea })),
+      },
+    })
+    .eq('id', entryId);
+  if (error) throw error;
+}
+
 // ---------- Inventory 4D ----------
 
 export async function updateEntryInventory4d(
