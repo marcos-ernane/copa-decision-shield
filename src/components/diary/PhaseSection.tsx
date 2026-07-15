@@ -79,11 +79,45 @@ export function PhaseSection({ group, renderEntry }: PhaseSectionProps) {
       {/* Expanded entries */}
       {expanded && !isEmpty && (
         <div className="pl-4 space-y-2 pb-1">
-          {group.entries.map((entry) => (
-            <div key={entry.id}>
-              {renderEntry(entry)}
-            </div>
-          ))}
+          {(() => {
+            // Corrective entries are nested below the entry they correct.
+            // Orphaned correctives (parent not in this phase) appear at top level.
+            const correctives = group.entries.filter(e => e.entry_type === 'corrective');
+            const nonCorrectives = group.entries.filter(e => e.entry_type !== 'corrective');
+            const parentIds = new Set(nonCorrectives.map(e => e.id));
+
+            const corrMap = new Map<string, Entry[]>();
+            for (const c of correctives) {
+              if (c.linked_to && parentIds.has(c.linked_to)) {
+                const arr = corrMap.get(c.linked_to) ?? [];
+                arr.push(c);
+                corrMap.set(c.linked_to, arr);
+              }
+            }
+            const orphaned = correctives.filter(c => !c.linked_to || !parentIds.has(c.linked_to));
+
+            return (
+              <>
+                {nonCorrectives.map((entry) => (
+                  <div key={entry.id}>
+                    {renderEntry(entry)}
+                    {(corrMap.get(entry.id) ?? []).map((corr) => (
+                      <div
+                        key={corr.id}
+                        className="mt-1 ml-1 pl-3 border-l-2"
+                        style={{ borderLeftColor: 'rgba(217,119,6,0.45)' }}
+                      >
+                        {renderEntry(corr)}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                {orphaned.map((entry) => (
+                  <div key={entry.id}>{renderEntry(entry)}</div>
+                ))}
+              </>
+            );
+          })()}
         </div>
       )}
     </div>

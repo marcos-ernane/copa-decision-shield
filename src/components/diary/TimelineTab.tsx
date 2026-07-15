@@ -352,15 +352,42 @@ export function TimelineTab() {
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? '—';
 
-  // firstOccurrenceByProject: entryId da primeira entrada de cada projeto na lista deduped.
+  // Flat view: corrective entries that have a parent in deduped are removed
+  // from the top-level list and rendered nested below their parent instead.
+  const dedupedIdSet = useMemo(() => new Set(deduped.map(d => d.entry.id)), [deduped]);
+
+  // Map parentId → corrective items (for nested rendering in flat view)
+  const flatCorrectivesMap = useMemo(() => {
+    const map = new Map<string, Array<{ entry: Entry; count: number }>>();
+    for (const item of deduped) {
+      if (item.entry.entry_type === 'corrective' && item.entry.linked_to && dedupedIdSet.has(item.entry.linked_to)) {
+        const arr = map.get(item.entry.linked_to) ?? [];
+        arr.push(item);
+        map.set(item.entry.linked_to, arr);
+      }
+    }
+    return map;
+  }, [deduped, dedupedIdSet]);
+
+  // Top-level entries for flat view: all except correctives with a parent present
+  const flatEntries = useMemo(
+    () => deduped.filter(d =>
+      d.entry.entry_type !== 'corrective' ||
+      !d.entry.linked_to ||
+      !dedupedIdSet.has(d.entry.linked_to)
+    ),
+    [deduped, dedupedIdSet],
+  );
+
+  // firstOccurrenceByProject: entryId da primeira entrada de cada projeto na lista flatEntries.
   // Usado para renderizar a seção de fotos uma única vez por projeto no flat view.
   const firstOccurrenceByProject = useMemo(() => {
     const map = new Map<string, string>(); // projectId → first entryId
-    for (const { entry } of deduped) {
+    for (const { entry } of flatEntries) {
       if (!map.has(entry.project_id)) map.set(entry.project_id, entry.id);
     }
     return map;
-  }, [deduped]);
+  }, [flatEntries]);
 
   function handleViewChange(newView: DiaryView) {
     setView(newView);
@@ -1049,12 +1076,12 @@ export function TimelineTab() {
         )
       ) : (
         <ul className="space-y-2">
-          {deduped.length === 0 && (
+          {flatEntries.length === 0 && (
             <li className="text-small text-op-gray text-center py-6">
               {project === 'none' ? 'Escolha um projeto para ver os registros.' : 'Nenhum registro.'}
             </li>
           )}
-          {deduped.map(({ entry: e, count }) => (
+          {flatEntries.map(({ entry: e, count }) => (
             <Fragment key={e.id}>
               {/* Seção de fotos Antes/Depois — uma vez por projeto, antes da primeira entry */}
               {firstOccurrenceByProject.get(e.project_id) === e.id && userId && (
@@ -1064,6 +1091,16 @@ export function TimelineTab() {
               )}
               <li>
                 {renderEntryCard(e, count)}
+                {/* Registros corretivos aninhados abaixo do pai */}
+                {(flatCorrectivesMap.get(e.id) ?? []).map(({ entry: corr, count: corrCount }) => (
+                  <div
+                    key={corr.id}
+                    className="mt-1 ml-1 pl-3 border-l-2"
+                    style={{ borderLeftColor: 'rgba(217,119,6,0.45)' }}
+                  >
+                    {renderEntryCard(corr, corrCount)}
+                  </div>
+                ))}
               </li>
             </Fragment>
           ))}
