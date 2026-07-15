@@ -159,6 +159,7 @@ function LeverFilterScreen() {
 
   // Quando projeto selecionado: busca structured_O mais recente para contexto e entryId
   useEffect(() => {
+    if (!isAvulso) return;
     if (!selectedProjectId) {
       setEffectiveEntryId(undefined);
       setBottleneck('');
