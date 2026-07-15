@@ -87,12 +87,20 @@ export interface Inventory4D {
   desire:    Inventory4DItems;   // D — Desejo: o que as pessoas querem?
 }
 
+export interface RecombinationItem {
+  id: string;       // UUID gerado no cliente
+  idea: string;     // recombinação em uma frase — máx 200 chars
+  selected: boolean;
+}
+
 export interface StructuredOContent {
   resources: string;
   frictions: string;
   bottleneck: string;
-  lever_filter?: LeverItem[];    // Filtro de Alavanca — PRD-MOD-02
-  inventory_4d?: Inventory4D;   // Inventário 4D — PRD-MOD-03
+  lever_filter?: LeverItem[];           // Filtro de Alavanca — PRD-MOD-02
+  inventory_4d?: Inventory4D;           // Inventário 4D — PRD-MOD-03
+  recombinations?: RecombinationItem[]; // Recombinação — PRD-MOD-04
+  selected_recombination?: string;      // Ideia selecionada para pré-preencher no P
 }
 
 export interface ActionPlan {
