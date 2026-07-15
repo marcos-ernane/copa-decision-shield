@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { ArrowRight } from 'lucide-react';
 import { usePanelData } from '@/hooks/usePanelData';
 import type { Entry, Principle } from '@/types/database';
 
@@ -107,6 +109,12 @@ export function SymptomIndex() {
   const { entries, principles, projects } = usePanelData();
   const [query, setQuery] = useState('');
   const [activeChip, setActiveChip] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  function goToProject(projectId: string) {
+    if (!projectId) return;
+    void navigate({ to: '/project/$id/dashboard', params: { id: projectId } });
+  }
 
   // Termos mais recorrentes extraídos automaticamente do histórico real do usuário.
   const topTerms = useMemo(() => {
@@ -297,11 +305,21 @@ export function SymptomIndex() {
           <h3 className="text-body font-semibold text-op-white">{pname(g.projectId)}</h3>
           <ul className="space-y-1">
             {g.items.slice(0, 8).map((it) => (
-              <li key={it.id} className="rounded-md border border-op-gray/30 bg-op-navy p-2 text-small text-op-white/70">
-                <span className="text-label text-op-gray mr-2">
-                  {it.kind === 'principle' ? 'princípio' : 'registro'}
-                </span>
-                {it.text || <span className="text-muted-foreground italic">—</span>}
+              <li
+                key={it.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => goToProject(it.projectId)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') goToProject(it.projectId); }}
+                className="rounded-md border border-op-gray/30 bg-op-navy p-2 text-small text-op-white/70 cursor-pointer hover:bg-white/5 hover:border-op-gray/50 transition-colors flex items-start gap-2 group"
+              >
+                <div className="flex-1">
+                  <span className="text-label text-op-gray mr-2">
+                    {it.kind === 'principle' ? 'princípio' : 'registro'}
+                  </span>
+                  {it.text || <span className="text-muted-foreground italic">—</span>}
+                </div>
+                <ArrowRight className="size-3.5 text-op-gray shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </li>
             ))}
           </ul>
