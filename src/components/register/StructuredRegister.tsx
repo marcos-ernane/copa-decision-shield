@@ -11,7 +11,7 @@ import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 
 // Total de passos por formato (passo final = índice TOTAL_STEPS - 1)
-const FORMAT_STEPS: Record<'C' | 'O' | 'P' | 'A', number> = { C: 4, O: 3, P: 4, A: 5 };
+const FORMAT_STEPS: Record<'C' | 'O' | 'P' | 'A', number> = { C: 4, O: 4, P: 4, A: 5 };
 import { ProjectPicker } from './ProjectPicker';
 import { FormatC } from './FormatC';
 import { FormatO } from './FormatO';

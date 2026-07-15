@@ -29,7 +29,7 @@ interface Props {
   isReviewing?: boolean;
 }
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
 
 // ── Help content — Mapa 3R + Inventário 4D ──
 const ALL_HELP = {
@@ -393,7 +393,7 @@ export function FormatO({
   const nextDisabled =
     modo === '3r' &&
     !isReviewing &&
-    ((step === 0 && !resourcesFilled) || (step === 1 && !frictionsFilled));
+    ((step === 0 && !resourcesFilled) || (step === 1 && !frictionsFilled) || (step === 2 && !bottleneckFilled));
 
   const saveDisabled =
     modo === '3r'
@@ -742,9 +742,9 @@ export function FormatO({
           </>
         )}
 
-        {/* ── Bloco Recombinação — último step de ambos os modos [PRD-MOD-04] ── */}
+        {/* ── Bloco Recombinação — step 3 (3R) / step 3 (4D) — etapa dedicada [PRD-MOD-04] ── */}
         {isLastStep && (
-          <div className="border-t border-op-gray/20 mt-2 pt-4 space-y-3">
+          <div className="space-y-3">
 
             {/* Header */}
             <div className="flex items-center justify-between">
