@@ -879,10 +879,14 @@ export function FormatO({
         {isLastStep && modo === '3r' && (
           <button
             type="button"
-            onClick={() => void navigate({
-              to: '/lever-filter',
-              search: { projectId, ...(initialEntryId ? { entryId: initialEntryId } : {}) },
-            })}
+            onClick={() => {
+              const sel = recombinations.find((r) => r.selected && r.idea.trim());
+              if (sel) sessionStorage.setItem('__recombinationIdea', sel.idea.trim());
+              void navigate({
+                to: '/lever-filter',
+                search: { projectId, ...(initialEntryId ? { entryId: initialEntryId } : {}) },
+              });
+            }}
             className="flex items-center gap-1 text-label hover:underline text-[color:var(--color-brand-blue)]"
           >
             <Filter className="size-3.5" />
