@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
-import { Inbox as InboxIcon, X, LayoutList, List, BarChart2, Filter } from 'lucide-react';
+import { Inbox as InboxIcon, X, LayoutList, List, BarChart2, Filter, ChevronDown, ChevronRight } from 'lucide-react';
 import { Link, useSearch } from '@tanstack/react-router';
 import { buildOperationalView } from '@/lib/operationalView';
 import { ProjectSection } from './ProjectSection';
@@ -386,6 +386,13 @@ export function TimelineTab() {
                 ×{count}
               </span>
             )}
+            {e.entry_type === 'structured_O' && (
+              <span className="ml-auto">
+                {isExp
+                  ? <ChevronDown className="size-3.5 text-op-gray" />
+                  : <ChevronRight className="size-3.5 text-op-gray" />}
+              </span>
+            )}
           </div>
           {!inOperationalView && (
             <p className="text-body font-semibold text-op-white mt-0.5 truncate">
@@ -431,61 +438,76 @@ export function TimelineTab() {
                 ];
                 const inv4dFields = INV_LABELS.map(({ key, label }) => ({
                   label,
-                  value: [inv4d[key].item1, inv4d[key].item2, inv4d[key].item3]
-                    .filter(Boolean)
-                    .join('\n'),
-                })).filter((f) => f.value.trim());
+                  items: [inv4d[key].item1, inv4d[key].item2, inv4d[key].item3].filter(Boolean),
+                })).filter((f) => f.items.length > 0);
+
+                // collapsed: apenas o primeiro campo; expanded: todos
+                const visibleFields = isExp ? inv4dFields : inv4dFields.slice(0, 1);
+                const hiddenFields  = isExp ? 0 : inv4dFields.length - 1;
 
                 return (
                   <div className="mt-1 space-y-1.5">
-                    {inv4dFields.map((f, i) => {
-                      const items = f.value.split('\n').filter(Boolean);
-                      const visible = isExp ? items : items.slice(0, 2);
-                      const extra = isExp ? 0 : items.length - 2;
+                    {visibleFields.map((f, i) => {
+                      const visibleItems = isExp ? f.items : f.items.slice(0, 2);
+                      const extraItems   = isExp ? 0 : f.items.length - 2;
                       return (
                         <div key={i} className={i > 0 ? 'pt-1 border-t border-op-gray/10' : ''}>
                           <p className="text-label text-op-gray mb-0.5">{f.label}</p>
-                          {visible.map((item, j) => (
+                          {visibleItems.map((item, j) => (
                             <p key={j} className="text-small text-op-white/70 leading-snug pl-2">· {item}</p>
                           ))}
-                          {extra > 0 && (
-                            <p className="text-label text-op-gray pl-2">+{extra} item{extra > 1 ? 'ns' : ''}</p>
+                          {extraItems > 0 && (
+                            <p className="text-label text-op-gray pl-2">+{extraItems} item{extraItems > 1 ? 'ns' : ''}</p>
                           )}
                         </div>
                       );
                     })}
+                    {hiddenFields > 0 && (
+                      <p className="text-label text-op-gray">
+                        +{hiddenFields} dimensão{hiddenFields > 1 ? 'ões' : ''}
+                      </p>
+                    )}
                   </div>
                 );
               }
 
               // ── Modo 3R ──
               const rFields = [
-                { label: 'R1 — Recursos',    value: (c.resources as string) || '' },
-                { label: 'R2 — Ruídos',      value: (c.frictions as string) || '' },
-                { label: 'R3 — Restrições',  value: (c.bottleneck as string) || '' },
-              ].filter((f) => f.value.trim());
+                { label: 'R1 — Recursos',   items: ((c.resources  as string) || '').split('\n').filter(Boolean) },
+                { label: 'R2 — Ruídos',     items: ((c.frictions  as string) || '').split('\n').filter(Boolean) },
+                { label: 'R3 — Restrições', items: ((c.bottleneck as string) || '').split('\n').filter(Boolean) },
+              ].filter((f) => f.items.length > 0);
+
+              // collapsed: apenas o primeiro campo; expanded: todos
+              const visibleRFields = isExp ? rFields : rFields.slice(0, 1);
+              const hiddenRFields  = isExp ? 0 : rFields.length - 1;
+
               return (
                 <div className="mt-1 space-y-1.5">
-                  {rFields.map((f, i) => {
-                    const items = f.value.split('\n').filter(Boolean);
-                    const visible = isExp ? items : items.slice(0, 2);
-                    const extra = isExp ? 0 : items.length - 2;
+                  {visibleRFields.map((f, i) => {
+                    const visibleItems = isExp ? f.items : f.items.slice(0, 2);
+                    const extraItems   = isExp ? 0 : f.items.length - 2;
                     return (
                       <div key={i} className={i > 0 ? 'pt-1 border-t border-op-gray/10' : ''}>
                         <p className="text-label text-op-gray mb-0.5">{f.label}</p>
-                        {visible.map((item, j) => (
+                        {visibleItems.map((item, j) => (
                           <p key={j} className="text-small text-op-white/70 leading-snug pl-2">· {item}</p>
                         ))}
-                        {extra > 0 && (
-                          <p className="text-label text-op-gray pl-2">+{extra} item{extra > 1 ? 'ns' : ''}</p>
+                        {extraItems > 0 && (
+                          <p className="text-label text-op-gray pl-2">+{extraItems} item{extraItems > 1 ? 'ns' : ''}</p>
                         )}
                       </div>
                     );
                   })}
-                  {leverFilter && leverFilter.length > 0 && (
+                  {hiddenRFields > 0 && (
+                    <p className="text-label text-op-gray">
+                      +{hiddenRFields} campo{hiddenRFields > 1 ? 's' : ''}
+                    </p>
+                  )}
+                  {isExp && leverFilter && leverFilter.length > 0 && (
                     <div className="pt-1 border-t border-op-gray/10">
                       <p className="text-[10px] text-op-gray uppercase tracking-wide mb-1">FILTRO DE ALAVANCA</p>
-                      {(isExp ? leverFilter : leverFilter.slice(0, 2)).map((lf) => (
+                      {leverFilter.map((lf) => (
                         <div key={lf.id} className="flex items-center gap-2 pl-2 mb-0.5">
                           <span className="text-small text-op-white/70 flex-1 leading-snug truncate">{lf.idea}</span>
                           <span className={`text-label font-semibold flex-shrink-0 ${
@@ -497,9 +519,6 @@ export function TimelineTab() {
                           </span>
                         </div>
                       ))}
-                      {!isExp && leverFilter.length > 2 && (
-                        <p className="text-label text-op-gray pl-2">+{leverFilter.length - 2} {leverFilter.length - 2 === 1 ? 'ideia' : 'ideias'}</p>
-                      )}
                       <Link
                         to="/lever-filter"
                         search={{ entryId: e.id }}
@@ -557,18 +576,31 @@ export function TimelineTab() {
                 {TYPE_LABEL[e.entry_type]}
               </span>
             )}
-            {/* Badge Inventário 4D — diferencia visualmente do Mapa 3R [REQ-4D-14] */}
-            {e.entry_type === 'structured_O' && (e.content as { inventory_4d?: Inventory4D }).inventory_4d && (
-              <span
-                className="inline-flex items-center rounded-full text-label px-2 py-0.5"
-                style={{
-                  backgroundColor: 'rgba(14,165,233,0.10)',
-                  color: 'var(--color-brand-cyan, #0EA5E9)',
-                  border: '1px solid rgba(14,165,233,0.30)',
-                }}
-              >
-                Inventário 4D
-              </span>
+            {/* Badges de modo para structured_O — Mapa 3R ou Inventário 4D [REQ-4D-14] */}
+            {e.entry_type === 'structured_O' && (
+              (e.content as { inventory_4d?: Inventory4D }).inventory_4d ? (
+                <span
+                  className="inline-flex items-center rounded-full text-label px-2 py-0.5"
+                  style={{
+                    backgroundColor: 'rgba(14,165,233,0.10)',
+                    color: 'var(--color-brand-cyan, #0EA5E9)',
+                    border: '1px solid rgba(14,165,233,0.30)',
+                  }}
+                >
+                  Inventário 4D
+                </span>
+              ) : (
+                <span
+                  className="inline-flex items-center rounded-full text-label px-2 py-0.5"
+                  style={{
+                    backgroundColor: 'rgba(22,163,74,0.10)',
+                    color: 'var(--color-brand-green, #16A34A)',
+                    border: '1px solid rgba(22,163,74,0.30)',
+                  }}
+                >
+                  Mapa 3R
+                </span>
+              )
             )}
             {e.entry_type === 'inbox' && (
               <span className="inline-flex items-center rounded-full border border-op-cyan/40 bg-op-navy text-op-cyan text-label px-2 py-0.5">
