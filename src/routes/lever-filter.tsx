@@ -289,9 +289,10 @@ function LeverFilterScreen() {
       sessionStorage.setItem('__leverSuggestion', item.idea.trim());
     }
     // Navega diretamente para a etapa [P] Prova onde a IMV é definida
+    const destProjectId = urlProjectId ?? (selectedProjectId || undefined);
     void navigate({
       to: '/register/structured',
-      search: { format: 'P' as const, projectId: undefined, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined },
+      search: { format: 'P' as const, projectId: destProjectId, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined },
     });
   }
 
