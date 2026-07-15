@@ -111,9 +111,10 @@ interface Props {
   onSaved: () => void;
   onNextStep: () => void;
   onGoToStep?: (step: number) => void;
-  initialData?: StructuredPContent | null;
+  initialData?: Partial<StructuredPContent> | null;
   step: number;
   isReviewing?: boolean;
+  fromRecombination?: boolean;
 }
 
 const TOTAL_STEPS = 4;
@@ -284,7 +285,7 @@ function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boole
   );
 }
 
-export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onGoToStep, initialData, step, isReviewing }: Props) {
+export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onGoToStep, initialData, step, isReviewing, fromRecombination }: Props) {
   // Lê sugestão do Filtro de Alavanca (uso único — remove do sessionStorage imediatamente).
   // Sem guard por initialData: o FormatP pode estar em revisão (dados existentes) e ainda
   // precisar mostrar a sugestão como nova IMV a adicionar.
@@ -299,6 +300,12 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
     if (leverSuggestion && !initialData?.action) return [leverSuggestion];
     return toItems(initialData?.action);
   });
+  const [showRecombinationChip, setShowRecombinationChip] = useState(!!fromRecombination);
+
+  function handleActionItemsChange(items: string[]) {
+    setActionItems(items);
+    if (showRecombinationChip) setShowRecombinationChip(false);
+  }
   const action = fromItems(actionItems);
   const [reversible, setReversible] = useState<boolean | null>(initialData?.reversible ?? null);
   const [cheap, setCheap] = useState<boolean | null>(initialData?.cheap ?? null);
@@ -680,9 +687,19 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               </button>
             </div>
           )}
+          {showRecombinationChip && (
+            <div
+              className="flex items-center gap-2 rounded-md px-3 py-2 mb-2"
+              style={{ backgroundColor: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.25)' }}
+            >
+              <p className="text-[11px] leading-snug" style={{ color: '#16A34A' }}>
+                Ideia da Recombinação — edite se precisar
+              </p>
+            </div>
+          )}
           <TopicList
             items={actionItems}
-            onChange={setActionItems}
+            onChange={handleActionItemsChange}
             placeholder="Descreva a IMV para confirmar se sua leitura do cenário está certa."
             addLabel="Ajustar a IMV anterior"
             lockedCount={imvLockedCount}

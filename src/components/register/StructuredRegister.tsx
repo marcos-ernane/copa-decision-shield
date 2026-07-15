@@ -173,6 +173,8 @@ export function StructuredRegister() {
   const [suggestedPrinciple, setSuggestedPrinciple] = useState<SuggestionResult | null>(null);
   // Contexto de quick_review pré-existente para pré-preencher FormatA
   const [linkedQuickReviewFact, setLinkedQuickReviewFact] = useState<string | null>(null);
+  // Recombinação selecionada em O para pré-preencher P (PRD-MOD-04 Etapa 3)
+  const [prefilledAction, setPrefilledAction] = useState<string | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -290,6 +292,12 @@ export function StructuredRegister() {
     } else {
       navigate({ to: '/project/$id/dashboard', params: { id: projectId } });
     }
+  }
+
+  // Wrapper para capturar selected_recombination de O antes de avançar para P (PRD-MOD-04).
+  async function handleFormatOSaved(content?: StructuredOContent) {
+    setPrefilledAction(content?.selected_recombination ?? null);
+    await onSaved();
   }
 
   const isReviewing = statuses[format] === 'done';
@@ -456,7 +464,7 @@ export function StructuredRegister() {
             projectId={projectId}
             scenarioType={scenarioType}
             currentLayer={currentLayer}
-            onSaved={onSaved}
+            onSaved={handleFormatOSaved}
             onNextStep={handleNextStep}
             step={currentStep}
             isReviewing={isReviewing}
@@ -475,7 +483,14 @@ export function StructuredRegister() {
             onGoToStep={setCurrentStep}
             step={currentStep}
             isReviewing={isReviewing}
-            initialData={statuses['P'] === 'done' ? lastContent<StructuredPContent>(entries, 'structured_P') : null}
+            fromRecombination={statuses['P'] === 'next' && !!prefilledAction}
+            initialData={
+              statuses['P'] === 'done'
+                ? lastContent<StructuredPContent>(entries, 'structured_P')
+                : prefilledAction
+                ? { action: prefilledAction }
+                : null
+            }
           />
         )}
         {format === 'A' && (
