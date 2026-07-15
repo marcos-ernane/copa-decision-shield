@@ -1,7 +1,10 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
 import { Shuffle } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
+import { listProjects } from '@/lib/projects';
+import type { Project } from '@/types/database';
 
 export const Route = createFileRoute('/compass/recombination')({
   component: RecombinationPage,
@@ -43,6 +46,17 @@ const PRINCIPLES = [
 
 function RecombinationPage() {
   const navigate = useNavigate();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+
+  useEffect(() => {
+    setLoadingProjects(true);
+    listProjects().then((projs) => {
+      setProjects(projs.filter((p) => !['archived', 'concluded'].includes(p.state)));
+      setLoadingProjects(false);
+    });
+  }, []);
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: '#070C12', minHeight: '100vh' }}>
@@ -100,10 +114,41 @@ function RecombinationPage() {
           </div>
         </div>
 
+        {/* Seletor de projeto */}
+        <div
+          className="rounded-lg border border-op-gray/20 p-3 space-y-2"
+          style={{ backgroundColor: '#0F1923' }}
+        >
+          <p className="text-label text-op-gray uppercase tracking-wide">Para qual projeto?</p>
+          {loadingProjects ? (
+            <p className="text-small text-op-gray">Carregando projetos…</p>
+          ) : projects.length === 0 ? (
+            <p className="text-small text-op-gray italic">Nenhum projeto ativo encontrado.</p>
+          ) : (
+            <select
+              className="w-full rounded-lg px-3 py-2 text-body text-op-white border border-op-gray/30 focus:outline-none focus:border-brand-blue"
+              style={{ backgroundColor: '#1B2A4A' }}
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+            >
+              <option value="">— Selecione um projeto —</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
         {/* CTA */}
         <Button
           className="w-full"
-          onClick={() => void navigate({ to: '/register/structured', search: { format: 'O', projectId: undefined, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined } })}
+          disabled={!selectedProjectId}
+          onClick={() => void navigate({
+            to: '/register/structured',
+            search: { format: 'O', projectId: selectedProjectId || undefined, step: 3, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined },
+          })}
         >
           Abrir Formato O — Organização
         </Button>

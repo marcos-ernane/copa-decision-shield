@@ -292,7 +292,7 @@ function LeverFilterScreen() {
     const destProjectId = urlProjectId ?? (selectedProjectId || undefined);
     void navigate({
       to: '/register/structured',
-      search: { format: 'P' as const, projectId: destProjectId, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined },
+      search: { format: 'P' as const, projectId: destProjectId, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined, step: undefined },
     });
   }
 

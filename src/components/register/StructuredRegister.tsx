@@ -163,6 +163,7 @@ export function StructuredRegister() {
     linkedTo?: string;
     inboxEntryId?: string;
     inboxText?: string;
+    step?: number;
   };
   const [format, setFormat] = useState<Format>('C');
   const [currentStep, setCurrentStep] = useState(0);
@@ -210,9 +211,9 @@ export function StructuredRegister() {
           setFormat(next);
         }
       }
-      setCurrentStep(0);
+      setCurrentStep(search.step ?? 0);
     })();
-  }, [projectId, search.format, search.linkedTo]);
+  }, [projectId, search.format, search.linkedTo, search.step]);
 
   // Recalcula sugestão de princípio ao mudar de fase — fire-and-forget, não bloqueia UI.
   useEffect(() => {
