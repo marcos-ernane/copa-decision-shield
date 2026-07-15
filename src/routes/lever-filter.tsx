@@ -449,7 +449,7 @@ function LeverFilterScreen() {
                     {/* Campo da ideia */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="text-label text-op-gray">A ideia a avaliar</label>
+                        <label className="text-label text-op-gray">Insira sua ideia</label>
                         {ideaCount > 120 && (
                           <span className="text-label text-op-gray">{ideaCount}/150</span>
                         )}
@@ -465,6 +465,7 @@ function LeverFilterScreen() {
                     </div>
 
                     {/* 5 Perguntas */}
+                    <p className="text-label text-op-gray uppercase tracking-wide pt-1">Agora avalie</p>
                     {QUESTIONS.map((q) => (
                       <div key={q.key} className="space-y-1.5">
                         <div className="flex items-start gap-2">
