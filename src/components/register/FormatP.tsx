@@ -45,6 +45,29 @@ const CUT_RULE_HELP_TEXT = [
   'Pergunte-se: Qual sinal ou condição específica mostrará, de forma clara e objetiva, que esta IMV deve ser interrompida, ajustada ou reavaliada?',
 ];
 
+const LAYER_HELP_ITEMS: Array<{ label: string; description: string; detail: string }> = [
+  {
+    label: 'Operabilidade',
+    description: 'O básico não funciona',
+    detail: 'Use quando o cenário não consegue sequer operar de forma mínima. O problema está na fundação — processos quebrados, recursos ausentes, fluxos travados. Antes de pensar em crescimento, é preciso que o básico funcione de forma confiável.',
+  },
+  {
+    label: 'Conversão',
+    description: 'Não vira resultado',
+    detail: 'Use quando há movimento e operação, mas o esforço não se converte em resultado concreto. Existe demanda ou atividade, mas algo impede que ela se transforme em saída real — venda, adesão, entrega, decisão.',
+  },
+  {
+    label: 'Recorrência',
+    description: 'Não se repete',
+    detail: 'Use quando o resultado acontece, mas de forma esporádica ou instável. A conversão ocorre, mas não há consistência. O desafio é transformar um resultado pontual em algo que se repete com previsibilidade.',
+  },
+  {
+    label: 'Escala',
+    description: 'Não cresce',
+    detail: 'Use quando o sistema funciona e se repete, mas não acompanha o crescimento da demanda. O gargalo está na capacidade de ampliar o que já funciona sem perder qualidade ou consistência.',
+  },
+];
+
 const DEADLINE_HELP_TEXT = [
   'O prazo da IMV é o período definido para observar e medir os efeitos da intervenção antes de analisá-la. Um prazo muito curto pode não dar tempo suficiente para que os resultados apareçam. Um prazo muito longo pode atrasar aprendizados, consumir recursos desnecessariamente e dificultar ajustes rápidos. O ideal é definir um período compatível com o ritmo natural do cenário e com o tempo necessário para que a métrica apresente evidências confiáveis. O objetivo não é esperar indefinidamente por resultados, nem encerrar o teste antes que ele tenha a chance de demonstrar seu efeito.',
   'Pergunte-se: Quanto tempo esta IMV precisa para gerar evidências suficientes que permitam avaliar, com confiança, se a intervenção funcionou, precisa ser ajustada ou deve ser descartada?',
@@ -300,6 +323,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const [metricHelp, setMetricHelp] = useState(false);
   const [cutRuleHelp, setCutRuleHelp] = useState(false);
   const [deadlineHelp, setDeadlineHelp] = useState(false);
+  const [layerHelp, setLayerHelp] = useState(false);
   const [showCostBenefit, setShowCostBenefit] = useState(false);
   const [costBenefitData, setCostBenefitData] = useState<CostBenefitData | undefined>(
     initialData?.cost_benefit,
@@ -528,6 +552,45 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             {CUT_RULE_HELP_TEXT.map((para, i) => (
               <p key={i} className="text-body text-op-white leading-relaxed">{para}</p>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Bottom sheet de ajuda da camada operacional */}
+      {layerHelp && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50"
+          onClick={() => setLayerHelp(false)}
+        >
+          <div
+            className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-heading font-semibold text-op-white">Camada Operacional</h3>
+              <button
+                type="button"
+                onClick={() => setLayerHelp(false)}
+                className="p-1 rounded-md hover:bg-op-navy-elevated"
+                aria-label="Fechar ajuda"
+              >
+                <X className="size-5 text-op-gray" />
+              </button>
+            </div>
+            <p className="text-body text-op-white leading-relaxed">
+              A camada identifica em qual nível do sistema o problema está ocorrendo. Escolha a camada que melhor descreve onde a IMV vai atuar.
+            </p>
+            <div className="space-y-3">
+              {LAYER_HELP_ITEMS.map((item) => (
+                <div key={item.label} className="rounded-lg border border-op-gray/20 p-3 space-y-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-small font-semibold text-op-white">{item.label}</span>
+                    <span className="text-label text-op-gray">— {item.description}</span>
+                  </div>
+                  <p className="text-small text-op-white/80 leading-relaxed">{item.detail}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -896,9 +959,19 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             <VoiceInput value={cutRule} onChange={setCutRule} placeholder="Condição que se deve parar ou ajustar uma IMV ativa" rows={2} />
           </div>
           <div>
-            <p className="text-small font-medium text-op-white mb-1">
-              Camada atual do projeto - Toque para manter ou alterar
-            </p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-small font-medium text-op-white">
+                Camada atual do projeto - Toque para manter ou alterar
+              </p>
+              <button
+                type="button"
+                onClick={() => setLayerHelp(true)}
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors shrink-0 ml-2"
+              >
+                <CircleHelp className="size-3.5" />
+                Ajuda
+              </button>
+            </div>
             <div className="flex flex-wrap gap-2">
               {LAYERS.map((l) => (
                 <Button
