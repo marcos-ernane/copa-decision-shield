@@ -482,8 +482,8 @@ export function FormatO({
 
       <div className="space-y-4">
 
-        {/* ── Toggle Mapa 3R / Inventário 4D ── */}
-        <div className="flex items-center gap-2">
+        {/* ── Toggle Mapa 3R / Inventário 4D — oculto na etapa de Recombinação ── */}
+        {!isLastStep && <div className="flex items-center gap-2">
           <div className="flex flex-1 rounded-lg overflow-hidden border border-op-gray/30">
             <button
               type="button"
@@ -515,7 +515,7 @@ export function FormatO({
           >
             <CircleHelp className="size-3.5" />
           </button>
-        </div>
+        </div>}
 
         <StepDots current={step} total={TOTAL_STEPS} />
 
