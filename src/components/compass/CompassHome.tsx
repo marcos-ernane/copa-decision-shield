@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { CompassSection } from './CompassSection';
 import { PaywallGate } from '@/components/PaywallGate';
+import { BackButton } from '@/components/app/BackButton';
+import { CloseButton } from '@/components/app/CloseButton';
 
 const SECTIONS = [
   { to: '/compass/pocket', icon: CircleDot, title: 'Protocolo de Bolso', description: 'O sistema completo em 1 minuto' },
@@ -36,9 +38,15 @@ const SECTIONS = [
 export function CompassHome() {
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
-      <header className="px-4 py-4 border-b border-border">
-        <h1 className="text-title text-foreground">Bússola do Operador</h1>
-        <p className="text-small text-muted-foreground">Conteúdo do método. Sempre disponível.</p>
+      <header className="sticky top-0 z-10 border-b border-border" style={{ backgroundColor: '#070C12' }}>
+        <div className="flex items-center gap-2 px-4 py-3">
+          <BackButton />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-heading font-semibold text-foreground">Bússola do Operador</h1>
+            <p className="text-label text-muted-foreground">Conteúdo do método. Sempre disponível.</p>
+          </div>
+          <CloseButton className="ml-auto shrink-0" />
+        </div>
       </header>
       <main className="px-4 py-4 max-w-md mx-auto space-y-2">
         {SECTIONS.map((s) => {
