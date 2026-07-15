@@ -373,9 +373,14 @@ function LeverFilterScreen() {
                 Avaliando ideias para superar:
               </p>
               {bottleneck ? (
-                <p className="text-small text-op-white font-medium leading-snug">
-                  {bottleneck}
-                </p>
+                <ol className="space-y-1">
+                  {bottleneck.split('\n').filter((s) => s.trim()).map((line, i) => (
+                    <li key={i} className="flex items-start gap-1.5 text-small text-op-white font-medium leading-snug">
+                      <span className="text-op-gray shrink-0 select-none">{i + 1}.</span>
+                      <span>{line.trim()}</span>
+                    </li>
+                  ))}
+                </ol>
               ) : (
                 <p className="text-small text-op-gray italic leading-snug">
                   Gargalo não preenchido no R3 do Formato O.
