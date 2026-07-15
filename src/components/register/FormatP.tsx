@@ -294,10 +294,10 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
     if (s) sessionStorage.removeItem('__leverSuggestion');
     return s ?? null;
   });
-  const [isLeverSuggestion, setIsLeverSuggestion] = useState(!!leverSuggestion);
+  const [isLeverSuggestion, setIsLeverSuggestion] = useState(false);
   const [actionItems, setActionItems] = useState<string[]>(() => {
-    // Pré-preenche apenas quando não há IMV existente (fluxo novo)
-    if (leverSuggestion && !initialData?.action) return [leverSuggestion];
+    // Lever suggestion tem prioridade — substitui IMV anterior quando presente
+    if (leverSuggestion) return [leverSuggestion];
     return toItems(initialData?.action);
   });
   const [showRecombinationChip, setShowRecombinationChip] = useState(!!fromRecombination);

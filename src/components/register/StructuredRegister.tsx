@@ -485,10 +485,10 @@ export function StructuredRegister() {
             isReviewing={isReviewing}
             fromRecombination={statuses['P'] === 'next' && !!prefilledAction}
             initialData={
-              statuses['P'] === 'done'
-                ? lastContent<StructuredPContent>(entries, 'structured_P')
-                : prefilledAction
+              prefilledAction
                 ? { action: prefilledAction }
+                : statuses['P'] === 'done'
+                ? lastContent<StructuredPContent>(entries, 'structured_P')
                 : null
             }
           />
