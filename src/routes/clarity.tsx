@@ -77,10 +77,12 @@ function ClarityScreen() {
   // Leitura (false) é o modo padrão ao receber a resposta da IA.
   // Edição (true) é ativada pelo usuário para ajustar os blocos.
   const [editMode, setEditMode] = useState(false);
+  const [restoredFromSaved, setRestoredFromSaved] = useState(false);
 
   const compose = useCallback(async (proj: ProjectType, pay: CompositorPayload) => {
     setPhase('loading');
     setEditMode(false);
+    setRestoredFromSaved(false);
     const raw = await askFacilitator('CLARITY_COMPOSER', pay as unknown as Record<string, unknown>);
     if (!raw) {
       setPhase('ai_error');
@@ -110,8 +112,33 @@ function ClarityScreen() {
       if (!proj) { setPhase('no_project'); return; }
       setProject(proj);
       if (!canCompose(entries)) { setPhase('no_cycle'); return; }
+
       const pay = buildPayload(proj, entries, principles);
       setPayload(pay);
+
+      // Restaura a sessão salva mais recente, se existir.
+      // Evita chamar a IA desnecessariamente ao voltar para a tela.
+      type SessionContent = { kind: string; m1?: string; m2?: string; m3?: string; m4?: string };
+      const existing = [...entries]
+        .filter((e) => {
+          const c = e.content as SessionContent;
+          return e.entry_type === 'passive' && c?.kind === 'clarity_session';
+        })
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+
+      if (existing) {
+        const c = existing.content as SessionContent;
+        const restored: ClarityResult = {
+          m1: c.m1 ?? '', m2: c.m2 ?? '', m3: c.m3 ?? '', m4: c.m4 ?? '',
+          mirror: null, raw: '',
+        };
+        setResult(restored);
+        setEdited({ m1: restored.m1, m2: restored.m2, m3: restored.m3, m4: restored.m4 });
+        setRestoredFromSaved(true);
+        setPhase('editing');
+        return;
+      }
+
       await compose(proj, pay);
     }
     void load();
@@ -286,6 +313,21 @@ function ClarityScreen() {
             {/* MODO LEITURA — relatório contínuo (padrão) */}
             {!editMode && (
               <div className="rounded-xl border border-border bg-card divide-y divide-border/50">
+                {/* Banner: sessão restaurada — opção de regenerar */}
+                {restoredFromSaved && (
+                  <div className="px-4 py-2.5 flex items-center justify-between bg-muted/30">
+                    <p className="text-label text-muted-foreground">Última sessão restaurada</p>
+                    {project && payload && (
+                      <button
+                        type="button"
+                        onClick={() => void compose(project, payload)}
+                        className="text-label text-[color:var(--color-brand-blue)] hover:underline flex items-center gap-1"
+                      >
+                        <RefreshCw className="size-3" /> Regenerar
+                      </button>
+                    )}
+                  </div>
+                )}
                 {(['m1', 'm2', 'm3', 'm4'] as BlockKey[]).map((key) => (
                   <div key={key} className="px-4 py-4 space-y-1.5">
                     <p className="text-label font-semibold text-muted-foreground uppercase tracking-wide">
