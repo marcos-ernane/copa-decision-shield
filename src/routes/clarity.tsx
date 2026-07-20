@@ -318,6 +318,18 @@ function ClarityScreen() {
             {/* MODO LEITURA — relatório contínuo (padrão) */}
             {!editMode && (
               <div className="rounded-xl border border-border bg-card divide-y divide-border/50">
+                {/* Norte do projeto — contexto fixo no topo do relatório */}
+                {project?.north && (
+                  <div className="px-4 py-3 bg-muted/20">
+                    <p className="text-label font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                      Norte
+                    </p>
+                    <p className="text-small text-foreground/80 leading-relaxed italic">
+                      {project.north}
+                    </p>
+                  </div>
+                )}
+
                 {/* Banner: sessão restaurada — opção de regenerar */}
                 {restoredFromSaved && (
                   <div className="px-4 py-2.5 flex items-center justify-between bg-muted/30">
