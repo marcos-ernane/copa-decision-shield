@@ -1,11 +1,11 @@
 // ClarityScreen — Módulo 9 (PRD-MOD-09 v2.0)
 // Rota: /clarity?projectId=xxx
-// 4 blocos editáveis (M1-M4) + mirror read-only + rodapé Salvar / Compartilhar.
+// Modo leitura (padrão) + modo edição por bloco + mirror read-only + rodapé Salvar / Compartilhar.
 // Mirror nunca vai para exportação.
 
 import { createFileRoute, useSearch, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState, useCallback } from 'react';
-import { Brain, Share2, CheckCircle, AlertCircle, RefreshCw, CircleHelp, X, ChevronRight } from 'lucide-react';
+import { Brain, Share2, CheckCircle, AlertCircle, RefreshCw, CircleHelp, X, ChevronRight, Pencil } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { BackButton } from '@/components/app/BackButton';
@@ -30,7 +30,7 @@ export const Route = createFileRoute('/clarity')({
   component: ClarityScreen,
 });
 
-// ─── Help texts per block ─────────────────────────────────────────────────
+// ─── Block metadata ───────────────────────────────────────────────────────────
 
 const BLOCK_HELP: Record<'m1' | 'm2' | 'm3' | 'm4', string> = {
   m1: 'O fato concreto que ancora este diagnóstico. Edite se quiser ajustar a âncora.',
@@ -48,10 +48,10 @@ const BLOCK_LABELS: Record<'m1' | 'm2' | 'm3' | 'm4', string> = {
 
 type BlockKey = 'm1' | 'm2' | 'm3' | 'm4';
 
-// ─── Phase state ──────────────────────────────────────────────────────────
+// ─── Phase state ──────────────────────────────────────────────────────────────
 
 type Phase =
-  | 'picking'   // no projectId — show project picker
+  | 'picking'
   | 'loading'
   | 'no_cycle'
   | 'ai_error'
@@ -60,7 +60,7 @@ type Phase =
   | 'saved'
   | 'no_project';
 
-// ─── Component ────────────────────────────────────────────────────────────
+// ─── Component ────────────────────────────────────────────────────────────────
 
 function ClarityScreen() {
   const { projectId } = useSearch({ strict: false }) as { projectId?: string };
@@ -71,17 +71,16 @@ function ClarityScreen() {
   const [pickerProjects, setPickerProjects] = useState<ProjectType[]>([]);
   const [result, setResult] = useState<ClarityResult | null>(null);
   const [payload, setPayload] = useState<CompositorPayload | null>(null);
-  const [edited, setEdited] = useState<Record<BlockKey, string>>({
-    m1: '', m2: '', m3: '', m4: '',
-  });
+  const [edited, setEdited] = useState<Record<BlockKey, string>>({ m1: '', m2: '', m3: '', m4: '' });
   const [openHelp, setOpenHelp] = useState<BlockKey | null>(null);
   const [copied, setCopied] = useState(false);
+  // Leitura (false) é o modo padrão ao receber a resposta da IA.
+  // Edição (true) é ativada pelo usuário para ajustar os blocos.
+  const [editMode, setEditMode] = useState(false);
 
-  const compose = useCallback(async (
-    proj: ProjectType,
-    pay: CompositorPayload,
-  ) => {
+  const compose = useCallback(async (proj: ProjectType, pay: CompositorPayload) => {
     setPhase('loading');
+    setEditMode(false);
     const raw = await askFacilitator('CLARITY_COMPOSER', pay as unknown as Record<string, unknown>);
     if (!raw) {
       setPhase('ai_error');
@@ -95,7 +94,6 @@ function ClarityScreen() {
 
   useEffect(() => {
     if (!projectId) {
-      // Load active projects for the picker
       void listProjects().then((all) => {
         const active = all.filter((p) => !['archived', 'concluded'].includes(p.state));
         setPickerProjects(active);
@@ -109,15 +107,9 @@ function ClarityScreen() {
         listEntries(projectId!),
         listPrinciples(projectId!),
       ]);
-      if (!proj) {
-        setPhase('no_project');
-        return;
-      }
+      if (!proj) { setPhase('no_project'); return; }
       setProject(proj);
-      if (!canCompose(entries)) {
-        setPhase('no_cycle');
-        return;
-      }
+      if (!canCompose(entries)) { setPhase('no_cycle'); return; }
       const pay = buildPayload(proj, entries, principles);
       setPayload(pay);
       await compose(proj, pay);
@@ -159,9 +151,11 @@ function ClarityScreen() {
     setOpenHelp((prev) => (prev === key ? null : key));
   }
 
+  const hasContent = phase === 'editing' || phase === 'saving' || phase === 'saved';
+
   // ── Layout shell ──
   return (
-    <div className="min-h-screen pb-32" style={{ backgroundColor: '#070C12' }}>
+    <div className="min-h-screen pb-48" style={{ backgroundColor: '#070C12' }}>
       <header
         className="sticky top-0 z-10 border-b border-border"
         style={{ backgroundColor: '#070C12' }}
@@ -174,12 +168,27 @@ function ClarityScreen() {
               <p className="text-label text-muted-foreground truncate">{project.name}</p>
             )}
           </div>
-          <Brain className="size-5 text-muted-foreground shrink-0" />
+          {/* Alterna entre modo leitura e modo edição */}
+          {hasContent && result && (
+            <button
+              type="button"
+              aria-label={editMode ? 'Ver relatório' : 'Editar blocos'}
+              onClick={() => { setEditMode((v) => !v); setOpenHelp(null); }}
+              className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded shrink-0"
+            >
+              {editMode
+                ? <Brain className="size-5" />
+                : <Pencil className="size-4" />
+              }
+            </button>
+          )}
+          {!hasContent && <Brain className="size-5 text-muted-foreground shrink-0" />}
         </div>
       </header>
 
       <main className="px-4 py-4 max-w-md mx-auto space-y-4">
-        {/* Project picker — quando acessado pela Bússola sem projectId */}
+
+        {/* Project picker */}
         {phase === 'picking' && (
           <div className="space-y-3 pt-2">
             <p className="text-small text-muted-foreground">
@@ -229,7 +238,7 @@ function ClarityScreen() {
           </div>
         )}
 
-        {/* No project — fallback if id provided but not found */}
+        {/* No project */}
         {phase === 'no_project' && (
           <ErrorState
             title="Projeto não encontrado"
@@ -256,17 +265,12 @@ function ClarityScreen() {
         {phase === 'ai_error' && project && payload && (
           <div className="space-y-4 py-8 text-center">
             <AlertCircle className="size-10 text-brand-amber mx-auto" />
-            <p className="text-body text-foreground font-medium">
-              Não foi possível gerar
-            </p>
+            <p className="text-body text-foreground font-medium">Não foi possível gerar</p>
             <p className="text-small text-muted-foreground">
               O assistente não respondeu. Verifique sua conexão e tente novamente.
             </p>
             <div className="flex flex-col gap-2 pt-2">
-              <Button
-                onClick={() => void compose(project, payload)}
-                className="w-full gap-2"
-              >
+              <Button onClick={() => void compose(project, payload)} className="w-full gap-2">
                 <RefreshCw className="size-4" /> Tentar novamente
               </Button>
               <Button variant="outline" onClick={() => navigate({ to: '/', search: {} })} className="w-full">
@@ -276,64 +280,98 @@ function ClarityScreen() {
           </div>
         )}
 
-        {/* Editing / Saved */}
-        {(phase === 'editing' || phase === 'saving' || phase === 'saved') && result && (
+        {/* ── Conteúdo principal ── */}
+        {hasContent && result && (
           <>
-            {(['m1', 'm2', 'm3', 'm4'] as BlockKey[]).map((key) => (
-              <div key={key} className="space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-label font-semibold text-muted-foreground uppercase tracking-wide">
-                    {BLOCK_LABELS[key]}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label={`Ajuda: ${BLOCK_LABELS[key]}`}
-                    onClick={() => toggleHelp(key)}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {openHelp === key
-                      ? <X className="size-3.5" />
-                      : <CircleHelp className="size-3.5" />
-                    }
-                  </button>
-                </div>
-                {openHelp === key && (
-                  <p className="text-label text-muted-foreground leading-relaxed">
-                    {BLOCK_HELP[key]}
-                  </p>
-                )}
-                <Textarea
-                  value={edited[key]}
-                  onChange={(e) => handleEdit(key, e.target.value)}
-                  rows={4}
-                  className="text-body bg-card border-border resize-none"
-                  placeholder={BLOCK_LABELS[key]}
-                />
-              </div>
-            ))}
+            {/* MODO LEITURA — relatório contínuo (padrão) */}
+            {!editMode && (
+              <div className="rounded-xl border border-border bg-card divide-y divide-border/50">
+                {(['m1', 'm2', 'm3', 'm4'] as BlockKey[]).map((key) => (
+                  <div key={key} className="px-4 py-4 space-y-1.5">
+                    <p className="text-label font-semibold text-muted-foreground uppercase tracking-wide">
+                      {BLOCK_LABELS[key]}
+                    </p>
+                    <p className="text-body text-foreground leading-relaxed whitespace-pre-wrap">
+                      {edited[key] || <span className="italic text-muted-foreground">— vazio —</span>}
+                    </p>
+                  </div>
+                ))}
 
-            {/* Mirror — read-only, not exported */}
-            {result.mirror && (
-              <div className="rounded-md border border-brand-amber/30 bg-brand-amber/5 p-3 space-y-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-label font-semibold text-brand-amber uppercase tracking-wide">
-                    ANTES DE AGIR
-                  </span>
-                  <span className="text-label text-muted-foreground">(uso interno)</span>
-                </div>
-                <p className="text-small text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                  {result.mirror}
-                </p>
+                {result.mirror && (
+                  <div className="px-4 py-4 space-y-1.5 bg-brand-amber/5">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-label font-semibold text-brand-amber uppercase tracking-wide">
+                        ANTES DE AGIR
+                      </p>
+                      <span className="text-label text-muted-foreground">(uso interno)</span>
+                    </div>
+                    <p className="text-small text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                      {result.mirror}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* MODO EDIÇÃO — textareas individuais */}
+            {editMode && (
+              <div className="space-y-4">
+                {(['m1', 'm2', 'm3', 'm4'] as BlockKey[]).map((key) => (
+                  <div key={key} className="space-y-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-label font-semibold text-muted-foreground uppercase tracking-wide">
+                        {BLOCK_LABELS[key]}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`Ajuda: ${BLOCK_LABELS[key]}`}
+                        onClick={() => toggleHelp(key)}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {openHelp === key
+                          ? <X className="size-3.5" />
+                          : <CircleHelp className="size-3.5" />
+                        }
+                      </button>
+                    </div>
+                    {openHelp === key && (
+                      <p className="text-label text-muted-foreground leading-relaxed">
+                        {BLOCK_HELP[key]}
+                      </p>
+                    )}
+                    <Textarea
+                      value={edited[key]}
+                      onChange={(e) => handleEdit(key, e.target.value)}
+                      rows={4}
+                      className="text-body bg-card border-border resize-none"
+                      placeholder={BLOCK_LABELS[key]}
+                    />
+                  </div>
+                ))}
+
+                {result.mirror && (
+                  <div className="rounded-md border border-brand-amber/30 bg-brand-amber/5 p-3 space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-label font-semibold text-brand-amber uppercase tracking-wide">
+                        ANTES DE AGIR
+                      </span>
+                      <span className="text-label text-muted-foreground">(uso interno)</span>
+                    </div>
+                    <p className="text-small text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                      {result.mirror}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </>
         )}
       </main>
 
-      {/* Footer */}
-      {(phase === 'editing' || phase === 'saving' || phase === 'saved') && (
+      {/* Footer — bottom-16 para ficar acima do BottomNav (h-16) */}
+      {hasContent && (
         <div
-          className="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3 border-t border-border z-20"
+          className="fixed bottom-16 left-0 right-0 px-4 pb-3 pt-3 border-t border-border z-20"
           style={{ backgroundColor: '#070C12' }}
         >
           <div className="max-w-md mx-auto flex gap-3">
@@ -362,7 +400,7 @@ function ClarityScreen() {
             </Button>
           </div>
           {!Capacitor.isNativePlatform() && (
-            <p className="text-label text-center text-muted-foreground mt-2">
+            <p className="text-label text-center text-muted-foreground mt-1">
               Compartilhar copia o texto para a área de transferência. Mirror não é incluído.
             </p>
           )}
@@ -372,7 +410,7 @@ function ClarityScreen() {
   );
 }
 
-// ─── Error state helper ───────────────────────────────────────────────────
+// ─── Error state helper ───────────────────────────────────────────────────────
 
 function ErrorState({
   title,
