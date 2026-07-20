@@ -6,6 +6,10 @@
 import { createFileRoute, useSearch, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState, useCallback } from 'react';
 import { Brain, Share2, CheckCircle, AlertCircle, RefreshCw, CircleHelp, X, ChevronRight, Pencil } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { BackButton } from '@/components/app/BackButton';
@@ -78,6 +82,7 @@ function ClarityScreen() {
   // Edição (true) é ativada pelo usuário para ajustar os blocos.
   const [editMode, setEditMode] = useState(false);
   const [restoredFromSaved, setRestoredFromSaved] = useState(false);
+  const [showRegenConfirm, setShowRegenConfirm] = useState(false);
 
   const compose = useCallback(async (proj: ProjectType, pay: CompositorPayload) => {
     setPhase('loading');
@@ -320,7 +325,15 @@ function ClarityScreen() {
                     {project && payload && (
                       <button
                         type="button"
-                        onClick={() => void compose(project, payload)}
+                        onClick={() => {
+                          // Se o usuário editou algo, pede confirmação antes de apagar
+                          const hasEdits = result && (
+                            edited.m1 !== result.m1 || edited.m2 !== result.m2 ||
+                            edited.m3 !== result.m3 || edited.m4 !== result.m4
+                          );
+                          if (hasEdits) { setShowRegenConfirm(true); return; }
+                          void compose(project, payload);
+                        }}
                         className="text-label text-[color:var(--color-brand-blue)] hover:underline flex items-center gap-1"
                       >
                         <RefreshCw className="size-3" /> Regenerar
@@ -409,6 +422,30 @@ function ClarityScreen() {
           </>
         )}
       </main>
+
+      {/* Confirmação antes de regenerar quando há edições */}
+      <AlertDialog open={showRegenConfirm} onOpenChange={setShowRegenConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Regenerar diagnóstico?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você fez edições na sessão atual. Se regenerar, as edições serão perdidas
+              e um novo diagnóstico será gerado pela IA.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowRegenConfirm(false);
+                if (project && payload) void compose(project, payload);
+              }}
+            >
+              Continuar e regenerar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Footer — bottom-16 para ficar acima do BottomNav (h-16) */}
       {hasContent && (
