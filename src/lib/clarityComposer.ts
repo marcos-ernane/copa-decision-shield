@@ -160,9 +160,20 @@ function extractBlock(text: string, startMarkers: string[], endMarkers: string[]
   return text.slice(start, end).trim();
 }
 
+// Remove markdown formatting artifacts left by the AI (##, ---, **, *).
+// Keeps readable text intact; collapses excess blank lines.
+function cleanBlock(text: string): string {
+  return text
+    .replace(/^#{1,6}\s*$/gm, '')   // linhas que são só ## / ### etc.
+    .replace(/^-{2,}\s*$/gm, '')    // linhas que são só --- / ----
+    .replace(/^\*+\s*$/gm, '')      // linhas que são só ** / ***
+    .replace(/\n{3,}/g, '\n\n')     // mais de 2 quebras → 2
+    .trim();
+}
+
 /**
  * Parses the raw AI response into structured ClarityResult.
- * Gracefully handles minor formatting variations.
+ * Gracefully handles minor formatting variations and strips markdown artifacts.
  */
 export function parseResult(raw: string): ClarityResult {
   const allEndMarkers = [
@@ -172,12 +183,12 @@ export function parseResult(raw: string): ClarityResult {
 
   // Each block ends at the next marker onwards — slice removes earlier markers
   // so we never accidentally match a preceding section's label in body text.
-  const m1 = extractBlock(raw, MOVEMENT_PATTERNS[0].markers, allEndMarkers.slice(1));
-  const m2 = extractBlock(raw, MOVEMENT_PATTERNS[1].markers, allEndMarkers.slice(2));
-  const m3 = extractBlock(raw, MOVEMENT_PATTERNS[2].markers, allEndMarkers.slice(3));
-  const m4 = extractBlock(raw, MOVEMENT_PATTERNS[3].markers, allEndMarkers.slice(4));
+  const m1 = cleanBlock(extractBlock(raw, MOVEMENT_PATTERNS[0].markers, allEndMarkers.slice(1)));
+  const m2 = cleanBlock(extractBlock(raw, MOVEMENT_PATTERNS[1].markers, allEndMarkers.slice(2)));
+  const m3 = cleanBlock(extractBlock(raw, MOVEMENT_PATTERNS[2].markers, allEndMarkers.slice(3)));
+  const m4 = cleanBlock(extractBlock(raw, MOVEMENT_PATTERNS[3].markers, allEndMarkers.slice(4)));
 
-  const mirrorRaw = extractBlock(raw, MIRROR_MARKERS, []);
+  const mirrorRaw = cleanBlock(extractBlock(raw, MIRROR_MARKERS, []));
   const mirror = mirrorRaw.length > 0 ? mirrorRaw : null;
 
   return { m1, m2, m3, m4, mirror, raw };
