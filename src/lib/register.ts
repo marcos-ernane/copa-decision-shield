@@ -693,6 +693,20 @@ export async function savePassive(
   } catch { /* noop — registro passivo nunca quebra UI */ }
 }
 
+// ---------- Clareza Operacional — Módulo 9 (PRD-MOD-09 v2.0) ----------
+
+export async function saveClaritySession(
+  projectId: string,
+  blocks: { m1: string; m2: string; m3: string; m4: string },
+): Promise<void> {
+  await insertEntry({
+    projectId,
+    entry_type: 'passive',
+    content: { kind: 'clarity_session', ...blocks },
+    is_clean_fact: false,
+  });
+}
+
 // ---------- Protocol 5 Minutos (Sprint 16) ----------
 
 export interface Protocol5Content {

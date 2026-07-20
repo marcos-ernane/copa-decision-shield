@@ -19,6 +19,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeverFilterRouteImport } from './routes/lever-filter'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as DiaryRouteImport } from './routes/diary'
+import { Route as ClarityRouteImport } from './routes/clarity'
 import { Route as CreativeRouteImport } from './routes/creative'
 import { Route as ConcludedRouteImport } from './routes/concluded'
 import { Route as CompassRouteImport } from './routes/compass'
@@ -108,6 +109,11 @@ const InboxRoute = InboxRouteImport.update({
 const DiaryRoute = DiaryRouteImport.update({
   id: '/diary',
   path: '/diary',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClarityRoute = ClarityRouteImport.update({
+  id: '/clarity',
+  path: '/clarity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreativeRoute = CreativeRouteImport.update({
@@ -314,6 +320,7 @@ const ProjectIdReviewEntryIdRoute = ProjectIdReviewEntryIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/clarity': typeof ClarityRoute
   '/compass': typeof CompassRouteWithChildren
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
@@ -366,6 +373,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/clarity': typeof ClarityRoute
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
@@ -416,6 +424,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/clarity': typeof ClarityRoute
   '/compass': typeof CompassRouteWithChildren
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
@@ -470,6 +479,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/clarity'
     | '/compass'
     | '/concluded'
     | '/creative'
@@ -522,6 +532,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/clarity'
     | '/concluded'
     | '/creative'
     | '/diary'
@@ -571,6 +582,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/clarity'
     | '/compass'
     | '/concluded'
     | '/creative'
@@ -624,6 +636,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ClarityRoute: typeof ClarityRoute
   CompassRoute: typeof CompassRouteWithChildren
   ConcludedRoute: typeof ConcludedRoute
   CreativeRoute: typeof CreativeRoute
@@ -717,6 +730,13 @@ declare module '@tanstack/react-router' {
       path: '/diary'
       fullPath: '/diary'
       preLoaderRoute: typeof DiaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clarity': {
+      id: '/clarity'
+      path: '/clarity'
+      fullPath: '/clarity'
+      preLoaderRoute: typeof ClarityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/creative': {
@@ -1115,6 +1135,7 @@ const ProjectIdRouteWithChildren = ProjectIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ClarityRoute: ClarityRoute,
   CompassRoute: CompassRouteWithChildren,
   ConcludedRoute: ConcludedRoute,
   CreativeRoute: CreativeRoute,
