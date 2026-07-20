@@ -326,11 +326,13 @@ function ClarityScreen() {
                       <button
                         type="button"
                         onClick={() => {
-                          // Se o usuário editou algo, pede confirmação antes de apagar
-                          const hasEdits = result && (
+                          // Mostra confirmação se: (a) veio de sessão salva — há dados que
+                          // valem preservar mesmo sem nova edição — ou (b) o usuário editou
+                          // algo em cima de uma resposta fresca da IA.
+                          const hasEdits = restoredFromSaved || (result && (
                             edited.m1 !== result.m1 || edited.m2 !== result.m2 ||
                             edited.m3 !== result.m3 || edited.m4 !== result.m4
-                          );
+                          ));
                           if (hasEdits) { setShowRegenConfirm(true); return; }
                           void compose(project, payload);
                         }}
