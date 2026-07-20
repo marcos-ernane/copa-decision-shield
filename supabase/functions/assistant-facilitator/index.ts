@@ -357,7 +357,7 @@ async function callClaude(trigger: string, payload: Record<string, unknown>): Pr
   const isClarity = trigger === 'CLARITY_COMPOSER';
 
   const controller = new AbortController();
-  const timeoutMs  = isReport || isClarity ? 7500 : isHelp ? 10000 : 4000;
+  const timeoutMs  = isClarity ? 25000 : isReport ? 7500 : isHelp ? 10000 : 4000;
   const timeoutId  = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
