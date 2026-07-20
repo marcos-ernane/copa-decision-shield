@@ -120,6 +120,10 @@ REGRAS ABSOLUTAS:
 - Nunca use 'seu interlocutor', 'a outra pessoa', 'quem vai ouvir'.
 - Use 'você' — direto ao operador.
 - Cada movimento em 2 a 4 frases diretas.
+- SIGLAS E ABREVIAÇÕES: nunca use siglas ou abreviações isoladas sem explicar o que significam.
+  Se os dados contiverem siglas (ex: "D4", "D5", "ROI", "IMV2334"), escreva o nome completo
+  ou adicione a explicação entre parênteses na primeira ocorrência — depois use só o nome completo.
+  Exemplo correto: "a ação D4 (consolidar conteúdo do módulo 4)" — nunca apenas "D4".
 
 FORMATO DOS 4 MOVIMENTOS (obrigatório, exato):
 M1 — ÂNCORA
