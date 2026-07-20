@@ -5,14 +5,15 @@
 
 import { createFileRoute, useSearch, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState, useCallback } from 'react';
-import { Brain, Share2, CheckCircle, AlertCircle, RefreshCw, CircleHelp, X } from 'lucide-react';
+import { Brain, Share2, CheckCircle, AlertCircle, RefreshCw, CircleHelp, X, ChevronRight } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { getProject, listEntries, listPrinciples } from '@/lib/projects';
+import { getProject, listEntries, listPrinciples, listProjects } from '@/lib/projects';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
+import type { Project as ProjectType } from '@/types/database';
 import {
   canCompose,
   buildPayload,
@@ -21,7 +22,6 @@ import {
 } from '@/lib/clarityComposer';
 import type { ClarityResult, CompositorPayload } from '@/lib/clarityComposer';
 import { saveClaritySession } from '@/lib/register';
-import type { Project } from '@/types/database';
 
 export const Route = createFileRoute('/clarity')({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -51,6 +51,7 @@ type BlockKey = 'm1' | 'm2' | 'm3' | 'm4';
 // ─── Phase state ──────────────────────────────────────────────────────────
 
 type Phase =
+  | 'picking'   // no projectId — show project picker
   | 'loading'
   | 'no_cycle'
   | 'ai_error'
@@ -65,8 +66,9 @@ function ClarityScreen() {
   const { projectId } = useSearch({ strict: false }) as { projectId?: string };
   const navigate = useNavigate();
 
-  const [phase, setPhase] = useState<Phase>('loading');
-  const [project, setProject] = useState<Project | null>(null);
+  const [phase, setPhase] = useState<Phase>(projectId ? 'loading' : 'picking');
+  const [project, setProject] = useState<ProjectType | null>(null);
+  const [pickerProjects, setPickerProjects] = useState<ProjectType[]>([]);
   const [result, setResult] = useState<ClarityResult | null>(null);
   const [payload, setPayload] = useState<CompositorPayload | null>(null);
   const [edited, setEdited] = useState<Record<BlockKey, string>>({
@@ -76,7 +78,7 @@ function ClarityScreen() {
   const [copied, setCopied] = useState(false);
 
   const compose = useCallback(async (
-    proj: Project,
+    proj: ProjectType,
     pay: CompositorPayload,
   ) => {
     setPhase('loading');
@@ -93,7 +95,12 @@ function ClarityScreen() {
 
   useEffect(() => {
     if (!projectId) {
-      setPhase('no_project');
+      // Load active projects for the picker
+      void listProjects().then((all) => {
+        const active = all.filter((p) => !['archived', 'concluded'].includes(p.state));
+        setPickerProjects(active);
+        setPhase('picking');
+      });
       return;
     }
     async function load() {
@@ -172,6 +179,48 @@ function ClarityScreen() {
       </header>
 
       <main className="px-4 py-4 max-w-md mx-auto space-y-4">
+        {/* Project picker — quando acessado pela Bússola sem projectId */}
+        {phase === 'picking' && (
+          <div className="space-y-3 pt-2">
+            <p className="text-small text-muted-foreground">
+              Selecione um projeto ativo para gerar clareza operacional.
+            </p>
+            {pickerProjects.length === 0 ? (
+              <div className="rounded-md border border-border bg-card p-4 space-y-2 text-center">
+                <p className="text-small text-muted-foreground">Nenhum projeto ativo encontrado.</p>
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: '/' })}
+                  className="text-small text-[color:var(--color-brand-blue)] hover:underline"
+                >
+                  Ir para Início →
+                </button>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {pickerProjects.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      onClick={() => navigate({ to: '/clarity', search: { projectId: p.id } as never })}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-op-gray/30 bg-op-navy hover:opacity-80 transition-opacity text-left"
+                    >
+                      <Brain className="size-5 text-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-small text-foreground font-medium truncate">{p.name}</p>
+                        {p.north && (
+                          <p className="text-label text-muted-foreground line-clamp-1">{p.north}</p>
+                        )}
+                      </div>
+                      <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
         {/* Loading */}
         {phase === 'loading' && (
           <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
@@ -180,7 +229,7 @@ function ClarityScreen() {
           </div>
         )}
 
-        {/* No project */}
+        {/* No project — fallback if id provided but not found */}
         {phase === 'no_project' && (
           <ErrorState
             title="Projeto não encontrado"

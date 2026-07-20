@@ -14,6 +14,7 @@ import {
   Zap,
   LayoutGrid,
   Shuffle,
+  Brain,
 } from 'lucide-react';
 import { CompassSection } from './CompassSection';
 import { PaywallGate } from '@/components/PaywallGate';
@@ -33,6 +34,7 @@ const SECTIONS = [
   { to: '/creative', icon: Zap, title: 'Criatividade Funcional', description: 'Divergir com método, convergir com precisão', paid: true as const },
   { to: '/compass/maintenance', icon: RotateCw, title: 'Rotina de Manutenção', description: 'Semanal · Quinzenal · Mensal' },
   { to: '/compass/simulations', icon: Play, title: 'Simulações do Operador', description: 'Treino com cenários reais' },
+  { to: '/clarity', icon: Brain, title: 'Clareza Operacional', description: 'Organize seu diagnóstico em 4 movimentos — requer ciclo COPA aberto' },
 ];
 
 export function CompassHome() {

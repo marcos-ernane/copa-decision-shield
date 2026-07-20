@@ -2,7 +2,7 @@
 
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronRight, MoreVertical, Info, Gavel, BarChart2 } from 'lucide-react';
+import { ChevronRight, MoreVertical, Info, Gavel, BarChart2, Brain } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ import { formatCurrency, corRelacao } from '@/lib/costBenefit';
 import { ActionPlanSheet } from '@/components/project/ActionPlanSheet';
 import { CostBenefitSheet } from '@/components/register/CostBenefitSheet';
 import { detectOpenCycles } from '@/lib/openCycle';
+import { canCompose } from '@/lib/clarityComposer';
 import { OpenCycleCard } from '@/components/project/OpenCycleCard';
 import { computeProjectState, deriveProjectStatus, daysSince } from '@/lib/projectState';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
@@ -361,6 +362,8 @@ function ProjectDashboard() {
     apas: entries.filter((e) => e.entry_type === 'structured_A' && e.copa_phase === 'A').length,
     principles: principles.length,
   };
+
+  const composable = canCompose(entries);
 
   const provingEntry = entries.find(
     (e) =>
@@ -1125,6 +1128,32 @@ function ProjectDashboard() {
           discarded_patterns={0}
           evolved_bottleneck={project.current_bottleneck}
         />
+
+        {/* Clareza Operacional — Módulo 9 */}
+        <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Brain className="size-4 text-foreground shrink-0" />
+            <h2 className="text-label font-medium text-foreground">Clareza Operacional</h2>
+          </div>
+          {composable ? (
+            <>
+              <p className="text-small text-muted-foreground">
+                Organize seu diagnóstico em 4 movimentos estruturados.
+              </p>
+              <Button
+                size="sm"
+                className="w-full gap-2"
+                onClick={() => navigate({ to: '/clarity', search: { projectId: id } as never })}
+              >
+                <Brain className="size-4" /> Gerar Clareza
+              </Button>
+            </>
+          ) : (
+            <p className="text-small text-muted-foreground">
+              Complete uma Captura, uma Organização e inicie uma Prova (IMV em andamento) para gerar clareza operacional.
+            </p>
+          )}
+        </section>
 
         {/* Alerta do motor */}
         {motorAlert && (
