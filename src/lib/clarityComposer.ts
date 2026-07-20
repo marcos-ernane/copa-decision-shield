@@ -170,10 +170,12 @@ export function parseResult(raw: string): ClarityResult {
     MIRROR_MARKERS,
   ];
 
+  // Each block ends at the next marker onwards — slice removes earlier markers
+  // so we never accidentally match a preceding section's label in body text.
   const m1 = extractBlock(raw, MOVEMENT_PATTERNS[0].markers, allEndMarkers.slice(1));
-  const m2 = extractBlock(raw, MOVEMENT_PATTERNS[1].markers, allEndMarkers.filter((_, i) => i !== 1));
-  const m3 = extractBlock(raw, MOVEMENT_PATTERNS[2].markers, allEndMarkers.filter((_, i) => i !== 2));
-  const m4 = extractBlock(raw, MOVEMENT_PATTERNS[3].markers, [MIRROR_MARKERS]);
+  const m2 = extractBlock(raw, MOVEMENT_PATTERNS[1].markers, allEndMarkers.slice(2));
+  const m3 = extractBlock(raw, MOVEMENT_PATTERNS[2].markers, allEndMarkers.slice(3));
+  const m4 = extractBlock(raw, MOVEMENT_PATTERNS[3].markers, allEndMarkers.slice(4));
 
   const mirrorRaw = extractBlock(raw, MIRROR_MARKERS, []);
   const mirror = mirrorRaw.length > 0 ? mirrorRaw : null;
