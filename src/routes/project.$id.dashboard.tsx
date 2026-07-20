@@ -353,12 +353,18 @@ function ProjectDashboard() {
     return velocityColumns.reduce((sum, col) => sum + (col.days ?? 0), 0);
   })();
 
+  // IDs de structured_P que já têm APA vinculada (ciclo concluído = IMV "testada").
+  const closedPIds = new Set(
+    entries
+      .filter((e) => e.entry_type === 'structured_A' && e.linked_to)
+      .map((e) => e.linked_to!),
+  );
+
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
     structured: entries.filter((e) => e.entry_type !== 'pulse' && e.entry_type !== 'decision_record').length,
-    // Alinhado com buildOperationalView: conta apenas entradas classificadas na
-    // fase P (copa_phase='P'), igual à contagem exibida no Diário → Visão Operacional.
-    imvs: entries.filter((e) => e.entry_type === 'structured_P' && e.copa_phase === 'P').length,
+    // "IMVs testadas" = P com APA vinculada (ciclo encerrado), não todas as P abertas.
+    imvs: entries.filter((e) => e.entry_type === 'structured_P' && closedPIds.has(e.id)).length,
     apas: entries.filter((e) => e.entry_type === 'structured_A' && e.copa_phase === 'A').length,
     principles: principles.length,
   };
