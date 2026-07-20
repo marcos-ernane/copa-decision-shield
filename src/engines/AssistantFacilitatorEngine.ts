@@ -17,7 +17,8 @@ export type FacilitatorTrigger =
   | 'PRESSURE_ABUSE_PATTERN'
   | 'CREATIVE_DIVERGE_SUPPORT'
   | 'TRANSFER_CONSISTENCY_REPORT'
-  | 'HELP_CENTER_QUERY';
+  | 'HELP_CENTER_QUERY'
+  | 'CLARITY_COMPOSER';
 
 const PAID_TRIGGERS: FacilitatorTrigger[] = [
   'SUGGESTION_BUTTON_COPA_PROVE',
@@ -96,7 +97,8 @@ export async function askFacilitator(
       if (!paid) return null;
     }
 
-    const isHelp = trigger === 'HELP_CENTER_QUERY';
+    const isHelp    = trigger === 'HELP_CENTER_QUERY';
+    const isClarity = trigger === 'CLARITY_COMPOSER';
     const key = trigger + ':' + JSON.stringify(context);
 
     if (!isHelp) {
@@ -104,7 +106,7 @@ export async function askFacilitator(
       if (hit && hit.expiresAt > Date.now()) return hit.value;
     }
 
-    const timeoutMs = isHelp ? 22000 : 3000;
+    const timeoutMs = isHelp ? 22000 : isClarity ? 10000 : 3000;
     const suggestion = await invokeFunction(trigger, context, timeoutMs);
 
     if (!isHelp) {

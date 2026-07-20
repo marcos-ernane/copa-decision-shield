@@ -102,6 +102,46 @@ Máximo 2 frases.`,
 Ofereça UMA pergunta de especificidade OU UMA reformulação mais concreta do que já foi descrito.
 Nunca sugira o que fazer — apenas ajude a clarificar o que já existe.
 Máximo 2 frases.`,
+
+  // ── Clareza Operacional (Módulo 9) ───────────────────────
+  // PRD-MOD-09 v2.0 — centrado no operador, sem pressupor destinatário externo.
+
+  CLARITY_COMPOSER: `Você é um parceiro de clareza operacional.
+
+Receberá dados de um ciclo COPA de um projeto de negócio.
+Sua tarefa é organizar esse raciocínio em 4 movimentos estruturados
+que ajudem o operador a VER COM CLAREZA antes de agir — seja para
+uso pessoal ou para comunicar a alguém. Você não sabe qual uso
+o operador vai fazer. Escreva para ele, não para um destinatário.
+
+REGRAS ABSOLUTAS:
+- Use APENAS as informações fornecidas. Nunca invente contexto.
+- Linguagem de clareza interna, não de apresentação para outros.
+- Nunca use 'seu interlocutor', 'a outra pessoa', 'quem vai ouvir'.
+- Use 'você' — direto ao operador.
+- Cada movimento em 2 a 4 frases diretas.
+
+FORMATO DOS 4 MOVIMENTOS (obrigatório, exato):
+M1 — ÂNCORA
+[texto — o fato concreto que ancora este diagnóstico]
+
+M2 — PERCURSO
+[texto — como você chegou a esta leitura]
+
+M3 — O QUE GOVERNA
+[texto — o gargalo real, separado do que apenas incomoda]
+
+M4 — PRÓXIMO PASSO
+[texto — ação específica, pequena, acompanhável]
+
+ELEMENTO ESPELHO (opcional — incluir APENAS se identificar padrão, tensão ou ponto cego evidente nos dados):
+
+ANTES DE AGIR
+[uma única observação baseada estritamente nos dados — máx 3 frases.
+Pode ser: padrão histórico que se repete, tensão entre gargalo e IMV,
+ou risco nomeado que não aparece nos movimentos acima.
+Nunca inventar. Nunca inferir estado emocional. Nunca validar.
+Se não houver nada evidente nos dados, omitir completamente.]`,
 };
 
 // ============================================================
@@ -293,6 +333,8 @@ const VALID_TRIGGERS = new Set([
   // Gatilhos especiais
   'HELP_CENTER_QUERY',
   'TRANSFER_CONSISTENCY_REPORT',
+  // Módulo 9 — Clareza Operacional (PRD-MOD-09 v2.0)
+  'CLARITY_COMPOSER',
 ]);
 
 // Cache de resposta 15 min — desabilitado para HELP_CENTER_QUERY (cada pergunta é única).
@@ -310,21 +352,25 @@ async function callClaude(trigger: string, payload: Record<string, unknown>): Pr
     return null;
   }
 
-  const isReport = trigger === 'TRANSFER_CONSISTENCY_REPORT';
-  const isHelp   = trigger === 'HELP_CENTER_QUERY';
+  const isReport  = trigger === 'TRANSFER_CONSISTENCY_REPORT';
+  const isHelp    = trigger === 'HELP_CENTER_QUERY';
+  const isClarity = trigger === 'CLARITY_COMPOSER';
 
   const controller = new AbortController();
-  const timeoutMs  = isReport ? 7500 : isHelp ? 10000 : 4000;
+  const timeoutMs  = isReport || isClarity ? 7500 : isHelp ? 10000 : 4000;
   const timeoutId  = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     // Ajuda: injeta conhecimento dinâmico do banco (ou fallback estático).
     const knowledge = isHelp ? await getKnowledge() : '';
 
+    // CLARITY_COMPOSER tem seu próprio system prompt completo — não usa SYSTEM_PROMPT base.
     const system = isReport
       ? `${SYSTEM_PROMPT}\n\n${TRANSFER_REPORT_PROMPT}`
       : isHelp
       ? `${HELP_CENTER_BASE}\n\nCONHECIMENTO DO APP:\n${knowledge}\n\n${HELP_INSTRUCTION}`
+      : isClarity
+      ? TRIGGER_PROMPTS['CLARITY_COMPOSER']
       : TRIGGER_PROMPTS[trigger]
       ? `${SYSTEM_PROMPT}\n\n${TRIGGER_PROMPTS[trigger]}`
       : SYSTEM_PROMPT;
@@ -338,7 +384,7 @@ async function callClaude(trigger: string, payload: Record<string, unknown>): Pr
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: isReport ? 480 : isHelp ? 500 : 180,
+        max_tokens: isClarity ? 1000 : isReport ? 480 : isHelp ? 500 : 180,
         system,
         messages: [
           {

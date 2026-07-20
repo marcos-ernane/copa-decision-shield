@@ -355,8 +355,10 @@ function ProjectDashboard() {
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
     structured: entries.filter((e) => e.entry_type !== 'pulse' && e.entry_type !== 'decision_record').length,
-    imvs: entries.filter((e) => e.entry_type === 'structured_P').length,
-    apas: entries.filter((e) => e.entry_type === 'structured_A').length,
+    // Alinhado com buildOperationalView: conta apenas entradas classificadas na
+    // fase P (copa_phase='P'), igual à contagem exibida no Diário → Visão Operacional.
+    imvs: entries.filter((e) => e.entry_type === 'structured_P' && e.copa_phase === 'P').length,
+    apas: entries.filter((e) => e.entry_type === 'structured_A' && e.copa_phase === 'A').length,
     principles: principles.length,
   };
 
