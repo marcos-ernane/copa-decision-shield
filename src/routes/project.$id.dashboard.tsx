@@ -353,18 +353,22 @@ function ProjectDashboard() {
     return velocityColumns.reduce((sum, col) => sum + (col.days ?? 0), 0);
   })();
 
-  // IDs de structured_P que já têm APA vinculada (ciclo concluído = IMV "testada").
-  const closedPIds = new Set(
+  // "IMVs testadas" = IMVs distintas por texto de ação (mesma deduplicação do Diário).
+  // O projeto pode ter múltiplas entradas structured_P com o mesmo texto de ação (re-submissões),
+  // que o Diário colapsa em "1 registro". Aqui fazemos o mesmo para consistência.
+  const imvCount = new Set(
     entries
-      .filter((e) => e.entry_type === 'structured_A' && e.linked_to)
-      .map((e) => e.linked_to!),
-  );
+      .filter((e) => e.entry_type === 'structured_P')
+      .map((e) => {
+        const action = ((e.content as { action?: string }).action ?? '').trim();
+        return action || e.id; // sem texto de ação → usa id para não fundir entradas vazias
+      }),
+  ).size;
 
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
     structured: entries.filter((e) => e.entry_type !== 'pulse' && e.entry_type !== 'decision_record').length,
-    // "IMVs testadas" = P com APA vinculada (ciclo encerrado), não todas as P abertas.
-    imvs: entries.filter((e) => e.entry_type === 'structured_P' && closedPIds.has(e.id)).length,
+    imvs: imvCount,
     apas: entries.filter((e) => e.entry_type === 'structured_A' && e.copa_phase === 'A').length,
     principles: principles.length,
   };
