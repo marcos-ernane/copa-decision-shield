@@ -181,15 +181,42 @@ export function OperatorPanel() {
 
   const scenarioMaturity = useMemo(() => {
     const types: ScenarioType[] = ['fluxo', 'processo', 'oferta', 'relacionamento', 'pressao'];
+
+    // Maturidade = profundidade média de progressão no COPA, por tipo de cenário.
+    // Cada projeto é pontuado pela fase mais avançada que alcançou (não pelo botão
+    // manual "Concluir"), e projetos vazios (sem C/O/P/A) são excluídos para não
+    // diluir a média com projetos-fantasma que nunca foram trabalhados.
+    const PHASE_DEPTH: Record<string, number> = {
+      structured_C: 0.25, // Captura
+      structured_O: 0.5,  // Organização
+      structured_P: 0.75, // Prova (IMV)
+      structured_A: 1,    // Aferição
+    };
+
+    // Profundidade (0-1) de um projeto; null = vazio (nenhuma fase estruturada).
+    const projectDepth = (projectId: string, concluded: boolean): number | null => {
+      if (concluded) return 1;
+      let depth = 0;
+      for (const e of entries) {
+        if (e.project_id !== projectId) continue;
+        const d = PHASE_DEPTH[e.entry_type];
+        if (d && d > depth) depth = d;
+      }
+      return depth > 0 ? depth : null;
+    };
+
     return types
       .map((tipo) => {
-        const started = projects.filter((p) => p.scenario_type === tipo && p.state !== 'archived');
-        const closed = started.filter((p) => p.state === 'concluded');
-        const rate = started.length > 0 ? closed.length / started.length : null;
-        return { tipo, started: started.length, closed: closed.length, rate };
+        const ofType = projects.filter((p) => p.scenario_type === tipo && p.state !== 'archived');
+        const depths = ofType
+          .map((p) => projectDepth(p.id, p.state === 'concluded'))
+          .filter((d): d is number => d !== null);
+        const worked = depths.length;
+        const rate = worked > 0 ? depths.reduce((s, d) => s + d, 0) / worked : null;
+        return { tipo, worked, total: ofType.length, rate };
       })
-      .filter((r) => r.started > 0);
-  }, [projects]);
+      .filter((r) => r.worked > 0);
+  }, [projects, entries]);
 
   const layerDifficulty = useMemo(() => {
     const layers: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia', 'escala'];
@@ -694,7 +721,7 @@ export function OperatorPanel() {
               </button>
             </div>
             <ul className="space-y-3">
-              {scenarioMaturity.map(({ tipo, started, closed, rate }) => {
+              {scenarioMaturity.map(({ tipo, worked, total, rate }) => {
                 const meta = maturityMeta(rate);
                 const pct = rate !== null ? Math.round(rate * 100) : 0;
                 return (
@@ -710,7 +737,10 @@ export function OperatorPanel() {
                       />
                     </div>
                     <div className="flex justify-between text-label text-op-gray">
-                      <span>{closed} concluído{closed !== 1 ? 's' : ''} de {started} projeto{started !== 1 ? 's' : ''}</span>
+                      <span>
+                        {worked} projeto{worked !== 1 ? 's' : ''} trabalhado{worked !== 1 ? 's' : ''}
+                        {total > worked && ` (de ${total})`} · profundidade média
+                      </span>
                       <span className={meta.color}>{pct}%</span>
                     </div>
                   </li>
@@ -1707,36 +1737,39 @@ export function OperatorPanel() {
             <div className="space-y-2">
               <p className="text-label text-op-cyan uppercase">O que significa</p>
               <p className="text-body text-op-white">
-                Mostra a taxa de fechamento dos seus projetos agrupados pelo tipo de cenário.
-                Um tipo com alta taxa indica domínio operacional naquele contexto.
-                Um tipo com baixa taxa revela onde você ainda está desenvolvendo o método.
+                Mostra quão fundo você costuma operar o método COPA em cada tipo de cenário.
+                Cada projeto é pontuado pela fase mais avançada que alcançou — Captura (25%),
+                Organização (50%), Prova (75%), Aferição ou Concluído (100%) — e a barra é a
+                média dessas profundidades. Um tipo com média alta indica domínio operacional
+                naquele contexto; média baixa revela onde você ainda para cedo no método.
               </p>
               <ul className="mt-2 space-y-1 text-small text-op-gray">
-                <li><span className="text-green-400 font-semibold">Mestre</span> — 75% ou mais dos projetos concluídos</li>
-                <li><span className="text-op-cyan font-semibold">Operando</span> — 50% a 74%</li>
-                <li><span className="text-amber-400 font-semibold">Aprendendo</span> — 25% a 49%</li>
-                <li><span className="text-op-gray font-semibold">Iniciando</span> — menos de 25%</li>
+                <li><span className="text-green-400 font-semibold">Mestre</span> — 75% ou mais (fecha ciclos com Aferição)</li>
+                <li><span className="text-op-cyan font-semibold">Operando</span> — 50% a 74% (chega à Prova)</li>
+                <li><span className="text-amber-400 font-semibold">Aprendendo</span> — 25% a 49% (organiza)</li>
+                <li><span className="text-op-gray font-semibold">Iniciando</span> — menos de 25% (só captura)</li>
               </ul>
             </div>
 
             <div className="space-y-3">
               <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
               <div className="space-y-2 text-small">
-                {scenarioMaturity.map(({ tipo, started, closed, rate }) => {
+                {scenarioMaturity.map(({ tipo, worked, rate }) => {
                   const pct = rate !== null ? Math.round(rate * 100) : 0;
                   const meta = maturityMeta(rate);
                   return (
                     <div key={tipo} className="flex justify-between border-b border-op-gray/20 pb-1 gap-2">
                       <span className="text-op-gray shrink-0">{SCENARIO_LABELS[tipo]}</span>
                       <span className="text-op-white text-right">
-                        {closed} concluído{closed !== 1 ? 's' : ''} ÷ {started} projeto{started !== 1 ? 's' : ''} ={' '}
+                        média de {worked} projeto{worked !== 1 ? 's' : ''} trabalhado{worked !== 1 ? 's' : ''} ={' '}
                         <strong className={meta.color}>{pct}%</strong>
                       </span>
                     </div>
                   );
                 })}
                 <p className="text-label text-op-gray pt-1">
-                  Projetos arquivados são excluídos do cálculo.
+                  Projetos arquivados e projetos vazios (sem nenhum registro C/O/P/A) são
+                  excluídos do cálculo.
                 </p>
               </div>
             </div>
