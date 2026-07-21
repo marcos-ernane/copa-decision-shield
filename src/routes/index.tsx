@@ -8,7 +8,8 @@ import { wasAuthenticated } from '@/lib/authFlags';
 import { getInboxCount } from '@/lib/universalCapture';
 import { supabase } from '@/lib/supabase';
 import { listProjects, listPrinciples, updateProject, listAllEntries, deleteProject } from '@/lib/projects';
-import { sortProjects } from '@/lib/projectState';
+import { sortProjects, deriveProjectStatus } from '@/lib/projectState';
+import { detectOpenCycles } from '@/lib/openCycle';
 import { ProjectCard } from '@/components/project/ProjectCard';
 import { PactContextBanner } from '@/components/pact/PactContextBanner';
 import { CommunityLink } from '@/components/project/CommunityLink';
@@ -26,6 +27,21 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { Project, Principle, Entry } from '@/types/database';
+
+// Status de fase COPA por projeto (Aferindo/Em Prova/Ciclo completo…), mesma
+// lógica do Dashboard. Função pura (sem hook) para poder ser chamada após o
+// early return do componente.
+function copaStatusById(
+  projects: Project[],
+  entries: Entry[],
+): Record<string, { icon: string; label: string; color: string }> {
+  const map: Record<string, { icon: string; label: string; color: string }> = {};
+  for (const p of projects) {
+    const pe = entries.filter((e) => e.project_id === p.id);
+    map[p.id] = deriveProjectStatus(p, pe, detectOpenCycles(pe).length > 0);
+  }
+  return map;
+}
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -163,6 +179,10 @@ function Home() {
   const trueActive = active.filter((p) => p.state !== 'paused');
   const pausedProjects = active.filter((p) => p.state === 'paused');
 
+  // Status de fase COPA por projeto (Aferindo/Em Prova/Ciclo completo…) — migrado
+  // do antigo "Visão geral de projetos" do Painel. Mesma lógica do Dashboard.
+  const copaStatusMap = copaStatusById(projects, entries);
+
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
       <header className="px-6 pt-8 pb-4 flex items-start justify-between">
@@ -236,6 +256,7 @@ function Home() {
                   <ProjectCard
                     key={p.id}
                     project={p}
+                    copaStatus={copaStatusMap[p.id]}
                     recallPrinciple={principles[p.id]}
                     onEdit={() => navigate({ to: '/project/$id/edit', params: { id: p.id } })}
                     onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
@@ -324,6 +345,7 @@ function Home() {
                   <ProjectCard
                     key={p.id}
                     project={p}
+                    copaStatus={copaStatusMap[p.id]}
                     recallPrinciple={principles[p.id]}
                     onEdit={() => navigate({ to: '/project/$id/edit', params: { id: p.id } })}
                     onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
@@ -367,7 +389,7 @@ function Home() {
             {showConcluded && (
               <div className="space-y-3">
                 {concluded.map((p) => (
-                  <ProjectCard key={p.id} project={p} />
+                  <ProjectCard key={p.id} project={p} copaStatus={copaStatusMap[p.id]} />
                 ))}
               </div>
             )}

@@ -4,6 +4,7 @@ import type { Project, Principle } from '@/types/database';
 import type { ExecutionPlan } from '@/types/app';
 import { ProjectStateIcon } from './ProjectStateIcon';
 import { ScenarioTypeChip } from './ScenarioTypeChip';
+import { LayerChip } from './LayerChip';
 import { ExecutionProgressBar } from './ExecutionProgressBar';
 import { STATE_DISPLAY, daysSince, determineEntryType } from '@/lib/projectState';
 import {
@@ -17,6 +18,9 @@ import {
 interface Props {
   project: Project;
   recallPrinciple?: Principle | null;
+  /** Status de fase COPA (deriveProjectStatus). Quando fornecido, substitui o
+   *  estado simples pelo rótulo de fase (Aferindo/Em Prova/Ciclo completo…). */
+  copaStatus?: { icon: string; label: string; color: string };
   /** Plano de execução da IMV ativa — quando fornecido exibe indicador (REQ-PLANEXEC-21, 25). */
   executionPlan?: ExecutionPlan | null;
   imvOverdue?: boolean;
@@ -29,7 +33,7 @@ interface Props {
   onDelete?: () => void;
 }
 
-export function ProjectCard({ project, recallPrinciple, executionPlan, imvOverdue = false, onEdit, onConclude, onArchive, onPause, onResume, onDelete }: Props) {
+export function ProjectCard({ project, recallPrinciple, copaStatus, executionPlan, imvOverdue = false, onEdit, onConclude, onArchive, onPause, onResume, onDelete }: Props) {
   const navigate = useNavigate();
   const entryType = determineEntryType(project);
   const days = daysSince(project.last_entry_at);
@@ -52,7 +56,11 @@ export function ProjectCard({ project, recallPrinciple, executionPlan, imvOverdu
     <>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0 flex-1">
-          <ProjectStateIcon state={project.state} className="mt-0.5" />
+          {copaStatus ? (
+            <span className={`text-lg leading-none mt-0.5 ${copaStatus.color}`} aria-hidden>{copaStatus.icon}</span>
+          ) : (
+            <ProjectStateIcon state={project.state} className="mt-0.5" />
+          )}
           <div className="min-w-0 flex-1">
             <h3 className="text-heading text-op-white truncate">{project.name}</h3>
             <p className="text-small text-op-gray line-clamp-1 mt-0.5">
@@ -62,8 +70,8 @@ export function ProjectCard({ project, recallPrinciple, executionPlan, imvOverdu
         </div>
       </div>
       <div className="flex items-center gap-2 mt-3 flex-wrap">
-        <span className="text-label text-op-gray">
-          {STATE_DISPLAY[project.state].label}
+        <span className={`text-label ${copaStatus ? copaStatus.color : 'text-op-gray'}`}>
+          {copaStatus ? copaStatus.label : STATE_DISPLAY[project.state].label}
         </span>
         {project.scenario_type && (
           <ScenarioTypeChip
@@ -73,6 +81,7 @@ export function ProjectCard({ project, recallPrinciple, executionPlan, imvOverdu
             }
           />
         )}
+        {project.current_layer && <LayerChip layer={project.current_layer} />}
         {showStale && (
           <span className="text-label text-op-gray">· {days}d sem registro</span>
         )}
