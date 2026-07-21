@@ -7,11 +7,10 @@ import { ArrowRight, Check, ChevronDown, Clock, Mic, Trash2 } from 'lucide-react
 import { toast } from 'sonner';
 import { processInboxEntry, discardInboxEntry } from '@/lib/universalCapture';
 import { listProjects } from '@/lib/projects';
+import { registrableProjects } from '@/lib/projectState';
 import { savePulse } from '@/lib/register';
 import type { InboxEntry } from '@/lib/universalCapture';
-import type { Project, ProjectState } from '@/types/database';
-
-const INACTIVE_STATES: ProjectState[] = ['concluded', 'archived', 'paused'];
+import type { Project } from '@/types/database';
 
 interface Props {
   entry: InboxEntry;
@@ -77,15 +76,8 @@ export function InboxCard({ entry, onProcessed }: Props) {
   async function handleVincularClick() {
     if (linkState === 'idle') {
       const all = await listProjects().catch(() => []);
-      // Todos os projetos ativos (mais recentes primeiro) — sem limite; a lista rola.
-      const active = all
-        .filter((p) => !INACTIVE_STATES.includes(p.state))
-        .sort((a, b) => {
-          const ta = a.last_entry_at ? new Date(a.last_entry_at).getTime() : 0;
-          const tb = b.last_entry_at ? new Date(b.last_entry_at).getTime() : 0;
-          return tb - ta;
-        });
-      setProjects(active);
+      // Mesma lista do "Para qual projeto?": registráveis (exclui concluído/arquivado).
+      setProjects(registrableProjects(all));
       setLinkState('picking');
     } else {
       setLinkState('idle');
@@ -175,14 +167,14 @@ export function InboxCard({ entry, onProcessed }: Props) {
             {projects.length === 0 ? (
               <p className="text-label text-op-gray/60">Nenhum projeto ativo.</p>
             ) : (
-              <div className="flex flex-wrap gap-2 max-h-44 overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                 {projects.map((p) => (
                   <button
                     key={p.id}
                     type="button"
                     disabled={savingId !== null}
                     onClick={() => void handleSaveAsPulse(p)}
-                    className="px-3 py-1 rounded-full text-small font-semibold border border-op-gray/30 text-op-gray hover:border-op-gray/60 hover:text-op-white transition-colors disabled:opacity-40"
+                    className="w-full text-left rounded-md border border-op-gray/30 bg-op-navy px-4 py-3 text-small text-op-white hover:bg-op-navy-elevated transition-colors disabled:opacity-40"
                   >
                     {savingId === p.id ? 'Salvando…' : p.name}
                   </button>

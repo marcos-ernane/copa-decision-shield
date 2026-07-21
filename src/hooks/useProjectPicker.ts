@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useSearch } from '@tanstack/react-router';
 import { listProjects } from '@/lib/projects';
+import { registrableProjects } from '@/lib/projectState';
 import type { Project } from '@/types/database';
 
 export function useProjectPicker() {
@@ -14,8 +15,10 @@ export function useProjectPicker() {
 
   useEffect(() => {
     let mounted = true;
-    listProjects().then((p) => {
+    listProjects().then((all) => {
       if (!mounted) return;
+      // Mesma lista dos demais seletores: registráveis (exclui concluído/arquivado).
+      const p = registrableProjects(all);
       setProjects(p);
       setLoaded(true);
       // Auto-seleciona se houver apenas 1 projeto e nada na URL.
