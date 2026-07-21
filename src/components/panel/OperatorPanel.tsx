@@ -37,6 +37,7 @@ import {
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 import type { Entry } from '@/types/database';
 import { computeLayerDomain } from '@/lib/layerDomain';
+import { computeBottleneckPersistence } from '@/lib/bottleneckPersistence';
 
 const PULSO_WEIGHT = 1;
 const ANALISE_WEIGHT = 3;
@@ -287,56 +288,7 @@ export function OperatorPanel() {
     };
   }, [entries]);
 
-  const bottleneckPersistence = useMemo(() => {
-    const oEntries = entries.filter((e) => e.entry_type === 'structured_O');
-    if (oEntries.length === 0) return null;
-
-    const resolvedDays: number[] = [];
-    let unresolved = 0;
-
-    for (const oEntry of oEntries) {
-      const nextA = entries
-        .filter(
-          (e) =>
-            e.entry_type === 'structured_A' &&
-            e.project_id === oEntry.project_id &&
-            new Date(e.created_at) > new Date(oEntry.created_at),
-        )
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
-
-      if (nextA) {
-        const days = Math.max(
-          0,
-          Math.round(
-            (new Date(nextA.created_at).getTime() - new Date(oEntry.created_at).getTime()) /
-              (1000 * 60 * 60 * 24),
-          ),
-        );
-        resolvedDays.push(days);
-      } else {
-        unresolved++;
-      }
-    }
-
-    const avgDays =
-      resolvedDays.length > 0
-        ? Math.round(resolvedDays.reduce((s, d) => s + d, 0) / resolvedDays.length)
-        : null;
-
-    const unresolvedPct = Math.round((unresolved / oEntries.length) * 100);
-    const daysPct = Math.round((Math.min(avgDays ?? 60, 60) / 60) * 100);
-    const persistenceIndex = Math.round(unresolvedPct * 0.6 + daysPct * 0.4);
-
-    return {
-      total: oEntries.length,
-      resolved: resolvedDays.length,
-      unresolved,
-      avgDays,
-      unresolvedPct,
-      daysPct,
-      persistenceIndex,
-    };
-  }, [entries]);
+  const bottleneckPersistence = useMemo(() => computeBottleneckPersistence(entries), [entries]);
 
   const principleReusability = useMemo(() => {
     const active = principles.filter((p) => !p.is_archived);
@@ -1447,9 +1399,10 @@ export function OperatorPanel() {
             <div className="space-y-2">
               <p className="text-label text-op-cyan uppercase">O que significa</p>
               <p className="text-body text-op-white">
-                Mede quanto tempo seus gargalos levam para ser resolvidos. Para cada fase de Organização
-                (mapeamento do gargalo), verifica se houve uma Aferição (APA) posterior e quantos dias levou.
-                Índice alto significa gargalos que resistem por muito tempo.
+                Mede quanto tempo seus gargalos levam para ser resolvidos. Cada gargalo é contado
+                uma vez (pela fase de Organização onde foi nomeado, sem repetições) e considerado
+                resolvido quando uma Aferição (APA) o fecha — cada APA resolve um único gargalo, o
+                mais antigo ainda em aberto. Índice alto significa gargalos que resistem por muito tempo.
               </p>
               <ul className="mt-2 space-y-1 text-small text-op-gray">
                 <li><span className="text-green-400 font-semibold">Gargalo ágil</span> — índice abaixo de 25</li>
@@ -1463,11 +1416,11 @@ export function OperatorPanel() {
               <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
               <div className="space-y-1 text-small">
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Total de gargalos mapeados (fase O)</span>
+                  <span className="text-op-gray">Gargalos distintos (fase O, sem repetição)</span>
                   <span className="text-op-white">{bottleneckPersistence.total}</span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Resolvidos (seguidos de APA)</span>
+                  <span className="text-op-gray">Resolvidos (fechados 1:1 por APA)</span>
                   <span className="text-op-white">{bottleneckPersistence.resolved}</span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
