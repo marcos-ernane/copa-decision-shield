@@ -167,7 +167,9 @@ export function InboxCard({ entry, onProcessed }: Props) {
             {projects.length === 0 ? (
               <p className="text-label text-op-gray/60">Nenhum projeto ativo.</p>
             ) : (
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+              // Sem caixa de rolagem interna: a lista flui e a página rola
+              // naturalmente, no mesmo formato do "Para qual projeto?".
+              <div className="space-y-2">
                 {projects.map((p) => (
                   <button
                     key={p.id}
