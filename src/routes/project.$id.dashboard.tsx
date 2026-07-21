@@ -2,7 +2,7 @@
 
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronRight, MoreVertical, Info, Gavel, BarChart2, Brain } from 'lucide-react';
+import { ChevronRight, MoreVertical, Info, Gavel, BarChart2, Brain, Pencil } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
@@ -267,6 +267,9 @@ function ProjectDashboard() {
   const [isArchiving, setIsArchiving] = useState(false);
   const [showVelocitySheet, setShowVelocitySheet] = useState(false);
   const [showAllCycles, setShowAllCycles] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [newNameValue, setNewNameValue] = useState('');
+  const [showNameConfirm, setShowNameConfirm] = useState(false);
   const [showIQISheet, setShowIQISheet] = useState(false);
   const [showActionPlanSheet, setShowActionPlanSheet] = useState(false);
   const [showCostBenefitSheet, setShowCostBenefitSheet] = useState(false);
@@ -296,6 +299,16 @@ function ProjectDashboard() {
       }
     })();
   }, [id, navigate]);
+
+  async function handleSaveName() {
+    if (!project) return;
+    const trimmed = newNameValue.trim();
+    if (trimmed.length < 2 || trimmed === project.name) { setEditingName(false); return; }
+    await updateProject(id, { name: trimmed });
+    setProject((p) => (p ? { ...p, name: trimmed } : p));
+    setEditingName(false);
+    setShowNameConfirm(false);
+  }
 
   async function handleToggleTreino() {
     if (!project) return;
@@ -555,14 +568,78 @@ function ProjectDashboard() {
       </header>
 
       <main className="px-6 py-6 space-y-6 max-w-md mx-auto">
+        {/* AlertDialog confirmação de edição de nome */}
+        <AlertDialog open={showNameConfirm} onOpenChange={setShowNameConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Alterar nome do projeto?</AlertDialogTitle>
+              <AlertDialogDescription>
+                O nome será atualizado em todo o app — histórico, Diário e Manual do Operador.
+                Esta ação não pode ser desfeita automaticamente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setShowNameConfirm(false)}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => void handleSaveName()}>
+                Confirmar alteração
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Cabeçalho */}
         <section className="space-y-2">
           <div>
             <p className="text-label text-op-gray uppercase tracking-wide">Nome</p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <ProjectStateIcon state={currentState} />
-              <h1 className="text-title text-op-white">{project.name}</h1>
-            </div>
+            {editingName ? (
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  autoFocus
+                  value={newNameValue}
+                  onChange={(e) => setNewNameValue(e.target.value)}
+                  maxLength={80}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const trimmed = newNameValue.trim();
+                      if (trimmed.length >= 2 && trimmed !== project.name) setShowNameConfirm(true);
+                    }
+                    if (e.key === 'Escape') setEditingName(false);
+                  }}
+                  className="flex-1 rounded-md border border-op-amber bg-op-navy px-3 py-1.5 text-title text-op-white focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const trimmed = newNameValue.trim();
+                    if (trimmed.length >= 2 && trimmed !== project.name) setShowNameConfirm(true);
+                    else setEditingName(false);
+                  }}
+                  className="text-label text-op-amber font-semibold px-2"
+                >
+                  OK
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingName(false)}
+                  className="text-label text-op-gray px-1"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mt-0.5">
+                <ProjectStateIcon state={currentState} />
+                <h1 className="text-title text-op-white">{project.name}</h1>
+                <button
+                  type="button"
+                  onClick={() => { setNewNameValue(project.name); setEditingName(true); }}
+                  className="p-1 rounded-md text-op-gray hover:text-op-white hover:bg-op-navy-elevated transition-colors"
+                  aria-label="Editar nome do projeto"
+                >
+                  <Pencil className="size-3.5" />
+                </button>
+              </div>
+            )}
           </div>
           <button
             onClick={() => setNorthExpanded((v) => !v)}
