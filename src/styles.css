@@ -216,3 +216,14 @@ body {
   background-color: #070C12 !important;
   color: #F0F4F8 !important;
 }
+
+/* Safe-area do topo (iPhone com notch, em app nativo / PWA standalone).
+   Os headers fixos no topo (sticky top-0) descem abaixo do notch, e o fundo
+   do header preenche a área do recorte. env() = 0 em navegadores comuns —
+   sem qualquer efeito no uso via navegador. A especificidade .sticky.top-0
+   (0,2,0) vence o py-3 (0,1,0), somando a inset ao padding já existente. */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .sticky.top-0 {
+    padding-top: calc(0.75rem + env(safe-area-inset-top));
+  }
+}

@@ -40,7 +40,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: '#070C12', minHeight: '100vh' }}>
-      <div className={readingMode ? 'pb-24' : 'pb-16'}>{children}</div>
+      <div style={{ paddingBottom: `calc(${readingMode ? '6rem' : '4rem'} + env(safe-area-inset-bottom))` }}>{children}</div>
       {!hideFabs && <Fabs />}
       {readingMode && <ReadingModeBanner />}
       <BottomNav />

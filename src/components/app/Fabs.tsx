@@ -40,7 +40,7 @@ export function Fabs() {
   return (
     <>
       {/* FAB Captura Universal — lado esquerdo */}
-      <div className="fixed bottom-20 left-4 z-40">
+      <div className="fixed left-4 z-40" style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
         <FABButton
           onClick={() => setCaptureOpen(true)}
           icon={Zap}
@@ -52,7 +52,7 @@ export function Fabs() {
       </div>
 
       {/* FABs Pressão + Protocolo 5min — lado direito */}
-      <div className="fixed bottom-20 right-4 z-40 flex flex-col items-end gap-3">
+      <div className="fixed right-4 z-40 flex flex-col items-end gap-3" style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
         <FABButton to="/pressure" icon={Zap} label="PRESSÃO" colorScheme="pressure" />
         {protocol5 && (
           <FABButton
