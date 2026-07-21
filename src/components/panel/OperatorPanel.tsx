@@ -1582,19 +1582,26 @@ export function OperatorPanel() {
                         <span className={`font-semibold ${meta.color}`}>Score: {difficulty}/100</span>
                       </div>
                       <div className="flex justify-between text-op-gray">
-                        <span>Qualidade das IMVs ({imvCount} ciclo{imvCount !== 1 ? 's' : ''})</span>
-                        <span>{avgIQI}% → peso 50%</span>
+                        <span>Qualidade das IMVs ({imvCount} ciclo{imvCount !== 1 ? 's' : ''}) <span className="text-op-gray/60">(peso 50%)</span></span>
+                        <span>{avgIQI}%</span>
                       </div>
                       <div className="flex justify-between text-op-gray">
-                        <span>Fechamento real (IMV com APA vinculada)</span>
-                        <span>{followRate}% → peso 50%</span>
+                        <span>Fechamento real (IMV com APA vinculada) <span className="text-op-gray/60">(peso 50%)</span></span>
+                        <span>{followRate}%</span>
+                      </div>
+                      <div className="flex justify-between pt-0.5">
+                        <span className="text-op-gray font-semibold">Índice de domínio</span>
+                        <span className="font-semibold" style={{ color: meta.barColor }}>
+                          {avgIQI}% × 50% + {followRate}% × 50% = {difficulty}
+                        </span>
                       </div>
                     </div>
                   );
                 })}
-                <p className="text-label text-op-gray">
-                  Domínio = qualidade × 50% + fechamento real × 50%. IMVs deduplicados por
-                  ação; cada APA fecha um único IMV.
+                <p className="text-label text-op-gray/80 leading-relaxed">
+                  Os dois fatores têm <span className="text-op-white">peso igual (50% cada)</span>:
+                  domínio é operar IMVs de qualidade <span className="text-op-white">e</span> fechá-los
+                  com APA. IMVs deduplicados por ação; cada APA fecha um único IMV, sem crédito cruzado.
                 </p>
               </div>
             </div>
