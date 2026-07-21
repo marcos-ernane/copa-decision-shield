@@ -179,7 +179,7 @@ function NewProject() {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Agenda de clientes"
+              placeholder="Nomeie o que está trabalhando"
               maxLength={80}
               className="w-full rounded-md border border-op-gray/20 bg-op-navy px-3 py-2 text-body text-op-white placeholder:text-op-gray focus:outline-none focus:ring-2 focus:ring-op-amber"
             />
