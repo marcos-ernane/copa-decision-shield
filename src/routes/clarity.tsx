@@ -5,7 +5,7 @@
 
 import { createFileRoute, useSearch, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState, useCallback } from 'react';
-import { Brain, Share2, CheckCircle, AlertCircle, RefreshCw, CircleHelp, X, ChevronRight, Pencil } from 'lucide-react';
+import { Brain, Copy, CheckCircle, AlertCircle, RefreshCw, CircleHelp, X, ChevronRight, Pencil } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -488,13 +488,13 @@ function ClarityScreen() {
             >
               {copied
                 ? <><CheckCircle className="size-4" /> Copiado!</>
-                : <><Share2 className="size-4" /> Compartilhar</>
+                : <><Copy className="size-4" /> Copiar</>
               }
             </Button>
           </div>
           {!Capacitor.isNativePlatform() && (
             <p className="text-label text-center text-muted-foreground mt-1">
-              Compartilhar copia o texto para a área de transferência. Mirror não é incluído.
+              Copie o texto para a área de transferência e cole onde quiser.
             </p>
           )}
         </div>
