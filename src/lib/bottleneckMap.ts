@@ -4,6 +4,7 @@
 
 import type { ScenarioType, OperationalLayer } from '../types/app';
 import type { Entry } from '../types/database';
+import { distinctIMVKey } from './imv';
 
 export type CellIntensity = 'none' | 'low' | 'medium' | 'high';
 
@@ -77,10 +78,7 @@ export function buildBottleneckMap(entries: Entry[]): BottleneckMap {
     const li = BOTTLENECK_LAYERS.indexOf(entry.layer_at_entry!);
     if (si === -1 || li === -1) continue;  // [REQ-BM-01] valor desconhecido ignorado
 
-    const action = ((entry.content as { action?: string }).action ?? '')
-      .trim()
-      .toLowerCase();
-    const cycleKey = `${entry.project_id}|${action || entry.id}`;
+    const cycleKey = distinctIMVKey(entry); // mesma chave canônica de src/lib/imv.ts
     if (seenCycles.has(cycleKey)) continue; // re-salvamento da mesma IMV → ignora
     seenCycles.add(cycleKey);
 
