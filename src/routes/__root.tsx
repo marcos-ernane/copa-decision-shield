@@ -84,6 +84,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "color-scheme", content: "dark" },
+      // Cor da barra do navegador mobile igual ao fundo do app (visual contínuo).
+      { name: "theme-color", content: "#070C12" },
+      // "Adicionar à tela inicial" (iOS) abre em modo standalone, barra translúcida
+      // — o conteúdo vai sob a status bar e a safe-area-top cuida do espaçamento.
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Operador de Precisão" },
       { title: "Operador de Precisão" },
       { name: "description", content: "Sistema de inteligência operacional pessoal baseado no Método COPA" },
       { name: "author", content: "Lovable" },

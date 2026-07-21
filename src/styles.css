@@ -215,6 +215,10 @@ html,
 body {
   background-color: #070C12 !important;
   color: #F0F4F8 !important;
+  /* Rede de segurança contra scroll horizontal acidental no celular.
+     'clip' (não 'hidden') não cria contexto de rolagem — preserva os
+     headers position: sticky. */
+  overflow-x: clip;
 }
 
 /* Safe-area do topo (iPhone com notch, em app nativo / PWA standalone).
