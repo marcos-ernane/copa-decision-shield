@@ -24,9 +24,12 @@ export interface RubricScores {
 export interface IndexBreakdown {
   cleanPulses: number;
   totalPulses: number;
+  apas: number;           // APAs completas (structured_A)
+  quickReviews: number;   // revisões rápidas (contam 0,7 cada)
   effectiveA: number;     // APAs + quick_reviews × 0,7
   distinctIMVs: number;   // structured_P deduplicados
-  stalePenalty: number;
+  staleIMVs: number;      // IMVs paradas (>7 dias sem APA)
+  stalePenalty: number;   // penalidade em pontos = staleIMVs × 5
   principles: number;
   uniqueProjects: number;
   rawClarity: number;
@@ -162,6 +165,7 @@ export function calculateIndex(
 
   const now = Date.now();
   let stalePenalty = 0;
+  let staleIMVs = 0;
   for (const p of pEntries) {
     const pTime = new Date(p.created_at).getTime();
     const hasApa = aEntries.some(
@@ -176,7 +180,10 @@ export function calculateIndex(
         new Date(qr.created_at).getTime() > pTime &&
         new Date(qr.created_at).getTime() - pTime <= 7 * 86400000,
     );
-    if (!hasApa && !hasQuickReview && now - pTime > 7 * 86400000) stalePenalty += 5;
+    if (!hasApa && !hasQuickReview && now - pTime > 7 * 86400000) {
+      stalePenalty += 5;
+      staleIMVs += 1;
+    }
   }
   execution = clamp(execution - stalePenalty);
 
@@ -266,8 +273,11 @@ export function calculateIndex(
     breakdown: {
       cleanPulses: pulses.filter((e) => e.is_clean_fact).length,
       totalPulses: pulses.length,
+      apas: aEntries.length,
+      quickReviews: qrEntries.length,
       effectiveA: effectiveACount,
       distinctIMVs: pEntries.length,
+      staleIMVs,
       stalePenalty,
       principles: principles.length,
       uniqueProjects,

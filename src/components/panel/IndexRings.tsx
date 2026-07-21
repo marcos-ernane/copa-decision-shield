@@ -94,21 +94,30 @@ function fmtNum(n: number): string {
 }
 
 // Conta por extenso de cada anel, com os números reais do usuário.
-function ringFormula(key: RingKey, b: IndexBreakdown): { formula: string; raw: number } {
+// Retorna uma ou mais linhas (execução pode precisar detalhar as aferições).
+function ringFormula(key: RingKey, b: IndexBreakdown): { lines: string[]; raw: number } {
   switch (key) {
     case 'clarity':
-      if (b.totalPulses < 3) return { formula: `${b.totalPulses} pulso(s) — mínimo 3 para calcular = 0`, raw: 0 };
-      return { formula: `${b.cleanPulses} fatos limpos ÷ ${b.totalPulses} pulsos × 100 = ${b.rawClarity}`, raw: b.rawClarity };
+      if (b.totalPulses < 3) return { lines: [`${b.totalPulses} pulso(s) — mínimo 3 para calcular = 0`], raw: 0 };
+      return { lines: [`${b.cleanPulses} fatos limpos ÷ ${b.totalPulses} pulsos × 100 = ${b.rawClarity}`], raw: b.rawClarity };
     case 'execution': {
-      if (b.distinctIMVs === 0) return { formula: `nenhum IMV testado = 0`, raw: 0 };
-      const base = `${fmtNum(b.effectiveA)} APA(s) ÷ ${b.distinctIMVs} IMV(s) × 100`;
-      const pen = b.stalePenalty > 0 ? ` − ${b.stalePenalty} (IMVs paradas)` : '';
-      return { formula: `${base}${pen} = ${b.rawExecution}`, raw: b.rawExecution };
+      if (b.distinctIMVs === 0) return { lines: ['Nenhum IMV testado ainda = 0'], raw: 0 };
+      const lines: string[] = [];
+      // "Aferições" = APAs completas + revisões rápidas ponderadas (0,7 cada).
+      // Só detalha quando há revisões rápidas, que é o que gera a fração.
+      const numerador = b.quickReviews > 0
+        ? `${fmtNum(b.effectiveA)} aferições (${b.apas} APAs + ${b.quickReviews} revisões rápidas × 0,7)`
+        : `${b.apas} APA${b.apas !== 1 ? 's' : ''}`;
+      const pen = b.stalePenalty > 0
+        ? ` − ${b.stalePenalty} pts (${b.staleIMVs} IMV${b.staleIMVs !== 1 ? 's' : ''} parada${b.staleIMVs !== 1 ? 's' : ''} × 5)`
+        : '';
+      lines.push(`${numerador} ÷ ${b.distinctIMVs} IMVs × 100${pen} = ${b.rawExecution}`);
+      return { lines, raw: b.rawExecution };
     }
     case 'learning': {
       const sum = b.principles * 5 + b.uniqueProjects * 10;
       const cap = sum > 100 ? ' → limitado a 100' : '';
-      return { formula: `${b.principles} princípios × 5 + ${b.uniqueProjects} projetos × 10 = ${sum}${cap}`, raw: b.rawLearning };
+      return { lines: [`${b.principles} princípios × 5 + ${b.uniqueProjects} projetos × 10 = ${sum}${cap}`], raw: b.rawLearning };
     }
   }
 }
@@ -183,7 +192,9 @@ export function IndexRings({ clarity, execution, learning, composite, level, bre
                 {calc && (
                   <div>
                     <div className="text-label text-muted-foreground uppercase tracking-wide mb-1">Como foi calculado</div>
-                    <p className="text-foreground font-medium">{calc.formula}</p>
+                    {calc.lines.map((line, i) => (
+                      <p key={i} className="text-foreground font-medium">{line}</p>
+                    ))}
                     {calc.raw !== values[openRing] && (
                       <p className="text-muted-foreground mt-1">
                         Valor exibido: {values[openRing]}. A suavização evita quedas bruscas no
