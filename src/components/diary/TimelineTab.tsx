@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
-import { Inbox as InboxIcon, X, LayoutList, List, BarChart2, Filter, ChevronDown, ChevronRight } from 'lucide-react';
+import { Inbox as InboxIcon, X, LayoutList, List, BarChart2, Filter, ChevronDown, ChevronRight, FilePlus2 } from 'lucide-react';
 import { Link, useSearch } from '@tanstack/react-router';
 import { buildOperationalView } from '@/lib/operationalView';
 import { ProjectSection } from './ProjectSection';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
+import { useReadingMode } from '@/hooks/useReadingMode';
 import type { ScenarioType, OperationalLayer, ExecutionPlan } from '@/types/app';
 import type { RootCauseChain, ActionPlan, CostBenefitData, LeverItem, Inventory4D, RecombinationItem } from '@/lib/register';
 import { updateEntryCostBenefit } from '@/lib/register';
@@ -137,6 +138,7 @@ export function TimelineTab() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const search = useSearch({ strict: false }) as { projectId?: string; type?: string; scenario_type?: string; layer?: string };
   const { entries, projects, refresh } = usePanelData();
+  const readingMode = useReadingMode();
   // 'none' = nenhuma seleção ainda → timeline vazia até o usuário escolher
   const [project, setProject] = useState<string>(search.projectId ?? 'none');
   // [REQ-BM-06] Inicializa com filtros vindos do Mapa de Gargalos (scenario_type e layer via URL)
@@ -933,6 +935,21 @@ export function TimelineTab() {
             </div>
           )}
         </div>
+
+        {/* Atalho para Registro Estruturado do projeto selecionado.
+            Aparece só com um projeto específico escolhido e fora do Modo Leitura.
+            Sem `format` na navegação: o StructuredRegister abre a fase aberta
+            automaticamente, ou o seletor C/O/P/A quando o ciclo está completo. */}
+        {selectedProject && !readingMode && (
+          <Link
+            to="/register/structured"
+            search={{ projectId: selectedProject.id, format: undefined, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined, step: undefined }}
+            className="flex items-center justify-center gap-2 rounded-xl border border-[color:var(--color-brand-blue)] bg-transparent py-2.5 text-small font-semibold text-[color:var(--color-brand-blue)] hover:bg-[color:var(--color-brand-blue)]/10 transition-colors"
+          >
+            <FilePlus2 className="size-4 shrink-0" />
+            Registro estruturado neste projeto
+          </Link>
+        )}
 
         {/* Toggle Visão Operacional / Lista [REQ-VO-16..18] */}
         <div className="flex rounded-lg overflow-hidden border border-op-gray/30">
