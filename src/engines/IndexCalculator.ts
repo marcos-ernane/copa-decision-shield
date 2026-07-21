@@ -6,6 +6,7 @@
 //   - congela quando todos os projetos ativos estão pausados/arquivados
 
 import type { Entry, Principle, Project } from '@/types/database';
+import { distinctIMVs } from '@/lib/imv';
 
 export interface RubricScores {
   observation: number;
@@ -131,7 +132,11 @@ export function calculateIndex(
   let clarity = pulses.length < 3 ? 0 : pct(pulses.filter((e) => e.is_clean_fact).length, pulses.length);
 
   // ---------- Execução ----------
-  const pEntries = entries.filter((e) => e.entry_type === 'structured_P');
+  // IMVs distintos (dedup por ação): re-salvamentos do mesmo IMV inflavam o
+  // denominador e a penalidade. Ex.: 6 duplicatas ÷ 1 APA marcava 17% de
+  // execução quando o real é ~100%. Alimenta também Diagnóstico, Proporcionalidade
+  // e Ética na rubrica — todos passam a razão sobre IMVs distintos.
+  const pEntries = distinctIMVs(entries);
   const aEntries = entries.filter((e) => e.entry_type === 'structured_A');
   // quick_review conta como 0.7 de uma APA completa (PRD-ITEM-01)
   const qrEntries = entries.filter((e) => e.entry_type === 'quick_review');
