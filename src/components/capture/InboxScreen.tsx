@@ -14,8 +14,8 @@ const INBOX_ACTIONS: { label: string; desc: string }[] = [
     desc: 'Transforma a captura numa análise estruturada (fase Captura do COPA). Na tela seguinte você escolhe o projeto — ou cria um novo.',
   },
   {
-    label: 'Vincular a projeto',
-    desc: 'Abre a lista dos seus projetos. Ao escolher um, você pode abri-lo no COPA já vinculado, ou salvar a captura como um Pulso rápido dentro dele (sem passar pelo COPA).',
+    label: 'Salvar como pulso',
+    desc: 'Abre a lista dos seus projetos. Ao tocar em um, a captura é salva como um Pulso rápido dentro dele — sem passar pelo COPA. Para análise estruturada, use "Abrir no COPA".',
   },
   {
     label: 'Já processado',

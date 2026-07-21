@@ -28,7 +28,7 @@ function timeAgo(iso: string): string {
   return `${Math.floor(hours / 24)}d atrás`;
 }
 
-type LinkState = 'idle' | 'picking' | 'picked';
+type LinkState = 'idle' | 'picking';
 
 export function InboxCard({ entry, onProcessed }: Props) {
   const navigate = useNavigate();
@@ -36,8 +36,7 @@ export function InboxCard({ entry, onProcessed }: Props) {
   const [discarding, setDiscarding] = useState(false);
   const [linkState, setLinkState] = useState<LinkState>('idle');
   const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [linking, setLinking] = useState(false);
+  const [savingId, setSavingId] = useState<string | null>(null);
   const content = entry.content;
 
   async function handleMarkProcessed() {
@@ -90,20 +89,14 @@ export function InboxCard({ entry, onProcessed }: Props) {
       setLinkState('picking');
     } else {
       setLinkState('idle');
-      setSelectedProject(null);
     }
   }
 
-  function handlePickProject(p: Project) {
-    setSelectedProject(p);
-    setLinkState('picked');
-  }
-
-  async function handleSaveAsPulse() {
-    if (!selectedProject) return;
-    setLinking(true);
+  // Clique no chip do projeto salva a captura como pulso direto naquele projeto.
+  async function handleSaveAsPulse(project: Project) {
+    setSavingId(project.id);
     try {
-      await savePulse(selectedProject.id, {
+      await savePulse(project.id, {
         text: content.text,
         fact_text: content.text,
         interpretation_text: '',
@@ -113,11 +106,11 @@ export function InboxCard({ entry, onProcessed }: Props) {
       });
       await processInboxEntry(entry.id);
       window.dispatchEvent(new CustomEvent('aop:inbox-updated'));
-      toast.success(`Salvo como pulso em "${selectedProject.name}".`);
+      toast.success(`Salvo como pulso em "${project.name}".`);
       onProcessed?.();
     } catch {
       toast.error('Não foi possível salvar. Tente novamente.');
-      setLinking(false);
+      setSavingId(null);
     }
   }
 
@@ -159,14 +152,15 @@ export function InboxCard({ entry, onProcessed }: Props) {
         </button>
       </div>
 
-      {/* Inbox linker */}
+      {/* Salvar como pulso — escolhe o projeto e salva a captura como pulso nele.
+          (Para análise estruturada, use "Abrir no COPA" acima.) */}
       <div className="space-y-2">
         <button
           type="button"
           onClick={() => void handleVincularClick()}
           className="w-full flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-small font-semibold text-op-gray border border-op-gray/30 hover:text-op-white hover:border-op-gray/60 transition-colors"
         >
-          Vincular a projeto
+          Salvar como pulso
           <ChevronDown
             className={[
               'size-3.5 transition-transform',
@@ -176,7 +170,8 @@ export function InboxCard({ entry, onProcessed }: Props) {
         </button>
 
         {linkState === 'picking' && (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
+            <p className="text-label text-op-gray/70">Salvar como pulso em qual projeto?</p>
             {projects.length === 0 ? (
               <p className="text-label text-op-gray/60">Nenhum projeto ativo.</p>
             ) : (
@@ -185,49 +180,15 @@ export function InboxCard({ entry, onProcessed }: Props) {
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => handlePickProject(p)}
-                    className="px-3 py-1 rounded-full text-small font-semibold border border-op-gray/30 text-op-gray hover:border-op-gray/60 hover:text-op-white transition-colors"
+                    disabled={savingId !== null}
+                    onClick={() => void handleSaveAsPulse(p)}
+                    className="px-3 py-1 rounded-full text-small font-semibold border border-op-gray/30 text-op-gray hover:border-op-gray/60 hover:text-op-white transition-colors disabled:opacity-40"
                   >
-                    {p.name}
+                    {savingId === p.id ? 'Salvando…' : p.name}
                   </button>
                 ))}
               </div>
             )}
-          </div>
-        )}
-
-        {linkState === 'picked' && selectedProject && (
-          <div className="space-y-2">
-            <p className="text-label text-op-cyan/80">
-              Projeto: <span className="font-semibold">{selectedProject.name}</span>
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={linking}
-                onClick={() => handleOpenCopa(selectedProject.id)}
-                className="flex-1 flex items-center justify-center gap-1 rounded-lg py-1.5 text-small font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
-                style={{ backgroundColor: 'var(--color-brand-blue)' }}
-              >
-                Abrir no COPA
-                <ArrowRight className="size-3" />
-              </button>
-              <button
-                type="button"
-                disabled={linking}
-                onClick={() => void handleSaveAsPulse()}
-                className="flex-1 flex items-center justify-center gap-1 rounded-lg py-1.5 text-small font-semibold text-op-gray border border-op-gray/30 hover:text-op-white hover:border-op-gray/60 transition-colors disabled:opacity-50"
-              >
-                {linking ? 'Salvando…' : 'Salvar como pulso'}
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => { setLinkState('picking'); setSelectedProject(null); }}
-              className="text-label text-op-gray/60 hover:text-op-gray transition-colors"
-            >
-              ← Trocar projeto
-            </button>
           </div>
         )}
       </div>
