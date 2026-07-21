@@ -1424,12 +1424,12 @@ export function OperatorPanel() {
                   <span className="text-op-white">{bottleneckPersistence.resolved}</span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Sem resolução</span>
+                  <span className="text-op-gray">Sem resolução <span className="text-op-gray/60">(peso 60%)</span></span>
                   <span className="text-op-white">{bottleneckPersistence.unresolved} = {bottleneckPersistence.unresolvedPct}%</span>
                 </div>
                 {bottleneckPersistence.avgDays !== null && (
                   <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                    <span className="text-op-gray">Média de dias para resolver</span>
+                    <span className="text-op-gray">Média de dias para resolver <span className="text-op-gray/60">(peso 40%)</span></span>
                     <span className="text-op-white">{bottleneckPersistence.avgDays} dias = {bottleneckPersistence.daysPct}% de 60 dias</span>
                   </div>
                 )}
@@ -1439,6 +1439,12 @@ export function OperatorPanel() {
                     {bottleneckPersistence.unresolvedPct}% × 60% + {bottleneckPersistence.daysPct}% × 40% = {bottleneckPersistence.persistenceIndex}
                   </span>
                 </div>
+                <p className="text-label text-op-gray/80 pt-1 leading-relaxed">
+                  Os pesos são fixos: a fração <span className="text-op-white">sem resolução pesa 60%</span>
+                  {' '}(é o sinal mais forte de persistência) e o <span className="text-op-white">tempo médio
+                  de resolução pesa 40%</span>. Assim, gargalos que ficam abertos contam mais para o índice
+                  do que gargalos que demoram mas acabam resolvidos.
+                </p>
               </div>
             </div>
 
