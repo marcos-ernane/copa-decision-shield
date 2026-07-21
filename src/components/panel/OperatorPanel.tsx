@@ -11,7 +11,7 @@ import { updateProject } from '@/lib/projects';
 import { STATE_ORDER, deriveProjectStatus } from '@/lib/projectState';
 import { detectOpenCycles } from '@/lib/openCycle';
 import { IndexRings } from './IndexRings';
-import { BaselineEvolution } from './BaselineEvolution';
+import { OperatorRubricCard } from './OperatorRubricCard';
 import { PatternCards } from './PatternCards';
 import { QualitativeEvolution } from './QualitativeEvolution';
 import { BottleneckMapSection } from './BottleneckMapSection';
@@ -517,29 +517,18 @@ export function OperatorPanel() {
       <div className="px-4 py-4 space-y-6">
         {loading && <p className="text-small text-muted-foreground">Carregando…</p>}
 
-        {/* Seção 1 — Índice */}
+        {/* Seção 1 — Índice do Operador (3 anéis + nível composto) */}
         <section>
           <IndexRings {...idx} />
-          {baselineCompleted ? (
-            <Link to="/panel/rubric" className="mt-4 block rounded-md border border-op-gray/30 bg-op-navy p-3">
-              <div className="flex justify-between text-small">
-                <span className="text-op-white">Treinamento do operador</span>
-                <span className="text-op-gray">{idx.rubricTotal}/35 pontos →</span>
-              </div>
-              <div className="h-2 mt-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
-                <div className="h-full" style={{ width: `${(idx.rubricTotal / 35) * 100}%`, backgroundColor: '#22C5DA' }} />
-              </div>
-            </Link>
-          ) : (
-            <Link to="/baseline/new" className="mt-4 inline-flex text-small text-op-cyan hover:underline">
-              Fazer diagnóstico de 12 minutos →
-            </Link>
-          )}
         </section>
 
-        {/* Seção 2 — Linha de base */}
+        {/* Seção 2 — Rubrica do Operador (KPI consolidado: medido vs autoavaliação) */}
         <section>
-          <BaselineEvolution baselines={baselines} baselineCompleted={baselineCompleted} />
+          <OperatorRubricCard
+            rubricTotal={idx.rubricTotal}
+            baselines={baselines}
+            baselineCompleted={baselineCompleted}
+          />
         </section>
 
         {/* Seção 3 — Visão geral de projetos */}
