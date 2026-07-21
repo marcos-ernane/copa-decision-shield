@@ -78,14 +78,14 @@ export function InboxCard({ entry, onProcessed }: Props) {
   async function handleVincularClick() {
     if (linkState === 'idle') {
       const all = await listProjects().catch(() => []);
+      // Todos os projetos ativos (mais recentes primeiro) — sem limite; a lista rola.
       const active = all
         .filter((p) => !INACTIVE_STATES.includes(p.state))
         .sort((a, b) => {
           const ta = a.last_entry_at ? new Date(a.last_entry_at).getTime() : 0;
           const tb = b.last_entry_at ? new Date(b.last_entry_at).getTime() : 0;
           return tb - ta;
-        })
-        .slice(0, 4);
+        });
       setProjects(active);
       setLinkState('picking');
     } else {
@@ -159,30 +159,17 @@ export function InboxCard({ entry, onProcessed }: Props) {
         </button>
       </div>
 
-      {/* Descartar */}
-      <div className="flex justify-end">
-        <button
-          type="button"
-          disabled={discarding || marking}
-          onClick={() => void handleDiscard()}
-          className="flex items-center gap-1 text-label text-op-gray/50 hover:text-brand-red transition-colors disabled:opacity-40"
-        >
-          <Trash2 className="size-3" />
-          {discarding ? 'Descartando…' : 'Descartar'}
-        </button>
-      </div>
-
       {/* Inbox linker */}
       <div className="space-y-2">
         <button
           type="button"
           onClick={() => void handleVincularClick()}
-          className="flex items-center gap-1 text-label text-op-gray/70 hover:text-op-gray transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-small font-semibold text-op-gray border border-op-gray/30 hover:text-op-white hover:border-op-gray/60 transition-colors"
         >
           Vincular a projeto
           <ChevronDown
             className={[
-              'size-3 transition-transform',
+              'size-3.5 transition-transform',
               linkState !== 'idle' ? 'rotate-180' : '',
             ].join(' ')}
           />
@@ -193,7 +180,7 @@ export function InboxCard({ entry, onProcessed }: Props) {
             {projects.length === 0 ? (
               <p className="text-label text-op-gray/60">Nenhum projeto ativo.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 max-h-44 overflow-y-auto pr-1">
                 {projects.map((p) => (
                   <button
                     key={p.id}
@@ -243,6 +230,19 @@ export function InboxCard({ entry, onProcessed }: Props) {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Descartar — ação destrutiva, por último */}
+      <div className="flex justify-end pt-1">
+        <button
+          type="button"
+          disabled={discarding || marking}
+          onClick={() => void handleDiscard()}
+          className="flex items-center gap-1 text-label text-op-gray/50 hover:text-brand-red transition-colors disabled:opacity-40"
+        >
+          <Trash2 className="size-3" />
+          {discarding ? 'Descartando…' : 'Descartar'}
+        </button>
       </div>
     </div>
   );
