@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
+import type { Entry } from '@/types/database';
 
 const PULSO_WEIGHT = 1;
 const ANALISE_WEIGHT = 3;
@@ -220,57 +221,100 @@ export function OperatorPanel() {
 
   const layerDifficulty = useMemo(() => {
     const layers: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia', 'escala'];
+    const layerSet = new Set<string>(layers);
+
+    const iqiOf = (e: Entry): number => {
+      const c = e.content as { reversible?: boolean; cheap?: boolean; specific?: boolean; measurable?: boolean };
+      return ((c.reversible ? 1 : 0) + (c.cheap ? 1 : 0) + (c.specific ? 1 : 0) + (c.measurable ? 1 : 0)) / 4;
+    };
+
+    // Fechamento REAL por vínculo (APA ou quick_review com linked_to → P.id),
+    // mesma lógica do detectOpenCycles. Evita o crédito cruzado da fórmula antiga,
+    // em que qualquer APA posterior "fechava" todos os IMVs anteriores do projeto.
+    const closedByLink = new Set(
+      entries
+        .filter((e) => (e.entry_type === 'structured_A' || e.entry_type === 'quick_review') && e.linked_to)
+        .map((e) => e.linked_to as string),
+    );
+
+    // 1. Grupos distintos de IMV — dedup por (projeto + ação); re-salvamentos contam 1×.
+    //    Guarda maior IQI, data mais antiga e se algum membro foi fechado por vínculo.
+    type Group = { projectId: string; layer: string; iqi: number; ts: number; closed: boolean };
+    const groups = new Map<string, Group>();
+    for (const e of entries) {
+      if (e.entry_type !== 'structured_P') continue;
+      const layer = e.layer_at_entry;
+      if (!layer || !layerSet.has(layer)) continue;
+      const action = ((e.content as { action?: string }).action ?? '').trim().toLowerCase();
+      const key = `${e.project_id}|${action || e.id}`;
+      const ts = new Date(e.created_at).getTime();
+      const linkedClosed = closedByLink.has(e.id);
+      const prev = groups.get(key);
+      if (!prev) {
+        groups.set(key, { projectId: e.project_id, layer, iqi: iqiOf(e), ts, closed: linkedClosed });
+      } else {
+        groups.set(key, {
+          projectId: prev.projectId,
+          layer: prev.layer,
+          iqi: Math.max(prev.iqi, iqiOf(e)),
+          ts: Math.min(prev.ts, ts),
+          closed: prev.closed || linkedClosed,
+        });
+      }
+    }
+    const groupList = [...groups.values()];
+    if (groupList.length === 0) return [];
+
+    // 2. Pareamento 1:1 temporal (global) para APAs legadas SEM vínculo: cada uma
+    //    fecha no máximo UM IMV distinto ainda aberto, criado antes dela, no mesmo
+    //    projeto. Credita o fluxo sequencial C→O→P→A sem reintroduzir crédito cruzado.
+    const unlinkedApasByProject = new Map<string, number[]>();
+    for (const e of entries) {
+      if (e.entry_type === 'structured_A' && !e.linked_to) {
+        const arr = unlinkedApasByProject.get(e.project_id) ?? [];
+        arr.push(new Date(e.created_at).getTime());
+        unlinkedApasByProject.set(e.project_id, arr);
+      }
+    }
+    const openByProject = new Map<string, Group[]>();
+    for (const g of groupList) {
+      if (g.closed) continue;
+      const arr = openByProject.get(g.projectId) ?? [];
+      arr.push(g);
+      openByProject.set(g.projectId, arr);
+    }
+    for (const [projectId, open] of openByProject) {
+      const apas = [...(unlinkedApasByProject.get(projectId) ?? [])].sort((a, b) => a - b);
+      if (apas.length === 0) continue;
+      open.sort((a, b) => a.ts - b.ts);
+      let ai = 0;
+      for (const g of open) {
+        while (ai < apas.length && apas[ai] <= g.ts) ai++; // APA precisa ser posterior ao IMV
+        if (ai >= apas.length) break;
+        g.closed = true;
+        ai++; // APA consumida (1:1)
+      }
+    }
+
+    // 3. Agrega por camada: domínio = 50% qualidade + 50% fechamento real.
     return layers
       .map((layer) => {
-        const imvEntries = entries.filter(
-          (e) => e.entry_type === 'structured_P' && e.layer_at_entry === layer,
-        );
-        if (imvEntries.length === 0) return null;
-
-        // 1. Qualidade média das IMVs (0-1)
-        const avgIQI =
-          imvEntries.reduce((sum, e) => {
-            const c = e.content as { reversible?: boolean; cheap?: boolean; specific?: boolean; measurable?: boolean };
-            return sum + ((c.reversible ? 1 : 0) + (c.cheap ? 1 : 0) + (c.specific ? 1 : 0) + (c.measurable ? 1 : 0)) / 4;
-          }, 0) / imvEntries.length;
-
-        // 2. Taxa de aferição: P com A posterior no mesmo projeto
-        const followCount = imvEntries.filter((pEntry) =>
-          entries.some(
-            (e) =>
-              e.entry_type === 'structured_A' &&
-              e.project_id === pEntry.project_id &&
-              new Date(e.created_at) > new Date(pEntry.created_at),
-          ),
-        ).length;
-        const followRate = followCount / imvEntries.length;
-
-        // 3. Pressão de bloqueio: projetos ativos nessa camada que estão travados
-        const layerProjects = projects.filter(
-          (p) => p.current_layer === layer && p.state !== 'archived' && p.state !== 'concluded',
-        );
-        const blockRate =
-          layerProjects.length > 0
-            ? layerProjects.filter((p) => p.state === 'blocked').length / layerProjects.length
-            : 0;
-
-        // Domínio = soma ponderada (0-100); quanto maior, melhor
-        const difficulty = Math.min(
-          100,
-          Math.round(avgIQI * 40 + followRate * 40 + (1 - blockRate) * 20),
-        );
-
+        const gs = groupList.filter((g) => g.layer === layer);
+        if (gs.length === 0) return null;
+        const n = gs.length;
+        const avgIQI = gs.reduce((s, g) => s + g.iqi, 0) / n;
+        const closeRate = gs.filter((g) => g.closed).length / n;
+        const difficulty = Math.round((avgIQI * 0.5 + closeRate * 0.5) * 100);
         return {
           layer,
           difficulty,
-          imvCount: imvEntries.length,
+          imvCount: n,
           avgIQI: Math.round(avgIQI * 100),
-          followRate: Math.round(followRate * 100),
-          blockRate: Math.round(blockRate * 100),
+          followRate: Math.round(closeRate * 100),
         };
       })
       .filter((r): r is NonNullable<typeof r> => r !== null);
-  }, [entries, projects]);
+  }, [entries]);
 
   const registrationDepth = useMemo(() => {
     if (entries.length === 0) return null;
@@ -1608,7 +1652,8 @@ export function OperatorPanel() {
             <div className="space-y-2">
               <p className="text-label text-op-cyan uppercase">O que significa</p>
               <p className="text-body text-op-white">
-                Mede o nível de domínio operacional em cada camada com base em três fatores reais do seu histórico.
+                Mede o nível de domínio operacional em cada camada combinando dois fatores reais:
+                a qualidade dos seus IMVs e quantos deles você de fato fechou com uma APA.
                 Quanto maior o índice, mais essa camada está respondendo ao método.
               </p>
               <ul className="mt-2 space-y-1 text-small text-op-gray">
@@ -1631,7 +1676,7 @@ export function OperatorPanel() {
                 </button>
               </div>
               <div className="space-y-3 text-small">
-                {layerDifficulty.map(({ layer, difficulty, avgIQI, followRate, blockRate, imvCount }) => {
+                {layerDifficulty.map(({ layer, difficulty, avgIQI, followRate, imvCount }) => {
                   const meta = difficultyMeta(difficulty);
                   return (
                     <div key={layer} className="border-b border-op-gray/20 pb-3 space-y-1">
@@ -1640,22 +1685,19 @@ export function OperatorPanel() {
                         <span className={`font-semibold ${meta.color}`}>Score: {difficulty}/100</span>
                       </div>
                       <div className="flex justify-between text-op-gray">
-                        <span>Qualidade das IMVs ({imvCount} registros)</span>
-                        <span>{avgIQI}% → peso 40%</span>
+                        <span>Qualidade das IMVs ({imvCount} ciclo{imvCount !== 1 ? 's' : ''})</span>
+                        <span>{avgIQI}% → peso 50%</span>
                       </div>
                       <div className="flex justify-between text-op-gray">
-                        <span>Taxa de aferição (P→A concluídos)</span>
-                        <span>{followRate}% → peso 40%</span>
-                      </div>
-                      <div className="flex justify-between text-op-gray">
-                        <span>Pressão de bloqueio (projetos travados)</span>
-                        <span>{blockRate}% → peso 20%</span>
+                        <span>Fechamento real (IMV com APA vinculada)</span>
+                        <span>{followRate}% → peso 50%</span>
                       </div>
                     </div>
                   );
                 })}
                 <p className="text-label text-op-gray">
-                  Domínio = qualidade × 40 + aferição × 40 + (100% − bloqueio) × 20
+                  Domínio = qualidade × 50% + fechamento real × 50%. IMVs deduplicados por
+                  ação; cada APA fecha um único IMV.
                 </p>
               </div>
             </div>
@@ -1693,18 +1735,13 @@ export function OperatorPanel() {
               <tbody className="text-op-white">
                 <tr className="border-b border-op-gray/20">
                   <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Qualidade das IMVs</td>
-                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">40%</td>
-                  <td className="py-2.5 text-op-gray">Quanto mais critérios cumpridos (reversível / barato / específico / mensurável), maior o domínio</td>
-                </tr>
-                <tr className="border-b border-op-gray/20">
-                  <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Taxa de aferição</td>
-                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">40%</td>
-                  <td className="py-2.5 text-op-gray">% de IMVs que geraram APA posterior — quanto mais aferições, maior o domínio</td>
+                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">50%</td>
+                  <td className="py-2.5 text-op-gray">Quanto mais critérios cumpridos (reversível / barato / específico / mensurável), maior o domínio. IMVs repetidos contam uma vez.</td>
                 </tr>
                 <tr>
-                  <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Ausência de bloqueio</td>
-                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">20%</td>
-                  <td className="py-2.5 text-op-gray">Quanto menos projetos travados nessa camada, maior o domínio</td>
+                  <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Fechamento real</td>
+                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">50%</td>
+                  <td className="py-2.5 text-op-gray">% de IMVs efetivamente fechados com uma APA — cada APA fecha um único IMV, sem crédito cruzado</td>
                 </tr>
               </tbody>
             </table>
