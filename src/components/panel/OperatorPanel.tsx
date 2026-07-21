@@ -9,6 +9,7 @@ import { calculateIndex } from '@/engines/IndexCalculator';
 import { generatePatterns } from '@/engines/PatternEngine';
 import { updateProject } from '@/lib/projects';
 import { STATE_ORDER, deriveProjectStatus } from '@/lib/projectState';
+import { detectOpenCycles } from '@/lib/openCycle';
 import { IndexRings } from './IndexRings';
 import { BaselineEvolution } from './BaselineEvolution';
 import { PatternCards } from './PatternCards';
@@ -550,7 +551,10 @@ export function OperatorPanel() {
             <ul className="space-y-2">
               {activeProjects.map((p) => {
                 const projectEntries = entries.filter((e) => e.project_id === p.id);
-                const status = deriveProjectStatus(p, projectEntries);
+                // Passa hasOpenCycles (IMV sem APA) para bater com o Dashboard:
+                // sem isso, um projeto com ciclo aberto aparecia como "Ciclo completo".
+                const hasOpenCycles = detectOpenCycles(projectEntries).length > 0;
+                const status = deriveProjectStatus(p, projectEntries, hasOpenCycles);
                 return (
                   <li key={p.id} className="flex items-stretch rounded-md border border-op-gray/30 bg-op-navy overflow-hidden">
                     <div className="flex-1 min-w-0">
