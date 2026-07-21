@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import type { IndexBreakdown } from '@/engines/IndexCalculator';
 import {
   Sheet,
   SheetContent,
@@ -83,7 +84,33 @@ interface Props {
   learning: number;
   composite: number;
   level: 'starting' | 'developing' | 'operating' | 'solid' | 'precise';
+  breakdown?: IndexBreakdown;
   className?: string;
+}
+
+// Formata a APA efetiva (pode ser fracionária por causa dos quick_reviews × 0,7).
+function fmtNum(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ',');
+}
+
+// Conta por extenso de cada anel, com os números reais do usuário.
+function ringFormula(key: RingKey, b: IndexBreakdown): { formula: string; raw: number } {
+  switch (key) {
+    case 'clarity':
+      if (b.totalPulses < 3) return { formula: `${b.totalPulses} pulso(s) — mínimo 3 para calcular = 0`, raw: 0 };
+      return { formula: `${b.cleanPulses} fatos limpos ÷ ${b.totalPulses} pulsos × 100 = ${b.rawClarity}`, raw: b.rawClarity };
+    case 'execution': {
+      if (b.distinctIMVs === 0) return { formula: `nenhum IMV testado = 0`, raw: 0 };
+      const base = `${fmtNum(b.effectiveA)} APA(s) ÷ ${b.distinctIMVs} IMV(s) × 100`;
+      const pen = b.stalePenalty > 0 ? ` − ${b.stalePenalty} (IMVs paradas)` : '';
+      return { formula: `${base}${pen} = ${b.rawExecution}`, raw: b.rawExecution };
+    }
+    case 'learning': {
+      const sum = b.principles * 5 + b.uniqueProjects * 10;
+      const cap = sum > 100 ? ' → limitado a 100' : '';
+      return { formula: `${b.principles} princípios × 5 + ${b.uniqueProjects} projetos × 10 = ${sum}${cap}`, raw: b.rawLearning };
+    }
+  }
 }
 
 const LEVEL_LABEL: Record<Props['level'], string> = {
@@ -94,11 +121,12 @@ const LEVEL_LABEL: Record<Props['level'], string> = {
   precise: 'Preciso',
 };
 
-export function IndexRings({ clarity, execution, learning, composite, level, className }: Props) {
+export function IndexRings({ clarity, execution, learning, composite, level, breakdown, className }: Props) {
   const [openRing, setOpenRing] = useState<RingKey | null>(null);
   const info = openRing ? RING_INFO[openRing] : null;
 
   const values: Record<RingKey, number> = { clarity, execution, learning };
+  const calc = openRing && breakdown ? ringFormula(openRing, breakdown) : null;
 
   return (
     <>
@@ -111,6 +139,9 @@ export function IndexRings({ clarity, execution, learning, composite, level, cla
         <div className="text-center">
           <div className="text-label text-muted-foreground uppercase tracking-wide">Nível composto</div>
           <div className="text-title text-foreground">{LEVEL_LABEL[level]} · {composite}</div>
+          <div className="text-label text-muted-foreground mt-0.5">
+            (Clareza {clarity} + Execução {execution} + Aprendizado {learning}) ÷ 3 = {composite}
+          </div>
         </div>
       </div>
 
@@ -149,6 +180,18 @@ export function IndexRings({ clarity, execution, learning, composite, level, cla
                   <div className="text-label text-muted-foreground uppercase tracking-wide mb-1">Teto</div>
                   <p className="text-foreground">{info.ceiling}</p>
                 </div>
+                {calc && (
+                  <div>
+                    <div className="text-label text-muted-foreground uppercase tracking-wide mb-1">Como foi calculado</div>
+                    <p className="text-foreground font-medium">{calc.formula}</p>
+                    {calc.raw !== values[openRing] && (
+                      <p className="text-muted-foreground mt-1">
+                        Valor exibido: {values[openRing]}. A suavização evita quedas bruscas no
+                        mesmo dia, então o exibido sobe gradualmente até o valor calculado.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <SheetClose asChild>

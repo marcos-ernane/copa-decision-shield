@@ -18,6 +18,22 @@ export interface RubricScores {
   ethics: number;
 }
 
+// Números crus que produzem cada índice — para a "memória de cálculo" (conta por
+// extenso) exibida no Painel. rawX é o valor antes da suavização; o exibido pode
+// diferir quando a suavização evita quedas abruptas no mesmo dia.
+export interface IndexBreakdown {
+  cleanPulses: number;
+  totalPulses: number;
+  effectiveA: number;     // APAs + quick_reviews × 0,7
+  distinctIMVs: number;   // structured_P deduplicados
+  stalePenalty: number;
+  principles: number;
+  uniqueProjects: number;
+  rawClarity: number;
+  rawExecution: number;
+  rawLearning: number;
+}
+
 export interface IndexResult {
   clarity: number;
   execution: number;
@@ -27,6 +43,7 @@ export interface IndexResult {
   rubric: RubricScores;
   rubricTotal: number;
   frozen: boolean;
+  breakdown?: IndexBreakdown;
 }
 
 const SMOOTH_KEY = 'aop.index_smooth';
@@ -167,6 +184,11 @@ export function calculateIndex(
   const uniqueProjects = new Set(principles.map((p) => p.project_id)).size;
   let learning = clamp(principles.length * 5 + uniqueProjects * 10);
 
+  // Guarda os valores crus (antes da suavização) para a memória de cálculo.
+  const rawClarity = clarity;
+  const rawExecution = execution;
+  const rawLearning = learning;
+
   // Smoothing (sem quedas abruptas no mesmo dia)
   clarity = applySmoothing(clarity, prev?.clarity, sameDay);
   execution = applySmoothing(execution, prev?.execution, sameDay);
@@ -241,5 +263,17 @@ export function calculateIndex(
     rubric,
     rubricTotal,
     frozen,
+    breakdown: {
+      cleanPulses: pulses.filter((e) => e.is_clean_fact).length,
+      totalPulses: pulses.length,
+      effectiveA: effectiveACount,
+      distinctIMVs: pEntries.length,
+      stalePenalty,
+      principles: principles.length,
+      uniqueProjects,
+      rawClarity,
+      rawExecution,
+      rawLearning,
+    },
   };
 }

@@ -215,8 +215,9 @@ export function OperatorPanel() {
           .map((p) => projectDepth(p.id, p.state === 'concluded'))
           .filter((d): d is number => d !== null);
         const worked = depths.length;
+        const sumPct = Math.round(depths.reduce((s, d) => s + d, 0) * 100); // soma dos níveis (pts)
         const rate = worked > 0 ? depths.reduce((s, d) => s + d, 0) / worked : null;
-        return { tipo, worked, total: ofType.length, rate };
+        return { tipo, worked, total: ofType.length, rate, sumPct };
       })
       .filter((r) => r.worked > 0);
   }, [projects, entries]);
@@ -1695,22 +1696,24 @@ export function OperatorPanel() {
             <div className="space-y-3">
               <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
               <div className="space-y-2 text-small">
-                {scenarioMaturity.map(({ tipo, worked, rate }) => {
+                {scenarioMaturity.map(({ tipo, worked, rate, sumPct }) => {
                   const pct = rate !== null ? Math.round(rate * 100) : 0;
                   const meta = maturityMeta(rate);
                   return (
                     <div key={tipo} className="flex justify-between border-b border-op-gray/20 pb-1 gap-2">
                       <span className="text-op-gray shrink-0">{SCENARIO_LABELS[tipo]}</span>
                       <span className="text-op-white text-right">
-                        média de {worked} projeto{worked !== 1 ? 's' : ''} trabalhado{worked !== 1 ? 's' : ''} ={' '}
+                        {sumPct} pts ÷ {worked * 100} ({worked} × 100) × 100 ={' '}
                         <strong className={meta.color}>{pct}%</strong>
                       </span>
                     </div>
                   );
                 })}
-                <p className="text-label text-op-gray pt-1">
-                  Projetos arquivados e projetos vazios (sem nenhum registro C/O/P/A) são
-                  excluídos do cálculo.
+                <p className="text-label text-op-gray pt-1 leading-relaxed">
+                  Cada projeto vale sua fase mais avançada em pontos (Captura 25, Organização 50,
+                  Prova 75, Aferição/Concluído 100). Somamos os pontos e dividimos pelo máximo
+                  possível (número de projetos × 100). Projetos arquivados e vazios (sem C/O/P/A)
+                  ficam de fora.
                 </p>
               </div>
             </div>
