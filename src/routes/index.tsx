@@ -1,4 +1,4 @@
-// HomeScreen — lista de projetos ordenada e Principle Recall passivo (REQ-NAV-05).
+// HomeScreen — lista de projetos ordenada (REQ-NAV-05).
 
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
@@ -7,7 +7,7 @@ import { GuestStorage } from '@/lib/guestStorage';
 import { wasAuthenticated } from '@/lib/authFlags';
 import { getInboxCount } from '@/lib/universalCapture';
 import { supabase } from '@/lib/supabase';
-import { listProjects, listPrinciples, updateProject, listAllEntries, deleteProject } from '@/lib/projects';
+import { listProjects, updateProject, listAllEntries, deleteProject } from '@/lib/projects';
 import { sortProjects, deriveProjectStatus } from '@/lib/projectState';
 import { detectOpenCycles } from '@/lib/openCycle';
 import { ProjectCard } from '@/components/project/ProjectCard';
@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { Project, Principle, Entry } from '@/types/database';
+import type { Project, Entry } from '@/types/database';
 
 // Status de fase COPA por projeto (Aferindo/Em Prova/Ciclo completo…), mesma
 // lógica do Dashboard. Função pura (sem hook) para poder ser chamada após o
@@ -52,7 +52,6 @@ function Home() {
   const [ready, setReady] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [principles, setPrinciples] = useState<Record<string, Principle | null>>({});
   const [name, setName] = useState('');
   const [communityLink, setCommunityLink] = useState<string | null>(null);
   const [inboxCount, setInboxCount] = useState(0);
@@ -128,17 +127,6 @@ function Home() {
     const [list, allEntries] = await Promise.all([listProjects(), listAllEntries()]);
     setProjects(list);
     setEntries(allEntries);
-    // Principle recall: para cada projeto blocked/new, busca 1 princípio
-    const recall: Record<string, Principle | null> = {};
-    await Promise.all(
-      list.map(async (p) => {
-        if (p.state === 'blocked' || p.state === 'new') {
-          const principles = await listPrinciples(p.id);
-          recall[p.id] = principles[0] ?? null;
-        }
-      }),
-    );
-    setPrinciples(recall);
     setReady(true);
   }
 
@@ -257,7 +245,6 @@ function Home() {
                     key={p.id}
                     project={p}
                     copaStatus={copaStatusMap[p.id]}
-                    recallPrinciple={principles[p.id]}
                     onEdit={() => navigate({ to: '/project/$id/edit', params: { id: p.id } })}
                     onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
                     onArchive={() => setArchivingId(p.id)}
@@ -346,7 +333,6 @@ function Home() {
                     key={p.id}
                     project={p}
                     copaStatus={copaStatusMap[p.id]}
-                    recallPrinciple={principles[p.id]}
                     onEdit={() => navigate({ to: '/project/$id/edit', params: { id: p.id } })}
                     onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
                     onArchive={() => setArchivingId(p.id)}

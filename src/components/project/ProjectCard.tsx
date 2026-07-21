@@ -1,6 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { MoreVertical } from 'lucide-react';
-import type { Project, Principle } from '@/types/database';
+import type { Project } from '@/types/database';
 import type { ExecutionPlan } from '@/types/app';
 import { ProjectStateIcon } from './ProjectStateIcon';
 import { ScenarioTypeChip } from './ScenarioTypeChip';
@@ -17,7 +17,6 @@ import {
 
 interface Props {
   project: Project;
-  recallPrinciple?: Principle | null;
   /** Status de fase COPA (deriveProjectStatus). Quando fornecido, substitui o
    *  estado simples pelo rótulo de fase (Aferindo/Em Prova/Ciclo completo…). */
   copaStatus?: { icon: string; label: string; color: string };
@@ -33,14 +32,11 @@ interface Props {
   onDelete?: () => void;
 }
 
-export function ProjectCard({ project, recallPrinciple, copaStatus, executionPlan, imvOverdue = false, onEdit, onConclude, onArchive, onPause, onResume, onDelete }: Props) {
+export function ProjectCard({ project, copaStatus, executionPlan, imvOverdue = false, onEdit, onConclude, onArchive, onPause, onResume, onDelete }: Props) {
   const navigate = useNavigate();
   const entryType = determineEntryType(project);
   const days = daysSince(project.last_entry_at);
   const showStale = days > 5 && days !== Infinity;
-  const showRecall =
-    recallPrinciple &&
-    (project.state === 'blocked' || project.state === 'new');
   const showMenu = !!(onEdit || onConclude || onArchive || onPause || onResume || onDelete);
 
   const cardTo =
@@ -168,21 +164,6 @@ export function ProjectCard({ project, recallPrinciple, copaStatus, executionPla
         >
           {cardContent}
         </Link>
-      )}
-
-      {showRecall && (
-        <div className="px-2">
-          <p className="text-label text-op-gray text-center">
-            ── Um princípio seu pode ajudar aqui. ──
-          </p>
-          <p className="text-small text-op-white italic mt-1">"{recallPrinciple.content}"</p>
-          <button
-            onClick={() => navigate({ to: '/diary' })}
-            className="text-label text-op-gray underline mt-1"
-          >
-            ver no banco
-          </button>
-        </div>
       )}
     </div>
   );
