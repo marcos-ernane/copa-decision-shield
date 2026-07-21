@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import { getProject, listEntries, listPrinciples } from '@/lib/projects';
+import { countDistinctIMVs } from '@/lib/imv';
 import type { Entry, Principle, Project } from '@/types/database';
 
 interface Props {
@@ -69,7 +70,8 @@ export function AccumulatedCapacityScreen({ projectId }: Props) {
       const copaCount = entries.filter(
         (e) => e.entry_type === 'structured_C',
       ).length;
-      const iMVCount = entries.filter((e) => e.entry_type === 'structured_P').length;
+      // IMVs distintos (dedup por ação) — mesma contagem do card no Dashboard.
+      const iMVCount = countDistinctIMVs(entries);
       const apaCount = entries.filter((e) => e.entry_type === 'structured_A').length;
       const principleCount = principles.filter((p) => !p.is_archived).length;
       const pulseCount = entries.filter((e) => e.entry_type === 'pulse').length;
