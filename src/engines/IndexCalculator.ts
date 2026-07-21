@@ -28,8 +28,8 @@ export interface IndexBreakdown {
   quickReviews: number;   // revisões rápidas (contam 0,7 cada)
   effectiveA: number;     // APAs + quick_reviews × 0,7
   distinctIMVs: number;   // structured_P deduplicados
-  staleIMVs: number;      // IMVs paradas (>7 dias sem APA)
-  stalePenalty: number;   // penalidade em pontos = staleIMVs × 5
+  staleIMVs: number;      // IMVs paradas (>10 dias sem APA)
+  stalePenalty: number;   // penalidade em pontos = staleIMVs × 1
   principles: number;
   uniqueProjects: number;
   rawClarity: number;
