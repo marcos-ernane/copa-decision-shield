@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 import type { Entry } from '@/types/database';
+import { computeLayerDomain } from '@/lib/layerDomain';
 
 const PULSO_WEIGHT = 1;
 const ANALISE_WEIGHT = 3;
@@ -219,102 +220,7 @@ export function OperatorPanel() {
       .filter((r) => r.worked > 0);
   }, [projects, entries]);
 
-  const layerDifficulty = useMemo(() => {
-    const layers: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia', 'escala'];
-    const layerSet = new Set<string>(layers);
-
-    const iqiOf = (e: Entry): number => {
-      const c = e.content as { reversible?: boolean; cheap?: boolean; specific?: boolean; measurable?: boolean };
-      return ((c.reversible ? 1 : 0) + (c.cheap ? 1 : 0) + (c.specific ? 1 : 0) + (c.measurable ? 1 : 0)) / 4;
-    };
-
-    // Fechamento REAL por vínculo (APA ou quick_review com linked_to → P.id),
-    // mesma lógica do detectOpenCycles. Evita o crédito cruzado da fórmula antiga,
-    // em que qualquer APA posterior "fechava" todos os IMVs anteriores do projeto.
-    const closedByLink = new Set(
-      entries
-        .filter((e) => (e.entry_type === 'structured_A' || e.entry_type === 'quick_review') && e.linked_to)
-        .map((e) => e.linked_to as string),
-    );
-
-    // 1. Grupos distintos de IMV — dedup por (projeto + ação); re-salvamentos contam 1×.
-    //    Guarda maior IQI, data mais antiga e se algum membro foi fechado por vínculo.
-    type Group = { projectId: string; layer: string; iqi: number; ts: number; closed: boolean };
-    const groups = new Map<string, Group>();
-    for (const e of entries) {
-      if (e.entry_type !== 'structured_P') continue;
-      const layer = e.layer_at_entry;
-      if (!layer || !layerSet.has(layer)) continue;
-      const action = ((e.content as { action?: string }).action ?? '').trim().toLowerCase();
-      const key = `${e.project_id}|${action || e.id}`;
-      const ts = new Date(e.created_at).getTime();
-      const linkedClosed = closedByLink.has(e.id);
-      const prev = groups.get(key);
-      if (!prev) {
-        groups.set(key, { projectId: e.project_id, layer, iqi: iqiOf(e), ts, closed: linkedClosed });
-      } else {
-        groups.set(key, {
-          projectId: prev.projectId,
-          layer: prev.layer,
-          iqi: Math.max(prev.iqi, iqiOf(e)),
-          ts: Math.min(prev.ts, ts),
-          closed: prev.closed || linkedClosed,
-        });
-      }
-    }
-    const groupList = [...groups.values()];
-    if (groupList.length === 0) return [];
-
-    // 2. Pareamento 1:1 temporal (global) para APAs legadas SEM vínculo: cada uma
-    //    fecha no máximo UM IMV distinto ainda aberto, criado antes dela, no mesmo
-    //    projeto. Credita o fluxo sequencial C→O→P→A sem reintroduzir crédito cruzado.
-    const unlinkedApasByProject = new Map<string, number[]>();
-    for (const e of entries) {
-      if (e.entry_type === 'structured_A' && !e.linked_to) {
-        const arr = unlinkedApasByProject.get(e.project_id) ?? [];
-        arr.push(new Date(e.created_at).getTime());
-        unlinkedApasByProject.set(e.project_id, arr);
-      }
-    }
-    const openByProject = new Map<string, Group[]>();
-    for (const g of groupList) {
-      if (g.closed) continue;
-      const arr = openByProject.get(g.projectId) ?? [];
-      arr.push(g);
-      openByProject.set(g.projectId, arr);
-    }
-    for (const [projectId, open] of openByProject) {
-      const apas = [...(unlinkedApasByProject.get(projectId) ?? [])].sort((a, b) => a - b);
-      if (apas.length === 0) continue;
-      open.sort((a, b) => a.ts - b.ts);
-      let ai = 0;
-      for (const g of open) {
-        while (ai < apas.length && apas[ai] <= g.ts) ai++; // APA precisa ser posterior ao IMV
-        if (ai >= apas.length) break;
-        g.closed = true;
-        ai++; // APA consumida (1:1)
-      }
-    }
-
-    // 3. Agrega por camada: domínio = 50% qualidade + 50% fechamento real.
-    return layers
-      .map((layer) => {
-        const gs = groupList.filter((g) => g.layer === layer);
-        if (gs.length === 0) return null;
-        const n = gs.length;
-        const avgIQI = gs.reduce((s, g) => s + g.iqi, 0) / n;
-        const closeRate = gs.filter((g) => g.closed).length / n;
-        const difficulty = Math.round((avgIQI * 0.5 + closeRate * 0.5) * 100);
-        return {
-          layer,
-          difficulty,
-          imvCount: n,
-          avgIQI: Math.round(avgIQI * 100),
-          followRate: Math.round(closeRate * 100),
-        };
-      })
-      .filter((r): r is NonNullable<typeof r> => r !== null);
-  }, [entries]);
+  const layerDifficulty = useMemo(() => computeLayerDomain(entries), [entries]);
 
   const registrationDepth = useMemo(() => {
     // Exclui entradas `passive`: são telemetria comportamental (route_visit,
