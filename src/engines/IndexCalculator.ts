@@ -163,7 +163,11 @@ export function calculateIndex(
   const effectiveACount = aEntries.length + qrEntries.length * 0.7;
   let execution = pEntries.length === 0 ? 0 : pct(effectiveACount, pEntries.length);
 
+  // IMV "parada": testada há mais de 10 dias sem nenhuma APA/revisão nesse período.
+  // Cada uma tira 1 ponto da Execução (sem teto — pode zerar). Janela e limite
+  // alinhados em 10 dias para não penalizar IMV aferida dentro do prazo.
   const now = Date.now();
+  const STALE_MS = 10 * 86400000;
   let stalePenalty = 0;
   let staleIMVs = 0;
   for (const p of pEntries) {
@@ -172,16 +176,16 @@ export function calculateIndex(
       (a) =>
         a.project_id === p.project_id &&
         new Date(a.created_at).getTime() > pTime &&
-        new Date(a.created_at).getTime() - pTime <= 7 * 86400000,
+        new Date(a.created_at).getTime() - pTime <= STALE_MS,
     );
     const hasQuickReview = qrEntries.some(
       (qr) =>
         qr.linked_to === p.id &&
         new Date(qr.created_at).getTime() > pTime &&
-        new Date(qr.created_at).getTime() - pTime <= 7 * 86400000,
+        new Date(qr.created_at).getTime() - pTime <= STALE_MS,
     );
-    if (!hasApa && !hasQuickReview && now - pTime > 7 * 86400000) {
-      stalePenalty += 5;
+    if (!hasApa && !hasQuickReview && now - pTime > STALE_MS) {
+      stalePenalty += 1;
       staleIMVs += 1;
     }
   }

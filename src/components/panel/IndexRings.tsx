@@ -28,9 +28,9 @@ const RING_INFO: Record<RingKey, RingInfo> = {
   },
   execution: {
     title: 'Execução',
-    what: 'Mede quantas IMVs testadas geraram uma Análise Pós-Ação (APA) em até 7 dias.',
-    improve: 'Após testar uma IMV, registre o Formato A com o resultado — mesmo que seja negativo. IMVs sem APA depois de 7 dias reduzem o índice em -5 pontos cada.',
-    ceiling: '100. Penalidades por IMVs abandonadas podem manter o valor baixo mesmo com muitos registros.',
+    what: 'Mede quantas IMVs testadas geraram uma Análise Pós-Ação (APA) em até 10 dias.',
+    improve: 'Após testar uma IMV, registre o Formato A com o resultado — mesmo que seja negativo. Cada IMV deixada mais de 10 dias sem APA tira -1 ponto (sem limite). Não deixe IMVs paradas: se acumularem, a penalidade pode zerar a Execução. Registre a APA ou arquive o projeto para parar a contagem negativa.',
+    ceiling: '100. A penalidade por IMVs paradas não tem teto — muitas IMVs sem APA podem manter o valor em 0 mesmo com muitos registros.',
   },
   learning: {
     title: 'Aprendizado',
@@ -109,7 +109,7 @@ function ringFormula(key: RingKey, b: IndexBreakdown): { lines: string[]; raw: n
         ? `${fmtNum(b.effectiveA)} aferições (${b.apas} APAs + ${b.quickReviews} revisões rápidas × 0,7)`
         : `${b.apas} APA${b.apas !== 1 ? 's' : ''}`;
       const pen = b.stalePenalty > 0
-        ? ` − ${b.stalePenalty} pts (${b.staleIMVs} IMV${b.staleIMVs !== 1 ? 's' : ''} parada${b.staleIMVs !== 1 ? 's' : ''} × 5)`
+        ? ` − ${b.stalePenalty} pts (${b.staleIMVs} IMV${b.staleIMVs !== 1 ? 's' : ''} parada${b.staleIMVs !== 1 ? 's' : ''} há +10 dias × 1)`
         : '';
       lines.push(`${numerador} ÷ ${b.distinctIMVs} IMVs × 100${pen} = ${b.rawExecution}`);
       return { lines, raw: b.rawExecution };
@@ -201,6 +201,18 @@ export function IndexRings({ clarity, execution, learning, composite, level, bre
                         mesmo dia, então o exibido sobe gradualmente até o valor calculado.
                       </p>
                     )}
+                  </div>
+                )}
+                {openRing === 'execution' && breakdown && breakdown.staleIMVs > 0 && (
+                  <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3">
+                    <p className="text-red-400 font-semibold text-small">
+                      ⚠ {breakdown.staleIMVs} IMV{breakdown.staleIMVs !== 1 ? 's' : ''} parada{breakdown.staleIMVs !== 1 ? 's' : ''} há mais de 10 dias
+                    </p>
+                    <p className="text-foreground mt-1">
+                      Cada uma tira 1 ponto da Execução, sem limite — por isso o índice pode chegar a 0.
+                      Registre a APA (Formato A) de cada IMV testada, ou arquive os projetos que não vai
+                      retomar, para parar a contagem negativa.
+                    </p>
                   </div>
                 )}
               </div>
