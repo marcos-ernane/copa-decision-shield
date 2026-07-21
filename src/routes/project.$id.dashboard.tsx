@@ -685,37 +685,18 @@ function ProjectDashboard() {
           };
 
           return showInteractive ? (
-            <button
-              type="button"
-              onClick={handleStateClick}
-              className="w-full text-left rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-1 hover:bg-op-navy-elevated transition-colors"
-            >
+            <div className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
               <h2 className="text-label text-op-gray uppercase">Onde estou agora</h2>
-              <div className="flex items-center justify-between">
-                <p className={`text-heading ${stateDisplay.color}`}>
-                  {stateDisplay.icon} {stateDisplay.label}
-                </p>
-                <ChevronRight className="size-4 text-op-gray shrink-0" />
-              </div>
+              <p className={`text-heading ${stateDisplay.color}`}>
+                {stateDisplay.icon} {stateDisplay.label}
+              </p>
               {isBlocked ? (
                 <p className="text-small text-op-gray">Execute um diagnóstico para destravar</p>
               ) : (
                 <CopaStepsRow done={done} next={nextPhase} allDone={allDone} />
               )}
               {!isBlocked && allDone && (
-                <div className="mt-1 space-y-1.5">
-                  <p className="text-small text-op-gray">Ciclo completo — ver linha do tempo</p>
-                  <button
-                    type="button"
-                    className="text-small text-red-500 hover:text-red-400 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void navigate({ to: '/project/$id/conclude', params: { id } });
-                    }}
-                  >
-                    Encerrar o Projeto →
-                  </button>
-                </div>
+                <p className="text-small text-op-gray">Ciclo completo — ver linha do tempo</p>
               )}
               {currentState === 'proving' && totalDays > 0 && (
                 <div className="pt-1">
@@ -723,16 +704,38 @@ function ProjectDashboard() {
                 </div>
               )}
               {!isBlocked && imvDeadlineStatus === 'expired' && pDeadline && (
-                <p className="text-small mt-1" style={{ color: '#dc2626' }}>
+                <p className="text-small" style={{ color: '#dc2626' }}>
                   IMV vencida em {fmtDeadlineDDMM(pDeadline)} — Verifique.
                 </p>
               )}
               {!isBlocked && imvDeadlineStatus === 'today' && pDeadline && (
-                <p className="text-small mt-1" style={{ color: '#b45309' }}>
+                <p className="text-small" style={{ color: '#b45309' }}>
                   Atenção: IMV vence hoje {fmtDeadlineDDMM(pDeadline)}.
                 </p>
               )}
-            </button>
+              {/* Botão de entrada principal */}
+              <button
+                type="button"
+                onClick={handleStateClick}
+                className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-small font-semibold transition-colors"
+                style={{ backgroundColor: '#2563EB', color: '#ffffff' }}
+              >
+                {isBlocked
+                  ? 'Iniciar diagnóstico →'
+                  : allDone
+                  ? 'Ver histórico →'
+                  : 'Entrar no projeto →'}
+              </button>
+              {!isBlocked && allDone && (
+                <button
+                  type="button"
+                  className="w-full text-center text-small text-red-500 hover:text-red-400 transition-colors pt-0.5"
+                  onClick={() => void navigate({ to: '/project/$id/conclude', params: { id } })}
+                >
+                  Encerrar o Projeto →
+                </button>
+              )}
+            </div>
           ) : (
             <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
               <h2 className="text-label text-op-gray uppercase">Onde estou agora</h2>
