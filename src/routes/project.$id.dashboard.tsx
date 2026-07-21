@@ -32,6 +32,7 @@ import { formatCurrency, corRelacao } from '@/lib/costBenefit';
 import { ActionPlanSheet } from '@/components/project/ActionPlanSheet';
 import { CostBenefitSheet } from '@/components/register/CostBenefitSheet';
 import { detectOpenCycles } from '@/lib/openCycle';
+import { countDistinctIMVs, distinctIMVs } from '@/lib/imv';
 import { canCompose } from '@/lib/clarityComposer';
 import { OpenCycleCard } from '@/components/project/OpenCycleCard';
 import { computeProjectState, deriveProjectStatus, daysSince } from '@/lib/projectState';
@@ -206,7 +207,8 @@ interface IQIResult {
 }
 
 function computeIQI(entries: Entry[]): IQIResult | null {
-  const imvs = entries.filter((e) => e.entry_type === 'structured_P');
+  // IMVs distintos: re-salvamentos do mesmo IMV não devem pesar mais na média.
+  const imvs = distinctIMVs(entries);
   if (imvs.length === 0) return null;
 
   let totalScore = 0;
@@ -366,21 +368,22 @@ function ProjectDashboard() {
     return velocityColumns.reduce((sum, col) => sum + (col.days ?? 0), 0);
   })();
 
-  // "IMVs testadas" = IMVs distintas por texto de ação (mesma deduplicação do Diário).
-  // O projeto pode ter múltiplas entradas structured_P com o mesmo texto de ação (re-submissões),
-  // que o Diário colapsa em "1 registro". Aqui fazemos o mesmo para consistência.
-  const imvCount = new Set(
-    entries
-      .filter((e) => e.entry_type === 'structured_P')
-      .map((e) => {
-        const action = ((e.content as { action?: string }).action ?? '').trim();
-        return action || e.id; // sem texto de ação → usa id para não fundir entradas vazias
-      }),
-  ).size;
+  // "IMVs testadas" — helper único (dedup por ação), igual ao card de Capacidade
+  // e ao Mapa de Gargalos. "análises" exclui telemetria (passive) e colapsa IMVs
+  // re-salvados, para bater com o que o Diário efetivamente mostra.
+  const imvCount = countDistinctIMVs(entries);
+  const analiseCount =
+    entries.filter(
+      (e) =>
+        e.entry_type !== 'pulse' &&
+        e.entry_type !== 'decision_record' &&
+        e.entry_type !== 'passive' &&
+        e.entry_type !== 'structured_P',
+    ).length + imvCount;
 
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
-    structured: entries.filter((e) => e.entry_type !== 'pulse' && e.entry_type !== 'decision_record').length,
+    structured: analiseCount,
     imvs: imvCount,
     apas: entries.filter((e) => e.entry_type === 'structured_A' && e.copa_phase === 'A').length,
     principles: principles.length,
