@@ -317,16 +317,46 @@ export function OperatorPanel() {
   }, [entries]);
 
   const registrationDepth = useMemo(() => {
-    if (entries.length === 0) return null;
+    // Exclui entradas `passive`: são telemetria comportamental (route_visit,
+    // register_abandoned, etc.) e sessões de Clareza (kind='clarity_session'),
+    // não registros do usuário. Contá-las poluía "Pulsos" e o denominador.
+    const real = entries.filter((e) => e.entry_type !== 'passive');
+    if (real.length === 0) return null;
 
-    const pulsoEntries = entries.filter((e) =>
-      ['pulse', 'passive', 'protocol_5min'].includes(e.entry_type),
+    // Deduplica re-salvamentos: mesma entrada (tipo + projeto + texto principal)
+    // conta 1×, igual ao Diário. Evita inflar "Análises" com IMVs repetidos.
+    const previewKey = (e: Entry): string => {
+      const c = e.content as Record<string, unknown>;
+      const pick = (k: string) => (typeof c[k] === 'string' ? (c[k] as string) : '');
+      let text = '';
+      switch (e.entry_type) {
+        case 'pulse':        text = pick('text'); break;
+        case 'structured_C': text = pick('fact_text'); break;
+        case 'structured_O': text = pick('main_bottleneck') || pick('frictions'); break;
+        case 'structured_P': text = pick('action'); break;
+        case 'structured_A': text = pick('principle_text') || pick('what_happened'); break;
+        case 'protocol_5min': text = pick('fact_text'); break;
+        default: text = ''; // tipos sem texto natural → não deduplica
+      }
+      const norm = text.trim().toLowerCase();
+      return norm ? `${e.entry_type}|${e.project_id}|${norm}` : `id|${e.id}`;
+    };
+    const seen = new Set<string>();
+    const deduped = real.filter((e) => {
+      const k = previewKey(e);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+
+    const pulsoEntries = deduped.filter((e) =>
+      ['pulse', 'protocol_5min'].includes(e.entry_type),
     );
-    const analiseEntries = entries.filter((e) =>
+    const analiseEntries = deduped.filter((e) =>
       ['structured_C', 'structured_O', 'structured_P', 'copa_session', 'pressure_session',
         'creative_session', 'simulation_session'].includes(e.entry_type),
     );
-    const reflexaoEntries = entries.filter((e) =>
+    const reflexaoEntries = deduped.filter((e) =>
       ['structured_A', 'corrective'].includes(e.entry_type),
     );
 
@@ -335,11 +365,12 @@ export function OperatorPanel() {
     const reflexoesWeight = reflexaoEntries.length * REFLEXAO_WEIGHT;
     const totalWeight = pulsosWeight + analisesWeight + reflexoesWeight;
 
-    const score = Math.round((totalWeight / (entries.length * 5)) * 100);
+    const denom = deduped.length;
+    const score = denom > 0 ? Math.round((totalWeight / (denom * 5)) * 100) : 0;
 
     return {
       score,
-      total: entries.length,
+      total: denom,
       pulsos: pulsoEntries.length,
       analises: analiseEntries.length,
       reflexoes: reflexaoEntries.length,
@@ -1581,7 +1612,8 @@ export function OperatorPanel() {
               <p className="text-body text-op-white">
                 Mede o quanto seus registros vão além da superfície. Cada categoria tem um peso fixo:
                 Pulso = 1 · Análise = 3 · Reflexão = 5. Quem registra mais APAs e corretivos
-                tem profundidade mais alta.
+                tem profundidade mais alta. Eventos automáticos do sistema e registros repetidos
+                não entram na conta.
               </p>
               <ul className="mt-2 space-y-1 text-small text-op-gray">
                 <li><span className="text-green-400 font-semibold">Registro profundo</span> — 75 ou mais</li>
@@ -1613,7 +1645,7 @@ export function OperatorPanel() {
                   </span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Máximo possível ({registrationDepth.total} × 5)</span>
+                  <span className="text-op-gray">Máximo possível ({registrationDepth.total} registros × 5)</span>
                   <span className="text-op-white">{registrationDepth.total * 5} pts</span>
                 </div>
                 <div className="flex justify-between pt-1">
