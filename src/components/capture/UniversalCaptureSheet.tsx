@@ -17,13 +17,13 @@ import type { ProjectState } from '@/types/app';
 const INACTIVE_STATES: ProjectState[] = ['concluded', 'archived', 'paused'];
 
 const HELP_CONTENT = {
-  title: 'Captura Universal',
+  title: 'Capturar (Pulso e Inbox)',
   paragraphs: [
-    'A Captura Universal é o ponto de entrada mais rápido do app. Use quando algo surgir na sua cabeça e você não quiser perder o pensamento — mesmo sem saber ainda a qual projeto ele pertence.',
-    'Como funciona: escreva ou dite o que está acontecendo. Depois, escolha se quer vincular já a um projeto ativo ou deixar a captura solta no Inbox.',
-    'Vincular a um projeto: a captura é salva imediatamente como um pulso naquele projeto. Ideal quando você já sabe onde o pensamento se encaixa.',
-    'Deixar no Inbox (sem seleção): a captura fica guardada em espera. Quando você tiver mais clareza, acessa o Inbox, analisa cada captura e decide: abrir no COPA completo, vincular a um projeto existente ou descartar.',
-    'O Inbox nunca bloqueia seu fluxo. Capture agora, processe quando fizer sentido.',
+    'Capturar é o atalho mais rápido para registrar um pensamento antes de perdê-lo — mesmo sem saber ainda a qual projeto ele pertence. É por aqui que você cria um Pulso.',
+    'Como funciona: escreva ou dite o que está acontecendo. Depois, escolha se quer vincular já a um projeto ou deixar solto no Inbox.',
+    'Com um projeto: o registro é salvo imediatamente como um Pulso naquele projeto — o registro rápido (< 30s) que aparece na Linha do Tempo, nos filtros e no Painel. Use quando já sabe onde o pensamento se encaixa.',
+    'Sem projeto (Inbox): fica guardado em espera. Quando tiver mais clareza, você acessa o Inbox e decide: transformar em Pulso, abrir no COPA completo (Captura estruturada) ou descartar.',
+    'Ou seja: Capturar é a ação; Pulso é o registro que ela cria quando há um projeto. O Inbox nunca bloqueia seu fluxo — capture agora, organize quando fizer sentido.',
   ],
 };
 
@@ -170,7 +170,8 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
                 </button>
               </div>
               <p className="text-small text-op-gray mt-1">
-                Capture agora, com ou sem projeto. Processe depois.
+                Com um projeto, sua nota vira um <span className="text-op-white">Pulso</span>.
+                Sem projeto, fica no <span className="text-op-white">Inbox</span> para organizar depois.
               </p>
             </DrawerHeader>
 
@@ -263,7 +264,11 @@ export function UniversalCaptureSheet({ open, onOpenChange, onSaved }: Props) {
                   disabled={!text.trim() || saving}
                   onClick={() => void handleSave()}
                 >
-                  {saving ? 'Salvando…' : 'Capturar'}
+                  {saving
+                    ? 'Salvando…'
+                    : selectedProject
+                    ? 'Registrar pulso'
+                    : 'Enviar ao Inbox'}
                 </Button>
                 <Button
                   variant="outline"
