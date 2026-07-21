@@ -1,5 +1,4 @@
-import { Link, useNavigate, useRouter } from '@tanstack/react-router';
-import { MoreVertical } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import { useMemo, useState } from 'react';
@@ -7,34 +6,12 @@ import { usePanelData } from '@/hooks/usePanelData';
 import { GuestStorage } from '@/lib/guestStorage';
 import { calculateIndex } from '@/engines/IndexCalculator';
 import { generatePatterns } from '@/engines/PatternEngine';
-import { updateProject } from '@/lib/projects';
-import { STATE_ORDER, deriveProjectStatus } from '@/lib/projectState';
-import { detectOpenCycles } from '@/lib/openCycle';
 import { IndexRings } from './IndexRings';
 import { OperatorRubricCard } from './OperatorRubricCard';
 import { PatternCards } from './PatternCards';
 import { QualitativeEvolution } from './QualitativeEvolution';
 import { BottleneckMapSection } from './BottleneckMapSection';
 import { buildBottleneckMap } from '@/lib/bottleneckMap';
-import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
-import { LayerChip } from '@/components/project/LayerChip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
 import type { Entry } from '@/types/database';
 import { computeLayerDomain } from '@/lib/layerDomain';
@@ -103,11 +80,7 @@ function maturityMeta(rate: number | null): { label: string; color: string; barC
 }
 
 export function OperatorPanel() {
-  const navigate = useNavigate();
-  const { projects, entries, principles, baselines, loading, refresh } = usePanelData();
-  const [archivingId, setArchivingId] = useState<string | null>(null);
-  const [pausingId, setPausingId] = useState<string | null>(null);
-  const [pauseReason, setPauseReason] = useState('');
+  const { projects, entries, principles, baselines, loading } = usePanelData();
   const [showMaturitySheet, setShowMaturitySheet] = useState(false);
   const [showDifficultySheet, setShowDifficultySheet] = useState(false);
   const [showDifficultyLearnMore, setShowDifficultyLearnMore] = useState(false);
@@ -117,44 +90,6 @@ export function OperatorPanel() {
   const [showGrowthSheet, setShowGrowthSheet] = useState(false);
   const [showPressureSheet, setShowPressureSheet] = useState(false);
   const [showRubricCorrelationSheet, setShowRubricCorrelationSheet] = useState(false);
-
-  async function handleArchive() {
-    if (!archivingId) return;
-    await updateProject(archivingId, { archived_at: new Date().toISOString(), state: 'archived' });
-    setArchivingId(null);
-    void refresh();
-  }
-
-  async function handlePause() {
-    if (!pausingId) return;
-    const reason = pauseReason.trim() || 'Pausado';
-    await updateProject(pausingId, { state: 'paused', pause_reason: reason });
-    setPausingId(null);
-    setPauseReason('');
-    void refresh();
-  }
-
-  async function handleResume(id: string) {
-    await updateProject(id, { state: 'new', pause_reason: '' });
-    void refresh();
-  }
-
-  // Apenas projetos ativos, ordenados por prioridade de estado — PRD Seção 12.1
-  const activeProjects = useMemo(
-    () =>
-      projects
-        .filter((p) => p.state !== 'archived' && p.state !== 'concluded')
-        .sort((a, b) => {
-          const ia = STATE_ORDER.indexOf(a.state);
-          const ib = STATE_ORDER.indexOf(b.state);
-          if (ia !== ib) return ia - ib;
-          return (
-            new Date(b.last_entry_at ?? b.created_at).getTime() -
-            new Date(a.last_entry_at ?? a.created_at).getTime()
-          );
-        }),
-    [projects],
-  );
 
   const profile = GuestStorage.getProfile();
   const baselineCompleted = !!profile?.baseline_completed || baselines.length > 0;
@@ -168,20 +103,6 @@ export function OperatorPanel() {
     [entries, principles, projects],
   );
   const bottleneckMap = useMemo(() => buildBottleneckMap(entries), [entries]);
-
-  const scenarioCount = useMemo(() => {
-    const m = new Map<ScenarioType, number>();
-    for (const p of projects) if (p.scenario_type) m.set(p.scenario_type, (m.get(p.scenario_type) ?? 0) + 1);
-    return Array.from(m.entries());
-  }, [projects]);
-
-  const layerMode = useMemo(() => {
-    const m = new Map<OperationalLayer, number>();
-    for (const p of projects) if (p.current_layer) m.set(p.current_layer, (m.get(p.current_layer) ?? 0) + 1);
-    let best: [OperationalLayer, number] | null = null;
-    for (const e of m) if (!best || e[1] > best[1]) best = e;
-    return best;
-  }, [projects]);
 
   const scenarioMaturity = useMemo(() => {
     const types: ScenarioType[] = ['fluxo', 'processo', 'oferta', 'relacionamento', 'pressao'];
@@ -529,106 +450,6 @@ export function OperatorPanel() {
             baselines={baselines}
             baselineCompleted={baselineCompleted}
           />
-        </section>
-
-        {/* Seção 3 — Visão geral de projetos */}
-        <section className="space-y-2">
-          <h2 className="text-heading text-foreground">Visão geral de projetos</h2>
-          {activeProjects.length === 0 ? (
-            <p className="text-small text-muted-foreground">Nenhum projeto ativo.</p>
-          ) : (
-            <ul className="space-y-2">
-              {activeProjects.map((p) => {
-                const projectEntries = entries.filter((e) => e.project_id === p.id);
-                // Passa hasOpenCycles (IMV sem APA) para bater com o Dashboard:
-                // sem isso, um projeto com ciclo aberto aparecia como "Ciclo completo".
-                const hasOpenCycles = detectOpenCycles(projectEntries).length > 0;
-                const status = deriveProjectStatus(p, projectEntries, hasOpenCycles);
-                return (
-                  <li key={p.id} className="flex items-stretch rounded-md border border-op-gray/30 bg-op-navy overflow-hidden">
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        to="/project/$id/dashboard"
-                        params={{ id: p.id }}
-                        className="block p-3 hover:bg-accent space-y-1"
-                      >
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`text-base leading-none ${status.color}`} aria-hidden>{status.icon}</span>
-                          <span className={`text-small font-medium ${status.color}`}>{status.label}</span>
-                          <span className="text-small text-foreground font-medium">{p.name}</span>
-                        </div>
-                        {(p.scenario_type || p.current_layer) && (
-                          <div className="flex gap-1 flex-wrap pl-5">
-                            {p.scenario_type && <ScenarioTypeChip type={p.scenario_type} />}
-                            {p.current_layer && <LayerChip layer={p.current_layer} />}
-                          </div>
-                        )}
-                      </Link>
-                      {status.label === 'Ciclo completo' && (
-                        <div className="px-3 pb-2.5 border-t border-op-gray/20 pt-2">
-                          <Link
-                            to="/project/$id/conclude"
-                            params={{ id: p.id }}
-                            className="text-small text-red-500 hover:text-red-400 transition-colors"
-                          >
-                            Encerrar o Projeto →
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          className="p-2 mr-1 rounded-md hover:bg-accent shrink-0"
-                          aria-label="Mais opções"
-                        >
-                          <MoreVertical className="size-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem
-                          onClick={() => navigate({ to: '/project/$id/dashboard', params: { id: p.id } })}
-                        >
-                          Ver Dashboard
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {p.state === 'paused' ? (
-                          <DropdownMenuItem onClick={() => void handleResume(p.id)}>
-                            Retomar projeto
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => setPausingId(p.id)}>
-                            Pausar projeto
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          onClick={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
-                        >
-                          Concluir projeto
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => setArchivingId(p.id)}
-                        >
-                          Arquivar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          {(scenarioCount.length > 0 || layerMode) && (
-            <div className="text-label text-muted-foreground space-y-0.5 pt-1">
-              {scenarioCount.length > 0 && (
-                <div>Seus projetos por tipo: {scenarioCount.map(([k, n]) => `${k} (${n})`).join(' · ')}</div>
-              )}
-              {layerMode && (
-                <div>Camada mais frequente: {layerMode[0]} ({layerMode[1]} projeto{layerMode[1] > 1 ? 's' : ''})</div>
-              )}
-            </div>
-          )}
         </section>
 
         {/* Seção 3B — Maturidade por Tipo de Cenário */}
@@ -1722,52 +1543,6 @@ export function OperatorPanel() {
         </div>
       )}
 
-      {/* Dialog: Pausar */}
-      <AlertDialog open={!!pausingId} onOpenChange={(v) => { if (!v) { setPausingId(null); setPauseReason(''); } }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Pausar projeto</AlertDialogTitle>
-            <AlertDialogDescription>
-              Informe o motivo da pausa. Ele ficará visível no projeto enquanto estiver pausado.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <input
-            value={pauseReason}
-            onChange={(e) => setPauseReason(e.target.value)}
-            placeholder="Ex: aguardando resultado externo"
-            className="mt-2 w-full rounded-xl border border-op-gray/30 bg-op-navy text-op-white placeholder:text-op-gray px-3 py-2 text-sm"
-          />
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => { setPausingId(null); setPauseReason(''); }}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => void handlePause()}
-              disabled={!pauseReason.trim()}
-              className="disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Confirmar pausa
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Dialog: Arquivar */}
-      <AlertDialog open={!!archivingId} onOpenChange={(v) => !v && setArchivingId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Arquivar projeto?</AlertDialogTitle>
-            <AlertDialogDescription>
-              O projeto será removido da lista ativa. Nenhum dado é apagado. Use "Concluir" se o
-              Norte foi alcançado.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void handleArchive()}>Arquivar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
