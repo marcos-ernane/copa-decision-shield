@@ -1347,6 +1347,14 @@ export interface CostBenefitData {
 
 **Branch ativa:** `claude/kind-bardeen-rKhPC`
 
+**[REGRA PERMANENTE — MOBILE OBRIGATÓRIO]** ~95% dos usuários acessam pelo celular. **Toda e qualquer alteração, ajuste ou nova implementação de código DEVE estar configurada para o uso correto no celular** — nunca só no desktop. Antes de considerar qualquer mudança pronta, verificar:
+- **Responsividade a partir de 375px** — sem largura fixa que estoure a tela, sem overflow horizontal; usar `max-w-*`, `flex-wrap`, `min-w-0`, `truncate`/`line-clamp` conforme necessário.
+- **Safe-area (iPhone com notch/home indicator)** — elementos fixos/sticky respeitam `env(safe-area-inset-*)`. Padrões já estabelecidos: BottomNav e FABs com `env(safe-area-inset-bottom)`; headers `sticky top-0` cobertos pela regra global em `src/styles.css`. Novos elementos fixos no rodapé/topo devem seguir o mesmo padrão.
+- **Alvos de toque** — botões/áreas clicáveis com tamanho confortável para o dedo.
+- **Sem `overflow-x: hidden`** que quebre `sticky` — usar `overflow-x: clip` quando precisar conter scroll horizontal.
+- **Teclado e telas pequenas** — sheets/modais roláveis (`max-h-[..vh] overflow-y-auto`); conteúdo não some atrás da BottomNav (usar o padding do AppShell).
+Em resumo: mobile-first não é opcional — é critério de "pronto" para qualquer entrega.
+
 **Roteamento:** TanStack Router v1 (NOT React Router). Rotas em `src/routes/`, arquivo gerado em `src/routeTree.gen.ts`. Rotas usam convenção de arquivos (`.` como separador de segmento).
 
 **Persistência dual:** Todos os dados do usuário devem funcionar em modo guest via `src/lib/guestStorage.ts` (localStorage/Capacitor Preferences). Ao autenticar, migrar via `src/lib/migrateGuest.ts`. Em operações de escrita/leitura, sempre checar `AuthState` e rotear para Supabase ou GuestStorage.
