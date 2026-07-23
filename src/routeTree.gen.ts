@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ReportRouteImport } from './routes/report'
 import { Route as ReadingModeRouteImport } from './routes/reading-mode'
 import { Route as Protocol5RouteImport } from './routes/protocol5'
 import { Route as PressureRouteImport } from './routes/pressure'
@@ -64,6 +65,11 @@ import { Route as ProjectIdReviewEntryIdRouteImport } from './routes/project.$id
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReadingModeRoute = ReadingModeRouteImport.update({
@@ -333,6 +339,7 @@ export interface FileRoutesByFullPath {
   '/pressure': typeof PressureRouteWithChildren
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
+  '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/pressure': typeof PressureRouteWithChildren
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
+  '/report': typeof ReportRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
@@ -437,6 +445,7 @@ export interface FileRoutesById {
   '/pressure': typeof PressureRouteWithChildren
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
+  '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
@@ -492,6 +501,7 @@ export interface FileRouteTypes {
     | '/pressure'
     | '/protocol5'
     | '/reading-mode'
+    | '/report'
     | '/settings'
     | '/auth/callback'
     | '/baseline/new'
@@ -543,6 +553,7 @@ export interface FileRouteTypes {
     | '/pressure'
     | '/protocol5'
     | '/reading-mode'
+    | '/report'
     | '/auth/callback'
     | '/baseline/new'
     | '/compass/friction'
@@ -595,6 +606,7 @@ export interface FileRouteTypes {
     | '/pressure'
     | '/protocol5'
     | '/reading-mode'
+    | '/report'
     | '/settings'
     | '/auth/callback'
     | '/baseline/new'
@@ -649,6 +661,7 @@ export interface RootRouteChildren {
   PressureRoute: typeof PressureRouteWithChildren
   Protocol5Route: typeof Protocol5Route
   ReadingModeRoute: typeof ReadingModeRoute
+  ReportRoute: typeof ReportRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   AuthCallbackRoute: typeof AuthCallbackRoute
   BaselineNewRoute: typeof BaselineNewRoute
@@ -667,6 +680,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reading-mode': {
@@ -1148,6 +1168,7 @@ const rootRouteChildren: RootRouteChildren = {
   PressureRoute: PressureRouteWithChildren,
   Protocol5Route: Protocol5Route,
   ReadingModeRoute: ReadingModeRoute,
+  ReportRoute: ReportRoute,
   SettingsRoute: SettingsRouteWithChildren,
   AuthCallbackRoute: AuthCallbackRoute,
   BaselineNewRoute: BaselineNewRoute,
