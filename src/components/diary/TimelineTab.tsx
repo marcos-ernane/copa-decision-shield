@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
-import { Inbox as InboxIcon, X, LayoutList, List, BarChart2, Filter, ChevronDown, ChevronRight, FilePlus2, ClipboardList } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { Inbox as InboxIcon, X, BarChart2, Filter, ChevronDown, ChevronRight, FilePlus2, ClipboardList } from 'lucide-react';
 import { Link, useSearch } from '@tanstack/react-router';
 import { buildOperationalView } from '@/lib/operationalView';
 import { ProjectSection } from './ProjectSection';
@@ -53,9 +53,6 @@ const PERIODS = [
 ] as const;
 
 const ACTIVE_STATES = new Set(['new', 'capturing', 'organizing', 'proving', 'blocked']);
-
-const DIARY_VIEW_KEY = 'aop.diary.timeline_view';
-type DiaryView = 'operational' | 'flat';
 
 // Tipos cuja letra (C/O/P/A) já aparece no cabeçalho da PhaseSection — redundante repetir no card
 const PHASE_NATIVE_TYPES = new Set(['structured_C', 'structured_O', 'structured_P', 'structured_A']);
@@ -160,10 +157,6 @@ export function TimelineTab() {
   const [activeCostBenefit, setActiveCostBenefit] = useState<{ entryId: string; data: CostBenefitData; imv: string } | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<DiaryView>(() => {
-    const saved = localStorage.getItem(DIARY_VIEW_KEY);
-    return saved === 'operational' || saved === 'flat' ? saved : 'operational';
-  });
 
   const { userId } = useAuthState();
 
@@ -354,54 +347,12 @@ export function TimelineTab() {
     };
   }, [filtered]);
 
+  // A Timeline é sempre Visão Operacional (a antiga visão "Lista" plana foi aposentada).
   const operationalView = useMemo(() => {
-    if (view !== 'operational') return null;
     return buildOperationalView(deduped.map((d) => d.entry), projectMap);
-  }, [view, deduped, projectMap]);
+  }, [deduped, projectMap]);
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? '—';
-
-  // Flat view: corrective entries that have a parent in deduped are removed
-  // from the top-level list and rendered nested below their parent instead.
-  const dedupedIdSet = useMemo(() => new Set(deduped.map(d => d.entry.id)), [deduped]);
-
-  // Map parentId → corrective items (for nested rendering in flat view)
-  const flatCorrectivesMap = useMemo(() => {
-    const map = new Map<string, Array<{ entry: Entry; count: number }>>();
-    for (const item of deduped) {
-      if (item.entry.entry_type === 'corrective' && item.entry.linked_to && dedupedIdSet.has(item.entry.linked_to)) {
-        const arr = map.get(item.entry.linked_to) ?? [];
-        arr.push(item);
-        map.set(item.entry.linked_to, arr);
-      }
-    }
-    return map;
-  }, [deduped, dedupedIdSet]);
-
-  // Top-level entries for flat view: all except correctives with a parent present
-  const flatEntries = useMemo(
-    () => deduped.filter(d =>
-      d.entry.entry_type !== 'corrective' ||
-      !d.entry.linked_to ||
-      !dedupedIdSet.has(d.entry.linked_to)
-    ),
-    [deduped, dedupedIdSet],
-  );
-
-  // firstOccurrenceByProject: entryId da primeira entrada de cada projeto na lista flatEntries.
-  // Usado para renderizar a seção de fotos uma única vez por projeto no flat view.
-  const firstOccurrenceByProject = useMemo(() => {
-    const map = new Map<string, string>(); // projectId → first entryId
-    for (const { entry } of flatEntries) {
-      if (!map.has(entry.project_id)) map.set(entry.project_id, entry.id);
-    }
-    return map;
-  }, [flatEntries]);
-
-  function handleViewChange(newView: DiaryView) {
-    setView(newView);
-    localStorage.setItem(DIARY_VIEW_KEY, newView);
-  }
 
   function renderEntryCard(e: Entry, count = 1, inOperationalView = false): React.ReactNode {
     const isPhaseNative = inOperationalView && PHASE_NATIVE_TYPES.has(e.entry_type);
@@ -985,33 +936,20 @@ export function TimelineTab() {
           </Link>
         )}
 
-        {/* Toggle Visão Operacional / Lista [REQ-VO-16..18] */}
-        <div className="flex rounded-lg overflow-hidden border border-op-gray/30">
-          <button
-            type="button"
-            onClick={() => handleViewChange('operational')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-label transition-colors ${
-              view === 'operational'
-                ? 'bg-[color:var(--color-brand-blue)] text-white font-semibold'
-                : 'bg-transparent text-op-gray hover:text-op-white'
-            }`}
+        {/* Relatório Consultivo do projeto selecionado — substitui a antiga visão
+            "Lista" (aposentada). Aparece só com um projeto específico escolhido e
+            fora do Modo Leitura, mesmo critério do "Registro estruturado neste projeto".
+            A tela /report cuida de gerar/cooldown/ver. */}
+        {selectedProject && !readingMode && (
+          <Link
+            to="/report"
+            search={{ projectId: selectedProject.id, entryId: undefined }}
+            className="flex items-center justify-center gap-2 rounded-xl border border-[color:var(--color-brand-blue)] bg-[color:var(--color-brand-blue)]/10 py-2.5 text-small font-semibold text-[color:var(--color-brand-blue)] hover:bg-[color:var(--color-brand-blue)]/20 transition-colors"
           >
-            <LayoutList className="size-3.5 shrink-0" />
-            Visão Operacional
-          </button>
-          <button
-            type="button"
-            onClick={() => handleViewChange('flat')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-label transition-colors border-l border-op-gray/30 ${
-              view === 'flat'
-                ? 'bg-[color:var(--color-brand-blue)] text-white font-semibold'
-                : 'bg-transparent text-op-gray hover:text-op-white'
-            }`}
-          >
-            <List className="size-3.5 shrink-0" />
-            Lista
-          </button>
-        </div>
+            <ClipboardList className="size-4 shrink-0" />
+            Relatório Consultivo deste projeto
+          </Link>
+        )}
 
         <div className="space-y-0.5">
           <p className="text-label text-op-gray uppercase tracking-wide">Período</p>
@@ -1138,8 +1076,8 @@ export function TimelineTab() {
         </div>
       </div>
 
-      {/* ── Entry display — Visão Operacional ou Lista Plana [REQ-VO-16..22] ── */}
-      {view === 'operational' && operationalView ? (
+      {/* ── Entry display — Visão Operacional [REQ-VO-16..22] ── */}
+      {operationalView && (
         project === 'none' ? (
           <p className="text-small text-op-gray text-center py-6">
             Escolha um projeto para ver os registros.
@@ -1164,37 +1102,6 @@ export function TimelineTab() {
             ))}
           </div>
         )
-      ) : (
-        <ul className="space-y-2">
-          {flatEntries.length === 0 && (
-            <li className="text-small text-op-gray text-center py-6">
-              {project === 'none' ? 'Escolha um projeto para ver os registros.' : 'Nenhum registro.'}
-            </li>
-          )}
-          {flatEntries.map(({ entry: e, count }) => (
-            <Fragment key={e.id}>
-              {/* Seção de fotos Antes/Depois — uma vez por projeto, antes da primeira entry */}
-              {firstOccurrenceByProject.get(e.project_id) === e.id && userId && (
-                <li>
-                  <ProjectScenarioPhotos projectId={e.project_id} userId={userId} />
-                </li>
-              )}
-              <li>
-                {renderEntryCard(e, count)}
-                {/* Registros corretivos aninhados abaixo do pai */}
-                {(flatCorrectivesMap.get(e.id) ?? []).map(({ entry: corr, count: corrCount }) => (
-                  <div
-                    key={corr.id}
-                    className="mt-1 ml-1 pl-3 border-l-2"
-                    style={{ borderLeftColor: 'rgba(217,119,6,0.45)' }}
-                  >
-                    {renderEntryCard(corr, corrCount)}
-                  </div>
-                ))}
-              </li>
-            </Fragment>
-          ))}
-        </ul>
       )}
 
       {activeActionPlan && (
