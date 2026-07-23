@@ -4,7 +4,7 @@
 // fallback local quando a IA falha. Sem storage extra — cooldown derivado de
 // created_at das entries project_report (funciona idêntico em guest e autenticado).
 
-import { askFacilitator, type FacilitatorTrigger } from '@/engines/AssistantFacilitatorEngine';
+import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { countCompleteCycles } from '@/lib/cycles';
 import type { Entry, Principle, Project } from '@/types/database';
 import type { AuthState } from '@/types/app';
@@ -309,20 +309,15 @@ export function generateLocalReport(payload: ReportPayload): ParsedReport {
 
 /**
  * Orquestra a geração: tenta a IA via askFacilitator → fallback local se null/erro.
- * Retorna { report, isFallback }.
- *
- * NOTA (Etapa 3): o trigger 'PROJECT_REPORT_CONSULTANT' só é adicionado ao union
- * FacilitatorTrigger em src/engines/AssistantFacilitatorEngine.ts na Etapa 3. Até
- * lá, o cast abaixo mantém o tsc verde sem tocar o arquivo da Etapa 3; remover o
- * cast quando o membro do union existir. O timeout de cliente (28000ms) também é
- * configurado na Etapa 3.
+ * Retorna { report, isFallback }. O trigger 'PROJECT_REPORT_CONSULTANT' está no
+ * union FacilitatorTrigger e usa timeout de cliente de 28000ms (< 30s do servidor).
  */
 export async function generateReport(
   payload: ReportPayload,
   _authState: AuthState,
 ): Promise<{ report: ParsedReport; isFallback: boolean }> {
   try {
-    const raw = await askFacilitator('PROJECT_REPORT_CONSULTANT' as FacilitatorTrigger, {
+    const raw = await askFacilitator('PROJECT_REPORT_CONSULTANT', {
       text: buildPromptText(payload),
     });
     if (raw) {
