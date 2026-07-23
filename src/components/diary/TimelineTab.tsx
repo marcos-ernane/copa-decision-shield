@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
-import { Inbox as InboxIcon, X, LayoutList, List, BarChart2, Filter, ChevronDown, ChevronRight, FilePlus2 } from 'lucide-react';
+import { Inbox as InboxIcon, X, LayoutList, List, BarChart2, Filter, ChevronDown, ChevronRight, FilePlus2, ClipboardList } from 'lucide-react';
 import { Link, useSearch } from '@tanstack/react-router';
 import { buildOperationalView } from '@/lib/operationalView';
 import { ProjectSection } from './ProjectSection';
@@ -7,7 +7,7 @@ import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
 import { useReadingMode } from '@/hooks/useReadingMode';
 import type { ScenarioType, OperationalLayer, ExecutionPlan } from '@/types/app';
-import type { RootCauseChain, ActionPlan, CostBenefitData, LeverItem, Inventory4D, RecombinationItem } from '@/lib/register';
+import type { RootCauseChain, ActionPlan, CostBenefitData, LeverItem, Inventory4D, RecombinationItem, ProjectReportContent } from '@/lib/register';
 import { updateEntryCostBenefit } from '@/lib/register';
 import { formatCurrency, corRelacao } from '@/lib/costBenefit';
 import { getPhaseTimeState } from '@/lib/executionPlan';
@@ -39,6 +39,7 @@ const ENTRY_TYPES = [
   { v: 'quick_review',       label: 'Revisão'      },
   { v: 'corrective',         label: 'Corretiva'    },
   { v: 'decision_record',    label: 'Decisão'      },
+  { v: 'project_report',     label: 'Relatório'    },
   { v: 'copa_session',       label: 'COPA'         },
   { v: 'protocol_5min',      label: '5 Min'        },
   { v: 'creative_session',   label: 'Criativo'     },
@@ -76,6 +77,10 @@ function entryPreview(e: Entry): string {
     return (c.decision as string) || '—';
   }
 
+  if (e.entry_type === 'project_report') {
+    return (c.summary as string) || 'Relatório consultivo gerado pela IA';
+  }
+
   return (
     (c.text as string) ||
     (c.fact_text as string) ||
@@ -104,6 +109,7 @@ const TYPE_ICON: Record<string, string> = {
   passive: '·',
   quick_review: 'R',
   decision_record: '◈',
+  project_report: '▤',
   inbox: '⊡', // rendered via Lucide Inbox component in JSX
 };
 
@@ -122,6 +128,7 @@ const TYPE_LABEL: Record<string, string> = {
   simulation_session: 'Simulação',
   quick_review: 'Revisão Rápida',
   decision_record: 'Decisão',
+  project_report: 'Relatório Consultivo',
   inbox: 'Captura Universal',
 };
 
@@ -862,6 +869,33 @@ export function TimelineTab() {
                       </p>
                     </div>
                   )}
+                </div>
+              );
+            })()}
+            {/* Relatório Consultivo — tipo + fallback + link para a tela completa */}
+            {e.entry_type === 'project_report' && (() => {
+              const c = e.content as unknown as ProjectReportContent;
+              const typeLabel = c.report_type === 'evolution' ? 'Evolução Operacional'
+                : c.report_type === 'full_cycle' ? 'Relatório de Ciclo'
+                : 'Diagnóstico e Intervenção';
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-label text-op-gray uppercase">{typeLabel}</span>
+                    {c.is_fallback && (
+                      <span className="inline-flex items-center rounded-full border border-op-amber/50 bg-op-navy text-op-amber text-label px-2 py-0.5">
+                        Fallback
+                      </span>
+                    )}
+                  </div>
+                  <Link
+                    to="/report"
+                    search={{ projectId: e.project_id, entryId: e.id }}
+                    className="flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
+                  >
+                    <ClipboardList className="size-3.5" />
+                    Ver relatório completo
+                  </Link>
                 </div>
               );
             })()}

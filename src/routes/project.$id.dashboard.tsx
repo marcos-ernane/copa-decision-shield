@@ -2,7 +2,7 @@
 
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronRight, MoreVertical, Info, Gavel, BarChart2, Brain, Pencil } from 'lucide-react';
+import { ChevronRight, MoreVertical, Info, Gavel, BarChart2, Brain, Pencil, ClipboardList } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,7 @@ import { CostBenefitSheet } from '@/components/register/CostBenefitSheet';
 import { detectOpenCycles } from '@/lib/openCycle';
 import { countDistinctIMVs, distinctIMVs } from '@/lib/imv';
 import { canCompose } from '@/lib/clarityComposer';
+import { reportCooldown } from '@/lib/reportComposer';
 import { OpenCycleCard } from '@/components/project/OpenCycleCard';
 import { computeProjectState, deriveProjectStatus, daysSince } from '@/lib/projectState';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
@@ -1247,6 +1248,45 @@ function ProjectDashboard() {
             </p>
           )}
         </section>
+
+        {/* Relatório Consultivo de Projeto (PRD-plano-execucao-imv) */}
+        {entries.some((e) => e.entry_type === 'structured_P') && (() => {
+          const cooldownInfo = reportCooldown(entries, authState);
+          return (
+            <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="size-4 text-foreground shrink-0" />
+                <h2 className="text-label font-medium text-foreground">Relatório Consultivo</h2>
+              </div>
+              {cooldownInfo.blocked ? (
+                <div>
+                  <p className="text-[11px] text-op-gray">
+                    Próximo relatório em{' '}
+                    {cooldownInfo.nextAvailableAt?.toLocaleDateString('pt-BR')}
+                  </p>
+                  {!cooldownInfo.isPaidPlan && (
+                    <p className="text-[11px] text-brand-blue mt-1">
+                      Plano pago: relatório a cada 7 dias.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <p className="text-small text-muted-foreground">
+                    A IA lê todo o histórico do projeto e entrega uma análise consultiva.
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full gap-2"
+                    onClick={() => navigate({ to: '/report', search: { projectId: id } as never })}
+                  >
+                    <ClipboardList className="size-4" /> Gerar Relatório Consultivo
+                  </Button>
+                </>
+              )}
+            </section>
+          );
+        })()}
 
         {/* Alerta do motor */}
         {motorAlert && (

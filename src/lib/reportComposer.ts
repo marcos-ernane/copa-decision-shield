@@ -245,6 +245,24 @@ export function buildPromptText(payload: ReportPayload): string {
   return lines.join('\n');
 }
 
+// ---------- Sanitização de exibição ----------
+
+/**
+ * A IA às vezes acrescenta markdown por conta própria (títulos #, separadores ---,
+ * **negrito**). Limpa esses artefatos apenas para exibição/PDF — o texto cru é
+ * preservado no que é persistido (integridade de dados).
+ */
+export function cleanReportSection(raw: string): string {
+  return (raw || '')
+    .split('\n')
+    .filter((l) => !/^\s*[-=*_]{3,}\s*$/.test(l)) // remove --- === *** separadores
+    .map((l) => l.replace(/^\s*#{1,6}\s+/, '').trimEnd()) // remove cabeçalhos markdown
+    .join('\n')
+    .replace(/\*\*/g, '') // remove marcações de negrito
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 // ---------- Parse ----------
 
 export interface ParsedReport {

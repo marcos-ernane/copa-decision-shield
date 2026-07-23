@@ -2,8 +2,7 @@
 // Rota: /report?projectId=xxx  (opcional &entryId=yyy → visualização de relatório salvo)
 // Molde: clarity.tsx. A IA lê o projeto inteiro e devolve 5 seções de análise.
 // Etapa 4: tela completa (estados, aviso Aferição, cooldown, CircleHelps, fallback,
-// salvar, exportar PDF). A exportação de PDF vive inline aqui nesta etapa e será
-// extraída para src/lib/reportPdf.ts na Etapa 5.
+// salvar, exportar PDF). Etapa 5: exportação de PDF extraída para src/lib/reportPdf.ts.
 
 import { createFileRoute, useSearch, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
@@ -15,18 +14,16 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Capacitor } from '@capacitor/core';
-import { Share } from '@capacitor/share';
-import jsPDF from 'jspdf';
 import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { getProject, listEntries, listPrinciples } from '@/lib/projects';
 import { useAuthState } from '@/lib/planLimits';
 import {
-  buildReportPayload, generateReport, reportCooldown,
+  buildReportPayload, generateReport, reportCooldown, cleanReportSection,
   type ReportPayload, type ParsedReport,
 } from '@/lib/reportComposer';
 import { saveProjectReport, type ProjectReportContent, type ProjectReportType } from '@/lib/register';
+import { exportReportPdf } from '@/lib/reportPdf';
 import type { Entry, Project as ProjectType } from '@/types/database';
 
 export const Route = createFileRoute('/report')({
@@ -69,20 +66,6 @@ const SECTIONS: { key: SectionKey; num: number; label: string; help: string }[] 
     help: 'Sugestões concretas baseadas no aprendizado: qual gargalo atacar, qual camada priorizar, qual IMV evitar.',
   },
 ];
-
-// A IA às vezes acrescenta markdown por conta própria (títulos #, separadores ---,
-// **negrito**). Limpa esses artefatos apenas na exibição — o texto cru é preservado
-// no que é salvo/persistido.
-function cleanSection(raw: string): string {
-  return (raw || '')
-    .split('\n')
-    .filter((l) => !/^\s*[-=*_]{3,}\s*$/.test(l))      // remove --- === *** separadores
-    .map((l) => l.replace(/^\s*#{1,6}\s+/, '').trimEnd()) // remove cabeçalhos markdown
-    .join('\n')
-    .replace(/\*\*/g, '')                                // remove marcações de negrito
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
 
 // ─── Estados ──────────────────────────────────────────────────────────────────
 
@@ -193,7 +176,7 @@ function ReportScreen() {
     const content: ProjectReportContent = {
       report_type: payload.reportType,
       complete_cycles: payload.completeCycles,
-      summary: cleanSection(result.section_panorama).slice(0, 100),
+      summary: cleanReportSection(result.section_panorama).slice(0, 100),
       section_panorama: result.section_panorama,
       section_quality: result.section_quality,
       section_result: result.section_result,
@@ -210,7 +193,6 @@ function ReportScreen() {
     }
   }
 
-  // Exportação de PDF — inline nesta etapa; extraída para src/lib/reportPdf.ts na Etapa 5.
   async function handleExportPdf() {
     if (!result || !project) return;
     const content: ProjectReportContent = {
@@ -225,48 +207,7 @@ function ReportScreen() {
       is_fallback: isFallback,
       generated_at: new Date().toISOString(),
     };
-    const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
-    const margin = 48;
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-    let y = margin;
-    const guard = () => { if (y > pageH - margin) { pdf.addPage(); y = margin; } };
-    const addLine = (text: string, size: number, bold: boolean) => {
-      guard();
-      pdf.setFontSize(size);
-      pdf.setFont('helvetica', bold ? 'bold' : 'normal');
-      const lines = pdf.splitTextToSize(text, pageW - margin * 2);
-      lines.forEach((l: string) => { guard(); pdf.text(l, margin, y); y += size * 1.4; });
-    };
-    addLine(`RELATÓRIO CONSULTIVO — ${project.name.toUpperCase()}`, 16, true);
-    addLine(`Gerado em ${new Date(content.generated_at).toLocaleDateString('pt-BR')}`, 9, false);
-    y += 12;
-    const pdfSections: [string, string][] = [
-      ['1. PANORAMA DO PROJETO', cleanSection(content.section_panorama)],
-      ['2. QUALIDADE DO DIAGNÓSTICO', cleanSection(content.section_quality)],
-      ['3. RESULTADO E APRENDIZADO', cleanSection(content.section_result)],
-      ['4. CRÍTICAS CONSTRUTIVAS', cleanSection(content.section_critique)],
-      ['5. SUGESTÕES PARA O PRÓXIMO CICLO', cleanSection(content.section_next)],
-    ];
-    pdfSections.forEach(([label, text]) => {
-      y += 8; guard();
-      addLine(label, 11, true);
-      addLine(text, 11, false);
-      y += 8;
-    });
-    if (content.is_fallback) addLine('* Relatório gerado localmente — IA indisponível no momento.', 9, false);
-    const fileName = `relatorio-${new Date(content.generated_at).toISOString().slice(0, 10)}.pdf`;
-    if (Capacitor.isNativePlatform()) {
-      const blob = pdf.output('blob');
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try { await Share.share({ title: 'Relatório Consultivo', url: reader.result as string }); }
-        catch { /* cancelamento silencioso */ }
-      };
-      reader.readAsDataURL(blob);
-    } else {
-      pdf.save(fileName);
-    }
+    await exportReportPdf(content, project.name);
   }
 
   const showFooter = phase === 'generated' || phase === 'viewing_saved';
@@ -443,7 +384,7 @@ function ReportScreen() {
                   <p className="text-label text-muted-foreground leading-relaxed">{s.help}</p>
                 )}
                 <p className="text-body text-foreground leading-relaxed whitespace-pre-wrap">
-                  {cleanSection(result[s.key])}
+                  {cleanReportSection(result[s.key])}
                 </p>
               </div>
             ))}
