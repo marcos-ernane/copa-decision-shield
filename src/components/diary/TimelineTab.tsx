@@ -922,33 +922,6 @@ export function TimelineTab() {
           )}
         </div>
 
-        {/* Ações do projeto selecionado — lado a lado, estilo primário (âmbar,
-            mesmo padrão do "Gerar Clareza"). Só com projeto específico escolhido e
-            fora do Modo Leitura. Ordem: "Ver Relatório" (esquerda) → "Editar Projeto".
-            Editar Projeto abre o Registro Estruturado (fase aberta ou seletor C/O/P/A). */}
-        {selectedProject && !readingMode && (
-          <div className="flex gap-2">
-            <Button asChild className="flex-1 gap-2">
-              <Link
-                to="/report"
-                search={{ projectId: selectedProject.id, entryId: undefined }}
-              >
-                <ClipboardList className="size-4 shrink-0" />
-                Ver Relatório
-              </Link>
-            </Button>
-            <Button asChild className="flex-1 gap-2">
-              <Link
-                to="/register/structured"
-                search={{ projectId: selectedProject.id, format: undefined, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined, step: undefined }}
-              >
-                <FilePlus2 className="size-4 shrink-0" />
-                Editar Projeto
-              </Link>
-            </Button>
-          </div>
-        )}
-
         <div className="space-y-0.5">
           <p className="text-label text-op-gray uppercase tracking-wide">Período</p>
           <div className="flex gap-1">
@@ -1072,6 +1045,35 @@ export function TimelineTab() {
             </div>
           )}
         </div>
+
+        {/* Ações do projeto selecionado — lado a lado, estilo primário (âmbar,
+            mesmo padrão do "Gerar Clareza"). Posicionadas ABAIXO dos filtros e logo
+            ACIMA da barra do projeto/lançamentos (ordem lógica). Só com projeto
+            específico escolhido e fora do Modo Leitura.
+            Ordem: "Ver Relatório" (esquerda) → "Editar Projeto".
+            Editar Projeto abre o Registro Estruturado (fase aberta ou seletor C/O/P/A). */}
+        {selectedProject && !readingMode && (
+          <div className="flex gap-2">
+            <Button asChild className="flex-1 gap-2">
+              <Link
+                to="/report"
+                search={{ projectId: selectedProject.id, entryId: undefined }}
+              >
+                <ClipboardList className="size-4 shrink-0" />
+                Ver Relatório
+              </Link>
+            </Button>
+            <Button asChild className="flex-1 gap-2">
+              <Link
+                to="/register/structured"
+                search={{ projectId: selectedProject.id, format: undefined, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined, step: undefined }}
+              >
+                <FilePlus2 className="size-4 shrink-0" />
+                Editar Projeto
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* ── Entry display — Visão Operacional [REQ-VO-16..22] ── */}
