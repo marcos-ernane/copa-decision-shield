@@ -25,6 +25,7 @@ export interface PlanLimits {
   compass_full: boolean;
   creative_flow: boolean;
   transfer_proof: boolean;
+  project_report: boolean;
   simulations_max: number;
   copa_unlimited: boolean;
   pressure_unlimited: boolean;
@@ -64,6 +65,7 @@ const FREE_LIMITS: PlanLimits = {
   compass_full: false,
   creative_flow: false,
   transfer_proof: false,
+  project_report: true, // ambos habilitados — cooldown diferenciado controla frequência
   simulations_max: 2,
   // sempre gratuito:
   copa_unlimited: true,
@@ -104,6 +106,7 @@ const PAID_LIMITS: PlanLimits = {
   compass_full: true,
   creative_flow: true,
   transfer_proof: true,
+  project_report: true, // ambos habilitados — cooldown diferenciado controla frequência
   simulations_max: Infinity,
   copa_unlimited: true,
   pressure_unlimited: true,

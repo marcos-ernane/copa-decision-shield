@@ -190,6 +190,23 @@ export interface DecisionRecordContent {
   review_date?: string;       // Quando revisar — opcional, ISO date
 }
 
+// ---------- Relatório Consultivo de Projeto (PRD-plano-execucao-imv) ----------
+
+export type ProjectReportType = 'diagnostic' | 'full_cycle' | 'evolution';
+
+export interface ProjectReportContent {
+  report_type: ProjectReportType;
+  complete_cycles: number;
+  summary: string;           // preview para Timeline — primeiros ~100 chars
+  section_panorama: string;
+  section_quality: string;
+  section_result: string;
+  section_critique: string;
+  section_next: string;
+  is_fallback: boolean;      // true quando gerado localmente sem IA
+  generated_at: string;      // ISO — momento da geração
+}
+
 async function insertEntry(args: {
   projectId: string;
   entry_type: EntryType | 'passive' | 'protocol_5min' | 'creative_session' | 'simulation_session' | 'copa_session' | 'pressure_session';
@@ -649,6 +666,23 @@ export async function saveQuickReview(
     copa_phase: 'A',
     scenario_type_at_entry: scenarioType ?? null,
     layer_at_entry: layerAtEntry ?? null,
+  });
+}
+
+// ---------- Relatório Consultivo de Projeto (PRD-plano-execucao-imv) ----------
+
+export async function saveProjectReport(
+  projectId: string,
+  content: ProjectReportContent,
+  scenarioType?: ScenarioType | null,
+): Promise<Entry> {
+  return insertEntry({
+    projectId,
+    entry_type: 'project_report',
+    content: content as unknown as Record<string, unknown>,
+    is_clean_fact: false,
+    copa_phase: null,
+    scenario_type_at_entry: scenarioType ?? null,
   });
 }
 
