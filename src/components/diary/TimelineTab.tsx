@@ -888,7 +888,7 @@ export function TimelineTab() {
           </button>
 
           {dropdownOpen && (
-            <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl border border-op-gray/30 bg-op-navy shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+            <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl border border-op-gray/30 bg-op-navy shadow-lg overflow-hidden max-h-[65vh] overflow-y-auto">
               <button
                 type="button"
                 onClick={() => { setProject('none'); setDropdownOpen(false); }}
