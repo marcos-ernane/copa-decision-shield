@@ -146,6 +146,46 @@ Pode ser: padrão histórico que se repete, tensão entre gargalo e IMV,
 ou risco nomeado que não aparece nos movimentos acima.
 Nunca inventar. Nunca inferir estado emocional. Nunca validar.
 Se não houver nada evidente nos dados, omitir completamente.]`,
+
+  // ── Relatório Consultivo de Projeto (PRD-plano-execucao-imv) ─
+  // Prompt autocontido — não usa SYSTEM_PROMPT base (padrão do CLARITY_COMPOSER).
+  // Labels "SEÇÃO N — NOME" exatos: o cliente parseia por regex nesses rótulos.
+
+  PROJECT_REPORT_CONSULTANT: `
+Você é um consultor operacional sênior especializado em micro e pequenas empresas.
+Receberá dados completos de um projeto gerenciado pelo método COPA
+(Captura → Organização → Prova → Aferição).
+Sua tarefa é entregar um relatório consultivo completo, estruturado em 5 seções.
+Use APENAS as informações fornecidas. Nunca invente dados ou resultados.
+Linguagem direta, respeitosa e construtiva. Nunca punitiva.
+Cada seção separada pelo label exato abaixo (sem variação).
+
+SEÇÃO 1 — PANORAMA DO PROJETO
+Síntese do diagnóstico: o que foi observado, qual gargalo foi identificado,
+qual intervenção foi escolhida e com que critério. 3 a 5 frases.
+
+SEÇÃO 2 — QUALIDADE DO DIAGNÓSTICO
+Avalie: o fato registrado estava limpo (sem interpretação misturada)?
+O gargalo identificado é o mais provável dado o cenário e a camada?
+A IMV estava bem calibrada pelos 4 critérios (reversível, barata, específica, mensurável)?
+Se há resultado (APA), ele confirma ou contradiz o diagnóstico inicial?
+3 a 5 frases.
+
+SEÇÃO 3 — RESULTADO E APRENDIZADO
+O que a execução revelou. O que funcionou, o que não funcionou.
+Qual princípio foi extraído e se ele é generalizável ou específico demais.
+Se não há APA, analise a qualidade do planejamento.
+3 a 5 frases.
+
+SEÇÃO 4 — CRÍTICAS CONSTRUTIVAS
+Pontos onde o ciclo poderia ter sido mais preciso.
+Diagnóstico superficial, IMV pouco específica, métrica vaga, princípio genérico.
+Sempre construtivo, nunca punitivo. 2 a 4 pontos em frases diretas.
+
+SEÇÃO 5 — SUGESTÕES PARA O PRÓXIMO CICLO
+Com base no aprendizado, o que o operador deveria considerar no próximo ciclo:
+qual gargalo atacar, qual camada priorizar, qual tipo de IMV evitar.
+2 a 4 sugestões concretas e acionáveis.`,
 };
 
 // ============================================================
@@ -339,6 +379,8 @@ const VALID_TRIGGERS = new Set([
   'TRANSFER_CONSISTENCY_REPORT',
   // Módulo 9 — Clareza Operacional (PRD-MOD-09 v2.0)
   'CLARITY_COMPOSER',
+  // Relatório Consultivo de Projeto (PRD-plano-execucao-imv)
+  'PROJECT_REPORT_CONSULTANT',
 ]);
 
 // Cache de resposta 15 min — desabilitado para HELP_CENTER_QUERY (cada pergunta é única).
@@ -359,9 +401,10 @@ async function callClaude(trigger: string, payload: Record<string, unknown>): Pr
   const isReport  = trigger === 'TRANSFER_CONSISTENCY_REPORT';
   const isHelp    = trigger === 'HELP_CENTER_QUERY';
   const isClarity = trigger === 'CLARITY_COMPOSER';
+  const isReportConsultant = trigger === 'PROJECT_REPORT_CONSULTANT';
 
   const controller = new AbortController();
-  const timeoutMs  = isClarity ? 25000 : isReport ? 7500 : isHelp ? 10000 : 4000;
+  const timeoutMs  = isReportConsultant ? 30000 : isClarity ? 25000 : isReport ? 7500 : isHelp ? 10000 : 4000;
   const timeoutId  = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
@@ -375,6 +418,8 @@ async function callClaude(trigger: string, payload: Record<string, unknown>): Pr
       ? `${HELP_CENTER_BASE}\n\nCONHECIMENTO DO APP:\n${knowledge}\n\n${HELP_INSTRUCTION}`
       : isClarity
       ? TRIGGER_PROMPTS['CLARITY_COMPOSER']
+      : isReportConsultant
+      ? TRIGGER_PROMPTS['PROJECT_REPORT_CONSULTANT']
       : TRIGGER_PROMPTS[trigger]
       ? `${SYSTEM_PROMPT}\n\n${TRIGGER_PROMPTS[trigger]}`
       : SYSTEM_PROMPT;
@@ -388,7 +433,7 @@ async function callClaude(trigger: string, payload: Record<string, unknown>): Pr
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: isClarity ? 1000 : isReport ? 480 : isHelp ? 500 : 180,
+        max_tokens: isReportConsultant ? 1800 : isClarity ? 1000 : isReport ? 480 : isHelp ? 500 : 180,
         system,
         messages: [
           {
