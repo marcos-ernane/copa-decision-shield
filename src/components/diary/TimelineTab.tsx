@@ -13,6 +13,7 @@ import { formatCurrency, corRelacao } from '@/lib/costBenefit';
 import { getPhaseTimeState } from '@/lib/executionPlan';
 import { ActionPlanSheet } from '@/components/project/ActionPlanSheet';
 import { CostBenefitSheet } from '@/components/register/CostBenefitSheet';
+import { Button } from '@/components/ui/button';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import { EditZoneGuard } from '@/components/EditZoneGuard';
@@ -921,34 +922,31 @@ export function TimelineTab() {
           )}
         </div>
 
-        {/* Atalho para Registro Estruturado do projeto selecionado.
-            Aparece só com um projeto específico escolhido e fora do Modo Leitura.
-            Sem `format` na navegação: o StructuredRegister abre a fase aberta
-            automaticamente, ou o seletor C/O/P/A quando o ciclo está completo. */}
+        {/* Ações do projeto selecionado — lado a lado, estilo primário (âmbar,
+            mesmo padrão do "Gerar Clareza"). Só com projeto específico escolhido e
+            fora do Modo Leitura. Ordem: "Ver Relatório" (esquerda) → "Editar Projeto".
+            Editar Projeto abre o Registro Estruturado (fase aberta ou seletor C/O/P/A). */}
         {selectedProject && !readingMode && (
-          <Link
-            to="/register/structured"
-            search={{ projectId: selectedProject.id, format: undefined, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined, step: undefined }}
-            className="flex items-center justify-center gap-2 rounded-xl border border-[color:var(--color-brand-blue)] bg-transparent py-2.5 text-small font-semibold text-[color:var(--color-brand-blue)] hover:bg-[color:var(--color-brand-blue)]/10 transition-colors"
-          >
-            <FilePlus2 className="size-4 shrink-0" />
-            Registro estruturado neste projeto
-          </Link>
-        )}
-
-        {/* Relatório Consultivo do projeto selecionado — substitui a antiga visão
-            "Lista" (aposentada). Aparece só com um projeto específico escolhido e
-            fora do Modo Leitura, mesmo critério do "Registro estruturado neste projeto".
-            A tela /report cuida de gerar/cooldown/ver. */}
-        {selectedProject && !readingMode && (
-          <Link
-            to="/report"
-            search={{ projectId: selectedProject.id, entryId: undefined }}
-            className="flex items-center justify-center gap-2 rounded-xl border border-[color:var(--color-brand-blue)] bg-[color:var(--color-brand-blue)]/10 py-2.5 text-small font-semibold text-[color:var(--color-brand-blue)] hover:bg-[color:var(--color-brand-blue)]/20 transition-colors"
-          >
-            <ClipboardList className="size-4 shrink-0" />
-            Relatório Consultivo deste projeto
-          </Link>
+          <div className="flex gap-2">
+            <Button asChild className="flex-1 gap-2">
+              <Link
+                to="/report"
+                search={{ projectId: selectedProject.id, entryId: undefined }}
+              >
+                <ClipboardList className="size-4 shrink-0" />
+                Ver Relatório
+              </Link>
+            </Button>
+            <Button asChild className="flex-1 gap-2">
+              <Link
+                to="/register/structured"
+                search={{ projectId: selectedProject.id, format: undefined, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined, step: undefined }}
+              >
+                <FilePlus2 className="size-4 shrink-0" />
+                Editar Projeto
+              </Link>
+            </Button>
+          </div>
         )}
 
         <div className="space-y-0.5">
