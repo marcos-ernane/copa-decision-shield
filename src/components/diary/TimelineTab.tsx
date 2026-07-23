@@ -7,7 +7,7 @@ import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
 import { useReadingMode } from '@/hooks/useReadingMode';
 import type { ScenarioType, OperationalLayer, ExecutionPlan } from '@/types/app';
-import type { RootCauseChain, ActionPlan, CostBenefitData, LeverItem, Inventory4D, RecombinationItem, ProjectReportContent } from '@/lib/register';
+import type { RootCauseChain, ActionPlan, CostBenefitData, LeverItem, Inventory4D, RecombinationItem } from '@/lib/register';
 import { updateEntryCostBenefit } from '@/lib/register';
 import { formatCurrency, corRelacao } from '@/lib/costBenefit';
 import { getPhaseTimeState } from '@/lib/executionPlan';
@@ -705,23 +705,26 @@ export function TimelineTab() {
                   Criar registro corretivo
                 </Link>
               )}
-              <EditZoneGuard
-                zone="red"
-                title="Arquivar registro?"
-                description="Este registro ficará oculto no Timeline. Use o Registro Corretivo para corrigir o conteúdo."
-                confirmLabel="Arquivar"
-                onConfirm={async () => { await archiveEntry(e.id); void refresh(); }}
-              >
-                {(open) => (
-                  <button
-                    type="button"
-                    onClick={open}
-                    className="text-label text-muted-foreground hover:text-destructive"
-                  >
-                    Arquivar
-                  </button>
-                )}
-              </EditZoneGuard>
+              {/* Arquivar não se aplica ao Relatório Consultivo (project_report) */}
+              {e.entry_type !== 'project_report' && (
+                <EditZoneGuard
+                  zone="red"
+                  title="Arquivar registro?"
+                  description="Este registro ficará oculto no Timeline. Use o Registro Corretivo para corrigir o conteúdo."
+                  confirmLabel="Arquivar"
+                  onConfirm={async () => { await archiveEntry(e.id); void refresh(); }}
+                >
+                  {(open) => (
+                    <button
+                      type="button"
+                      onClick={open}
+                      className="text-label text-muted-foreground hover:text-destructive"
+                    >
+                      Arquivar
+                    </button>
+                  )}
+                </EditZoneGuard>
+              )}
             </div>
             {/* Cadeia de causa raiz — accordion (REQ-RC-18) */}
             {e.entry_type === 'structured_C' && (() => {
@@ -821,33 +824,6 @@ export function TimelineTab() {
                       </p>
                     </div>
                   )}
-                </div>
-              );
-            })()}
-            {/* Relatório Consultivo — tipo + fallback + link para a tela completa */}
-            {e.entry_type === 'project_report' && (() => {
-              const c = e.content as unknown as ProjectReportContent;
-              const typeLabel = c.report_type === 'evolution' ? 'Evolução Operacional'
-                : c.report_type === 'full_cycle' ? 'Relatório de Ciclo'
-                : 'Diagnóstico e Intervenção';
-              return (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-label text-op-gray uppercase">{typeLabel}</span>
-                    {c.is_fallback && (
-                      <span className="inline-flex items-center rounded-full border border-op-amber/50 bg-op-navy text-op-amber text-label px-2 py-0.5">
-                        Fallback
-                      </span>
-                    )}
-                  </div>
-                  <Link
-                    to="/report"
-                    search={{ projectId: e.project_id, entryId: e.id }}
-                    className="flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
-                  >
-                    <ClipboardList className="size-3.5" />
-                    Ver relatório completo
-                  </Link>
                 </div>
               );
             })()}
