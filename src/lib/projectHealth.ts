@@ -47,7 +47,10 @@ async function fetchProjectEntries(
 ): Promise<Entry[]> {
   if (authState === 'GUEST') {
     return GuestStorage.getEntries().filter(
-      (e) => e.project_id === projectId && e.entry_type !== 'inbox',
+      (e) =>
+        e.project_id === projectId &&
+        e.entry_type !== 'inbox' &&
+        e.entry_type !== 'project_report',
     );
   }
 
@@ -56,6 +59,7 @@ async function fetchProjectEntries(
     .select('id, project_id, entry_type, content, copa_phase, linked_to, created_at')
     .eq('project_id', projectId)
     .neq('entry_type', 'inbox')
+    .neq('entry_type', 'project_report')
     .order('created_at', { ascending: false });
 
   if (error) throw error;

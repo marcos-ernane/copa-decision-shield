@@ -112,9 +112,12 @@ export function calculateIndex(
   const prev = readSmooth();
   const sameDay = prev?.date === today;
 
-  // Inbox e decision_record não contribuem para nenhum score — excluídos inclusive do guarda mínimo
+  // Inbox, decision_record e project_report não contribuem para nenhum score — excluídos inclusive do guarda mínimo
   const entries = allEntries.filter(
-    (e) => e.entry_type !== 'inbox' && e.entry_type !== 'decision_record',
+    (e) =>
+      e.entry_type !== 'inbox' &&
+      e.entry_type !== 'decision_record' &&
+      e.entry_type !== 'project_report',
   );
 
   // Congelamento total: nenhum projeto ativo
