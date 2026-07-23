@@ -219,6 +219,10 @@ async function insertEntry(args: {
   layer_at_entry?: OperationalLayer | null;
   classification?: string | null;
   copa_phase?: 'C' | 'O' | 'P' | 'A' | null;
+  // Default true. false para entries de meta-atividade (ex.: project_report) que
+  // não devem contar como "atividade operacional" — não reseta o relógio de
+  // inatividade nem o cálculo de estado (blocked > 7 dias).
+  updateLastEntryAt?: boolean;
 }): Promise<Entry> {
   const { data: { session } } = await supabase.auth.getSession();
   const now = new Date().toISOString();
@@ -258,7 +262,9 @@ async function insertEntry(args: {
 
   if (!session) {
     GuestStorage.addEntry(entry);
-    GuestStorage.updateProject(args.projectId, { last_entry_at: now });
+    if (args.updateLastEntryAt !== false) {
+      GuestStorage.updateProject(args.projectId, { last_entry_at: now });
+    }
     triggerIndexUpdate();
     dispatchEntrySaved(entry);
     return entry;
@@ -283,7 +289,9 @@ async function insertEntry(args: {
     .select()
     .single();
   if (error) throw error;
-  await supabase.from('projects').update({ last_entry_at: now }).eq('id', args.projectId);
+  if (args.updateLastEntryAt !== false) {
+    await supabase.from('projects').update({ last_entry_at: now }).eq('id', args.projectId);
+  }
   triggerIndexUpdate();
   const saved = data as Entry;
   dispatchEntrySaved(saved);
@@ -683,6 +691,9 @@ export async function saveProjectReport(
     is_clean_fact: false,
     copa_phase: null,
     scenario_type_at_entry: scenarioType ?? null,
+    // Meta-atividade: gerar/salvar relatório não conta como atividade operacional
+    // — não reseta o relógio de inatividade nem o estado "Travado > 7 dias".
+    updateLastEntryAt: false,
   });
 }
 
