@@ -482,11 +482,19 @@ function LeverFilterScreen() {
                 className="rounded-xl border border-op-gray/20 overflow-hidden"
                 style={{ backgroundColor: '#0F1923' }}
               >
-                {/* Collapsed header */}
-                <button
-                  type="button"
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                {/* Collapsed header — div clicável (permite aninhar a lixeira de ruído
+                    como <button> válido, sem disparar o expand). */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer"
                   onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setExpandedId(isExpanded ? null : item.id);
+                    }
+                  }}
                 >
                   {/* Número */}
                   <span
@@ -512,11 +520,23 @@ function LeverFilterScreen() {
                   >
                     {result === 'lever' ? 'ALAVANCA' : result === 'noise' ? 'RUÍDO' : '—'}
                   </span>
+                  {/* Lixeira rápida — só para RUÍDO na lista (excluir sem expandir).
+                      O "Remover ideia" do expandido continua existindo. */}
+                  {!isExpanded && result === 'noise' && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
+                      className="flex-shrink-0 p-0.5 text-op-gray hover:text-brand-red transition-colors"
+                      aria-label="Excluir ideia (ruído)"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  )}
                   {isExpanded
                     ? <ChevronUp   className="size-3.5 text-op-gray flex-shrink-0" />
                     : <ChevronDown className="size-3.5 text-op-gray flex-shrink-0" />
                   }
-                </button>
+                </div>
 
                 {/* CTA colapsada — nudge para a alavanca (recomendada) ou estado
                     "já virou IMV". Ruído/incompleta exigem expandir (uso deliberado). */}
