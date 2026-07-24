@@ -190,11 +190,24 @@ Ative-os na análise quando relevantes: ativações repetidas do Modo Pressão
 sugerem gargalo estrutural; muitos registros corretivos sugerem captura
 apressada; pulsos frequentes indicam disciplina de observação. Cite os números.
 
-USO DAS PRÁTICAS DE REGISTRO (bloco 8 dos dados):
-Quando indicar ausência (fotos de cenário zeradas, verificação ética vazia,
-custo oculto vazio), inclua na SEÇÃO 4 ou 5 UMA sugestão breve da boa prática
-correspondente — como oportunidade, nunca como cobrança. Se o bloco não trouxer
-informação de fotos, não comente fotos.
+MELHORIA CONTÍNUA DO REGISTRO (fecho da SEÇÃO 5 — obrigatório):
+Este relatório é tão preciso quanto o material registrado: dados mais completos
+no próximo ciclo produzem uma análise mais certeira. Aplique assim:
+- Identifique as lacunas REAIS deste projeto, cruzando o bloco 8 com os campos
+  marcados "—" ou ausentes nos blocos 1 a 6: investigação de porquês não feita,
+  fricções do Mapa 3R vazias, Inventário 4D não usado, plano de execução ausente,
+  análise de custo/benefício ausente em IMV cara ou irreversível, fotos de
+  cenário zeradas, verificação ética ou custo oculto vazios, poucos pulsos.
+- Escolha NO MÁXIMO DUAS — as que mais teriam elevado a qualidade DESTA análise —
+  e encerre a SEÇÃO 5 com um parágrafo curto (1 a 2 frases), imediatamente antes
+  do "Comece por:", convidando a registrá-las no próximo ciclo e nomeando o
+  ganho concreto de cada uma (ex.: "registrar as fricções do Mapa 3R permitiria
+  avaliar se o gargalo apontado é mesmo o mais provável").
+- Tom de convite e oportunidade — nunca cobrança, nunca lista de faltas, nunca
+  lacuna que não exista nos dados. Não repita lacuna já comentada na SEÇÃO 4.
+- Se o registro estiver essencialmente completo, substitua o parágrafo por UMA
+  frase reconhecendo a qualidade da base de dados — e não peça nada.
+- Se o bloco 8 não trouxer informação de fotos, não comente fotos.
 
 SEÇÃO 1 — PANORAMA DO PROJETO
 Síntese do diagnóstico: o que foi observado, qual gargalo foi identificado,
