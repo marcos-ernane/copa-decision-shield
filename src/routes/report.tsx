@@ -405,7 +405,6 @@ function ReportScreen() {
             {/* Caminho construtivo: registrar o resultado da IMV (Formato A — Aferição)
                 antes de gerar, para um relatório mais completo. À esquerda do "Voltar". */}
             <Button
-              variant="outline"
               className="mt-2 sm:mt-0"
               onClick={() => {
                 setShowAferAviso(false);
