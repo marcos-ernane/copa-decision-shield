@@ -166,24 +166,25 @@ export function RootCauseFlow({ factText, onComplete, onSkip }: RootCauseFlowPro
           )}
         </div>
 
-        {/* "Esta é a causa raiz" — ghost, full width */}
-        <Button
-          variant="outline"
-          className="w-full"
-          disabled={!canAdvance}
-          onClick={handleDeclareRoot}
-        >
-          Esta é a causa raiz
-        </Button>
-
-        {/* "Próximo porquê" / "Concluir análise" — brand-blue, full width */}
-        <Button
-          className="w-full"
-          disabled={!canAdvance}
-          onClick={handleNext}
-        >
-          {isFinalStep ? 'Concluir análise' : 'Próximo porquê →'}
-        </Button>
+        {/* Ações lado a lado — continuar (primário, âmbar) à esquerda; declarar
+            causa raiz (outline) à direita. */}
+        <div className="flex gap-2">
+          <Button
+            className="flex-1"
+            disabled={!canAdvance}
+            onClick={handleNext}
+          >
+            {isFinalStep ? 'Concluir análise' : 'Investigar mais'}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1"
+            disabled={!canAdvance}
+            onClick={handleDeclareRoot}
+          >
+            Esta é a causa raiz
+          </Button>
+        </div>
 
         {/* Skip — ghost small, footer */}
         <button
