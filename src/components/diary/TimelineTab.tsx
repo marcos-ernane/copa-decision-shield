@@ -696,7 +696,9 @@ export function TimelineTab() {
           <div className="mt-3 pt-3 border-t border-border space-y-3">
             {/* Ações — sempre no topo para fácil acesso */}
             <div className="flex gap-3">
-              {e.entry_type !== 'corrective' && (
+              {/* Registro corretivo não se aplica ao Relatório Consultivo (project_report),
+                  que é análise gerada por IA, nem aos próprios registros corretivos. */}
+              {e.entry_type !== 'corrective' && e.entry_type !== 'project_report' && (
                 <Link
                   to="/register/corrective/$entryId"
                   params={{ entryId: e.id }}
