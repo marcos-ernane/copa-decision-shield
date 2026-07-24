@@ -901,8 +901,12 @@ export function FormatO({
           <button
             type="button"
             onClick={() => {
-              const sel = recombinations.find((r) => r.selected && r.idea.trim());
-              if (sel) sessionStorage.setItem('__recombinationIdea', sel.idea.trim());
+              // Passo A: leva TODAS as recombinações preenchidas para o Filtro
+              // (antes só a selecionada). O filtro lista todas para avaliação.
+              const list = recombinations
+                .filter((r) => r.idea.trim())
+                .map((r) => ({ id: r.id, idea: r.idea.trim() }));
+              sessionStorage.setItem('__recombinations', JSON.stringify(list));
               void navigate({
                 to: '/lever-filter',
                 search: { projectId, ...(initialEntryId ? { entryId: initialEntryId } : {}) },

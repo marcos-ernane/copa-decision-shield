@@ -78,6 +78,7 @@ export interface LeverItem {
   measurement: boolean | null;       // Q5: consigo medir sem autoengano?
   result: 'lever' | 'noise' | 'incomplete'; // calculado
   no_count: number;                  // quantidade de NÃOs — calculado
+  used_as_imv?: boolean;             // marcada quando a ideia já virou IMV (Passo B) — retrocompat
 }
 
 // Inventário 4D — 3 itens por dimensão (limite rígido do livro)

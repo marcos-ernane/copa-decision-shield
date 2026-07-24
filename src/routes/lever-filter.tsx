@@ -116,6 +116,33 @@ function makeItem(): LeverItem {
   };
 }
 
+// Passo A: monta a lista do filtro a partir de TODAS as recombinações do [O],
+// preservando avaliações já salvas (match por id ou pelo texto da ideia — cobre
+// dados antigos, cujos lever_filter tinham id próprio, sem duplicar). Ideias
+// adicionadas direto no filtro (sem recombinação correspondente) são mantidas.
+function buildLeverItems(
+  recombinations: { id: string; idea: string }[],
+  leverFilter: LeverItem[],
+): LeverItem[] {
+  const byId = new Map(leverFilter.map((i) => [i.id, i]));
+  const byIdea = new Map(leverFilter.map((i) => [i.idea.trim().toLowerCase(), i]));
+  const consumed = new Set<LeverItem>();
+  const out: LeverItem[] = [];
+  for (const r of recombinations) {
+    const idea = (r.idea ?? '').trim();
+    if (!idea) continue;
+    const match = byId.get(r.id) ?? byIdea.get(idea.toLowerCase());
+    if (match) {
+      consumed.add(match);
+      out.push({ ...match, id: r.id, idea });
+    } else {
+      out.push({ ...makeItem(), id: r.id, idea });
+    }
+  }
+  for (const i of leverFilter) if (!consumed.has(i)) out.push(i);
+  return out;
+}
+
 // ──────────────────────────────────────
 // Screen
 // ──────────────────────────────────────
@@ -129,18 +156,30 @@ function LeverFilterScreen() {
   // isAvulso: só quando não há nenhum contexto de projeto na URL (acesso puro pela Bússola)
   const isAvulso = !urlEntryId && !urlProjectId;
 
-  const [preseeded] = useState<{ id: string; idea: string } | null>(() => {
-    const idea = sessionStorage.getItem('__recombinationIdea');
-    if (idea) {
-      sessionStorage.removeItem('__recombinationIdea');
-      return { id: guestId(), idea };
+  // Passo A: recebe TODAS as recombinações do FormatO (via sessionStorage) para
+  // listar cada ideia. Fallback à chave antiga de 1 ideia mantém retrocompat.
+  const [sessionRecombinations] = useState<{ id: string; idea: string }[]>(() => {
+    const raw = sessionStorage.getItem('__recombinations');
+    if (raw) {
+      sessionStorage.removeItem('__recombinations');
+      try {
+        const parsed = JSON.parse(raw) as { id: string; idea: string }[];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
     }
-    return null;
+    const single = sessionStorage.getItem('__recombinationIdea');
+    if (single) {
+      sessionStorage.removeItem('__recombinationIdea');
+      return [{ id: guestId(), idea: single }];
+    }
+    return [];
   });
   const [items,      setItems]      = useState<LeverItem[]>(() =>
-    preseeded ? [{ ...makeItem(), id: preseeded.id, idea: preseeded.idea }] : []
+    sessionRecombinations.length ? buildLeverItems(sessionRecombinations, []) : []
   );
-  const [expandedId, setExpandedId] = useState<string | null>(preseeded?.id ?? null);
+  const [expandedId, setExpandedId] = useState<string | null>(sessionRecombinations[0]?.id ?? null);
   const [bottleneck, setBottleneck] = useState<string>('');
   const [helpKey,    setHelpKey]    = useState<HelpKey | null>(null);
   const [saving,     setSaving]     = useState(false);
@@ -181,9 +220,11 @@ function LeverFilterScreen() {
         setNoOEntry(false);
         const c = oEntry.content as Record<string, unknown>;
         setBottleneck((c.bottleneck as string) ?? '');
-        const lf = c.lever_filter as LeverItem[] | undefined;
-        if (lf && lf.length > 0) setItems(lf);
-        else setItems([]);
+        const lf = (c.lever_filter as LeverItem[] | undefined) ?? [];
+        const recomb = sessionRecombinations.length
+          ? sessionRecombinations
+          : ((c.recombinations as { id: string; idea: string }[] | undefined) ?? []);
+        setItems(buildLeverItems(recomb, lf));
       } else {
         setEffectiveEntryId(undefined);
         setNoOEntry(true);
@@ -202,8 +243,11 @@ function LeverFilterScreen() {
         setEffectiveEntryId(oEntry.id);
         const c = oEntry.content as Record<string, unknown>;
         setBottleneck((c.bottleneck as string) ?? '');
-        const lf = c.lever_filter as LeverItem[] | undefined;
-        if (lf && lf.length > 0) setItems(lf);
+        const lf = (c.lever_filter as LeverItem[] | undefined) ?? [];
+        const recomb = sessionRecombinations.length
+          ? sessionRecombinations
+          : ((c.recombinations as { id: string; idea: string }[] | undefined) ?? []);
+        setItems(buildLeverItems(recomb, lf));
       }
     });
   }, [urlProjectId, urlEntryId]);
@@ -227,8 +271,11 @@ function LeverFilterScreen() {
       }
       if (!content) return;
       setBottleneck((content.bottleneck as string) ?? '');
-      const lf = content.lever_filter as LeverItem[] | undefined;
-      if (lf && lf.length > 0) setItems(lf);
+      const lf = (content.lever_filter as LeverItem[] | undefined) ?? [];
+      const recomb = sessionRecombinations.length
+        ? sessionRecombinations
+        : ((content.recombinations as { id: string; idea: string }[] | undefined) ?? []);
+      setItems(buildLeverItems(recomb, lf));
     }
     void load();
   }, [urlEntryId]);
