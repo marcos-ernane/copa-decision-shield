@@ -692,13 +692,14 @@ export function TimelineTab() {
             );
           })()}
         </div>
-        {expanded === e.id && (
+        {/* Área expandida (ações + detalhes). Não renderiza para o Relatório
+            Consultivo (project_report): não há ações aplicáveis nem detalhes extras.
+            O resumo completo já aparece ao expandir (fora desta área). */}
+        {expanded === e.id && e.entry_type !== 'project_report' && (
           <div className="mt-3 pt-3 border-t border-border space-y-3">
             {/* Ações — sempre no topo para fácil acesso */}
             <div className="flex gap-3">
-              {/* Registro corretivo não se aplica ao Relatório Consultivo (project_report),
-                  que é análise gerada por IA, nem aos próprios registros corretivos. */}
-              {e.entry_type !== 'corrective' && e.entry_type !== 'project_report' && (
+              {e.entry_type !== 'corrective' && (
                 <Link
                   to="/register/corrective/$entryId"
                   params={{ entryId: e.id }}
@@ -707,26 +708,23 @@ export function TimelineTab() {
                   Criar registro corretivo
                 </Link>
               )}
-              {/* Arquivar não se aplica ao Relatório Consultivo (project_report) */}
-              {e.entry_type !== 'project_report' && (
-                <EditZoneGuard
-                  zone="red"
-                  title="Arquivar registro?"
-                  description="Este registro ficará oculto no Timeline. Use o Registro Corretivo para corrigir o conteúdo."
-                  confirmLabel="Arquivar"
-                  onConfirm={async () => { await archiveEntry(e.id); void refresh(); }}
-                >
-                  {(open) => (
-                    <button
-                      type="button"
-                      onClick={open}
-                      className="text-label text-muted-foreground hover:text-destructive"
-                    >
-                      Arquivar
-                    </button>
-                  )}
-                </EditZoneGuard>
-              )}
+              <EditZoneGuard
+                zone="red"
+                title="Arquivar registro?"
+                description="Este registro ficará oculto no Timeline. Use o Registro Corretivo para corrigir o conteúdo."
+                confirmLabel="Arquivar"
+                onConfirm={async () => { await archiveEntry(e.id); void refresh(); }}
+              >
+                {(open) => (
+                  <button
+                    type="button"
+                    onClick={open}
+                    className="text-label text-muted-foreground hover:text-destructive"
+                  >
+                    Arquivar
+                  </button>
+                )}
+              </EditZoneGuard>
             </div>
             {/* Cadeia de causa raiz — accordion (REQ-RC-18) */}
             {e.entry_type === 'structured_C' && (() => {
