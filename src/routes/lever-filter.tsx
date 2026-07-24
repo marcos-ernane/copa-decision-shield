@@ -181,6 +181,8 @@ function LeverFilterScreen() {
     sessionRecombinations.length ? buildLeverItems(sessionRecombinations, []) : []
   );
   const [expandedId, setExpandedId] = useState<string | null>(sessionRecombinations[0]?.id ?? null);
+  // Id da ideia cujo "Avançar" foi tentado com avaliação incompleta (mostra aviso).
+  const [avancarWarning, setAvancarWarning] = useState<string | null>(null);
   const [bottleneck, setBottleneck] = useState<string>('');
   const [helpKey,    setHelpKey]    = useState<HelpKey | null>(null);
   const [saving,     setSaving]     = useState(false);
@@ -599,23 +601,39 @@ function LeverFilterScreen() {
                       </p>
                     )}
 
-                    {/* Avançar — recolhe a ideia e volta à lista. A decisão de virar
-                        IMV é feita na LISTA (vendo todas juntas), só para alavancas.
-                        Aqui é só avaliação: para uma ideia virar alavanca, ajuste as
-                        respostas (troque um NÃO por SIM) — o "descarte" é essa revisão. */}
-                    <button
-                      type="button"
-                      onClick={() => setExpandedId(null)}
-                      className="w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-small font-medium border transition-colors"
-                      style={{
-                        color: 'var(--color-brand-blue)',
-                        borderColor: 'color-mix(in srgb, var(--color-brand-blue) 35%, transparent)',
-                        backgroundColor: 'color-mix(in srgb, var(--color-brand-blue) 7%, transparent)',
-                      }}
-                    >
-                      Avançar
-                      <ArrowRight className="size-3.5" />
-                    </button>
+                    {/* Avançar — só recolhe quando as 5 perguntas foram respondidas.
+                        Incompleto: mostra aviso e não sai (garante a confirmação de
+                        alavanca/ruído, evitando o loop de entrar e sair sem avaliar).
+                        A decisão de virar IMV é feita na LISTA (vendo todas juntas). */}
+                    <div className="space-y-1.5">
+                      {avancarWarning === item.id && result === 'incomplete' && (
+                        <p className="text-label text-brand-amber leading-snug">
+                          Responda SIM ou NÃO nas 5 perguntas antes de avançar. É essa
+                          avaliação que confirma se a ideia é alavanca ou ruído — sem ela,
+                          a ideia não pode virar IMV.
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (result === 'incomplete') {
+                            setAvancarWarning(item.id);
+                            return;
+                          }
+                          setAvancarWarning(null);
+                          setExpandedId(null);
+                        }}
+                        className="w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-small font-medium border transition-colors"
+                        style={{
+                          color: 'var(--color-brand-blue)',
+                          borderColor: 'color-mix(in srgb, var(--color-brand-blue) 35%, transparent)',
+                          backgroundColor: 'color-mix(in srgb, var(--color-brand-blue) 7%, transparent)',
+                        }}
+                      >
+                        Avançar
+                        <ArrowRight className="size-3.5" />
+                      </button>
+                    </div>
 
                     {/* Lixeira */}
                     <button
