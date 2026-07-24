@@ -140,7 +140,8 @@ function ReportScreen() {
       }
 
       const decisions = allEntries.filter((e) => e.entry_type === 'decision_record');
-      const pay = buildReportPayload(proj, allEntries, principles, decisions);
+      const pay = await buildReportPayload(proj, allEntries, principles, decisions);
+      if (cancelled) return;
       if (!pay) { setPhase('no_imv'); return; }
       setPayload(pay);
       setReportType(pay.reportType);

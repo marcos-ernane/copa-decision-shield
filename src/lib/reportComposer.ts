@@ -1,19 +1,32 @@
 // reportComposer.ts — Builder e Composer do Relatório Consultivo de Projeto
-// (PRD-plano-execucao-imv). Seleciona por relevância os campos de C/O/P/A +
-// princípios + decisões, monta o texto para a IA, parseia as 5 seções e provê
-// fallback local quando a IA falha. Sem storage extra — cooldown derivado de
-// created_at das entries project_report (funciona idêntico em guest e autenticado).
+// (PRD-plano-execucao-imv + Etapa 7). Coleta TODAS as fontes de dados do projeto
+// em 3 blocos com teto fixo de tamanho:
+//   A — Núcleo do ciclo: C/O/P/A completos, incl. sub-telas (porquês, 3R+fricções,
+//       4D, alavanca, custo/benefício detalhado, plano de execução, 5W2H flag).
+//   B — Sinais operacionais agregados: pulsos, Pressão, 5min, revisões, corretivos,
+//       clareza — sempre "contagem + amostra truncada", nunca dump bruto.
+//   C — Flags de práticas de registro: fotos antes/depois, campos opcionais —
+//       permitem à IA sugerir boas práticas apenas quando de fato faltam.
+// O prompt final segue a LINHA DO TEMPO OPERACIONAL (diagnóstico → organização →
+// decisão → execução → resultado → histórico → sinais → práticas) para que o
+// relatório saia como raciocínio sequencial único.
+// Cooldown derivado de created_at das entries project_report — sem storage extra.
 
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { countCompleteCycles } from '@/lib/cycles';
+import { getEntryImageCounts } from '@/lib/entryImages';
+import { supabase } from '@/lib/supabase';
 import type { Entry, Principle, Project } from '@/types/database';
-import type { AuthState } from '@/types/app';
+import type { AuthState, ExecutionPlan } from '@/types/app';
 import type {
   StructuredCContent,
   StructuredOContent,
   StructuredPContent,
   StructuredAContent,
   DecisionRecordContent,
+  QuickReviewContent,
+  Protocol5Content,
+  PulseContent,
   ProjectReportType,
 } from '@/lib/register';
 
@@ -49,6 +62,25 @@ export function reportCooldown(
 
 // ---------- Payload ----------
 
+export interface ReportSignals {
+  pulses: { count: number; samples: string[] };
+  pressure: { count: number; last?: string };
+  protocol5: { count: number; last?: string };
+  quickReviews: { count: number; last?: string };
+  correctives: { count: number };
+  claritySessions: { count: number };
+}
+
+export interface ReportPractices {
+  /** null = indisponível (modo guest — fotos vivem só no Supabase). */
+  photos: { captura: number; afericao: number } | null;
+  ethicalCheckFilled: boolean;
+  cutRuleFilled: boolean;
+  metricFilled: boolean;
+  /** null = não se aplica (sem Aferição registrada ainda). */
+  hiddenCostFilled: boolean | null;
+}
+
 export interface ReportPayload {
   // PROJETO
   projectName: string;
@@ -56,14 +88,20 @@ export interface ReportPayload {
   currentLayer: string | null;
   reportType: ProjectReportType;
   completeCycles: number;
-  // CICLO ATUAL
+  // BLOCO A — DIAGNÓSTICO (Captura)
   factText: string; // structured_C.fact_text — máx 200 chars
+  interpretationText?: string; // interpretações separadas do fato — máx 120
   hypothesisText: string; // structured_C.hypothesis_text — máx 150 chars
-  rootCause?: string; // structured_C.root_cause_chain.root_cause — máx 120 chars
+  rootCauseChain?: string; // cadeia dos porquês compactada — máx 300
+  imvPossible?: string; // IMV esboçada na Captura — máx 100
+  // BLOCO A — ORGANIZAÇÃO
   resources: string; // structured_O.resources — máx 150 chars
+  frictions: string; // structured_O.frictions (Mapa 3R / R2) — máx 150 chars
   bottleneck: string; // structured_O.bottleneck — máx 150 chars
-  leverResult?: string; // structured_O.lever_filter — ideia aprovada, máx 100 chars
+  inventory4d?: string; // Inventário 4D compactado — máx 280
+  leverStats?: string; // "N ideias: X alavanca, Y ruído" + aprovada
   selectedRecombination?: string; // máx 100 chars
+  // BLOCO A — DECISÃO (IMV)
   imvAction: string; // structured_P.action — máx 150 chars
   imvReversible: boolean | null;
   imvCheap: boolean | null;
@@ -74,31 +112,46 @@ export interface ReportPayload {
   imvCutRule: string; // máx 100 chars
   imvLayer: string | null;
   imvEthicalCheck?: string; // máx 80 chars
-  costBenefitSummary?: string; // relacao + R$ total
-  // APA (quando existe)
+  costBenefitDetail?: string; // relação + graus médios + top itens — máx 320
+  // BLOCO A — EXECUÇÃO
+  executionPlanSummary?: string; // fases/concluídas/vencidas/reaberturas + próxima — máx 220
+  hasActionPlan: boolean; // 5W2H gerado (conteúdo é derivado da IMV — não repetido)
+  // BLOCO A — RESULTADO (APA)
   apaPrincipleText?: string; // máx 200 chars
   apaDecision?: string; // máx 150 chars
   apaWhatWorked?: string; // máx 150 chars
   apaHiddenCost?: string; // máx 100 chars
+  apaRepeatRule?: string; // máx 100 chars
+  apaCutRuleNext?: string; // máx 100 chars
   apaNextBottleneck?: string; // máx 100 chars
   // HISTÓRICO
   principles: string[]; // máx 4, por recall_count DESC, 100 chars cada
   decisions: string[]; // máx 3 mais recentes, 80 chars cada
   previousCyclesSummary?: string; // só quando evolution — resumo dos ciclos anteriores
+  // BLOCO B — SINAIS OPERACIONAIS
+  signals: ReportSignals;
+  // BLOCO C — PRÁTICAS DE REGISTRO
+  practices: ReportPractices;
 }
 
+const trunc = (s: string | null | undefined, n: number): string | undefined => {
+  const t = (s ?? '').trim();
+  return t ? t.slice(0, n) : undefined;
+};
+
 /**
- * Monta o ReportPayload a partir do projeto, entries, princípios e decisões.
+ * Monta o ReportPayload varrendo TODAS as fontes de dados do projeto.
  * Retorna null quando não há structured_P (mínimo para a IA ter o que analisar).
- * `decisions` são entries decision_record (não há tipo DecisionRecord dedicado;
- * o content é lido como DecisionRecordContent).
+ * Async por causa da contagem de fotos (Supabase; guest → practices.photos = null).
+ * `decisions` são entries decision_record (content lido como DecisionRecordContent).
+ * Obs.: o Retorno Calibrado persiste como pulse — entra pelos sinais de pulsos.
  */
-export function buildReportPayload(
+export async function buildReportPayload(
   project: Project,
   entries: Entry[],
   principles: Principle[],
   decisions: Entry[],
-): ReportPayload | null {
+): Promise<ReportPayload | null> {
   // Verificar condição mínima
   const hasP = entries.some((e) => e.entry_type === 'structured_P');
   if (!hasP) return null;
@@ -124,12 +177,100 @@ export function buildReportPayload(
   const cC = cEntry?.content as StructuredCContent | undefined;
   const oC = oEntry?.content as StructuredOContent | undefined;
   const pC = pEntry.content as unknown as StructuredPContent;
-  const aC = aEntry?.content as StructuredAContent | undefined;
+  const aC = aEntry?.content as unknown as StructuredAContent | undefined;
 
-  // Lever filter — pegar ideia aprovada se existir
-  const leverApproved = oC?.lever_filter?.find((i) => i.result === 'lever')?.idea;
+  // ── Cadeia de causa raiz (os porquês) — compactada ──
+  let rootCauseChain: string | undefined;
+  const chain = cC?.root_cause_chain;
+  if (chain?.root_cause) {
+    const steps = (chain.steps ?? [])
+      .map((s) => `${s.step_number}. ${(s.answer ?? '').trim().slice(0, 60)}`)
+      .filter((s) => s.length > 3)
+      .join(' → ');
+    rootCauseChain = `${steps ? steps + ' ⇒ ' : ''}Causa raiz: ${chain.root_cause.slice(0, 120)}`.slice(0, 300);
+  }
 
-  // Ciclos anteriores para modo evolution
+  // ── Inventário 4D — compactado (1 linha por dimensão) ──
+  let inventory4d: string | undefined;
+  if (oC?.inventory_4d) {
+    const dims: [string, { item1: string; item2: string; item3: string }][] = [
+      ['Densidade', oC.inventory_4d.density],
+      ['Direção', oC.inventory_4d.direction],
+      ['Demora', oC.inventory_4d.delay],
+      ['Desejo', oC.inventory_4d.desire],
+    ];
+    const lines = dims
+      .map(([label, d]) => {
+        const items = [d?.item1, d?.item2, d?.item3]
+          .map((i) => (i ?? '').trim())
+          .filter(Boolean)
+          .map((i) => i.slice(0, 40));
+        return items.length ? `${label}: ${items.join(', ')}` : null;
+      })
+      .filter(Boolean);
+    if (lines.length) inventory4d = lines.join(' | ').slice(0, 280);
+  }
+
+  // ── Filtro de Alavanca — estatística + ideia aprovada ──
+  let leverStats: string | undefined;
+  if (oC?.lever_filter?.length) {
+    const total = oC.lever_filter.length;
+    const levers = oC.lever_filter.filter((i) => i.result === 'lever').length;
+    const noise = oC.lever_filter.filter((i) => i.result === 'noise').length;
+    const approved = oC.lever_filter.find((i) => i.result === 'lever')?.idea;
+    leverStats = `${total} ideia(s) avaliada(s): ${levers} alavanca, ${noise} ruído${approved ? ` · aprovada: "${approved.slice(0, 80)}"` : ''}`;
+  }
+
+  // ── Custo/Benefício — detalhado (relação + graus + top itens) ──
+  let costBenefitDetail: string | undefined;
+  const cb = pC.cost_benefit;
+  if (cb) {
+    const topCustos = [...(cb.custos ?? [])]
+      .sort((a, b) => b.valor - a.valor)
+      .slice(0, 2)
+      .map((c) => `"${c.nome.slice(0, 40)}" R$ ${c.valor.toFixed(2)} (g${c.grau})`)
+      .join(' · ');
+    const topBeneficios = [...(cb.beneficios ?? [])]
+      .sort((a, b) => b.grau - a.grau)
+      .slice(0, 2)
+      .map((b) => `"${b.descricao.slice(0, 40)}" (g${b.grau})`)
+      .join(' · ');
+    costBenefitDetail = [
+      `${cb.relacao} · Total R$ ${cb.total_custo.toFixed(2)} · grau médio custo ${cb.grau_medio_custo.toFixed(1)} vs benefício ${cb.grau_medio_beneficio.toFixed(1)}`,
+      topCustos ? `Maiores custos: ${topCustos}` : null,
+      topBeneficios ? `Benefícios: ${topBeneficios}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n')
+      .slice(0, 320);
+  }
+
+  // ── Plano de Execução da IMV — resumo de fases ──
+  let executionPlanSummary: string | undefined;
+  const plan: ExecutionPlan | undefined = pC.execution_plan;
+  if (plan?.enabled && plan.phases?.length) {
+    const now = Date.now();
+    const total = plan.phases.length;
+    const done = plan.phases.filter((f) => f.status === 'concluída').length;
+    const overdue = plan.phases.filter(
+      (f) => f.status !== 'concluída' && new Date(f.deadline).getTime() < now,
+    ).length;
+    const reopens = plan.phases.reduce((acc, f) => acc + (f.reopen_history?.length ?? 0), 0);
+    const next = plan.phases
+      .filter((f) => f.status !== 'concluída')
+      .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())[0];
+    executionPlanSummary = [
+      `${total} fase(s) · ${done} concluída(s) · ${overdue} vencida(s) · ${reopens} reabertura(s) de prazo`,
+      next
+        ? `próxima: "${next.how.slice(0, 80)}" (até ${new Date(next.deadline).toLocaleDateString('pt-BR')})`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(' · ')
+      .slice(0, 220);
+  }
+
+  // ── Ciclos anteriores para modo evolution ──
   let previousCyclesSummary: string | undefined;
   if (reportType === 'evolution') {
     const prevAEntries = sorted
@@ -143,6 +284,87 @@ export function buildReportPayload(
       .join(' | ');
   }
 
+  // ── BLOCO B — Sinais operacionais agregados ──
+  const pulses = sorted.filter((e) => e.entry_type === 'pulse');
+  const pressures = sorted.filter((e) => e.entry_type === 'pressure_session');
+  const protocol5s = sorted.filter((e) => e.entry_type === 'protocol_5min');
+  const quickReviews = sorted.filter((e) => e.entry_type === 'quick_review');
+  const correctives = sorted.filter((e) => e.entry_type === 'corrective');
+  const claritySessions = sorted.filter((e) => {
+    const c = e.content as { kind?: string };
+    return e.entry_type === 'passive' && c?.kind === 'clarity_session';
+  });
+
+  const lastPressure = pressures[0]?.content as
+    | { fact?: string; next_step?: string }
+    | undefined;
+  const lastProtocol5 = protocol5s[0]?.content as unknown as Protocol5Content | undefined;
+  const lastQuickReview = quickReviews[0]?.content as unknown as QuickReviewContent | undefined;
+
+  const signals: ReportSignals = {
+    pulses: {
+      count: pulses.length,
+      samples: pulses.slice(0, 2).map((e) => {
+        const c = e.content as unknown as PulseContent;
+        return (c.fact_text || c.text || '').trim().slice(0, 80);
+      }).filter(Boolean),
+    },
+    pressure: {
+      count: pressures.length,
+      last: lastPressure
+        ? [lastPressure.fact, lastPressure.next_step]
+            .map((s) => (s ?? '').trim())
+            .filter(Boolean)
+            .join(' → ')
+            .slice(0, 120) || undefined
+        : undefined,
+    },
+    protocol5: {
+      count: protocol5s.length,
+      last: lastProtocol5
+        ? trunc(`${lastProtocol5.fact_text} → micro-ação: ${lastProtocol5.micro_action}`, 120)
+        : undefined,
+    },
+    quickReviews: {
+      count: quickReviews.length,
+      last: lastQuickReview
+        ? trunc(`${lastQuickReview.met_expectation}: ${lastQuickReview.what_happened}`, 120)
+        : undefined,
+    },
+    correctives: { count: correctives.length },
+    claritySessions: { count: claritySessions.length },
+  };
+
+  // ── BLOCO C — Práticas de registro ──
+  // Fotos: tabela entry_images é só Supabase — em guest, marcar como indisponível
+  // (null) para a IA não sugerir prática com base em dado que não existe no modo.
+  let photos: ReportPractices['photos'] = null;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const ids = [cEntry?.id, aEntry?.id].filter(Boolean) as string[];
+      if (ids.length) {
+        const counts = await getEntryImageCounts(ids);
+        photos = {
+          captura: cEntry ? (counts[cEntry.id] ?? 0) : 0,
+          afericao: aEntry ? (counts[aEntry.id] ?? 0) : 0,
+        };
+      } else {
+        photos = { captura: 0, afericao: 0 };
+      }
+    }
+  } catch {
+    photos = null; // falha de rede → indisponível, nunca quebra a geração
+  }
+
+  const practices: ReportPractices = {
+    photos,
+    ethicalCheckFilled: !!pC.ethical_check?.trim(),
+    cutRuleFilled: !!pC.cut_rule?.trim(),
+    metricFilled: !!pC.metric?.trim(),
+    hiddenCostFilled: aC ? !!aC.hidden_cost?.trim() : null,
+  };
+
   return {
     projectName: project.name,
     scenarioType: project.scenario_type ?? null,
@@ -150,12 +372,16 @@ export function buildReportPayload(
     reportType,
     completeCycles,
     factText: (cC?.fact_text ?? '').slice(0, 200),
+    interpretationText: trunc(cC?.interpretation_text, 120),
     hypothesisText: (cC?.hypothesis_text ?? '').slice(0, 150),
-    rootCause: cC?.root_cause_chain?.root_cause?.slice(0, 120),
+    rootCauseChain,
+    imvPossible: trunc(cC?.imv_possible, 100),
     resources: (oC?.resources ?? '').slice(0, 150),
+    frictions: (oC?.frictions ?? '').slice(0, 150),
     bottleneck: (oC?.bottleneck ?? '').slice(0, 150),
-    leverResult: leverApproved?.slice(0, 100),
-    selectedRecombination: oC?.selected_recombination?.slice(0, 100),
+    inventory4d,
+    leverStats,
+    selectedRecombination: trunc(oC?.selected_recombination, 100),
     imvAction: pC.action.slice(0, 150),
     imvReversible: pC.reversible,
     imvCheap: pC.cheap,
@@ -167,15 +393,17 @@ export function buildReportPayload(
       : 'Sem prazo',
     imvCutRule: pC.cut_rule.slice(0, 100),
     imvLayer: pC.layer ?? null,
-    imvEthicalCheck: pC.ethical_check?.slice(0, 80),
-    costBenefitSummary: pC.cost_benefit
-      ? `${pC.cost_benefit.relacao} · R$ ${pC.cost_benefit.total_custo.toFixed(2)}`
-      : undefined,
-    apaPrincipleText: aC?.principle_text?.slice(0, 200),
-    apaDecision: aC?.decision?.slice(0, 150),
-    apaWhatWorked: aC?.what_worked?.slice(0, 150),
-    apaHiddenCost: aC?.hidden_cost?.slice(0, 100) ?? undefined,
-    apaNextBottleneck: aC?.next_bottleneck?.slice(0, 100),
+    imvEthicalCheck: trunc(pC.ethical_check, 80),
+    costBenefitDetail,
+    executionPlanSummary,
+    hasActionPlan: !!pC.action_plan,
+    apaPrincipleText: trunc(aC?.principle_text, 200),
+    apaDecision: trunc(aC?.decision, 150),
+    apaWhatWorked: trunc(aC?.what_worked, 150),
+    apaHiddenCost: trunc(aC?.hidden_cost, 100),
+    apaRepeatRule: trunc(aC?.repeat_rule, 100),
+    apaCutRuleNext: trunc(aC?.cut_rule_next, 100),
+    apaNextBottleneck: trunc(aC?.next_bottleneck, 100),
     principles: [...principles]
       .filter((p) => !p.is_archived)
       .sort((a, b) => b.recall_count - a.recall_count)
@@ -186,62 +414,106 @@ export function buildReportPayload(
       .slice(0, 3)
       .map((d) => (d.content as unknown as DecisionRecordContent).decision.slice(0, 80)),
     previousCyclesSummary,
+    signals,
+    practices,
   };
 }
 
 /**
- * Converte o ReportPayload em texto natural consolidado para a IA — não JSON bruto.
- * Tamanho controlado pelos .slice() por campo em buildReportPayload.
+ * Converte o ReportPayload em texto natural consolidado para a IA, na ORDEM DA
+ * LINHA DO TEMPO OPERACIONAL (diagnóstico → organização → decisão → execução →
+ * resultado → histórico → sinais → práticas). Essa ordem espelha a arquitetura
+ * narrativa exigida do relatório: a IA lê os dados na mesma sequência em que
+ * deve raciocinar. Tamanho controlado pelos .slice() por campo.
  */
 export function buildPromptText(payload: ReportPayload): string {
   const bool = (v: boolean | null) => (v === true ? 'Sim' : v === false ? 'Não' : 'Não avaliado');
   const lines: string[] = [
-    `PROJETO: ${payload.projectName} | TIPO: ${payload.reportType.toUpperCase()}`,
+    `PROJETO: ${payload.projectName} | TIPO DE RELATÓRIO: ${payload.reportType.toUpperCase()}`,
     `CENÁRIO: ${payload.scenarioType ?? 'não definido'} | CAMADA: ${payload.currentLayer ?? 'não definida'}`,
     `CICLOS COMPLETOS: ${payload.completeCycles}`,
     '',
-    'DIAGNÓSTICO (Captura):',
-    `Fato observado: ${payload.factText}`,
+    '1) DIAGNÓSTICO (Captura):',
+    `Fato observado: ${payload.factText || '—'}`,
   ];
+  if (payload.interpretationText) lines.push(`Interpretações separadas do fato: ${payload.interpretationText}`);
   if (payload.hypothesisText) lines.push(`Hipótese: ${payload.hypothesisText}`);
-  if (payload.rootCause) lines.push(`Causa raiz: ${payload.rootCause}`);
-  lines.push('', 'ORGANIZAÇÃO:', `Recursos: ${payload.resources}`, `Gargalo: ${payload.bottleneck}`);
-  if (payload.leverResult) lines.push(`Ideia aprovada no filtro: ${payload.leverResult}`);
+  if (payload.rootCauseChain) lines.push(`Investigação de causa raiz (porquês): ${payload.rootCauseChain}`);
+  if (payload.imvPossible) lines.push(`IMV possível esboçada na Captura: ${payload.imvPossible}`);
+
+  lines.push('', '2) ORGANIZAÇÃO:', `Recursos: ${payload.resources || '—'}`);
+  if (payload.frictions) lines.push(`Fricções (Mapa 3R): ${payload.frictions}`);
+  lines.push(`Gargalo: ${payload.bottleneck || '—'}`);
+  if (payload.inventory4d) lines.push(`Inventário 4D: ${payload.inventory4d}`);
+  if (payload.leverStats) lines.push(`Filtro de Alavanca: ${payload.leverStats}`);
   if (payload.selectedRecombination)
     lines.push(`Recombinação selecionada: ${payload.selectedRecombination}`);
+
   lines.push(
     '',
-    'IMV (Prova):',
+    '3) DECISÃO — IMV (Prova):',
     `Ação: ${payload.imvAction}`,
     `Critérios — Reversível: ${bool(payload.imvReversible)} | Barata: ${bool(payload.imvCheap)} | Específica: ${bool(payload.imvSpecific)} | Mensurável: ${bool(payload.imvMeasurable)}`,
-    `Métrica: ${payload.imvMetric}`,
+    `Métrica: ${payload.imvMetric || '—'}`,
     `Prazo: ${payload.imvDeadline}`,
-    `Regra de corte: ${payload.imvCutRule}`,
+    `Regra de corte: ${payload.imvCutRule || '—'}`,
     `Camada: ${payload.imvLayer ?? 'não definida'}`,
   );
   if (payload.imvEthicalCheck) lines.push(`Verificação ética: ${payload.imvEthicalCheck}`);
-  if (payload.costBenefitSummary) lines.push(`Custo/Benefício: ${payload.costBenefitSummary}`);
+  if (payload.costBenefitDetail) lines.push(`Análise de custo/benefício:\n${payload.costBenefitDetail}`);
+
+  const execLines: string[] = [];
+  if (payload.executionPlanSummary) execLines.push(`Plano de execução: ${payload.executionPlanSummary}`);
+  if (payload.hasActionPlan)
+    execLines.push('Plano de Ação 5W2H: gerado (conteúdo derivado da própria IMV).');
+  if (execLines.length) lines.push('', '4) EXECUÇÃO:', ...execLines);
+
   if (payload.apaPrincipleText) {
     lines.push(
       '',
-      'AFERIÇÃO (resultado):',
+      '5) RESULTADO — AFERIÇÃO:',
       `Princípio extraído: ${payload.apaPrincipleText}`,
       `Decisão: ${payload.apaDecision ?? '—'}`,
       `O que funcionou: ${payload.apaWhatWorked ?? '—'}`,
     );
     if (payload.apaHiddenCost) lines.push(`Custo oculto: ${payload.apaHiddenCost}`);
+    if (payload.apaRepeatRule) lines.push(`Regra de repetição: ${payload.apaRepeatRule}`);
+    if (payload.apaCutRuleNext) lines.push(`Regra de corte para o próximo ciclo: ${payload.apaCutRuleNext}`);
     if (payload.apaNextBottleneck) lines.push(`Próximo gargalo: ${payload.apaNextBottleneck}`);
   }
-  if (payload.principles.length) {
-    lines.push('', 'PRINCÍPIOS HISTÓRICOS DO PROJETO:');
-    payload.principles.forEach((p, i) => lines.push(`P${i + 1}: ${p}`));
+
+  if (payload.principles.length || payload.decisions.length || payload.previousCyclesSummary) {
+    lines.push('', '6) HISTÓRICO DO PROJETO:');
+    payload.principles.forEach((p, i) => lines.push(`Princípio P${i + 1}: ${p}`));
+    payload.decisions.forEach((d, i) => lines.push(`Decisão D${i + 1}: ${d}`));
+    if (payload.previousCyclesSummary) lines.push(`Ciclos anteriores: ${payload.previousCyclesSummary}`);
   }
-  if (payload.decisions.length) {
-    lines.push('', 'DECISÕES REGISTRADAS:');
-    payload.decisions.forEach((d, i) => lines.push(`D${i + 1}: ${d}`));
-  }
-  if (payload.previousCyclesSummary)
-    lines.push('', 'CICLOS ANTERIORES:', payload.previousCyclesSummary);
+
+  const s = payload.signals;
+  const signalLines: string[] = [];
+  if (s.pulses.count)
+    signalLines.push(
+      `Pulsos: ${s.pulses.count}${s.pulses.samples.length ? ` · últimos: ${s.pulses.samples.map((x) => `"${x}"`).join(' | ')}` : ''}`,
+    );
+  if (s.pressure.count)
+    signalLines.push(`Modo Pressão: ${s.pressure.count} ativação(ões)${s.pressure.last ? ` · última: ${s.pressure.last}` : ''}`);
+  if (s.protocol5.count)
+    signalLines.push(`Protocolo 5 minutos: ${s.protocol5.count}${s.protocol5.last ? ` · último: ${s.protocol5.last}` : ''}`);
+  if (s.quickReviews.count)
+    signalLines.push(`Revisões rápidas: ${s.quickReviews.count}${s.quickReviews.last ? ` · última: ${s.quickReviews.last}` : ''}`);
+  if (s.correctives.count) signalLines.push(`Registros corretivos: ${s.correctives.count}`);
+  if (s.claritySessions.count) signalLines.push(`Sessões de Clareza Operacional: ${s.claritySessions.count}`);
+  if (signalLines.length) lines.push('', '7) SINAIS OPERACIONAIS DO PERÍODO:', ...signalLines);
+
+  const p = payload.practices;
+  const practiceLines: string[] = [];
+  if (p.photos)
+    practiceLines.push(`Fotos de cenário — Captura: ${p.photos.captura} · Aferição: ${p.photos.afericao}`);
+  practiceLines.push(
+    `Campos opcionais — verificação ética: ${p.ethicalCheckFilled ? 'preenchida' : 'vazia'} · regra de corte: ${p.cutRuleFilled ? 'presente' : 'ausente'} · métrica: ${p.metricFilled ? 'definida' : 'ausente'}${p.hiddenCostFilled !== null ? ` · custo oculto (APA): ${p.hiddenCostFilled ? 'registrado' : 'vazio'}` : ''}`,
+  );
+  lines.push('', '8) PRÁTICAS DE REGISTRO:', ...practiceLines);
+
   return lines.join('\n');
 }
 
@@ -309,8 +581,17 @@ export function generateLocalReport(payload: ReportPayload): ParsedReport {
     ]
       .filter(Boolean)
       .join(', ') || 'critérios não avaliados';
+  const s = payload.signals;
+  const sinais = [
+    s.pulses.count && `${s.pulses.count} pulso(s)`,
+    s.pressure.count && `${s.pressure.count} ativação(ões) do Modo Pressão`,
+    s.protocol5.count && `${s.protocol5.count} protocolo(s) de 5 minutos`,
+    s.correctives.count && `${s.correctives.count} registro(s) corretivo(s)`,
+  ]
+    .filter(Boolean)
+    .join(', ');
   return {
-    section_panorama: `Projeto '${payload.projectName}' com gargalo identificado: ${payload.bottleneck}. IMV definida: ${payload.imvAction}. Critérios atendidos: ${criterios}.`,
+    section_panorama: `Projeto '${payload.projectName}' com gargalo identificado: ${payload.bottleneck || 'não registrado'}. IMV definida: ${payload.imvAction}. Critérios atendidos: ${criterios}.${sinais ? ` Registros do período: ${sinais}.` : ''}`,
     section_quality: payload.apaPrincipleText
       ? 'O ciclo foi concluído com Aferição registrada, permitindo extração de princípio.'
       : 'O ciclo não possui Aferição registrada. A qualidade do diagnóstico não pôde ser avaliada com base em resultado real.',

@@ -154,11 +154,39 @@ Se não houver nada evidente nos dados, omitir completamente.]`,
   PROJECT_REPORT_CONSULTANT: `
 Você é um consultor operacional sênior especializado em micro e pequenas empresas.
 Receberá dados completos de um projeto gerenciado pelo método COPA
-(Captura → Organização → Prova → Aferição).
+(Captura → Organização → Prova → Aferição), organizados na ordem da linha do
+tempo operacional: diagnóstico → organização → decisão (IMV) → execução →
+resultado → histórico → sinais operacionais → práticas de registro.
 Sua tarefa é entregar um relatório consultivo completo, estruturado em 5 seções.
 Use APENAS as informações fornecidas. Nunca invente dados ou resultados.
 Linguagem direta, respeitosa e construtiva. Nunca punitiva.
-Cada seção separada pelo label exato abaixo (sem variação).
+Formato: texto corrido puro — sem markdown, sem cabeçalhos #, sem separadores ---,
+sem negrito **. Cada seção separada pelo label exato abaixo (sem variação).
+
+ARQUITETURA NARRATIVA (obrigatória):
+O relatório deve ser lido de cima para baixo como UM raciocínio único e encadeado.
+O leitor não deve precisar juntar pontos mentalmente — a ordem lógica é sua
+responsabilidade, não dele.
+- Siga a linha do tempo operacional: o que foi observado → o que foi decidido →
+  como foi executado → o que aconteceu → o que isso revela → o que fazer agora.
+- Cada seção (da 2 em diante) abre retomando em meia frase a conclusão da seção
+  anterior (ex.: "Partindo desse diagnóstico...", "Diante desse resultado...").
+- Dentro de cada seção, apresente os pontos em ordem cronológica dos dados.
+- Nunca referencie algo que ainda será dito ("como veremos adiante") — apenas o
+  que já foi dito. Nunca use siglas sem explicá-las na primeira ocorrência.
+- A SEÇÃO 5 termina com UMA frase final iniciada por "Comece por:" indicando o
+  primeiro passo imediato e concreto — é o fecho do raciocínio do relatório.
+
+USO DOS SINAIS OPERACIONAIS (bloco 7 dos dados):
+Ative-os na análise quando relevantes: ativações repetidas do Modo Pressão
+sugerem gargalo estrutural; muitos registros corretivos sugerem captura
+apressada; pulsos frequentes indicam disciplina de observação. Cite os números.
+
+USO DAS PRÁTICAS DE REGISTRO (bloco 8 dos dados):
+Quando indicar ausência (fotos de cenário zeradas, verificação ética vazia,
+custo oculto vazio), inclua na SEÇÃO 4 ou 5 UMA sugestão breve da boa prática
+correspondente — como oportunidade, nunca como cobrança. Se o bloco não trouxer
+informação de fotos, não comente fotos.
 
 SEÇÃO 1 — PANORAMA DO PROJETO
 Síntese do diagnóstico: o que foi observado, qual gargalo foi identificado,
@@ -433,7 +461,7 @@ async function callClaude(trigger: string, payload: Record<string, unknown>): Pr
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: isReportConsultant ? 1800 : isClarity ? 1000 : isReport ? 480 : isHelp ? 500 : 180,
+        max_tokens: isReportConsultant ? 2200 : isClarity ? 1000 : isReport ? 480 : isHelp ? 500 : 180,
         system,
         messages: [
           {
