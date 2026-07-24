@@ -553,19 +553,53 @@ export interface ParsedReport {
   section_next: string;
 }
 
+// Cabeçalho de seção, tolerante ao que a IA realmente produz:
+// markdown (#, **, >, -), "SEÇÃO"/"SECAO", travessão/en dash/hífen/dois-pontos,
+// espaçamento livre e caixa variável. Grupo 1 = número, grupo 2 = resto da linha.
+const SECTION_HEADER_RE = /^[\s#>*_\-]*SE[ÇC][ÃA]O\s*([1-5])\b[\s*_]*[—–\-:]*\s*(.*)$/i;
+
 /**
- * Parseia a resposta da IA em 5 seções via regex nos labels exatos
- * "SEÇÃO N — NOME". Retorna null se alguma das 5 seções faltar.
+ * Parseia a resposta da IA em 5 seções. Localiza os cabeçalhos linha a linha
+ * (em vez de um regex único e rígido) e usa o texto entre eles como corpo.
+ * Retorna null só quando alguma das 5 seções realmente falta.
  */
 export function parseReport(raw: string): ParsedReport | null {
-  const regex = /SEÇÃO (\d) — [A-ZÁÉÍÓÚÀÈÌÔÃÕÇÊ ]+\n([\s\S]*?)(?=SEÇÃO \d —|$)/g;
+  if (!raw?.trim()) return null;
+  const lines = raw.split('\n');
+
+  // 1) Localiza os cabeçalhos de seção
+  const marks: { n: string; line: number; rest: string }[] = [];
+  lines.forEach((line, i) => {
+    const m = line.match(SECTION_HEADER_RE);
+    if (m) marks.push({ n: m[1], line: i, rest: (m[2] ?? '').trim() });
+  });
+  if (!marks.length) return null;
+
+  // 2) Corpo = linhas entre um cabeçalho e o próximo. Se a IA colocou o texto na
+  // mesma linha do cabeçalho (resto longo = não é só o título), aproveita-o.
   const sections: Record<string, string> = {};
-  let m: RegExpExecArray | null;
-  while ((m = regex.exec(raw)) !== null) {
-    sections[m[1]] = m[2].trim();
-  }
-  if (!sections['1'] || !sections['2'] || !sections['3'] || !sections['4'] || !sections['5'])
+  marks.forEach((mark, i) => {
+    const end = i + 1 < marks.length ? marks[i + 1].line : lines.length;
+    const inline = mark.rest.replace(/[*_#]+$/g, '').trim();
+    const isTitleOnly = inline.length <= 60 && !/[.!?]/.test(inline);
+    const body = [
+      isTitleOnly ? '' : inline,
+      lines.slice(mark.line + 1, end).join('\n'),
+    ]
+      .join('\n')
+      .trim();
+    if (body && !sections[mark.n]) sections[mark.n] = body;
+  });
+
+  if (!sections['1'] || !sections['2'] || !sections['3'] || !sections['4'] || !sections['5']) {
+    // Log de diagnóstico — a IA respondeu, mas o formato não pôde ser interpretado.
+    console.warn(
+      '[Report] resposta da IA não parseada — seções encontradas:',
+      Object.keys(sections).join(',') || 'nenhuma',
+      '| início:', raw.slice(0, 120),
+    );
     return null;
+  }
   return {
     section_panorama: sections['1'],
     section_quality: sections['2'],

@@ -113,7 +113,9 @@ export async function askFacilitator(
     const timeoutMs = isReportConsultant ? 28000 : isHelp ? 22000 : isClarity ? 10000 : 3000;
     const suggestion = await invokeFunction(trigger, context, timeoutMs);
 
-    if (!isHelp) {
+    // Só cacheia resposta bem-sucedida. Cachear null prendia a falha por 15 min —
+    // "Tentar novamente" devolvia o mesmo null sem nem chamar a Edge Function.
+    if (!isHelp && suggestion) {
       cache.set(key, { value: suggestion, expiresAt: Date.now() + FIFTEEN_MIN });
     }
     return suggestion;
