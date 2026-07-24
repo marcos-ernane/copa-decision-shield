@@ -337,10 +337,6 @@ export function FormatO({
     setRecombinations((prev) => prev.filter((r) => r.id !== id));
   }
 
-  function selectRecombination(id: string) {
-    setRecombinations((prev) => prev.map((r) => ({ ...r, selected: r.id === id })));
-  }
-
   const missingResourcesAndFrictions =
     modo === '3r' &&
     isReviewing &&
@@ -395,14 +391,14 @@ export function FormatO({
         bottleneck: fromItems(bottleneckItems),
       };
     }
-    // Inclui recombinações no content se houver ao menos uma preenchida
+    // Inclui recombinações no content se houver ao menos uma preenchida.
+    // A escolha da IMV (selected_recombination) agora é feita no Filtro de
+    // Alavanca (handleUseAsIMV), não mais aqui via rádio.
     const filledRecombinations = recombinations.filter((r) => r.idea.trim());
-    const selectedRec = filledRecombinations.find((r) => r.selected);
     if (filledRecombinations.length > 0) {
       content = {
         ...content,
         recombinations: filledRecombinations,
-        ...(selectedRec ? { selected_recombination: selectedRec.idea } : {}),
       };
     }
     await saveStructuredO(projectId, content, scenarioType, currentLayer);
@@ -829,17 +825,6 @@ export function FormatO({
                         </span>
                       )}
                     </div>
-                    {item.selected && (
-                      <span className="shrink-0 mt-2 rounded-full px-2 py-0.5 text-[11px] border"
-                        style={{
-                          color: 'var(--color-brand-green)',
-                          borderColor: 'color-mix(in srgb, var(--color-brand-green) 40%, transparent)',
-                          backgroundColor: 'color-mix(in srgb, var(--color-brand-green) 12%, transparent)',
-                        }}
-                      >
-                        IMV ↗
-                      </span>
-                    )}
                     {recombinations.length > 1 && (
                       <button
                         type="button"
@@ -867,31 +852,13 @@ export function FormatO({
               </button>
             )}
 
-            {/* Seleção da melhor ideia */}
+            {/* A escolha da IMV migrou para o Filtro de Alavanca (Passo B):
+                lá as ideias são validadas pelas 5 perguntas e uma vira a IMV. */}
             {recombinations.some((r) => r.idea.trim()) && (
-              <div className="space-y-2 pt-1">
-                <p className="text-[13px] font-bold text-op-white">Qual vai virar IMV?</p>
-                <div className="space-y-1.5">
-                  {recombinations.filter((r) => r.idea.trim()).map((item) => (
-                    <label key={item.id} className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="recombination-select"
-                        checked={item.selected}
-                        onChange={() => selectRecombination(item.id)}
-                        className="mt-1"
-                        style={{ accentColor: 'var(--color-brand-blue)' }}
-                      />
-                      <span className="text-small text-op-white">{item.idea}</span>
-                    </label>
-                  ))}
-                </div>
-                {recombinations.some((r) => r.selected && r.idea.trim()) && (
-                  <p className="text-[12px]" style={{ color: 'var(--color-brand-green)' }}>
-                    Esta ideia será pré-preenchida no Formato P.
-                  </p>
-                )}
-              </div>
+              <p className="text-[12px] text-op-gray pt-1">
+                No <span className="text-[color:var(--color-brand-blue)]">Filtro de Alavanca</span> abaixo você
+                avalia as ideias e escolhe qual vira a IMV.
+              </p>
             )}
           </div>
         )}

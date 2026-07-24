@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
 import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
-import { CircleHelp, X, ChevronDown, ChevronUp, Plus, Trash2, ArrowRight } from 'lucide-react';
+import { CircleHelp, X, ChevronDown, ChevronUp, Plus, Trash2, ArrowRight, Check } from 'lucide-react';
 import type { LeverItem } from '@/lib/register';
 import { updateEntryLeverFilter, updateEntrySelectedRecombination } from '@/lib/register';
 import { calcLeverResult, corResultado } from '@/lib/leverFilter';
@@ -332,11 +332,14 @@ function LeverFilterScreen() {
 
   // ── Usar ideia como base da IMV ──
   async function handleUseAsIMV(item: LeverItem) {
-    if (saving) return;
+    if (saving || !item.idea.trim()) return;
     setSaving(true);
+    // Passo B: marca a ideia como "já virou IMV" (persiste no lever_filter).
+    const markedItems = items.map((i) => (i.id === item.id ? { ...i, used_as_imv: true } : i));
+    setItems(markedItems);
     try {
-      if (effectiveEntryId && items.length > 0) {
-        await updateEntryLeverFilter(effectiveEntryId, items);
+      if (effectiveEntryId && markedItems.length > 0) {
+        await updateEntryLeverFilter(effectiveEntryId, markedItems);
       }
       // Marca a recombinação escolhida como selecionada no registro [O] Organização
       if (effectiveEntryId && item.idea.trim()) {
@@ -512,23 +515,31 @@ function LeverFilterScreen() {
                   }
                 </button>
 
-                {/* CTA colapsada — visível sem precisar expandir */}
-                {result === 'lever' && !isExpanded && (
+                {/* CTA colapsada — nudge para a alavanca (recomendada) ou estado
+                    "já virou IMV". Ruído/incompleta exigem expandir (uso deliberado). */}
+                {!isExpanded && item.idea.trim() && (item.used_as_imv || result === 'lever') && (
                   <div className="px-4 pb-3 border-t border-op-gray/10">
-                    <button
-                      type="button"
-                      onClick={() => void handleUseAsIMV(item)}
-                      disabled={saving}
-                      className="w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 mt-2 text-small font-medium border transition-colors disabled:opacity-50"
-                      style={{
-                        color: '#16A34A',
-                        borderColor: 'rgba(22,163,74,0.35)',
-                        backgroundColor: 'rgba(22,163,74,0.07)',
-                      }}
-                    >
-                      <ArrowRight className="size-3.5" />
-                      Usar esta ideia como base da IMV
-                    </button>
+                    {item.used_as_imv ? (
+                      <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 mt-2 text-small font-medium text-op-gray">
+                        <Check className="size-3.5" style={{ color: '#16A34A' }} />
+                        Já virou IMV
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void handleUseAsIMV(item)}
+                        disabled={saving}
+                        className="w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 mt-2 text-small font-medium border transition-colors disabled:opacity-50"
+                        style={{
+                          color: '#16A34A',
+                          borderColor: 'rgba(22,163,74,0.35)',
+                          backgroundColor: 'rgba(22,163,74,0.07)',
+                        }}
+                      >
+                        <ArrowRight className="size-3.5" />
+                        Usar esta ideia como base da IMV
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -587,22 +598,40 @@ function LeverFilterScreen() {
                       </p>
                     )}
 
-                    {/* CTA — só aparece para ALAVANCA */}
-                    {result === 'lever' && (
-                      <button
-                        type="button"
-                        onClick={() => void handleUseAsIMV(item)}
-                        disabled={saving}
-                        className="w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-small font-medium border transition-colors disabled:opacity-50"
-                        style={{
-                          color: '#16A34A',
-                          borderColor: 'rgba(22,163,74,0.35)',
-                          backgroundColor: 'rgba(22,163,74,0.07)',
-                        }}
-                      >
-                        <ArrowRight className="size-3.5" />
-                        Usar esta ideia como base da IMV
-                      </button>
+                    {/* CTA — a IMV nasce daqui. Alavanca = recomendada (verde).
+                        Ruído/incompleta = permitido com aviso (âmbar), orienta sem
+                        bloquear. Já usada = estado "já virou IMV". */}
+                    {item.idea.trim() && (
+                      item.used_as_imv ? (
+                        <div className="w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-small font-medium text-op-gray border border-op-gray/20">
+                          <Check className="size-3.5" style={{ color: '#16A34A' }} />
+                          Já virou IMV
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {result !== 'lever' && (
+                            <p className="text-label text-brand-amber leading-snug">
+                              {result === 'noise'
+                                ? 'Esta ideia não passou no filtro (é ruído agora). Você pode usá-la mesmo assim.'
+                                : 'Ideia ainda não avaliada pelas 5 perguntas. Você pode usá-la mesmo assim.'}
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => void handleUseAsIMV(item)}
+                            disabled={saving}
+                            className="w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-small font-medium border transition-colors disabled:opacity-50"
+                            style={
+                              result === 'lever'
+                                ? { color: '#16A34A', borderColor: 'rgba(22,163,74,0.35)', backgroundColor: 'rgba(22,163,74,0.07)' }
+                                : { color: 'var(--color-brand-amber)', borderColor: 'color-mix(in srgb, var(--color-brand-amber) 35%, transparent)', backgroundColor: 'color-mix(in srgb, var(--color-brand-amber) 7%, transparent)' }
+                            }
+                          >
+                            <ArrowRight className="size-3.5" />
+                            {result === 'lever' ? 'Usar esta ideia como base da IMV' : 'Usar mesmo assim como IMV'}
+                          </button>
+                        </div>
+                      )
                     )}
 
                     {/* Lixeira */}
