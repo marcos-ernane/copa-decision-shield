@@ -13,6 +13,7 @@ import {
   type RecombinationItem,
 } from '@/lib/register';
 import { extractResourceList } from '@/lib/recombination';
+import { readFormDraft, useFormDraftPersist, clearFormDraft } from '@/hooks/useFormDraft';
 import { StepDots } from './StepDots';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 import { useNavigate } from '@tanstack/react-router';
@@ -213,9 +214,24 @@ export function FormatO({
 }: Props) {
   const navigate = useNavigate();
 
+  // Rascunho local — restaura texto digitado que não chegou a ser salvo
+  // (Voltar entre fases, saída da rota, refresh). Limpo no save com sucesso.
+  const [draft] = useState(() => readFormDraft<{
+    modo: '3r' | '4d';
+    resourceItems: string[];
+    frictionItems: string[];
+    bottleneckItems: string[];
+    densityItems: D3;
+    directionItems: D3;
+    delayItems: D3;
+    desireItems: D3;
+    recombinations: RecombinationItem[];
+  }>(projectId, 'O'));
+
   // ── Modo: 3R (padrão) ou 4D ──
-  // Se a entry já tem inventory_4d salvo, força modo 4D ao reabrir.
+  // Rascunho vence (escolha em andamento); senão, entry com inventory_4d força 4D.
   const [modo, setModo] = useState<'3r' | '4d'>(() => {
+    if (draft?.modo) return draft.modo;
     if (initialData?.inventory_4d) return '4d';
     const saved = localStorage.getItem('aop.formato_o.modo');
     return saved === '4d' ? '4d' : '3r';
@@ -224,23 +240,29 @@ export function FormatO({
   const [pendingModo, setPendingModo] = useState<'3r' | '4d' | null>(null);
 
   // ── Estado 3R ──
-  const [resourceItems,  setResourceItems]  = useState<string[]>(() => toItems(initialData?.resources));
-  const [frictionItems,  setFrictionItems]  = useState<string[]>(() => toItems(initialData?.frictions));
-  const [bottleneckItems, setBottleneckItems] = useState<string[]>(() => toItems(initialData?.bottleneck));
+  const [resourceItems,  setResourceItems]  = useState<string[]>(() => draft?.resourceItems ?? toItems(initialData?.resources));
+  const [frictionItems,  setFrictionItems]  = useState<string[]>(() => draft?.frictionItems ?? toItems(initialData?.frictions));
+  const [bottleneckItems, setBottleneckItems] = useState<string[]>(() => draft?.bottleneckItems ?? toItems(initialData?.bottleneck));
 
   // ── Estado 4D ──
-  const [densityItems,   setDensityItems]   = useState<D3>(() => init4DItems(initialData?.inventory_4d?.density));
-  const [directionItems, setDirectionItems] = useState<D3>(() => init4DItems(initialData?.inventory_4d?.direction));
-  const [delayItems,     setDelayItems]     = useState<D3>(() => init4DItems(initialData?.inventory_4d?.delay));
-  const [desireItems,    setDesireItems]    = useState<D3>(() => init4DItems(initialData?.inventory_4d?.desire));
+  const [densityItems,   setDensityItems]   = useState<D3>(() => draft?.densityItems ?? init4DItems(initialData?.inventory_4d?.density));
+  const [directionItems, setDirectionItems] = useState<D3>(() => draft?.directionItems ?? init4DItems(initialData?.inventory_4d?.direction));
+  const [delayItems,     setDelayItems]     = useState<D3>(() => draft?.delayItems ?? init4DItems(initialData?.inventory_4d?.delay));
+  const [desireItems,    setDesireItems]    = useState<D3>(() => draft?.desireItems ?? init4DItems(initialData?.inventory_4d?.desire));
 
   const [saving, setSaving] = useState(false);
   const [helpKey, setHelpKey] = useState<HelpKey | null>(null);
 
   // ── Estado Recombinação ──
   const [recombinations, setRecombinations] = useState<RecombinationItem[]>(
-    () => initialData?.recombinations ?? [],
+    () => draft?.recombinations ?? initialData?.recombinations ?? [],
   );
+
+  // Espelha o que foi digitado no rascunho local (grava só após mudança real)
+  useFormDraftPersist(projectId, 'O', {
+    modo, resourceItems, frictionItems, bottleneckItems,
+    densityItems, directionItems, delayItems, desireItems, recombinations,
+  });
 
   const leverFilterData: LeverItem[] | undefined = initialData?.lever_filter;
 
@@ -384,6 +406,7 @@ export function FormatO({
       };
     }
     await saveStructuredO(projectId, content, scenarioType, currentLayer);
+    clearFormDraft(projectId, 'O'); // entry salva — rascunho não é mais necessário
     setSaving(false);
     onSaved(content);
   }

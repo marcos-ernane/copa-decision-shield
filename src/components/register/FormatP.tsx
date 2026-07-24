@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredP, savePassive, updateEntryExecutionPlan, type StructuredPContent, type CostBenefitData } from '@/lib/register';
+import { readFormDraft, useFormDraftPersist, clearFormDraft } from '@/hooks/useFormDraft';
 import { createPlan } from '@/lib/executionPlan';
 import { updateProject } from '@/lib/projects';
 import { formatCurrency } from '@/lib/costBenefit';
@@ -295,10 +296,24 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
     return s ?? null;
   });
   const [isLeverSuggestion, setIsLeverSuggestion] = useState(false);
+  // Rascunho local — restaura texto digitado que não chegou a ser salvo
+  // (Voltar entre fases, saída da rota, refresh). Limpo no save com sucesso.
+  const [draft] = useState(() => readFormDraft<{
+    actionItems: string[];
+    reversible: boolean | null;
+    cheap: boolean | null;
+    specific: boolean | null;
+    measurable: boolean | null;
+    metric: string;
+    deadline: string;
+    cutRule: string;
+    layer: OperationalLayer | null;
+    costBenefitData?: CostBenefitData;
+  }>(projectId, 'P'));
   const [actionItems, setActionItems] = useState<string[]>(() => {
     // Lever suggestion tem prioridade — substitui IMV anterior quando presente
     if (leverSuggestion) return [leverSuggestion];
-    return toItems(initialData?.action);
+    return draft?.actionItems ?? toItems(initialData?.action);
   });
   const [showRecombinationChip, setShowRecombinationChip] = useState(!!fromRecombination);
 
@@ -307,14 +322,14 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
     if (showRecombinationChip) setShowRecombinationChip(false);
   }
   const action = fromItems(actionItems);
-  const [reversible, setReversible] = useState<boolean | null>(initialData?.reversible ?? null);
-  const [cheap, setCheap] = useState<boolean | null>(initialData?.cheap ?? null);
-  const [specific, setSpecific] = useState<boolean | null>(initialData?.specific ?? null);
-  const [measurable, setMeasurable] = useState<boolean | null>(initialData?.measurable ?? null);
-  const [metric, setMetric] = useState(initialData?.metric ?? '');
-  const [deadline, setDeadline] = useState(initialData?.deadline ?? '');
-  const [cutRule, setCutRule] = useState(initialData?.cut_rule ?? '');
-  const [layer, setLayer] = useState<OperationalLayer | null>(initialData?.layer ?? currentProjectLayer ?? null);
+  const [reversible, setReversible] = useState<boolean | null>(draft?.reversible ?? initialData?.reversible ?? null);
+  const [cheap, setCheap] = useState<boolean | null>(draft?.cheap ?? initialData?.cheap ?? null);
+  const [specific, setSpecific] = useState<boolean | null>(draft?.specific ?? initialData?.specific ?? null);
+  const [measurable, setMeasurable] = useState<boolean | null>(draft?.measurable ?? initialData?.measurable ?? null);
+  const [metric, setMetric] = useState(draft?.metric ?? initialData?.metric ?? '');
+  const [deadline, setDeadline] = useState(draft?.deadline ?? initialData?.deadline ?? '');
+  const [cutRule, setCutRule] = useState(draft?.cutRule ?? initialData?.cut_rule ?? '');
+  const [layer, setLayer] = useState<OperationalLayer | null>(draft?.layer ?? initialData?.layer ?? currentProjectLayer ?? null);
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [imvEditActive, setImvEditActive] = useState(false);
@@ -333,9 +348,15 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const [layerHelp, setLayerHelp] = useState(false);
   const [showCostBenefit, setShowCostBenefit] = useState(false);
   const [costBenefitData, setCostBenefitData] = useState<CostBenefitData | undefined>(
-    initialData?.cost_benefit,
+    draft?.costBenefitData ?? initialData?.cost_benefit,
   );
   const [confirmCheapChange, setConfirmCheapChange] = useState(false);
+
+  // Espelha o que foi digitado no rascunho local (grava só após mudança real)
+  useFormDraftPersist(projectId, 'P', {
+    actionItems, reversible, cheap, specific, measurable,
+    metric, deadline, cutRule, layer, costBenefitData,
+  });
 
   const hasChanges =
     action.trim() !== (initialData?.action ?? '') ||
@@ -362,6 +383,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
       layer,
       ...(costBenefitData ? { cost_benefit: costBenefitData } : {}),
     }, scenarioType);
+    clearFormDraft(projectId, 'P'); // entry salva — rascunho não é mais necessário
     if (updateLayer && layer) {
       await updateProject(projectId, { current_layer: layer });
     }

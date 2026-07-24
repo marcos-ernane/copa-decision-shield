@@ -5,6 +5,7 @@ import { Plus, X, ChevronDown, CircleHelp, Search, CheckCircle } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { saveStructuredC, type StructuredCContent, type RootCauseChain } from '@/lib/register';
+import { readFormDraft, useFormDraftPersist, clearFormDraft } from '@/hooks/useFormDraft';
 import { supabase } from '@/lib/supabase';
 import { RootCauseFlow } from './RootCauseFlow';
 import { StepDots } from './StepDots';
@@ -201,10 +202,20 @@ Separar observação de interpretação.
 
 Essa capacidade é o fundamento de todo o COPA. Se os fatos forem capturados de forma imprecisa, os recursos, ruídos, restrições, hipóteses, IMVs e aferições serão construídos sobre uma percepção distorcida da realidade. Por isso, a qualidade da captura começa pela qualidade dos fatos registrados.`;
 
+interface FormatCDraft {
+  factItems: string[];
+  interpItems: string[];
+  hypItems: string[];
+  rootCauseChains: RootCauseChain[];
+}
+
 export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing, userId, initialEntryId }: Props) {
-  const [factItems, setFactItems] = useState<string[]>(() => toItems(initialData?.fact_text));
-  const [interpItems, setInterpItems] = useState<string[]>(() => toItems(initialData?.interpretation_text));
-  const [hypItems, setHypItems] = useState<string[]>(() => toItems(initialData?.hypothesis_text));
+  // Rascunho local — restaura texto digitado que não chegou a ser salvo
+  // (Voltar entre fases, saída da rota, refresh). Limpo no save com sucesso.
+  const [draft] = useState<FormatCDraft | null>(() => readFormDraft<FormatCDraft>(projectId, 'C'));
+  const [factItems, setFactItems] = useState<string[]>(() => draft?.factItems ?? toItems(initialData?.fact_text));
+  const [interpItems, setInterpItems] = useState<string[]>(() => draft?.interpItems ?? toItems(initialData?.interpretation_text));
+  const [hypItems, setHypItems] = useState<string[]>(() => draft?.hypItems ?? toItems(initialData?.hypothesis_text));
   const [saving, setSaving] = useState(false);
   const [showFactsHelp, setShowFactsHelp] = useState(false);
   const [showInterpHelp, setShowInterpHelp] = useState(false);
@@ -213,7 +224,8 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   // (plural novo, com fallback ao singular legado) para não perder cadeias ao
   // reeditar um registro existente.
   const [rootCauseChains, setRootCauseChains] = useState<RootCauseChain[]>(
-    () => initialData?.root_cause_chains
+    () => draft?.rootCauseChains
+      ?? initialData?.root_cause_chains
       ?? (initialData?.root_cause_chain ? [initialData.root_cause_chain] : []),
   );
   // JSON inicial das cadeias — detecta mudança para habilitar "Salvar nova versão"
@@ -236,6 +248,9 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   // ref estável para onSaved — evita stale closure no efeito de auto-skip
   const onSavedRef = useRef(onSaved);
   onSavedRef.current = onSaved;
+
+  // Espelha o que foi digitado no rascunho local (grava só após mudança real)
+  useFormDraftPersist(projectId, 'C', { factItems, interpItems, hypItems, rootCauseChains });
 
   // Caminho 2: prop userId resolve depois do mount (pai re-renderiza com useAuthState() resolvido)
   useEffect(() => {
@@ -288,6 +303,7 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
           root_cause_chains: rootCauseChains,
         }),
       }, scenarioType, currentLayer);
+      clearFormDraft(projectId, 'C'); // entry salva — rascunho não é mais necessário
       setSavedEntryId(entry.id);
       // PRD-IMG-01: sempre avança para step 3 — a verificação de auth fica no step 3 [REQ-IMG-15]
       onNextStep();
