@@ -266,8 +266,21 @@ function LeverFilterScreen() {
       }
     } finally {
       setSaving(false);
-      window.history.back();
     }
+    // Fluxo vindo do Formato O (tem projeto): retorna à Recombinação (step 3 do
+    // FormatO, em modo revisão), de onde o usuário decide avançar ou editar.
+    // Substitui o window.history.back() que reabria o registro sem step e fazia
+    // ele auto-detectar a próxima fase pendente = [P] (pois [O] já está salvo).
+    const destProjectId = urlProjectId ?? (selectedProjectId || undefined);
+    if (!isAvulso && destProjectId) {
+      void navigate({
+        to: '/register/structured',
+        search: { format: 'O' as const, step: 3, projectId: destProjectId, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined },
+      });
+      return;
+    }
+    // Avulso (aberto pela Bússola): mantém o retorno à tela anterior.
+    window.history.back();
   }
 
   // ── Usar ideia como base da IMV ──
