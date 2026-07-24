@@ -231,3 +231,22 @@ body {
     padding-top: calc(0.75rem + env(safe-area-inset-top));
   }
 }
+
+/* ===== Caixas de digitação — padrão claro global =====
+   Toda área onde o usuário digita (input de texto/número/e-mail/etc. e textarea
+   nativos) recebe fundo claro (surface-1) e texto escuro (text-primary), para
+   diferenciar visualmente os campos editáveis do restante da UI escura do app.
+   Fora de @layer + !important para vencer as classes utilitárias do Tailwind em
+   inputs "crus". Exclui checkbox/radio/file/etc. (não são caixas de texto).
+   Opt-out pontual: adicionar a classe .field-dark ao elemento. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="hidden"]):not(.field-dark),
+textarea:not(.field-dark) {
+  background-color: var(--color-surface-1) !important;
+  color: var(--color-text-primary) !important;
+  caret-color: var(--color-text-primary);
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not(.field-dark)::placeholder,
+textarea:not(.field-dark)::placeholder {
+  color: var(--color-surface-3) !important;
+  opacity: 1;
+}
