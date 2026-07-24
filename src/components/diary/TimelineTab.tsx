@@ -726,10 +726,13 @@ export function TimelineTab() {
                 )}
               </EditZoneGuard>
             </div>
-            {/* Cadeia de causa raiz — accordion (REQ-RC-18) */}
+            {/* Cadeias de causa raiz — accordion (REQ-RC-18). Plural com fallback
+                ao campo singular legado; cada cadeia é rotulada pelo fato investigado. */}
             {e.entry_type === 'structured_C' && (() => {
-              const chain = (e.content as { root_cause_chain?: RootCauseChain }).root_cause_chain;
-              if (!chain?.completed) return null;
+              const c = e.content as { root_cause_chains?: RootCauseChain[]; root_cause_chain?: RootCauseChain };
+              const chains = (c.root_cause_chains ?? (c.root_cause_chain ? [c.root_cause_chain] : []))
+                .filter((ch) => ch?.completed);
+              if (!chains.length) return null;
               const open = expandedChain === e.id;
               return (
                 <div className="space-y-2">
@@ -738,20 +741,29 @@ export function TimelineTab() {
                     onClick={() => setExpandedChain(open ? null : e.id)}
                     className="flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
                   >
-                    {open ? '▾' : '▸'} Ver cadeia de causa raiz
+                    {open ? '▾' : '▸'} Ver investigação de causa raiz{chains.length > 1 ? ` (${chains.length} fatos)` : ''}
                   </button>
                   {open && (
-                    <div className="space-y-1.5 pl-3 border-l-2 border-op-gray/20">
-                      {chain.steps.map((s) => (
-                        <p key={s.step_number} className="text-small leading-snug">
-                          <span className="text-op-white/60">{s.question}</span>
-                          {' → '}
-                          <span className="text-op-white/80">{s.answer}</span>
-                        </p>
+                    <div className="space-y-3">
+                      {chains.map((chain, ci) => (
+                        <div key={ci} className="space-y-1.5 pl-3 border-l-2 border-op-gray/20">
+                          {chain.fact_text && (
+                            <p className="text-label text-op-gray uppercase leading-snug">
+                              Fato: <span className="normal-case">{chain.fact_text}</span>
+                            </p>
+                          )}
+                          {chain.steps.map((s) => (
+                            <p key={s.step_number} className="text-small leading-snug">
+                              <span className="text-op-white/60">{s.question}</span>
+                              {' → '}
+                              <span className="text-op-white/80">{s.answer}</span>
+                            </p>
+                          ))}
+                          <p className="text-small font-medium text-op-white/90 pt-1">
+                            Causa raiz: {chain.root_cause}
+                          </p>
+                        </div>
                       ))}
-                      <p className="text-small font-medium text-op-white/90 pt-1">
-                        Causa raiz: {chain.root_cause}
-                      </p>
                     </div>
                   )}
                 </div>

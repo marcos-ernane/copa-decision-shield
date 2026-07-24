@@ -209,8 +209,21 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   const [showFactsHelp, setShowFactsHelp] = useState(false);
   const [showInterpHelp, setShowInterpHelp] = useState(false);
   const [showHypsHelp, setShowHypsHelp] = useState(false);
-  const [rootCauseChain, setRootCauseChain] = useState<RootCauseChain | undefined>(undefined);
-  const [inRootCauseFlow, setInRootCauseFlow] = useState(false);
+  // Investigações de causa raiz — 1 por fato do Quadro 1. Semeia do initialData
+  // (plural novo, com fallback ao singular legado) para não perder cadeias ao
+  // reeditar um registro existente.
+  const [rootCauseChains, setRootCauseChains] = useState<RootCauseChain[]>(
+    () => initialData?.root_cause_chains
+      ?? (initialData?.root_cause_chain ? [initialData.root_cause_chain] : []),
+  );
+  // JSON inicial das cadeias — detecta mudança para habilitar "Salvar nova versão"
+  const initialChainsJson = useRef(JSON.stringify(
+    initialData?.root_cause_chains
+      ?? (initialData?.root_cause_chain ? [initialData.root_cause_chain] : []),
+  ));
+  // Seletor de fatos (lista com status) e fato atualmente sob investigação
+  const [rootCauseSelectorOpen, setRootCauseSelectorOpen] = useState(false);
+  const [investigatingFact, setInvestigatingFact] = useState<{ index: number; text: string } | null>(null);
   // PRD-IMG-01: ID da entry recém-salva nesta sessão (sobrepõe initialEntryId no step 3)
   const [savedEntryId, setSavedEntryId] = useState<string | null>(null);
   // PRD-IMG-01: userId confirmado para o step 3. Três caminhos de resolução:
@@ -258,7 +271,8 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
   const hasChanges =
     fact !== (initialData?.fact_text ?? '') ||
     interp !== (initialData?.interpretation_text ?? '') ||
-    hyp !== (initialData?.hypothesis_text ?? '');
+    hyp !== (initialData?.hypothesis_text ?? '') ||
+    JSON.stringify(rootCauseChains) !== initialChainsJson.current;
 
   async function save() {
     setSaving(true);
@@ -267,7 +281,12 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
         fact_text: fact,
         interpretation_text: interp,
         hypothesis_text: hyp,
-        ...(rootCauseChain && { root_cause_chain: rootCauseChain }),
+        // Plural = todas as investigações; singular legado = primeira (compat
+        // com leitores antigos do campo root_cause_chain).
+        ...(rootCauseChains.length > 0 && {
+          root_cause_chain: rootCauseChains[0],
+          root_cause_chains: rootCauseChains,
+        }),
       }, scenarioType, currentLayer);
       setSavedEntryId(entry.id);
       // PRD-IMG-01: sempre avança para step 3 — a verificação de auth fica no step 3 [REQ-IMG-15]
@@ -281,6 +300,17 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
 
   // ID ativo para o step 3: prioriza o recém-salvo, fallback para o existente (revisão/back-nav)
   const activeEntryId = savedEntryId ?? initialEntryId ?? null;
+
+  // Fatos investigáveis (Quadro 1, não vazios) e cadeia correspondente a cada um.
+  // Cadeia legada (sem fact_text) pertence ao primeiro fato — comportamento antigo.
+  const investigableFacts = factItems
+    .map((t, i) => ({ index: i, text: t.trim() }))
+    .filter((f) => f.text);
+  function chainForFact(text: string, index: number): RootCauseChain | undefined {
+    return rootCauseChains.find((c) =>
+      c.fact_text !== undefined ? c.fact_text.trim() === text : (c.fact_index ?? 0) === index,
+    );
+  }
 
   return (
     <>
@@ -373,15 +403,64 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
             Concluir
           </Button>
         </div>
-      ) : step === 2 && inRootCauseFlow ? (
+      ) : step === 2 && investigatingFact ? (
         <RootCauseFlow
-          factText={fact}
+          factText={investigatingFact.text}
           onComplete={(chain) => {
-            setRootCauseChain(chain);
-            setInRootCauseFlow(false);
+            const f = investigatingFact;
+            const enriched: RootCauseChain = { ...chain, fact_index: f.index, fact_text: f.text };
+            setRootCauseChains((prev) => {
+              // Re-investigar o mesmo fato substitui a cadeia anterior dele
+              const existing = prev.find((c) =>
+                c.fact_text !== undefined ? c.fact_text.trim() === f.text : (c.fact_index ?? 0) === f.index,
+              );
+              const rest = existing ? prev.filter((c) => c !== existing) : prev;
+              return [...rest, enriched];
+            });
+            setInvestigatingFact(null); // volta ao seletor, agora com ✔
           }}
-          onSkip={() => setInRootCauseFlow(false)}
+          onSkip={() => setInvestigatingFact(null)}
         />
+      ) : step === 2 && rootCauseSelectorOpen ? (
+        <div className="space-y-4">
+          <p className="text-heading font-semibold text-op-white">Investigar Causa Raiz</p>
+          <p className="text-small text-op-gray">
+            Escolha um fato do Quadro 1 para investigar pelos 5 porquês. Você pode
+            investigar quantos quiser — um por vez.
+          </p>
+          <div className="space-y-2">
+            {investigableFacts.map((f) => {
+              const done = chainForFact(f.text, f.index);
+              return (
+                <button
+                  key={f.index}
+                  type="button"
+                  onClick={() => setInvestigatingFact(f)}
+                  className="w-full flex items-start gap-2.5 rounded-md border border-op-gray/30 bg-op-navy px-3 py-2.5 text-left hover:opacity-80 transition-opacity"
+                >
+                  {done ? (
+                    <CheckCircle className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--color-brand-green)' }} />
+                  ) : (
+                    <Search className="size-4 shrink-0 mt-0.5 text-op-gray" />
+                  )}
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-small text-op-white leading-snug line-clamp-2">{f.text}</span>
+                    {done ? (
+                      <span className="block text-label mt-0.5" style={{ color: 'var(--color-brand-green)' }}>
+                        Investigado — causa raiz: {done.root_cause.slice(0, 60)}
+                      </span>
+                    ) : (
+                      <span className="block text-label text-op-gray mt-0.5">Toque para investigar</span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <Button className="w-full" onClick={() => setRootCauseSelectorOpen(false)}>
+            Concluir
+          </Button>
+        </div>
       ) : (
         <>
           <StepDots current={step} total={TOTAL_STEPS} />
@@ -449,17 +528,19 @@ export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNext
                 placeholder="O que poderia ser verdade e precisa mexer para o fato mudar."
                 addLabel="+ Adicionar Hipóteses"
               />
-              {/* Botão de entrada opcional para investigação de causa raiz */}
+              {/* Botão de entrada opcional — abre o seletor de fatos para investigar */}
               <div className="border-t border-op-gray/20 mt-3 pt-3">
                 <button
                   type="button"
-                  onClick={() => setInRootCauseFlow(true)}
+                  onClick={() => setRootCauseSelectorOpen(true)}
                   className="flex items-center gap-2 text-label text-op-gray hover:text-op-white transition-colors w-full justify-center py-2"
                 >
-                  {rootCauseChain ? (
+                  {rootCauseChains.length > 0 ? (
                     <>
                       <CheckCircle className="size-4" style={{ color: 'var(--color-brand-green)' }} />
-                      <span style={{ color: 'var(--color-brand-green)' }}>Causa raiz investigada</span>
+                      <span style={{ color: 'var(--color-brand-green)' }}>
+                        Causa raiz investigada ({rootCauseChains.length} {rootCauseChains.length === 1 ? 'fato' : 'fatos'})
+                      </span>
                     </>
                   ) : (
                     <>

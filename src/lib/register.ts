@@ -51,6 +51,10 @@ export interface RootCauseChain {
   root_cause: string;
   completed: boolean;
   steps_taken: number; // 1-5
+  // Referência ao fato investigado (Quadro 1). Ausente em cadeias legadas —
+  // nesse caso a cadeia pertence ao primeiro fato (comportamento antigo).
+  fact_index?: number;
+  fact_text?: string;
 }
 
 export interface StructuredCContent {
@@ -58,7 +62,10 @@ export interface StructuredCContent {
   interpretation_text: string;
   hypothesis_text: string;
   imv_possible?: string;
+  /** Legado — primeira investigação (mantido para leitores antigos). */
   root_cause_chain?: RootCauseChain;
+  /** Todas as investigações — no máximo 1 por fato do Quadro 1. */
+  root_cause_chains?: RootCauseChain[];
 }
 
 export interface LeverItem {

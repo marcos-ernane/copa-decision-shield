@@ -179,15 +179,23 @@ export async function buildReportPayload(
   const pC = pEntry.content as unknown as StructuredPContent;
   const aC = aEntry?.content as unknown as StructuredAContent | undefined;
 
-  // ── Cadeia de causa raiz (os porquês) — compactada ──
+  // ── Cadeias de causa raiz (os porquês) — TODAS, cada uma amarrada ao seu fato.
+  // Plural com fallback ao singular legado; máx 6 cadeias × ~300 chars (teto fixo).
   let rootCauseChain: string | undefined;
-  const chain = cC?.root_cause_chain;
-  if (chain?.root_cause) {
-    const steps = (chain.steps ?? [])
-      .map((s) => `${s.step_number}. ${(s.answer ?? '').trim().slice(0, 60)}`)
-      .filter((s) => s.length > 3)
-      .join(' → ');
-    rootCauseChain = `${steps ? steps + ' ⇒ ' : ''}Causa raiz: ${chain.root_cause.slice(0, 120)}`.slice(0, 300);
+  const chains = (cC?.root_cause_chains ?? (cC?.root_cause_chain ? [cC.root_cause_chain] : []))
+    .filter((ch) => ch?.root_cause)
+    .slice(0, 6);
+  if (chains.length) {
+    rootCauseChain = chains
+      .map((ch) => {
+        const steps = (ch.steps ?? [])
+          .map((s) => `${s.step_number}. ${(s.answer ?? '').trim().slice(0, 60)}`)
+          .filter((s) => s.length > 3)
+          .join(' → ');
+        const factRef = ch.fact_text ? `Fato "${ch.fact_text.trim().slice(0, 60)}": ` : '';
+        return `${factRef}${steps ? steps + ' ⇒ ' : ''}Causa raiz: ${ch.root_cause.slice(0, 120)}`.slice(0, 300);
+      })
+      .join('\n');
   }
 
   // ── Inventário 4D — compactado (1 linha por dimensão) ──
