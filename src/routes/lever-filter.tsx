@@ -159,6 +159,7 @@ function LeverFilterScreen() {
   // Passo A: recebe TODAS as recombinações do FormatO (via sessionStorage) para
   // listar cada ideia. Fallback à chave antiga de 1 ideia mantém retrocompat.
   const [sessionRecombinations] = useState<{ id: string; idea: string }[]>(() => {
+    if (typeof window === 'undefined') return []; // SSR: sem sessionStorage no servidor
     const raw = sessionStorage.getItem('__recombinations');
     if (raw) {
       sessionStorage.removeItem('__recombinations');

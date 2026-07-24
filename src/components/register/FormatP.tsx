@@ -291,6 +291,7 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   // Sem guard por initialData: o FormatP pode estar em revisão (dados existentes) e ainda
   // precisar mostrar a sugestão como nova IMV a adicionar.
   const [leverSuggestion] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null; // SSR: sem sessionStorage no servidor
     const s = sessionStorage.getItem('__leverSuggestion');
     if (s) sessionStorage.removeItem('__leverSuggestion');
     return s ?? null;

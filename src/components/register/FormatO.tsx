@@ -233,6 +233,7 @@ export function FormatO({
   const [modo, setModo] = useState<'3r' | '4d'>(() => {
     if (draft?.modo) return draft.modo;
     if (initialData?.inventory_4d) return '4d';
+    if (typeof window === 'undefined') return '3r'; // SSR: sem localStorage no servidor
     const saved = localStorage.getItem('aop.formato_o.modo');
     return saved === '4d' ? '4d' : '3r';
   });

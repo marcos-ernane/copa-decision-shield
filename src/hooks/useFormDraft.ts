@@ -24,6 +24,7 @@ function draftKey(projectId: string, format: string): string {
 
 /** Lê o rascunho salvo (ou null se ausente/expirado/corrompido). */
 export function readFormDraft<T>(projectId: string, format: string): T | null {
+  if (typeof window === 'undefined') return null; // SSR: sem localStorage no servidor
   try {
     const raw = localStorage.getItem(draftKey(projectId, format));
     if (!raw) return null;
@@ -63,6 +64,7 @@ export function useFormDraftPersist(projectId: string, format: string, data: unk
 
 /** Remove o rascunho — chamar após salvamento bem-sucedido da entry. */
 export function clearFormDraft(projectId: string, format: string): void {
+  if (typeof window === 'undefined') return;
   try {
     localStorage.removeItem(draftKey(projectId, format));
   } catch {
