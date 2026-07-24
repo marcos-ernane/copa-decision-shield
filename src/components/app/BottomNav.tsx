@@ -6,8 +6,8 @@ import { Home, LayoutGrid, Compass, BookOpen, BotMessageSquare } from 'lucide-re
 const TABS: { to: '/' | '/panel' | '/compass' | '/diary' | '/settings/help'; label: string; icon: typeof Home; exact: boolean }[] = [
   { to: '/', label: 'Início', icon: Home, exact: true },
   { to: '/panel', label: 'Painel', icon: LayoutGrid, exact: false },
-  { to: '/compass', label: 'Bússola', icon: Compass, exact: false },
   { to: '/diary', label: 'Diário', icon: BookOpen, exact: false },
+  { to: '/compass', label: 'Bússola', icon: Compass, exact: false },
   { to: '/settings/help', label: 'Ajuda IA', icon: BotMessageSquare, exact: false },
 ];
 
