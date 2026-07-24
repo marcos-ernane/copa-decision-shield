@@ -12,7 +12,10 @@ import { createProject } from '@/lib/projects';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 export const Route = createFileRoute('/project/new')({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): {
+    bottleneck?: string;
+    bottleneckEntryId?: string;
+  } => ({
     bottleneck: typeof s.bottleneck === 'string' ? s.bottleneck : undefined,
     bottleneckEntryId: typeof s.bottleneckEntryId === 'string' ? s.bottleneckEntryId : undefined,
   }),

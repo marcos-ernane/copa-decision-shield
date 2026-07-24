@@ -2,7 +2,13 @@ import { createFileRoute } from '@tanstack/react-router';
 import { DiaryShell } from '@/components/diary/DiaryShell';
 
 export const Route = createFileRoute('/diary')({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): {
+    principleId?: string;
+    projectId?: string;
+    type?: string;
+    scenario_type?: string;
+    layer?: string;
+  } => ({
     principleId: typeof search.principleId === 'string' ? search.principleId : undefined,
     projectId: typeof search.projectId === 'string' ? search.projectId : undefined,
     type: typeof search.type === 'string' ? search.type : undefined,

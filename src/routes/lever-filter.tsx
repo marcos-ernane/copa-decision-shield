@@ -62,7 +62,7 @@ const MAX_ITEMS = 5;
 // Route
 // ──────────────────────────────────────
 export const Route = createFileRoute('/lever-filter')({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { projectId?: string; entryId?: string } => ({
     projectId: typeof s.projectId === 'string' ? s.projectId : undefined,
     entryId:   typeof s.entryId   === 'string' ? s.entryId   : undefined,
   }),
