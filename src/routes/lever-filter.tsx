@@ -599,41 +599,23 @@ function LeverFilterScreen() {
                       </p>
                     )}
 
-                    {/* CTA — a IMV nasce daqui. Alavanca = recomendada (verde).
-                        Ruído/incompleta = permitido com aviso (âmbar), orienta sem
-                        bloquear. Já usada = estado "já virou IMV". */}
-                    {item.idea.trim() && (
-                      item.used_as_imv ? (
-                        <div className="w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-small font-medium text-op-gray border border-op-gray/20">
-                          <Check className="size-3.5" style={{ color: '#16A34A' }} />
-                          Já virou IMV
-                        </div>
-                      ) : (
-                        <div className="space-y-1.5">
-                          {result !== 'lever' && (
-                            <p className="text-label text-brand-amber leading-snug">
-                              {result === 'noise'
-                                ? 'Esta ideia não passou no filtro (é ruído agora). Você pode usá-la mesmo assim.'
-                                : 'Ideia ainda não avaliada pelas 5 perguntas. Você pode usá-la mesmo assim.'}
-                            </p>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => void handleUseAsIMV(item)}
-                            disabled={saving}
-                            className="w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-small font-medium border transition-colors disabled:opacity-50"
-                            style={
-                              result === 'lever'
-                                ? { color: '#16A34A', borderColor: 'rgba(22,163,74,0.35)', backgroundColor: 'rgba(22,163,74,0.07)' }
-                                : { color: 'var(--color-brand-amber)', borderColor: 'color-mix(in srgb, var(--color-brand-amber) 35%, transparent)', backgroundColor: 'color-mix(in srgb, var(--color-brand-amber) 7%, transparent)' }
-                            }
-                          >
-                            <ArrowRight className="size-3.5" />
-                            {result === 'lever' ? 'Usar esta ideia como base da IMV' : 'Usar mesmo assim como IMV'}
-                          </button>
-                        </div>
-                      )
-                    )}
+                    {/* Avançar — recolhe a ideia e volta à lista. A decisão de virar
+                        IMV é feita na LISTA (vendo todas juntas), só para alavancas.
+                        Aqui é só avaliação: para uma ideia virar alavanca, ajuste as
+                        respostas (troque um NÃO por SIM) — o "descarte" é essa revisão. */}
+                    <button
+                      type="button"
+                      onClick={() => setExpandedId(null)}
+                      className="w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-small font-medium border transition-colors"
+                      style={{
+                        color: 'var(--color-brand-blue)',
+                        borderColor: 'color-mix(in srgb, var(--color-brand-blue) 35%, transparent)',
+                        backgroundColor: 'color-mix(in srgb, var(--color-brand-blue) 7%, transparent)',
+                      }}
+                    >
+                      Avançar
+                      <ArrowRight className="size-3.5" />
+                    </button>
 
                     {/* Lixeira */}
                     <button
