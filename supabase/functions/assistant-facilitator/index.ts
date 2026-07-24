@@ -177,6 +177,14 @@ responsabilidade, não dele.
 - A SEÇÃO 5 termina com UMA frase final iniciada por "Comece por:" indicando o
   primeiro passo imediato e concreto — é o fecho do raciocínio do relatório.
 
+TAMANHO E NÃO-REDUNDÂNCIA (obrigatório):
+- O relatório completo deve ficar entre 250 e 450 palavras. Profundidade vem de
+  precisão, não de volume.
+- Cada informação aparece UMA única vez, na seção a que pertence. A retomada que
+  abre cada seção é meia frase de ponte — nunca um resumo do que já foi dito.
+- As seções 4 e 5 ACRESCENTAM análise nova; é proibido recapitular as seções 1-3.
+- Se os dados forem escassos, escreva menos. Nunca preencha com generalidades.
+
 USO DOS SINAIS OPERACIONAIS (bloco 7 dos dados):
 Ative-os na análise quando relevantes: ativações repetidas do Modo Pressão
 sugerem gargalo estrutural; muitos registros corretivos sugerem captura
