@@ -83,7 +83,9 @@ export function DiaryShell({ active: _active, children }: Props) {
         ['--diary-header-h' as string]: `${headerH}px`,
       }}
     >
-      <header ref={headerRef} className="sticky top-0 bg-op-black z-10 border-b border-border">
+      {/* Sem border-b: a única linha divisória da área fixa é a do bloco
+          legenda+seletor (fim da região congelada), definida no TimelineTab. */}
+      <header ref={headerRef} className="sticky top-0 bg-op-black z-10">
         <div className="flex items-center gap-2 px-4 py-3">
           <BackButton />
           <h1 className="text-heading text-foreground">Diário do operador</h1>
