@@ -47,18 +47,31 @@ export function DiaryShell({ active: _active, children }: Props) {
 
   useEffect(() => { setTab(activeFromUrl); }, [activeFromUrl]);
 
-  // Altura real do cabeçalho (título + abas) publicada como --diary-header-h.
-  // Permite que elementos internos fiquem sticky logo abaixo dele sem offset
-  // chutado — acompanha safe-area do iPhone e quebra de linha das abas.
+  // Altura real do cabeçalho (título + abas) publicada em --diary-header-h no
+  // <html>. Assim o bloco legenda+seletor do TimelineTab fica sticky logo abaixo
+  // dele sem offset chutado — acompanha a safe-area do iPhone e a quebra de linha
+  // das abas. Definido no documentElement (não via style inline) para não
+  // depender de herança e valer para qualquer descendente.
   const headerRef = useRef<HTMLElement>(null);
-  const [headerH, setHeaderH] = useState(0);
   useEffect(() => {
     const el = headerRef.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(() => setHeaderH(el.getBoundingClientRect().height));
-    ro.observe(el);
-    setHeaderH(el.getBoundingClientRect().height);
-    return () => ro.disconnect();
+    if (!el) return;
+    const root = document.documentElement;
+    const apply = () => {
+      const h = Math.round(el.getBoundingClientRect().height);
+      if (h > 0) root.style.setProperty('--diary-header-h', `${h}px`);
+    };
+    apply();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(apply) : null;
+    ro?.observe(el);
+    window.addEventListener('resize', apply);
+    window.addEventListener('orientationchange', apply);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', apply);
+      window.removeEventListener('orientationchange', apply);
+      root.style.removeProperty('--diary-header-h');
+    };
   }, []);
 
   function go(id: DiaryTab) {
@@ -77,11 +90,7 @@ export function DiaryShell({ active: _active, children }: Props) {
   return (
     <div
       className="min-h-screen bg-op-black pb-24"
-      style={{
-        backgroundColor: "#070C12",
-        minHeight: "100vh",
-        ['--diary-header-h' as string]: `${headerH}px`,
-      }}
+      style={{ backgroundColor: "#070C12", minHeight: "100vh" }}
     >
       {/* Sem border-b: a única linha divisória da área fixa é a do bloco
           legenda+seletor (fim da região congelada), definida no TimelineTab. */}
