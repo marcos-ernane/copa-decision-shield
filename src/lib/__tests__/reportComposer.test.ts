@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseReport, cleanReportSection } from '../reportComposer';
+import { parseReport, salvageReport, cleanReportSection } from '../reportComposer';
 
 // A IA nem sempre devolve o formato exato pedido no prompt (acrescenta markdown,
 // troca travessão por hífen, muda a caixa do título...). O parser precisa
@@ -66,5 +66,30 @@ describe('cleanReportSection', () => {
     expect(out).not.toContain('**');
     expect(out).toContain('O gargalo é estrutural.');
     expect(out).toContain('Fim.');
+  });
+});
+
+describe('salvageReport — rede de segurança quando a IA foge do formato', () => {
+  it('aproveita seções parciais e deixa as demais vazias', () => {
+    const raw = `SEÇÃO 1 — PANORAMA DO PROJETO\nTexto um.\n\nSEÇÃO 2 — QUALIDADE DO DIAGNÓSTICO\nTexto dois.`;
+    const r = salvageReport(raw);
+    expect(r).not.toBeNull();
+    expect(r!.section_panorama).toBe('Texto um.');
+    expect(r!.section_quality).toBe('Texto dois.');
+    expect(r!.section_result).toBe('');
+    expect(r!.section_next).toBe('');
+  });
+
+  it('sem nenhum rótulo, devolve o texto inteiro no primeiro bloco', () => {
+    const raw = 'O projeto avançou bem, mas a métrica não foi definida com precisão.';
+    const r = salvageReport(raw);
+    expect(r).not.toBeNull();
+    expect(r!.section_panorama).toBe(raw);
+    expect(r!.section_quality).toBe('');
+  });
+
+  it('retorna null para texto vazio', () => {
+    expect(salvageReport('')).toBeNull();
+    expect(salvageReport('   ')).toBeNull();
   });
 });

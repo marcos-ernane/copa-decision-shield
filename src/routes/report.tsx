@@ -365,7 +365,9 @@ function ReportScreen() {
               </div>
             )}
 
-            {SECTIONS.map((s) => (
+            {/* Seções sem conteúdo não são renderizadas — acontece quando a IA
+                responde fora do formato e o texto é aproveitado parcialmente. */}
+            {SECTIONS.filter((s) => cleanReportSection(result[s.key]).trim()).map((s) => (
               <div key={s.key} className="rounded-lg border border-border bg-card p-4 space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="size-[22px] rounded-full bg-brand-blue text-white text-label font-semibold flex items-center justify-center shrink-0">

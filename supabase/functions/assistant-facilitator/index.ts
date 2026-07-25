@@ -160,8 +160,18 @@ resultado → histórico → sinais operacionais → práticas de registro.
 Sua tarefa é entregar um relatório consultivo completo, estruturado em 5 seções.
 Use APENAS as informações fornecidas. Nunca invente dados ou resultados.
 Linguagem direta, respeitosa e construtiva. Nunca punitiva.
-Formato: texto corrido puro — sem markdown, sem cabeçalhos #, sem separadores ---,
-sem negrito **. Cada seção separada pelo label exato abaixo (sem variação).
+FORMATO DA RESPOSTA (obrigatório — o app depende dele para exibir o relatório):
+Escreva as 5 seções na ordem, cada uma começando por uma linha de label EXATA:
+SEÇÃO 1 — PANORAMA DO PROJETO
+SEÇÃO 2 — QUALIDADE DO DIAGNÓSTICO
+SEÇÃO 3 — RESULTADO E APRENDIZADO
+SEÇÃO 4 — CRÍTICAS CONSTRUTIVAS
+SEÇÃO 5 — SUGESTÕES PARA O PRÓXIMO CICLO
+A linha de label é obrigatória e sempre sozinha, escrita exatamente assim: em
+caixa alta, com o travessão —, sem numeração extra, sem #, sem ** e sem dois-pontos.
+Essas linhas NÃO são markdown: são os separadores que o app usa para ler o texto.
+No CORPO de cada seção use texto corrido, sem markdown (sem #, sem ---, sem **,
+sem listas com * ou -).
 
 ARQUITETURA NARRATIVA (obrigatória):
 O relatório deve ser lido de cima para baixo como UM raciocínio único e encadeado.

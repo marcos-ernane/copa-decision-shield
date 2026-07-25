@@ -559,44 +559,45 @@ export interface ParsedReport {
 const SECTION_HEADER_RE = /^[\s#>*_\-]*SE[ÇC][ÃA]O\s*([1-5])\b[\s*_]*[—–\-:]*\s*(.*)$/i;
 
 /**
- * Parseia a resposta da IA em 5 seções. Localiza os cabeçalhos linha a linha
- * (em vez de um regex único e rígido) e usa o texto entre eles como corpo.
- * Retorna null só quando alguma das 5 seções realmente falta.
+ * Extrai as seções encontradas na resposta da IA. Localiza os cabeçalhos linha a
+ * linha (em vez de um regex único e rígido) e usa o texto entre eles como corpo.
  */
-export function parseReport(raw: string): ParsedReport | null {
-  if (!raw?.trim()) return null;
+function extractSections(raw: string): Record<string, string> {
   const lines = raw.split('\n');
-
-  // 1) Localiza os cabeçalhos de seção
   const marks: { n: string; line: number; rest: string }[] = [];
   lines.forEach((line, i) => {
     const m = line.match(SECTION_HEADER_RE);
     if (m) marks.push({ n: m[1], line: i, rest: (m[2] ?? '').trim() });
   });
-  if (!marks.length) return null;
 
-  // 2) Corpo = linhas entre um cabeçalho e o próximo. Se a IA colocou o texto na
-  // mesma linha do cabeçalho (resto longo = não é só o título), aproveita-o.
   const sections: Record<string, string> = {};
   marks.forEach((mark, i) => {
     const end = i + 1 < marks.length ? marks[i + 1].line : lines.length;
+    // Se a IA colocou o texto na mesma linha do cabeçalho (resto longo = não é só
+    // o título), aproveita-o como início do corpo.
     const inline = mark.rest.replace(/[*_#]+$/g, '').trim();
     const isTitleOnly = inline.length <= 60 && !/[.!?]/.test(inline);
-    const body = [
-      isTitleOnly ? '' : inline,
-      lines.slice(mark.line + 1, end).join('\n'),
-    ]
+    const body = [isTitleOnly ? '' : inline, lines.slice(mark.line + 1, end).join('\n')]
       .join('\n')
       .trim();
     if (body && !sections[mark.n]) sections[mark.n] = body;
   });
+  return sections;
+}
 
+/**
+ * Parse estrito: só devolve quando as 5 seções foram encontradas.
+ */
+export function parseReport(raw: string): ParsedReport | null {
+  if (!raw?.trim()) return null;
+  const sections = extractSections(raw);
   if (!sections['1'] || !sections['2'] || !sections['3'] || !sections['4'] || !sections['5']) {
-    // Log de diagnóstico — a IA respondeu, mas o formato não pôde ser interpretado.
+    // Diagnóstico — a IA respondeu, mas o formato não pôde ser lido por completo.
     console.warn(
       '[Report] resposta da IA não parseada — seções encontradas:',
       Object.keys(sections).join(',') || 'nenhuma',
-      '| início:', raw.slice(0, 120),
+      '| início:',
+      raw.slice(0, 200),
     );
     return null;
   }
@@ -606,6 +607,35 @@ export function parseReport(raw: string): ParsedReport | null {
     section_result: sections['3'],
     section_critique: sections['4'],
     section_next: sections['5'],
+  };
+}
+
+/**
+ * Rede de segurança: a IA respondeu, mas fora do formato esperado. Em vez de
+ * descartar a análise e cair no relatório local (bem mais pobre), aproveita o
+ * que veio — seções encontradas ficam nos seus lugares; se nenhuma foi
+ * identificada, o texto inteiro é apresentado no primeiro bloco. Seções vazias
+ * não são renderizadas pela tela.
+ */
+export function salvageReport(raw: string): ParsedReport | null {
+  const clean = (raw ?? '').trim();
+  if (!clean) return null;
+  const s = extractSections(clean);
+  if (!Object.keys(s).length) {
+    return {
+      section_panorama: clean,
+      section_quality: '',
+      section_result: '',
+      section_critique: '',
+      section_next: '',
+    };
+  }
+  return {
+    section_panorama: s['1'] ?? '',
+    section_quality: s['2'] ?? '',
+    section_result: s['3'] ?? '',
+    section_critique: s['4'] ?? '',
+    section_next: s['5'] ?? '',
   };
 }
 
@@ -664,6 +694,10 @@ export async function generateReport(
     if (raw) {
       const parsed = parseReport(raw);
       if (parsed) return { report: parsed, isFallback: false };
+      // A IA respondeu, mas fora do formato: aproveita o texto em vez de
+      // descartar a análise e exibir "IA indisponível" (que seria falso).
+      const salvaged = salvageReport(raw);
+      if (salvaged) return { report: salvaged, isFallback: false };
     }
   } catch {
     /* timeout ou erro de rede — cai no fallback local */
