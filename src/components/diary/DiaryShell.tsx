@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useNavigate, useRouterState, useSearch, Link } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
@@ -47,6 +47,20 @@ export function DiaryShell({ active: _active, children }: Props) {
 
   useEffect(() => { setTab(activeFromUrl); }, [activeFromUrl]);
 
+  // Altura real do cabeçalho (título + abas) publicada como --diary-header-h.
+  // Permite que elementos internos fiquem sticky logo abaixo dele sem offset
+  // chutado — acompanha safe-area do iPhone e quebra de linha das abas.
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerH, setHeaderH] = useState(0);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => setHeaderH(el.getBoundingClientRect().height));
+    ro.observe(el);
+    setHeaderH(el.getBoundingClientRect().height);
+    return () => ro.disconnect();
+  }, []);
+
   function go(id: DiaryTab) {
     setTab(id);
     if (id === 'timeline') navigate({ to: '/diary' });
@@ -61,8 +75,15 @@ export function DiaryShell({ active: _active, children }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
-      <header className="sticky top-0 bg-op-black z-10 border-b border-border">
+    <div
+      className="min-h-screen bg-op-black pb-24"
+      style={{
+        backgroundColor: "#070C12",
+        minHeight: "100vh",
+        ['--diary-header-h' as string]: `${headerH}px`,
+      }}
+    >
+      <header ref={headerRef} className="sticky top-0 bg-op-black z-10 border-b border-border">
         <div className="flex items-center gap-2 px-4 py-3">
           <BackButton />
           <h1 className="text-heading text-foreground">Diário do operador</h1>

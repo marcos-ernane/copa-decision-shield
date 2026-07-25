@@ -847,7 +847,14 @@ export function TimelineTab() {
 
   return (
     <div className="space-y-3">
-      <div className="space-y-2">
+      {/* Legenda + seletor de projeto ficam fixos logo abaixo do cabeçalho do
+          Diário (top = altura real medida em DiaryShell, respeita safe-area).
+          Assim o operador troca de projeto a qualquer momento, sem rolar de volta.
+          -mx-4/px-4 compensam o padding do container para o fundo cobrir a largura. */}
+      <div
+        className="sticky z-[45] -mx-4 px-4 pt-2 pb-2 space-y-2 border-b border-border"
+        style={{ top: 'var(--diary-header-h, 0px)', backgroundColor: '#070C12' }}
+      >
         {/* Legenda de cores do seletor */}
         <div className="flex items-center gap-4 text-label text-op-gray">
           <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-success shrink-0" />Ativo</span>
