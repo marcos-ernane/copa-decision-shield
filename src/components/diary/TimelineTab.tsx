@@ -916,7 +916,10 @@ export function TimelineTab() {
             </div>
           )}
         </div>
+      </div>
 
+      {/* Filtros e ações — rolam normalmente, passando por baixo da área fixa */}
+      <div className="space-y-2">
         <div className="space-y-0.5">
           <p className="text-label text-op-gray uppercase tracking-wide">Período</p>
           <div className="flex gap-1">
