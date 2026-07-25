@@ -852,7 +852,7 @@ export function TimelineTab() {
           Assim o operador troca de projeto a qualquer momento, sem rolar de volta.
           -mx-4/px-4 compensam o padding do container para o fundo cobrir a largura. */}
       <div
-        className="sticky z-[45] -mx-4 px-4 pt-2 pb-2 space-y-2 border-b border-border"
+        className="sticky z-[45] -mx-4 -mt-4 px-4 pt-1.5 pb-2 space-y-2 border-b border-border"
         style={{ top: 'var(--diary-header-h, 0px)', backgroundColor: '#070C12' }}
       >
         {/* Legenda de cores do seletor */}
