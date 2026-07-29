@@ -15,6 +15,7 @@ import { Route as CompassRouteImport } from './routes/compass'
 import { Route as ConcludedRouteImport } from './routes/concluded'
 import { Route as CreativeRouteImport } from './routes/creative'
 import { Route as DiaryRouteImport } from './routes/diary'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as LeverFilterRouteImport } from './routes/lever-filter'
 import { Route as LoginRouteImport } from './routes/login'
@@ -24,6 +25,7 @@ import { Route as PressureRouteImport } from './routes/pressure'
 import { Route as Protocol5RouteImport } from './routes/protocol5'
 import { Route as ReadingModeRouteImport } from './routes/reading-mode'
 import { Route as ReportRouteImport } from './routes/report'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as BaselineNewRouteImport } from './routes/baseline.new'
@@ -92,6 +94,11 @@ const DiaryRoute = DiaryRouteImport.update({
   path: '/diary',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InboxRoute = InboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
@@ -135,6 +142,11 @@ const ReadingModeRoute = ReadingModeRouteImport.update({
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -331,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/inbox': typeof InboxRoute
   '/lever-filter': typeof LeverFilterRoute
   '/login': typeof LoginRoute
@@ -340,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
   '/report': typeof ReportRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/baseline/new': typeof BaselineNewRoute
@@ -384,6 +398,7 @@ export interface FileRoutesByTo {
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/inbox': typeof InboxRoute
   '/lever-filter': typeof LeverFilterRoute
   '/login': typeof LoginRoute
@@ -392,6 +407,7 @@ export interface FileRoutesByTo {
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
   '/report': typeof ReportRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
@@ -437,6 +453,7 @@ export interface FileRoutesById {
   '/concluded': typeof ConcludedRoute
   '/creative': typeof CreativeRoute
   '/diary': typeof DiaryRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/inbox': typeof InboxRoute
   '/lever-filter': typeof LeverFilterRoute
   '/login': typeof LoginRoute
@@ -446,6 +463,7 @@ export interface FileRoutesById {
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
   '/report': typeof ReportRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/baseline/new': typeof BaselineNewRoute
@@ -493,6 +511,7 @@ export interface FileRouteTypes {
     | '/concluded'
     | '/creative'
     | '/diary'
+    | '/forgot-password'
     | '/inbox'
     | '/lever-filter'
     | '/login'
@@ -502,6 +521,7 @@ export interface FileRouteTypes {
     | '/protocol5'
     | '/reading-mode'
     | '/report'
+    | '/reset-password'
     | '/settings'
     | '/signup'
     | '/baseline/new'
@@ -546,6 +566,7 @@ export interface FileRouteTypes {
     | '/concluded'
     | '/creative'
     | '/diary'
+    | '/forgot-password'
     | '/inbox'
     | '/lever-filter'
     | '/login'
@@ -554,6 +575,7 @@ export interface FileRouteTypes {
     | '/protocol5'
     | '/reading-mode'
     | '/report'
+    | '/reset-password'
     | '/signup'
     | '/baseline/new'
     | '/compass/friction'
@@ -598,6 +620,7 @@ export interface FileRouteTypes {
     | '/concluded'
     | '/creative'
     | '/diary'
+    | '/forgot-password'
     | '/inbox'
     | '/lever-filter'
     | '/login'
@@ -607,6 +630,7 @@ export interface FileRouteTypes {
     | '/protocol5'
     | '/reading-mode'
     | '/report'
+    | '/reset-password'
     | '/settings'
     | '/signup'
     | '/baseline/new'
@@ -653,6 +677,7 @@ export interface RootRouteChildren {
   ConcludedRoute: typeof ConcludedRoute
   CreativeRoute: typeof CreativeRoute
   DiaryRoute: typeof DiaryRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   InboxRoute: typeof InboxRoute
   LeverFilterRoute: typeof LeverFilterRoute
   LoginRoute: typeof LoginRoute
@@ -662,6 +687,7 @@ export interface RootRouteChildren {
   Protocol5Route: typeof Protocol5Route
   ReadingModeRoute: typeof ReadingModeRoute
   ReportRoute: typeof ReportRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   SignupRoute: typeof SignupRoute
   BaselineNewRoute: typeof BaselineNewRoute
@@ -715,6 +741,13 @@ declare module '@tanstack/react-router' {
       path: '/diary'
       fullPath: '/diary'
       preLoaderRoute: typeof DiaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inbox': {
@@ -778,6 +811,13 @@ declare module '@tanstack/react-router' {
       path: '/report'
       fullPath: '/report'
       preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -1160,6 +1200,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConcludedRoute: ConcludedRoute,
   CreativeRoute: CreativeRoute,
   DiaryRoute: DiaryRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   InboxRoute: InboxRoute,
   LeverFilterRoute: LeverFilterRoute,
   LoginRoute: LoginRoute,
@@ -1169,6 +1210,7 @@ const rootRouteChildren: RootRouteChildren = {
   Protocol5Route: Protocol5Route,
   ReadingModeRoute: ReadingModeRoute,
   ReportRoute: ReportRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRouteWithChildren,
   SignupRoute: SignupRoute,
   BaselineNewRoute: BaselineNewRoute,

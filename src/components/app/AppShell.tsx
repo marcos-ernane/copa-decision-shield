@@ -14,6 +14,8 @@ const NO_SHELL_PREFIXES = [
   // nenhum, e os FABs cobrem o rodapé da tela. [REQ-NAV-01]
   '/login',
   '/signup',
+  '/forgot-password',
+  '/reset-password',
 ];
 
 const NO_FABS_PREFIXES = [

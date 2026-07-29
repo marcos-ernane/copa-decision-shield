@@ -9,9 +9,9 @@
 // quanto dentro de um drawer.
 
 import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LegalDocumentSheet } from './LegalDocumentSheet';
+import { Field, PasswordField, inputClass } from './fields';
 import { signIn, signUp, validateEmail, validateName, validatePassword } from '@/lib/auth';
 import {
   recordAcceptance,
@@ -52,7 +52,6 @@ export function AuthForm({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [consent, setConsent] = useState(false);
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -132,7 +131,11 @@ export function AuthForm({
 
   return (
     <>
+      {/* noValidate: com type="email" o browser bloqueia o submit e mostra a
+          própria bolha, e a validação daqui nunca roda — duas apresentações de
+          erro no mesmo formulário. A daqui é a única. */}
       <form
+        noValidate
         className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
@@ -173,36 +176,20 @@ export function AuthForm({
           />
         </Field>
 
-        <Field label="Senha" error={fieldErrors.password}>
-          <div className="relative">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              autoComplete={isSignup ? 'new-password' : 'current-password'}
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                clearFieldError('password');
-              }}
-              placeholder={isSignup ? 'Mínimo 8 caracteres' : 'Sua senha'}
-              className={`${inputClass(!!fieldErrors.password)} pr-12`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-              // Fica sobre o fundo claro do input (regra global), não sobre o
-              // fundo escuro da tela — daí surface-4 em vez de op-gray.
-              className="absolute right-0 top-0 h-12 w-12 flex items-center justify-center text-surface-4 hover:text-text-primary transition-colors"
-            >
-              {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
-            </button>
-          </div>
-          {isSignup && !fieldErrors.password && (
-            <p className="text-label text-muted-foreground pt-1">
-              Letra maiúscula, minúscula, número e caractere especial.
-            </p>
-          )}
-        </Field>
+        <PasswordField
+          label="Senha"
+          value={password}
+          onChange={(v) => {
+            setPassword(v);
+            clearFieldError('password');
+          }}
+          error={fieldErrors.password}
+          placeholder={isSignup ? 'Mínimo 8 caracteres' : 'Sua senha'}
+          autoComplete={isSignup ? 'new-password' : 'current-password'}
+          hint={
+            isSignup ? 'Letra maiúscula, minúscula, número e caractere especial.' : undefined
+          }
+        />
 
         {isSignup && (
           <div className="pt-1">
@@ -324,39 +311,4 @@ export function AuthForm({
       />
     </>
   );
-}
-
-// ─────────────────────────────────────────────────────────────────
-
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-1">
-      <label className="text-label text-muted-foreground block">{label}</label>
-      {children}
-      {error && <p className="text-small text-brand-red">{error}</p>}
-    </div>
-  );
-}
-
-/**
- * Fundo e cor do texto vêm da regra global de caixas de digitação em
- * styles.css (fundo claro, texto escuro, com !important) — não repetir aqui.
- *
- * 16px é deliberado: abaixo disso o Safari no iPhone dá zoom ao focar o campo
- * e desloca a tela inteira. h-12 garante alvo de toque confortável.
- */
-function inputClass(hasError: boolean): string {
-  return [
-    'w-full h-12 rounded-xl border px-3 text-[16px]',
-    'focus:outline-none focus:ring-2 focus:ring-op-amber',
-    hasError ? 'border-brand-red' : 'border-op-gray/30',
-  ].join(' ');
 }

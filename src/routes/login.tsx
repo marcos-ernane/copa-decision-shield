@@ -39,6 +39,7 @@ function LoginPage() {
         mode="login"
         onSuccess={() => void navigate({ to: '/' })}
         onModeChange={() => void navigate({ to: '/signup' })}
+        onForgotPassword={() => void navigate({ to: '/forgot-password' })}
       />
     </AuthScreen>
   );
