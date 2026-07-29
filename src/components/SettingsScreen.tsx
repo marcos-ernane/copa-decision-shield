@@ -14,9 +14,12 @@ import { PlanBadge } from './PlanBadge';
 import { LoginSheet } from './LoginSheet';
 import { UpgradeSheet } from './UpgradeSheet';
 import { TrialEndingSheet } from './TrialEndingSheet';
+import { LegalDocumentSheet } from '@/components/auth/LegalDocumentSheet';
+import { getLatestAcceptances } from '@/lib/legalConsent';
+import { LEGAL_DOCUMENTS } from '@/content/legal';
 import { enablePactGlobally, disablePactGlobally } from '@/lib/pact';
 import { isProtocol5FabEnabled, setProtocol5FabEnabled } from '@/components/app/Fabs';
-import type { Profile } from '@/types/database';
+import type { LegalAcceptance, LegalDocumentType, Profile } from '@/types/database';
 import { ChevronRight } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { useNavigate, useRouter } from '@tanstack/react-router';
@@ -38,6 +41,10 @@ export function SettingsScreen() {
   const [upgrade, setUpgrade] = useState(false);
   const [p5Fab, setP5Fab] = useState(false);
   const [showLoginNudge, setShowLoginNudge] = useState(false);
+  const [openLegalDoc, setOpenLegalDoc] = useState<LegalDocumentType | null>(null);
+  const [acceptances, setAcceptances] = useState<
+    Partial<Record<LegalDocumentType, LegalAcceptance>>
+  >({});
 
   function handleBack() {
     if (router.history.length > 1) {
@@ -55,6 +62,7 @@ export function SettingsScreen() {
     if (!userId) return;
     void supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
       .then(({ data }) => setProfile((data as Profile | null) ?? null));
+    void getLatestAcceptances(userId).then(setAcceptances);
   }, [userId]);
 
   async function handleSignOut() {
@@ -235,6 +243,35 @@ export function SettingsScreen() {
           </div>
         </Section>
 
+        <Section title="Legal">
+          <div className="rounded-xl border border-op-gray/30 bg-op-navy divide-y divide-op-gray/20">
+            {(Object.keys(LEGAL_DOCUMENTS) as LegalDocumentType[]).map((type) => {
+              const accepted = acceptances[type];
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setOpenLegalDoc(type)}
+                  className="w-full px-4 py-3 flex items-center justify-between gap-3 hover:opacity-80 transition-opacity text-left"
+                >
+                  <div className="min-w-0">
+                    <p className="text-body text-op-white truncate">
+                      {LEGAL_DOCUMENTS[type].title}
+                    </p>
+                    {accepted && (
+                      <p className="text-small text-op-gray">
+                        Aceito em {formatAcceptedDate(accepted.accepted_at)} · v
+                        {accepted.version}
+                      </p>
+                    )}
+                  </div>
+                  <ChevronRight className="size-4 text-op-gray shrink-0" />
+                </button>
+              );
+            })}
+          </div>
+        </Section>
+
         <p className="text-small text-op-gray text-center pt-4">
           App Operador de Precisão v3.0
         </p>
@@ -242,8 +279,22 @@ export function SettingsScreen() {
 
       <UpgradeSheet open={upgrade} onOpenChange={setUpgrade} />
       <LoginSheet open={showLoginNudge} onDismiss={() => setShowLoginNudge(false)} />
+      <LegalDocumentSheet
+        documentType={openLegalDoc}
+        onClose={() => setOpenLegalDoc(null)}
+      />
     </div>
   );
+}
+
+function formatAcceptedDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
