@@ -65,6 +65,47 @@ export async function getLatestAcceptances(
   return latest;
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Aceite pendente
+//
+// O INSERT exige auth.uid() = user_id, ou seja, sessão ativa. Quando a
+// confirmação de e-mail está ligada, o signUp cria o usuário mas NÃO abre
+// sessão — o aceite já foi dado na tela, e perdê-lo seria perder a prova.
+// Guardamos localmente e gravamos assim que houver sessão.
+// ─────────────────────────────────────────────────────────────────
+
+const PENDING_KEY = 'aop.pending_legal_acceptance';
+
+export function savePendingAcceptance(types: LegalDocumentType[]): void {
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(types));
+  } catch { /* SSR guard */ }
+}
+
+/**
+ * Grava o aceite que ficou pendente, se houver. Idempotente: só limpa o
+ * marcador local depois que o INSERT confirma — se falhar, tenta de novo
+ * na próxima sessão. Chamar quando uma sessão for estabelecida.
+ */
+export async function flushPendingAcceptance(userId: string): Promise<void> {
+  let types: LegalDocumentType[];
+  try {
+    const raw = localStorage.getItem(PENDING_KEY);
+    if (!raw) return;
+    types = JSON.parse(raw) as LegalDocumentType[];
+  } catch { return; }
+
+  if (!Array.isArray(types) || types.length === 0) {
+    try { localStorage.removeItem(PENDING_KEY); } catch { /* SSR guard */ }
+    return;
+  }
+
+  const result = await recordAcceptance(userId, types);
+  if (result.success) {
+    try { localStorage.removeItem(PENDING_KEY); } catch { /* SSR guard */ }
+  }
+}
+
 /**
  * true quando falta aceitar a versão vigente de algum dos documentos —
  * seja por nunca ter aceitado, seja porque uma versão nova foi publicada.
