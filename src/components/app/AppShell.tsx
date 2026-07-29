@@ -10,6 +10,10 @@ import { useReadingMode } from '@/hooks/useReadingMode';
 const NO_SHELL_PREFIXES = [
   '/onboarding',
   '/reading-mode',
+  // Autenticação: sem sessão, navegar para Painel/Bússola não leva a lugar
+  // nenhum, e os FABs cobrem o rodapé da tela. [REQ-NAV-01]
+  '/login',
+  '/signup',
 ];
 
 const NO_FABS_PREFIXES = [

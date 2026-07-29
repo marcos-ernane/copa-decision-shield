@@ -190,7 +190,9 @@ export function AuthForm({
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-              className="absolute right-0 top-0 h-12 w-12 flex items-center justify-center text-op-gray hover:text-foreground transition-colors"
+              // Fica sobre o fundo claro do input (regra global), não sobre o
+              // fundo escuro da tela — daí surface-4 em vez de op-gray.
+              className="absolute right-0 top-0 h-12 w-12 flex items-center justify-center text-surface-4 hover:text-text-primary transition-colors"
             >
               {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
             </button>
@@ -345,13 +347,16 @@ function Field({
 }
 
 /**
+ * Fundo e cor do texto vêm da regra global de caixas de digitação em
+ * styles.css (fundo claro, texto escuro, com !important) — não repetir aqui.
+ *
  * 16px é deliberado: abaixo disso o Safari no iPhone dá zoom ao focar o campo
  * e desloca a tela inteira. h-12 garante alvo de toque confortável.
  */
 function inputClass(hasError: boolean): string {
   return [
-    'w-full h-12 rounded-xl border bg-op-navy px-3 text-[16px] text-op-white',
-    'placeholder:text-op-gray focus:outline-none focus:ring-2 focus:ring-op-amber',
+    'w-full h-12 rounded-xl border px-3 text-[16px]',
+    'focus:outline-none focus:ring-2 focus:ring-op-amber',
     hasError ? 'border-brand-red' : 'border-op-gray/30',
   ].join(' ');
 }

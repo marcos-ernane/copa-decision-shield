@@ -10,6 +10,7 @@ import {
 import { useEffect, useLayoutEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { migrateGuestToCloud } from "@/lib/migrateGuest";
+import { flushPendingAcceptance } from "@/lib/legalConsent";
 import { markWasAuthenticated } from "@/lib/authFlags";
 import { MigrationIndicator } from "@/components/MigrationIndicator";
 import { AppShell } from "@/components/app/AppShell";
@@ -228,6 +229,9 @@ function RootComponent() {
         }
         if (event === "SIGNED_IN" && session?.user) {
           void migrateGuestToCloud(session.user.id);
+          // Aceite dado no cadastro quando ainda não havia sessão para gravá-lo
+          // (confirmação de e-mail ligada). Agora há.
+          void flushPendingAcceptance(session.user.id);
         }
       },
     );

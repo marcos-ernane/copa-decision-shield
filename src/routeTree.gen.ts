@@ -25,6 +25,7 @@ import { Route as Protocol5RouteImport } from './routes/protocol5'
 import { Route as ReadingModeRouteImport } from './routes/reading-mode'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as BaselineNewRouteImport } from './routes/baseline.new'
 import { Route as CompassIndexRouteImport } from './routes/compass.index'
 import { Route as CompassFrictionRouteImport } from './routes/compass.friction'
@@ -139,6 +140,11 @@ const ReportRoute = ReportRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BaselineNewRoute = BaselineNewRouteImport.update({
@@ -335,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/reading-mode': typeof ReadingModeRoute
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/signup': typeof SignupRoute
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
   '/compass/guide': typeof CompassGuideRoute
@@ -385,6 +392,7 @@ export interface FileRoutesByTo {
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
   '/report': typeof ReportRoute
+  '/signup': typeof SignupRoute
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
   '/compass/guide': typeof CompassGuideRoute
@@ -439,6 +447,7 @@ export interface FileRoutesById {
   '/reading-mode': typeof ReadingModeRoute
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/signup': typeof SignupRoute
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
   '/compass/guide': typeof CompassGuideRoute
@@ -494,6 +503,7 @@ export interface FileRouteTypes {
     | '/reading-mode'
     | '/report'
     | '/settings'
+    | '/signup'
     | '/baseline/new'
     | '/compass/friction'
     | '/compass/guide'
@@ -544,6 +554,7 @@ export interface FileRouteTypes {
     | '/protocol5'
     | '/reading-mode'
     | '/report'
+    | '/signup'
     | '/baseline/new'
     | '/compass/friction'
     | '/compass/guide'
@@ -597,6 +608,7 @@ export interface FileRouteTypes {
     | '/reading-mode'
     | '/report'
     | '/settings'
+    | '/signup'
     | '/baseline/new'
     | '/compass/friction'
     | '/compass/guide'
@@ -651,6 +663,7 @@ export interface RootRouteChildren {
   ReadingModeRoute: typeof ReadingModeRoute
   ReportRoute: typeof ReportRoute
   SettingsRoute: typeof SettingsRouteWithChildren
+  SignupRoute: typeof SignupRoute
   BaselineNewRoute: typeof BaselineNewRoute
   DecisionNewRoute: typeof DecisionNewRoute
   ProjectIdRoute: typeof ProjectIdRouteWithChildren
@@ -772,6 +785,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/baseline/new': {
@@ -1150,6 +1170,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReadingModeRoute: ReadingModeRoute,
   ReportRoute: ReportRoute,
   SettingsRoute: SettingsRouteWithChildren,
+  SignupRoute: SignupRoute,
   BaselineNewRoute: BaselineNewRoute,
   DecisionNewRoute: DecisionNewRoute,
   ProjectIdRoute: ProjectIdRouteWithChildren,
