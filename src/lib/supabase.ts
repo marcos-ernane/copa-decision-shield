@@ -9,11 +9,11 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
-    // 'implicit': tokens vêm direto na URL de retorno — não depende de um
-    // "code verifier" no navegador de origem. Faz o Magic Link funcionar mesmo
-    // quando o link abre num navegador diferente de onde foi pedido (ex.: app
-    // de e-mail abrindo num navegador interno no celular).
-    flowType: 'implicit',
+    // Não há mais link de retorno: a recuperação de senha usa
+    // código de 6 dígitos digitado no próprio app (verifyOtp).
+    detectSessionInUrl: false,
+    // PKCE é viável porque nenhum fluxo depende mais de abrir
+    // um link em navegador diferente do de origem.
+    flowType: 'pkce',
   },
 });

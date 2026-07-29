@@ -9,127 +9,61 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as ReportRouteImport } from './routes/report'
-import { Route as ReadingModeRouteImport } from './routes/reading-mode'
-import { Route as Protocol5RouteImport } from './routes/protocol5'
-import { Route as PressureRouteImport } from './routes/pressure'
-import { Route as PanelRouteImport } from './routes/panel'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as LeverFilterRouteImport } from './routes/lever-filter'
-import { Route as InboxRouteImport } from './routes/inbox'
-import { Route as DiaryRouteImport } from './routes/diary'
-import { Route as CreativeRouteImport } from './routes/creative'
-import { Route as ConcludedRouteImport } from './routes/concluded'
-import { Route as CompassRouteImport } from './routes/compass'
-import { Route as ClarityRouteImport } from './routes/clarity'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SettingsIndexRouteImport } from './routes/settings.index'
-import { Route as PanelIndexRouteImport } from './routes/panel.index'
-import { Route as CompassIndexRouteImport } from './routes/compass.index'
-import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
-import { Route as SettingsHelpRouteImport } from './routes/settings.help'
-import { Route as RegisterStructuredRouteImport } from './routes/register.structured'
-import { Route as RegisterPulseRouteImport } from './routes/register.pulse'
-import { Route as ProjectNewRouteImport } from './routes/project.new'
-import { Route as ProjectIdRouteImport } from './routes/project.$id'
-import { Route as PressureSplatRouteImport } from './routes/pressure.$'
-import { Route as PanelTransferRouteImport } from './routes/panel.transfer'
-import { Route as PanelRubricRouteImport } from './routes/panel.rubric'
-import { Route as PanelBaselineRouteImport } from './routes/panel.baseline'
-import { Route as DiarySplatRouteImport } from './routes/diary.$'
-import { Route as DecisionNewRouteImport } from './routes/decision.new'
-import { Route as CompassSimulationsRouteImport } from './routes/compass.simulations'
-import { Route as CompassSheetsRouteImport } from './routes/compass.sheets'
-import { Route as CompassSheetRouteImport } from './routes/compass.sheet'
-import { Route as CompassRecombinationRouteImport } from './routes/compass.recombination'
-import { Route as CompassPocketRouteImport } from './routes/compass.pocket'
-import { Route as CompassMaintenanceRouteImport } from './routes/compass.maintenance'
-import { Route as CompassInventory4dRouteImport } from './routes/compass.inventory4d'
-import { Route as CompassGuideRouteImport } from './routes/compass.guide'
-import { Route as CompassFrictionRouteImport } from './routes/compass.friction'
+import { Route as ClarityRouteImport } from './routes/clarity'
+import { Route as CompassRouteImport } from './routes/compass'
+import { Route as ConcludedRouteImport } from './routes/concluded'
+import { Route as CreativeRouteImport } from './routes/creative'
+import { Route as DiaryRouteImport } from './routes/diary'
+import { Route as InboxRouteImport } from './routes/inbox'
+import { Route as LeverFilterRouteImport } from './routes/lever-filter'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PanelRouteImport } from './routes/panel'
+import { Route as PressureRouteImport } from './routes/pressure'
+import { Route as Protocol5RouteImport } from './routes/protocol5'
+import { Route as ReadingModeRouteImport } from './routes/reading-mode'
+import { Route as ReportRouteImport } from './routes/report'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as BaselineNewRouteImport } from './routes/baseline.new'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
-import { Route as RegisterCorrectiveEntryIdRouteImport } from './routes/register.corrective.$entryId'
-import { Route as ProjectIdSheetRouteImport } from './routes/project.$id.sheet'
-import { Route as ProjectIdPlanDetailRouteImport } from './routes/project.$id.plan-detail'
-import { Route as ProjectIdPactRouteImport } from './routes/project.$id.pact'
-import { Route as ProjectIdEditRouteImport } from './routes/project.$id.edit'
-import { Route as ProjectIdDiagnosisRouteImport } from './routes/project.$id.diagnosis'
-import { Route as ProjectIdDashboardRouteImport } from './routes/project.$id.dashboard'
-import { Route as ProjectIdConcludeRouteImport } from './routes/project.$id.conclude'
+import { Route as CompassIndexRouteImport } from './routes/compass.index'
+import { Route as CompassFrictionRouteImport } from './routes/compass.friction'
+import { Route as CompassGuideRouteImport } from './routes/compass.guide'
+import { Route as CompassInventory4dRouteImport } from './routes/compass.inventory4d'
+import { Route as CompassMaintenanceRouteImport } from './routes/compass.maintenance'
+import { Route as CompassPocketRouteImport } from './routes/compass.pocket'
+import { Route as CompassRecombinationRouteImport } from './routes/compass.recombination'
+import { Route as CompassSheetRouteImport } from './routes/compass.sheet'
+import { Route as CompassSheetsRouteImport } from './routes/compass.sheets'
+import { Route as CompassSimulationsRouteImport } from './routes/compass.simulations'
+import { Route as DecisionNewRouteImport } from './routes/decision.new'
+import { Route as DiarySplatRouteImport } from './routes/diary.$'
+import { Route as PanelIndexRouteImport } from './routes/panel.index'
+import { Route as PanelBaselineRouteImport } from './routes/panel.baseline'
+import { Route as PanelRubricRouteImport } from './routes/panel.rubric'
+import { Route as PanelTransferRouteImport } from './routes/panel.transfer'
+import { Route as PressureSplatRouteImport } from './routes/pressure.$'
+import { Route as ProjectIdRouteImport } from './routes/project.$id'
+import { Route as ProjectNewRouteImport } from './routes/project.new'
+import { Route as RegisterPulseRouteImport } from './routes/register.pulse'
+import { Route as RegisterStructuredRouteImport } from './routes/register.structured'
+import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as SettingsHelpRouteImport } from './routes/settings.help'
+import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
 import { Route as ProjectIdCapacityRouteImport } from './routes/project.$id.capacity'
+import { Route as ProjectIdConcludeRouteImport } from './routes/project.$id.conclude'
+import { Route as ProjectIdDashboardRouteImport } from './routes/project.$id.dashboard'
+import { Route as ProjectIdDiagnosisRouteImport } from './routes/project.$id.diagnosis'
+import { Route as ProjectIdEditRouteImport } from './routes/project.$id.edit'
+import { Route as ProjectIdPactRouteImport } from './routes/project.$id.pact'
+import { Route as ProjectIdPlanDetailRouteImport } from './routes/project.$id.plan-detail'
+import { Route as ProjectIdSheetRouteImport } from './routes/project.$id.sheet'
+import { Route as RegisterCorrectiveEntryIdRouteImport } from './routes/register.corrective.$entryId'
 import { Route as ProjectIdReviewEntryIdRouteImport } from './routes/project.$id.review.$entryId'
 
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportRoute = ReportRouteImport.update({
-  id: '/report',
-  path: '/report',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReadingModeRoute = ReadingModeRouteImport.update({
-  id: '/reading-mode',
-  path: '/reading-mode',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Protocol5Route = Protocol5RouteImport.update({
-  id: '/protocol5',
-  path: '/protocol5',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PressureRoute = PressureRouteImport.update({
-  id: '/pressure',
-  path: '/pressure',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PanelRoute = PanelRouteImport.update({
-  id: '/panel',
-  path: '/panel',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LeverFilterRoute = LeverFilterRouteImport.update({
-  id: '/lever-filter',
-  path: '/lever-filter',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InboxRoute = InboxRouteImport.update({
-  id: '/inbox',
-  path: '/inbox',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DiaryRoute = DiaryRouteImport.update({
-  id: '/diary',
-  path: '/diary',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CreativeRoute = CreativeRouteImport.update({
-  id: '/creative',
-  path: '/creative',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConcludedRoute = ConcludedRouteImport.update({
-  id: '/concluded',
-  path: '/concluded',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CompassRoute = CompassRouteImport.update({
-  id: '/compass',
-  path: '/compass',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClarityRoute = ClarityRouteImport.update({
@@ -137,124 +71,84 @@ const ClarityRoute = ClarityRouteImport.update({
   path: '/clarity',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CompassRoute = CompassRouteImport.update({
+  id: '/compass',
+  path: '/compass',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsIndexRoute = SettingsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SettingsRoute,
+const ConcludedRoute = ConcludedRouteImport.update({
+  id: '/concluded',
+  path: '/concluded',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const PanelIndexRoute = PanelIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => PanelRoute,
+const CreativeRoute = CreativeRouteImport.update({
+  id: '/creative',
+  path: '/creative',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiaryRoute = DiaryRouteImport.update({
+  id: '/diary',
+  path: '/diary',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InboxRoute = InboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeverFilterRoute = LeverFilterRouteImport.update({
+  id: '/lever-filter',
+  path: '/lever-filter',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PanelRoute = PanelRouteImport.update({
+  id: '/panel',
+  path: '/panel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PressureRoute = PressureRouteImport.update({
+  id: '/pressure',
+  path: '/pressure',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Protocol5Route = Protocol5RouteImport.update({
+  id: '/protocol5',
+  path: '/protocol5',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReadingModeRoute = ReadingModeRouteImport.update({
+  id: '/reading-mode',
+  path: '/reading-mode',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BaselineNewRoute = BaselineNewRouteImport.update({
+  id: '/baseline/new',
+  path: '/baseline/new',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CompassIndexRoute = CompassIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => CompassRoute,
-} as any)
-const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsHelpRoute = SettingsHelpRouteImport.update({
-  id: '/help',
-  path: '/help',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const RegisterStructuredRoute = RegisterStructuredRouteImport.update({
-  id: '/register/structured',
-  path: '/register/structured',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterPulseRoute = RegisterPulseRouteImport.update({
-  id: '/register/pulse',
-  path: '/register/pulse',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProjectNewRoute = ProjectNewRouteImport.update({
-  id: '/project/new',
-  path: '/project/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProjectIdRoute = ProjectIdRouteImport.update({
-  id: '/project/$id',
-  path: '/project/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PressureSplatRoute = PressureSplatRouteImport.update({
-  id: '/$',
-  path: '/$',
-  getParentRoute: () => PressureRoute,
-} as any)
-const PanelTransferRoute = PanelTransferRouteImport.update({
-  id: '/transfer',
-  path: '/transfer',
-  getParentRoute: () => PanelRoute,
-} as any)
-const PanelRubricRoute = PanelRubricRouteImport.update({
-  id: '/rubric',
-  path: '/rubric',
-  getParentRoute: () => PanelRoute,
-} as any)
-const PanelBaselineRoute = PanelBaselineRouteImport.update({
-  id: '/baseline',
-  path: '/baseline',
-  getParentRoute: () => PanelRoute,
-} as any)
-const DiarySplatRoute = DiarySplatRouteImport.update({
-  id: '/$',
-  path: '/$',
-  getParentRoute: () => DiaryRoute,
-} as any)
-const DecisionNewRoute = DecisionNewRouteImport.update({
-  id: '/decision/new',
-  path: '/decision/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CompassSimulationsRoute = CompassSimulationsRouteImport.update({
-  id: '/simulations',
-  path: '/simulations',
-  getParentRoute: () => CompassRoute,
-} as any)
-const CompassSheetsRoute = CompassSheetsRouteImport.update({
-  id: '/sheets',
-  path: '/sheets',
-  getParentRoute: () => CompassRoute,
-} as any)
-const CompassSheetRoute = CompassSheetRouteImport.update({
-  id: '/sheet',
-  path: '/sheet',
-  getParentRoute: () => CompassRoute,
-} as any)
-const CompassRecombinationRoute = CompassRecombinationRouteImport.update({
-  id: '/recombination',
-  path: '/recombination',
-  getParentRoute: () => CompassRoute,
-} as any)
-const CompassPocketRoute = CompassPocketRouteImport.update({
-  id: '/pocket',
-  path: '/pocket',
-  getParentRoute: () => CompassRoute,
-} as any)
-const CompassMaintenanceRoute = CompassMaintenanceRouteImport.update({
-  id: '/maintenance',
-  path: '/maintenance',
-  getParentRoute: () => CompassRoute,
-} as any)
-const CompassInventory4dRoute = CompassInventory4dRouteImport.update({
-  id: '/inventory4d',
-  path: '/inventory4d',
-  getParentRoute: () => CompassRoute,
-} as any)
-const CompassGuideRoute = CompassGuideRouteImport.update({
-  id: '/guide',
-  path: '/guide',
   getParentRoute: () => CompassRoute,
 } as any)
 const CompassFrictionRoute = CompassFrictionRouteImport.update({
@@ -262,50 +156,119 @@ const CompassFrictionRoute = CompassFrictionRouteImport.update({
   path: '/friction',
   getParentRoute: () => CompassRoute,
 } as any)
-const BaselineNewRoute = BaselineNewRouteImport.update({
-  id: '/baseline/new',
-  path: '/baseline/new',
-  getParentRoute: () => rootRouteImport,
+const CompassGuideRoute = CompassGuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
+  getParentRoute: () => CompassRoute,
 } as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/auth/callback',
-  path: '/auth/callback',
-  getParentRoute: () => rootRouteImport,
+const CompassInventory4dRoute = CompassInventory4dRouteImport.update({
+  id: '/inventory4d',
+  path: '/inventory4d',
+  getParentRoute: () => CompassRoute,
 } as any)
-const RegisterCorrectiveEntryIdRoute =
-  RegisterCorrectiveEntryIdRouteImport.update({
-    id: '/register/corrective/$entryId',
-    path: '/register/corrective/$entryId',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ProjectIdSheetRoute = ProjectIdSheetRouteImport.update({
+const CompassMaintenanceRoute = CompassMaintenanceRouteImport.update({
+  id: '/maintenance',
+  path: '/maintenance',
+  getParentRoute: () => CompassRoute,
+} as any)
+const CompassPocketRoute = CompassPocketRouteImport.update({
+  id: '/pocket',
+  path: '/pocket',
+  getParentRoute: () => CompassRoute,
+} as any)
+const CompassRecombinationRoute = CompassRecombinationRouteImport.update({
+  id: '/recombination',
+  path: '/recombination',
+  getParentRoute: () => CompassRoute,
+} as any)
+const CompassSheetRoute = CompassSheetRouteImport.update({
   id: '/sheet',
   path: '/sheet',
-  getParentRoute: () => ProjectIdRoute,
+  getParentRoute: () => CompassRoute,
 } as any)
-const ProjectIdPlanDetailRoute = ProjectIdPlanDetailRouteImport.update({
-  id: '/plan-detail',
-  path: '/plan-detail',
-  getParentRoute: () => ProjectIdRoute,
+const CompassSheetsRoute = CompassSheetsRouteImport.update({
+  id: '/sheets',
+  path: '/sheets',
+  getParentRoute: () => CompassRoute,
 } as any)
-const ProjectIdPactRoute = ProjectIdPactRouteImport.update({
-  id: '/pact',
-  path: '/pact',
-  getParentRoute: () => ProjectIdRoute,
+const CompassSimulationsRoute = CompassSimulationsRouteImport.update({
+  id: '/simulations',
+  path: '/simulations',
+  getParentRoute: () => CompassRoute,
 } as any)
-const ProjectIdEditRoute = ProjectIdEditRouteImport.update({
-  id: '/edit',
-  path: '/edit',
-  getParentRoute: () => ProjectIdRoute,
+const DecisionNewRoute = DecisionNewRouteImport.update({
+  id: '/decision/new',
+  path: '/decision/new',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const ProjectIdDiagnosisRoute = ProjectIdDiagnosisRouteImport.update({
-  id: '/diagnosis',
-  path: '/diagnosis',
-  getParentRoute: () => ProjectIdRoute,
+const DiarySplatRoute = DiarySplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => DiaryRoute,
 } as any)
-const ProjectIdDashboardRoute = ProjectIdDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const PanelIndexRoute = PanelIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PanelRoute,
+} as any)
+const PanelBaselineRoute = PanelBaselineRouteImport.update({
+  id: '/baseline',
+  path: '/baseline',
+  getParentRoute: () => PanelRoute,
+} as any)
+const PanelRubricRoute = PanelRubricRouteImport.update({
+  id: '/rubric',
+  path: '/rubric',
+  getParentRoute: () => PanelRoute,
+} as any)
+const PanelTransferRoute = PanelTransferRouteImport.update({
+  id: '/transfer',
+  path: '/transfer',
+  getParentRoute: () => PanelRoute,
+} as any)
+const PressureSplatRoute = PressureSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => PressureRoute,
+} as any)
+const ProjectIdRoute = ProjectIdRouteImport.update({
+  id: '/project/$id',
+  path: '/project/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectNewRoute = ProjectNewRouteImport.update({
+  id: '/project/new',
+  path: '/project/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterPulseRoute = RegisterPulseRouteImport.update({
+  id: '/register/pulse',
+  path: '/register/pulse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterStructuredRoute = RegisterStructuredRouteImport.update({
+  id: '/register/structured',
+  path: '/register/structured',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsHelpRoute = SettingsHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const ProjectIdCapacityRoute = ProjectIdCapacityRouteImport.update({
+  id: '/capacity',
+  path: '/capacity',
   getParentRoute: () => ProjectIdRoute,
 } as any)
 const ProjectIdConcludeRoute = ProjectIdConcludeRouteImport.update({
@@ -313,11 +276,42 @@ const ProjectIdConcludeRoute = ProjectIdConcludeRouteImport.update({
   path: '/conclude',
   getParentRoute: () => ProjectIdRoute,
 } as any)
-const ProjectIdCapacityRoute = ProjectIdCapacityRouteImport.update({
-  id: '/capacity',
-  path: '/capacity',
+const ProjectIdDashboardRoute = ProjectIdDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => ProjectIdRoute,
 } as any)
+const ProjectIdDiagnosisRoute = ProjectIdDiagnosisRouteImport.update({
+  id: '/diagnosis',
+  path: '/diagnosis',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
+const ProjectIdEditRoute = ProjectIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
+const ProjectIdPactRoute = ProjectIdPactRouteImport.update({
+  id: '/pact',
+  path: '/pact',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
+const ProjectIdPlanDetailRoute = ProjectIdPlanDetailRouteImport.update({
+  id: '/plan-detail',
+  path: '/plan-detail',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
+const ProjectIdSheetRoute = ProjectIdSheetRouteImport.update({
+  id: '/sheet',
+  path: '/sheet',
+  getParentRoute: () => ProjectIdRoute,
+} as any)
+const RegisterCorrectiveEntryIdRoute =
+  RegisterCorrectiveEntryIdRouteImport.update({
+    id: '/register/corrective/$entryId',
+    path: '/register/corrective/$entryId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ProjectIdReviewEntryIdRoute = ProjectIdReviewEntryIdRouteImport.update({
   id: '/review/$entryId',
   path: '/review/$entryId',
@@ -341,7 +335,6 @@ export interface FileRoutesByFullPath {
   '/reading-mode': typeof ReadingModeRoute
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
-  '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
   '/compass/guide': typeof CompassGuideRoute
@@ -392,7 +385,6 @@ export interface FileRoutesByTo {
   '/protocol5': typeof Protocol5Route
   '/reading-mode': typeof ReadingModeRoute
   '/report': typeof ReportRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
   '/compass/guide': typeof CompassGuideRoute
@@ -447,7 +439,6 @@ export interface FileRoutesById {
   '/reading-mode': typeof ReadingModeRoute
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
-  '/auth/callback': typeof AuthCallbackRoute
   '/baseline/new': typeof BaselineNewRoute
   '/compass/friction': typeof CompassFrictionRoute
   '/compass/guide': typeof CompassGuideRoute
@@ -503,7 +494,6 @@ export interface FileRouteTypes {
     | '/reading-mode'
     | '/report'
     | '/settings'
-    | '/auth/callback'
     | '/baseline/new'
     | '/compass/friction'
     | '/compass/guide'
@@ -554,7 +544,6 @@ export interface FileRouteTypes {
     | '/protocol5'
     | '/reading-mode'
     | '/report'
-    | '/auth/callback'
     | '/baseline/new'
     | '/compass/friction'
     | '/compass/guide'
@@ -608,7 +597,6 @@ export interface FileRouteTypes {
     | '/reading-mode'
     | '/report'
     | '/settings'
-    | '/auth/callback'
     | '/baseline/new'
     | '/compass/friction'
     | '/compass/guide'
@@ -663,7 +651,6 @@ export interface RootRouteChildren {
   ReadingModeRoute: typeof ReadingModeRoute
   ReportRoute: typeof ReportRoute
   SettingsRoute: typeof SettingsRouteWithChildren
-  AuthCallbackRoute: typeof AuthCallbackRoute
   BaselineNewRoute: typeof BaselineNewRoute
   DecisionNewRoute: typeof DecisionNewRoute
   ProjectIdRoute: typeof ProjectIdRouteWithChildren
@@ -675,102 +662,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/report': {
-      id: '/report'
-      path: '/report'
-      fullPath: '/report'
-      preLoaderRoute: typeof ReportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reading-mode': {
-      id: '/reading-mode'
-      path: '/reading-mode'
-      fullPath: '/reading-mode'
-      preLoaderRoute: typeof ReadingModeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/protocol5': {
-      id: '/protocol5'
-      path: '/protocol5'
-      fullPath: '/protocol5'
-      preLoaderRoute: typeof Protocol5RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pressure': {
-      id: '/pressure'
-      path: '/pressure'
-      fullPath: '/pressure'
-      preLoaderRoute: typeof PressureRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/panel': {
-      id: '/panel'
-      path: '/panel'
-      fullPath: '/panel'
-      preLoaderRoute: typeof PanelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lever-filter': {
-      id: '/lever-filter'
-      path: '/lever-filter'
-      fullPath: '/lever-filter'
-      preLoaderRoute: typeof LeverFilterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inbox': {
-      id: '/inbox'
-      path: '/inbox'
-      fullPath: '/inbox'
-      preLoaderRoute: typeof InboxRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/diary': {
-      id: '/diary'
-      path: '/diary'
-      fullPath: '/diary'
-      preLoaderRoute: typeof DiaryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/creative': {
-      id: '/creative'
-      path: '/creative'
-      fullPath: '/creative'
-      preLoaderRoute: typeof CreativeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/concluded': {
-      id: '/concluded'
-      path: '/concluded'
-      fullPath: '/concluded'
-      preLoaderRoute: typeof ConcludedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/compass': {
-      id: '/compass'
-      path: '/compass'
-      fullPath: '/compass'
-      preLoaderRoute: typeof CompassRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clarity': {
@@ -780,172 +676,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClarityRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/compass': {
+      id: '/compass'
+      path: '/compass'
+      fullPath: '/compass'
+      preLoaderRoute: typeof CompassRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/': {
-      id: '/settings/'
-      path: '/'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof SettingsIndexRouteImport
-      parentRoute: typeof SettingsRoute
+    '/concluded': {
+      id: '/concluded'
+      path: '/concluded'
+      fullPath: '/concluded'
+      preLoaderRoute: typeof ConcludedRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/panel/': {
-      id: '/panel/'
-      path: '/'
-      fullPath: '/panel/'
-      preLoaderRoute: typeof PanelIndexRouteImport
-      parentRoute: typeof PanelRoute
+    '/creative': {
+      id: '/creative'
+      path: '/creative'
+      fullPath: '/creative'
+      preLoaderRoute: typeof CreativeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diary': {
+      id: '/diary'
+      path: '/diary'
+      fullPath: '/diary'
+      preLoaderRoute: typeof DiaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inbox': {
+      id: '/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof InboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lever-filter': {
+      id: '/lever-filter'
+      path: '/lever-filter'
+      fullPath: '/lever-filter'
+      preLoaderRoute: typeof LeverFilterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/panel': {
+      id: '/panel'
+      path: '/panel'
+      fullPath: '/panel'
+      preLoaderRoute: typeof PanelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pressure': {
+      id: '/pressure'
+      path: '/pressure'
+      fullPath: '/pressure'
+      preLoaderRoute: typeof PressureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/protocol5': {
+      id: '/protocol5'
+      path: '/protocol5'
+      fullPath: '/protocol5'
+      preLoaderRoute: typeof Protocol5RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reading-mode': {
+      id: '/reading-mode'
+      path: '/reading-mode'
+      fullPath: '/reading-mode'
+      preLoaderRoute: typeof ReadingModeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/baseline/new': {
+      id: '/baseline/new'
+      path: '/baseline/new'
+      fullPath: '/baseline/new'
+      preLoaderRoute: typeof BaselineNewRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/compass/': {
       id: '/compass/'
       path: '/'
       fullPath: '/compass/'
       preLoaderRoute: typeof CompassIndexRouteImport
-      parentRoute: typeof CompassRoute
-    }
-    '/settings/notifications': {
-      id: '/settings/notifications'
-      path: '/notifications'
-      fullPath: '/settings/notifications'
-      preLoaderRoute: typeof SettingsNotificationsRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/settings/help': {
-      id: '/settings/help'
-      path: '/help'
-      fullPath: '/settings/help'
-      preLoaderRoute: typeof SettingsHelpRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/register/structured': {
-      id: '/register/structured'
-      path: '/register/structured'
-      fullPath: '/register/structured'
-      preLoaderRoute: typeof RegisterStructuredRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register/pulse': {
-      id: '/register/pulse'
-      path: '/register/pulse'
-      fullPath: '/register/pulse'
-      preLoaderRoute: typeof RegisterPulseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/project/new': {
-      id: '/project/new'
-      path: '/project/new'
-      fullPath: '/project/new'
-      preLoaderRoute: typeof ProjectNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/project/$id': {
-      id: '/project/$id'
-      path: '/project/$id'
-      fullPath: '/project/$id'
-      preLoaderRoute: typeof ProjectIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pressure/$': {
-      id: '/pressure/$'
-      path: '/$'
-      fullPath: '/pressure/$'
-      preLoaderRoute: typeof PressureSplatRouteImport
-      parentRoute: typeof PressureRoute
-    }
-    '/panel/transfer': {
-      id: '/panel/transfer'
-      path: '/transfer'
-      fullPath: '/panel/transfer'
-      preLoaderRoute: typeof PanelTransferRouteImport
-      parentRoute: typeof PanelRoute
-    }
-    '/panel/rubric': {
-      id: '/panel/rubric'
-      path: '/rubric'
-      fullPath: '/panel/rubric'
-      preLoaderRoute: typeof PanelRubricRouteImport
-      parentRoute: typeof PanelRoute
-    }
-    '/panel/baseline': {
-      id: '/panel/baseline'
-      path: '/baseline'
-      fullPath: '/panel/baseline'
-      preLoaderRoute: typeof PanelBaselineRouteImport
-      parentRoute: typeof PanelRoute
-    }
-    '/diary/$': {
-      id: '/diary/$'
-      path: '/$'
-      fullPath: '/diary/$'
-      preLoaderRoute: typeof DiarySplatRouteImport
-      parentRoute: typeof DiaryRoute
-    }
-    '/decision/new': {
-      id: '/decision/new'
-      path: '/decision/new'
-      fullPath: '/decision/new'
-      preLoaderRoute: typeof DecisionNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/compass/simulations': {
-      id: '/compass/simulations'
-      path: '/simulations'
-      fullPath: '/compass/simulations'
-      preLoaderRoute: typeof CompassSimulationsRouteImport
-      parentRoute: typeof CompassRoute
-    }
-    '/compass/sheets': {
-      id: '/compass/sheets'
-      path: '/sheets'
-      fullPath: '/compass/sheets'
-      preLoaderRoute: typeof CompassSheetsRouteImport
-      parentRoute: typeof CompassRoute
-    }
-    '/compass/sheet': {
-      id: '/compass/sheet'
-      path: '/sheet'
-      fullPath: '/compass/sheet'
-      preLoaderRoute: typeof CompassSheetRouteImport
-      parentRoute: typeof CompassRoute
-    }
-    '/compass/recombination': {
-      id: '/compass/recombination'
-      path: '/recombination'
-      fullPath: '/compass/recombination'
-      preLoaderRoute: typeof CompassRecombinationRouteImport
-      parentRoute: typeof CompassRoute
-    }
-    '/compass/pocket': {
-      id: '/compass/pocket'
-      path: '/pocket'
-      fullPath: '/compass/pocket'
-      preLoaderRoute: typeof CompassPocketRouteImport
-      parentRoute: typeof CompassRoute
-    }
-    '/compass/maintenance': {
-      id: '/compass/maintenance'
-      path: '/maintenance'
-      fullPath: '/compass/maintenance'
-      preLoaderRoute: typeof CompassMaintenanceRouteImport
-      parentRoute: typeof CompassRoute
-    }
-    '/compass/inventory4d': {
-      id: '/compass/inventory4d'
-      path: '/inventory4d'
-      fullPath: '/compass/inventory4d'
-      preLoaderRoute: typeof CompassInventory4dRouteImport
-      parentRoute: typeof CompassRoute
-    }
-    '/compass/guide': {
-      id: '/compass/guide'
-      path: '/guide'
-      fullPath: '/compass/guide'
-      preLoaderRoute: typeof CompassGuideRouteImport
       parentRoute: typeof CompassRoute
     }
     '/compass/friction': {
@@ -955,67 +795,165 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompassFrictionRouteImport
       parentRoute: typeof CompassRoute
     }
-    '/baseline/new': {
-      id: '/baseline/new'
-      path: '/baseline/new'
-      fullPath: '/baseline/new'
-      preLoaderRoute: typeof BaselineNewRouteImport
-      parentRoute: typeof rootRouteImport
+    '/compass/guide': {
+      id: '/compass/guide'
+      path: '/guide'
+      fullPath: '/compass/guide'
+      preLoaderRoute: typeof CompassGuideRouteImport
+      parentRoute: typeof CompassRoute
     }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof rootRouteImport
+    '/compass/inventory4d': {
+      id: '/compass/inventory4d'
+      path: '/inventory4d'
+      fullPath: '/compass/inventory4d'
+      preLoaderRoute: typeof CompassInventory4dRouteImport
+      parentRoute: typeof CompassRoute
     }
-    '/register/corrective/$entryId': {
-      id: '/register/corrective/$entryId'
-      path: '/register/corrective/$entryId'
-      fullPath: '/register/corrective/$entryId'
-      preLoaderRoute: typeof RegisterCorrectiveEntryIdRouteImport
-      parentRoute: typeof rootRouteImport
+    '/compass/maintenance': {
+      id: '/compass/maintenance'
+      path: '/maintenance'
+      fullPath: '/compass/maintenance'
+      preLoaderRoute: typeof CompassMaintenanceRouteImport
+      parentRoute: typeof CompassRoute
     }
-    '/project/$id/sheet': {
-      id: '/project/$id/sheet'
+    '/compass/pocket': {
+      id: '/compass/pocket'
+      path: '/pocket'
+      fullPath: '/compass/pocket'
+      preLoaderRoute: typeof CompassPocketRouteImport
+      parentRoute: typeof CompassRoute
+    }
+    '/compass/recombination': {
+      id: '/compass/recombination'
+      path: '/recombination'
+      fullPath: '/compass/recombination'
+      preLoaderRoute: typeof CompassRecombinationRouteImport
+      parentRoute: typeof CompassRoute
+    }
+    '/compass/sheet': {
+      id: '/compass/sheet'
       path: '/sheet'
-      fullPath: '/project/$id/sheet'
-      preLoaderRoute: typeof ProjectIdSheetRouteImport
-      parentRoute: typeof ProjectIdRoute
+      fullPath: '/compass/sheet'
+      preLoaderRoute: typeof CompassSheetRouteImport
+      parentRoute: typeof CompassRoute
     }
-    '/project/$id/plan-detail': {
-      id: '/project/$id/plan-detail'
-      path: '/plan-detail'
-      fullPath: '/project/$id/plan-detail'
-      preLoaderRoute: typeof ProjectIdPlanDetailRouteImport
-      parentRoute: typeof ProjectIdRoute
+    '/compass/sheets': {
+      id: '/compass/sheets'
+      path: '/sheets'
+      fullPath: '/compass/sheets'
+      preLoaderRoute: typeof CompassSheetsRouteImport
+      parentRoute: typeof CompassRoute
     }
-    '/project/$id/pact': {
-      id: '/project/$id/pact'
-      path: '/pact'
-      fullPath: '/project/$id/pact'
-      preLoaderRoute: typeof ProjectIdPactRouteImport
-      parentRoute: typeof ProjectIdRoute
+    '/compass/simulations': {
+      id: '/compass/simulations'
+      path: '/simulations'
+      fullPath: '/compass/simulations'
+      preLoaderRoute: typeof CompassSimulationsRouteImport
+      parentRoute: typeof CompassRoute
     }
-    '/project/$id/edit': {
-      id: '/project/$id/edit'
-      path: '/edit'
-      fullPath: '/project/$id/edit'
-      preLoaderRoute: typeof ProjectIdEditRouteImport
-      parentRoute: typeof ProjectIdRoute
+    '/decision/new': {
+      id: '/decision/new'
+      path: '/decision/new'
+      fullPath: '/decision/new'
+      preLoaderRoute: typeof DecisionNewRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/project/$id/diagnosis': {
-      id: '/project/$id/diagnosis'
-      path: '/diagnosis'
-      fullPath: '/project/$id/diagnosis'
-      preLoaderRoute: typeof ProjectIdDiagnosisRouteImport
-      parentRoute: typeof ProjectIdRoute
+    '/diary/$': {
+      id: '/diary/$'
+      path: '/$'
+      fullPath: '/diary/$'
+      preLoaderRoute: typeof DiarySplatRouteImport
+      parentRoute: typeof DiaryRoute
     }
-    '/project/$id/dashboard': {
-      id: '/project/$id/dashboard'
-      path: '/dashboard'
-      fullPath: '/project/$id/dashboard'
-      preLoaderRoute: typeof ProjectIdDashboardRouteImport
+    '/panel/': {
+      id: '/panel/'
+      path: '/'
+      fullPath: '/panel/'
+      preLoaderRoute: typeof PanelIndexRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/panel/baseline': {
+      id: '/panel/baseline'
+      path: '/baseline'
+      fullPath: '/panel/baseline'
+      preLoaderRoute: typeof PanelBaselineRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/panel/rubric': {
+      id: '/panel/rubric'
+      path: '/rubric'
+      fullPath: '/panel/rubric'
+      preLoaderRoute: typeof PanelRubricRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/panel/transfer': {
+      id: '/panel/transfer'
+      path: '/transfer'
+      fullPath: '/panel/transfer'
+      preLoaderRoute: typeof PanelTransferRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/pressure/$': {
+      id: '/pressure/$'
+      path: '/$'
+      fullPath: '/pressure/$'
+      preLoaderRoute: typeof PressureSplatRouteImport
+      parentRoute: typeof PressureRoute
+    }
+    '/project/$id': {
+      id: '/project/$id'
+      path: '/project/$id'
+      fullPath: '/project/$id'
+      preLoaderRoute: typeof ProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/project/new': {
+      id: '/project/new'
+      path: '/project/new'
+      fullPath: '/project/new'
+      preLoaderRoute: typeof ProjectNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register/pulse': {
+      id: '/register/pulse'
+      path: '/register/pulse'
+      fullPath: '/register/pulse'
+      preLoaderRoute: typeof RegisterPulseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register/structured': {
+      id: '/register/structured'
+      path: '/register/structured'
+      fullPath: '/register/structured'
+      preLoaderRoute: typeof RegisterStructuredRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/help': {
+      id: '/settings/help'
+      path: '/help'
+      fullPath: '/settings/help'
+      preLoaderRoute: typeof SettingsHelpRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/notifications': {
+      id: '/settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof SettingsNotificationsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/project/$id/capacity': {
+      id: '/project/$id/capacity'
+      path: '/capacity'
+      fullPath: '/project/$id/capacity'
+      preLoaderRoute: typeof ProjectIdCapacityRouteImport
       parentRoute: typeof ProjectIdRoute
     }
     '/project/$id/conclude': {
@@ -1025,12 +963,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectIdConcludeRouteImport
       parentRoute: typeof ProjectIdRoute
     }
-    '/project/$id/capacity': {
-      id: '/project/$id/capacity'
-      path: '/capacity'
-      fullPath: '/project/$id/capacity'
-      preLoaderRoute: typeof ProjectIdCapacityRouteImport
+    '/project/$id/dashboard': {
+      id: '/project/$id/dashboard'
+      path: '/dashboard'
+      fullPath: '/project/$id/dashboard'
+      preLoaderRoute: typeof ProjectIdDashboardRouteImport
       parentRoute: typeof ProjectIdRoute
+    }
+    '/project/$id/diagnosis': {
+      id: '/project/$id/diagnosis'
+      path: '/diagnosis'
+      fullPath: '/project/$id/diagnosis'
+      preLoaderRoute: typeof ProjectIdDiagnosisRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
+    '/project/$id/edit': {
+      id: '/project/$id/edit'
+      path: '/edit'
+      fullPath: '/project/$id/edit'
+      preLoaderRoute: typeof ProjectIdEditRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
+    '/project/$id/pact': {
+      id: '/project/$id/pact'
+      path: '/pact'
+      fullPath: '/project/$id/pact'
+      preLoaderRoute: typeof ProjectIdPactRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
+    '/project/$id/plan-detail': {
+      id: '/project/$id/plan-detail'
+      path: '/plan-detail'
+      fullPath: '/project/$id/plan-detail'
+      preLoaderRoute: typeof ProjectIdPlanDetailRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
+    '/project/$id/sheet': {
+      id: '/project/$id/sheet'
+      path: '/sheet'
+      fullPath: '/project/$id/sheet'
+      preLoaderRoute: typeof ProjectIdSheetRouteImport
+      parentRoute: typeof ProjectIdRoute
+    }
+    '/register/corrective/$entryId': {
+      id: '/register/corrective/$entryId'
+      path: '/register/corrective/$entryId'
+      fullPath: '/register/corrective/$entryId'
+      preLoaderRoute: typeof RegisterCorrectiveEntryIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/project/$id/review/$entryId': {
       id: '/project/$id/review/$entryId'
@@ -1170,7 +1150,6 @@ const rootRouteChildren: RootRouteChildren = {
   ReadingModeRoute: ReadingModeRoute,
   ReportRoute: ReportRoute,
   SettingsRoute: SettingsRouteWithChildren,
-  AuthCallbackRoute: AuthCallbackRoute,
   BaselineNewRoute: BaselineNewRoute,
   DecisionNewRoute: DecisionNewRoute,
   ProjectIdRoute: ProjectIdRouteWithChildren,

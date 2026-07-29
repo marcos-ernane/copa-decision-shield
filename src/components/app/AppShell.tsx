@@ -9,7 +9,6 @@ import { useReadingMode } from '@/hooks/useReadingMode';
 
 const NO_SHELL_PREFIXES = [
   '/onboarding',
-  '/auth/',
   '/reading-mode',
 ];
 
