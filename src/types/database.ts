@@ -242,6 +242,19 @@ export interface Subscription {
   created_at: string;
 }
 
+// ---------- 2.12 legal_acceptances (PRD-AUTH-01) ----------
+export type LegalDocumentType = 'privacy_policy' | 'terms_of_use';
+
+/** Append-only: cada aceite é um INSERT novo. O histórico é a prova jurídica. */
+export interface LegalAcceptance {
+  id: string;
+  user_id: string;
+  document_type: LegalDocumentType;
+  version: string;
+  accepted_at: string;
+  user_agent: string | null;
+}
+
 // ---------- Database schema agregado ----------
 export interface Database {
   public: {
@@ -257,6 +270,7 @@ export interface Database {
       notification_configs: { Row: NotificationConfig };
       operator_index: { Row: OperatorIndex };
       subscriptions: { Row: Subscription };
+      legal_acceptances: { Row: LegalAcceptance };
     };
   };
 }
