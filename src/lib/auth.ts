@@ -87,8 +87,11 @@ function translateSupabaseError(code: string, message: string): string {
     'weak_password': 'Senha não atende aos requisitos de segurança',
     'invalid_email': 'E-mail inválido',
     'over_email_send_rate_limit': 'Muitas tentativas. Aguarde alguns minutos',
-    'otp_expired': 'Código expirou. Solicite um novo',
-    'invalid_otp': 'Código inválido',
+    // Supabase usa 'otp_expired' tanto para código expirado quanto incorreto —
+    // a mensagem cobre as duas hipóteses para não enganar o usuário.
+    'otp_expired': 'Código incorreto ou expirado. Confira os dígitos ou solicite um novo',
+    'invalid_otp': 'Código incorreto. Confira os dígitos ou solicite um novo',
+    'otp_disabled': 'Recuperação por código indisponível. Tente novamente mais tarde',
     'session_not_found': 'Sessão expirada. Faça login novamente',
     'oauth_provider_not_supported': 'Provedor OAuth não suportado',
     'no_user_found': 'Usuário não encontrado',
