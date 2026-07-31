@@ -300,7 +300,7 @@ falha nos passos 7 ou 8 não duplica a prova de consentimento.
 | 16 | Dados sumiram | **PASSOU** | zero nas 8 contagens: usuário, profile, projetos, registros, princípios, imagens, aceites, assinaturas |
 | 17 | Aceites sobreviveram | **PASSOU** | `legal_acceptances` = 0 e `legal_acceptances_archive` = 2 (privacy_policy 1.1, terms_of_use 1.1). O contraste é o [REQ-DEL-01] |
 | 18 | Login falha | **PASSOU** | credenciais recusadas após a exclusão |
-| 19 | **Bloqueio de 2º trial** | pendente | |
+| 19 | **Bloqueio de 2º trial** | **PASSOU** | recadastro com o mesmo e-mail funciona; trial recusado com 400 e a mensagem exata. Verificado por console — ver defeito 3 abaixo |
 | 20 | Storage limpo | **PASSOU** | bucket `entry-images` sem a pasta do `user_id` |
 | 21 | Stripe | **PASSOU** | assinatura `Cancelada`, encerrada 31/07 18:36; log `DELETE /v1/subscriptions` 200 OK às 18:36:10; customer preservado; fatura R$ 0,00 |
 | 22 | Idempotência | pendente | |
@@ -312,6 +312,38 @@ Linha de base dos dois arquivos antes da exclusão: **0 e 0** — qualquer linha
 presente depois é necessariamente desta exclusão.
 
 ---
+
+## Defeitos encontrados durante a Etapa 7
+
+Todos **pré-existentes e fora do escopo do PRD-DEL-01** — nenhuma das seis
+etapas os introduziu. Registrados aqui porque foram descobertos por estes
+testes e porque dois deles atrapalharam a própria verificação.
+
+**1. Conta nova nasce sem `profiles`.** `signUp` grava o nome só em
+`auth.users.raw_user_meta_data` e nunca cria a linha em `public.profiles`; não
+há trigger. Consequências: a Home exibe o e-mail no lugar do nome, o usuário
+autenticado nunca vê o onboarding, e criar projeto falha com 409 (violação de
+FK). Contornado com `INSERT` manual. Tarefa #2, classificada como crítica.
+
+**2. Erros silenciosos na criação de projeto.** `project.new.tsx:115-129` tem
+`try/finally` sem `catch`. O 409 do defeito 1 só apareceu porque o DevTools
+estava aberto — na tela, o botão apenas piscava.
+
+**3. `<Toaster />` nunca é montado.** O componente existe em
+`src/components/ui/sonner.tsx` e é exportado, mas nenhum arquivo o renderiza.
+Seis arquivos chamam `toast(...)` e **nenhuma mensagem do app jamais apareceu**.
+Foi por isso que o CT-19 precisou ser verificado por console: a recusa do trial
+chegou corretamente ao cliente (`stripe.ts:49` a registrou) e não tinha onde ser
+exibida. Também afeta os toasts de exportação da Etapa 5.
+
+**4. Trial não atualiza a interface.** `UpgradeSheet.buy()` não recarrega o
+estado após sucesso, e `useAuthState` só relê a assinatura em eventos de
+autenticação — que criar assinatura não emite. O plano continua "Gratuito" até
+recarregar a página. Só o trial expõe isso: o caminho pago redireciona ao
+Stripe e a volta recarrega tudo.
+
+Os defeitos 2, 3 e 4 são a mesma família: o app faz a coisa certa e não conta
+ao usuário.
 
 ## Método de verificação de CT-12 e CT-13
 
