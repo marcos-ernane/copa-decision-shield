@@ -15,6 +15,7 @@ import { markWasAuthenticated } from "@/lib/authFlags";
 import { MigrationIndicator } from "@/components/MigrationIndicator";
 import { AppShell } from "@/components/app/AppShell";
 import { PassiveTracker } from "@/components/PassiveTracker";
+import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
 // In Vite dev mode, ?url imports are served as JavaScript modules with wrong
@@ -246,6 +247,22 @@ function RootComponent() {
         <AppShell>
           <Outlet />
         </AppShell>
+        {/* Sem este componente montado, o sonner enfileira as mensagens e não
+            há nada que as desenhe: seis arquivos chamam toast(...) e nenhuma
+            jamais apareceu na tela. Descoberto na Etapa 7 do PRD-DEL-01, quando
+            a recusa de segundo trial chegou correta ao cliente e só pôde ser
+            lida pelo console.
+
+            top-center e não o canto inferior direito padrão do sonner: a 375px
+            o rodapé é ocupado pela BottomNav (z-30) e pelos FABs (z-40), e o
+            toast cairia em cima deles. O offset soma a safe-area porque a regra
+            de notch em styles.css é escopada em .sticky.top-0 e não alcança o
+            portal do sonner. */}
+        <Toaster
+          position="top-center"
+          theme="dark"
+          offset="calc(1rem + env(safe-area-inset-top))"
+        />
       </div>
     </QueryClientProvider>
   );
