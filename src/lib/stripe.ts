@@ -35,6 +35,21 @@ export async function startCheckout(
     });
 
     if (error) {
+      // Em resposta não-2xx o invoke devolve FunctionsHttpError com data nulo,
+      // e a mensagem do erro é sempre a genérica 'Edge Function returned a
+      // non-2xx status code'. O motivo real está no corpo, exposto em .context
+      // como a Response intacta. Sem ler daqui, a recusa de segundo trial
+      // chegaria ao usuário como falha técnica em vez de explicação.
+      const ctx = (error as { context?: Response }).context;
+      const body = ctx && typeof ctx.json === 'function'
+        ? await ctx.json().catch(() => null)
+        : null;
+
+      if (body?.error) {
+        console.error('[stripe-checkout] function error:', body.error);
+        return { error: body.error as string };
+      }
+
       const msg = (error as { message?: string })?.message ?? 'Erro desconhecido';
       console.error('[stripe-checkout] invoke error:', msg, error);
       return { error: `Não foi possível iniciar o checkout. (${msg})` };
