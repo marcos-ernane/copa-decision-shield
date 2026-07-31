@@ -25,7 +25,13 @@
 
 CREATE TABLE IF NOT EXISTS public.legal_acceptances_archive (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  original_id uuid NOT NULL,
+  -- UNIQUE: os passos 6 e 7 da Edge Function NÃO são idempotentes por si. As
+  -- linhas de origem só caem no passo 9, pelo CASCADE — então uma segunda
+  -- tentativa após falha em 7 ou 8 releria as mesmas linhas e duplicaria a
+  -- prova. Numa auditoria, aceite duplicado é indistinguível de dois
+  -- consentimentos. A constraint torna a duplicata impossível no schema, e a
+  -- Etapa 2 usa upsert com onConflict: 'original_id'.
+  original_id uuid NOT NULL UNIQUE,
   -- SEM foreign key: o usuário deixará de existir
   original_user_id uuid NOT NULL,
   user_email_hash text NOT NULL,       -- SHA-256 do e-mail
@@ -46,6 +52,17 @@ ALTER TABLE public.legal_acceptances_archive ENABLE ROW LEVEL SECURITY;
 -- padrão. service_role ignora RLS por definição.
 -- Nenhum usuário final pode ler, alterar ou apagar o arquivo.
 
+-- O cliente nunca lê esta tabela em nenhum fluxo, então o GRANT padrão do
+-- schema public não tem uso legítimo aqui. Sem o REVOKE, a RLS é a única
+-- tranca — e uma policy adicionada por engano, ou um DISABLE ROW LEVEL
+-- SECURITY acidental, transformaria esse grant em acesso real.
+REVOKE ALL ON public.legal_acceptances_archive FROM anon, authenticated;
+
+COMMENT ON TABLE public.legal_acceptances_archive IS
+  'PRD-DEL-01: prova de consentimento de contas excluídas. Retenção de 5 anos '
+  '(Política de Privacidade, Seção 7). Ausência de FK e de policy é '
+  'intencional — sobrevive ao CASCADE de auth.users. NÃO REMOVER.';
+
 -- ===========================================================================
 -- 2. subscriptions_archive — registro de transação anonimizado
 -- ===========================================================================
@@ -55,7 +72,18 @@ ALTER TABLE public.legal_acceptances_archive ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS public.subscriptions_archive (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  -- UNIQUE pelo mesmo motivo de legal_acceptances_archive. A chave é a PK da
+  -- linha original (subscriptions.id), NÃO o user_email_hash: a Seção 8 prevê
+  -- recadastro com o mesmo e-mail, e uma segunda assinatura seguida de segunda
+  -- exclusão é legítima e precisa gerar um segundo registro. Cada assinatura
+  -- tem id próprio, então a retentativa deduplica e o recadastro não colide.
+  original_id uuid NOT NULL UNIQUE,    -- subscriptions.id
   user_email_hash text NOT NULL,       -- único vínculo, irreversível
+  -- Sem CHECK em plan: é arquivo histórico e deve aceitar fielmente o que
+  -- existiu. Os planos vendidos no Stripe (monthly, annual, biennial) já
+  -- divergem da lista do tipo, e uma constraint desatualizada faria o passo 7
+  -- falhar — impedindo o usuário de exercer o direito de exclusão. O dado já
+  -- vem validado pela tabela de origem.
   plan text NOT NULL,
   stripe_customer_id text,
   stripe_subscription_id text,
@@ -75,6 +103,13 @@ CREATE INDEX IF NOT EXISTS idx_subs_archive_hash
 
 ALTER TABLE public.subscriptions_archive ENABLE ROW LEVEL SECURITY;
 -- Nenhuma policy: acesso exclusivo por service_role.
+
+REVOKE ALL ON public.subscriptions_archive FROM anon, authenticated;
+
+COMMENT ON TABLE public.subscriptions_archive IS
+  'PRD-DEL-01: registro de transação de contas excluídas, anonimizado por hash '
+  'do e-mail. Sustenta a checagem de segundo trial em stripe-checkout. '
+  'Ausência de FK e de policy é intencional. NÃO REMOVER.';
 
 -- ===========================================================================
 -- VALIDAÇÃO — executar no SQL Editor após aplicar a migration
@@ -104,3 +139,30 @@ ALTER TABLE public.subscriptions_archive ENABLE ROW LEVEL SECURITY;
 --    SELECT indexname FROM pg_indexes
 --    WHERE tablename IN ('legal_acceptances_archive','subscriptions_archive');
 --    Esperado: incluir idx_legal_archive_hash e idx_subs_archive_hash
+--
+-- 6. UNIQUE em original_id nas duas (garantia de idempotência dos passos 6 e 7):
+--    SELECT tc.table_name, tc.constraint_name, kcu.column_name
+--    FROM information_schema.table_constraints tc
+--    JOIN information_schema.key_column_usage kcu
+--      ON tc.constraint_name = kcu.constraint_name
+--    WHERE tc.constraint_type = 'UNIQUE'
+--      AND tc.table_name IN ('legal_acceptances_archive','subscriptions_archive');
+--    Esperado: 2 linhas, ambas em original_id
+--
+-- 7. Grants revogados de anon e authenticated:
+--    SELECT table_name, grantee, privilege_type
+--    FROM information_schema.role_table_grants
+--    WHERE table_name IN ('legal_acceptances_archive','subscriptions_archive')
+--      AND grantee IN ('anon','authenticated');
+--    Esperado: 0 linhas
+--
+-- 8. Teste de idempotência (opcional — reverter com ROLLBACK):
+--    BEGIN;
+--    INSERT INTO public.subscriptions_archive
+--      (original_id, user_email_hash, plan)
+--    VALUES ('00000000-0000-0000-0000-000000000001','teste','free');
+--    -- repetir o mesmo INSERT deve falhar com violação de unicidade:
+--    INSERT INTO public.subscriptions_archive
+--      (original_id, user_email_hash, plan)
+--    VALUES ('00000000-0000-0000-0000-000000000001','teste','free');
+--    ROLLBACK;

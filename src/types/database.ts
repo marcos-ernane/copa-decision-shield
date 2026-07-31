@@ -268,6 +268,7 @@ export interface LegalAcceptance {
  */
 export interface LegalAcceptanceArchive {
   id: string;
+  /** legal_acceptances.id — UNIQUE: deduplica retentativa da Edge Function. */
   original_id: string;
   original_user_id: string;
   user_email_hash: string;
@@ -286,7 +287,14 @@ export interface LegalAcceptanceArchive {
  */
 export interface SubscriptionArchive {
   id: string;
+  /**
+   * subscriptions.id — UNIQUE. A chave é a linha original, não o hash do
+   * e-mail: recadastrar, assinar e excluir de novo é legítimo e deve gerar um
+   * segundo registro.
+   */
+  original_id: string;
   user_email_hash: string;
+  /** Sem CHECK no banco: arquivo histórico aceita qualquer plano que existiu. */
   plan: SubscriptionPlan;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
