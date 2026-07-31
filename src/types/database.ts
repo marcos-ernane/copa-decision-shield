@@ -255,6 +255,50 @@ export interface LegalAcceptance {
   user_agent: string | null;
 }
 
+// ---------- 2.13 Tabelas de arquivo (PRD-DEL-01) ----------
+// Sobrevivem ao auth.admin.deleteUser(). Sem FK para auth.users e sem policy
+// de RLS: acesso exclusivo por service_role, a partir da Edge Function
+// delete-account. Inalcançáveis pelo cliente — tipadas aqui como espelho do
+// schema, não para consulta.
+
+/**
+ * Cópia integral do aceite legal, preservada por 5 anos conforme a Seção 7 da
+ * Política de Privacidade. Mantém o user_id original como dado (não como
+ * referência) para que a prova continue nominal. [REQ-DEL-01]
+ */
+export interface LegalAcceptanceArchive {
+  id: string;
+  original_id: string;
+  original_user_id: string;
+  user_email_hash: string;
+  document_type: LegalDocumentType;
+  version: string;
+  accepted_at: string;
+  user_agent: string | null;
+  archived_at: string;
+  deletion_reason: string;
+}
+
+/**
+ * Registro de transação anonimizado, para obrigação fiscal. O hash do e-mail é
+ * o único vínculo com a pessoa — e também a chave da checagem de segundo trial
+ * feita pela stripe-checkout. [REQ-DEL-02] [REQ-DEL-28]
+ */
+export interface SubscriptionArchive {
+  id: string;
+  user_email_hash: string;
+  plan: SubscriptionPlan;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  source: SubscriptionSource | null;
+  original_created_at: string | null;
+  /** true quando o cancelamento no Stripe foi confirmado antes da deleção. */
+  cancelled_at_deletion: boolean;
+  archived_at: string;
+}
+
 // ---------- Database schema agregado ----------
 export interface Database {
   public: {
@@ -271,6 +315,9 @@ export interface Database {
       operator_index: { Row: OperatorIndex };
       subscriptions: { Row: Subscription };
       legal_acceptances: { Row: LegalAcceptance };
+      // Somente service_role — o cliente nunca alcança estas duas.
+      legal_acceptances_archive: { Row: LegalAcceptanceArchive };
+      subscriptions_archive: { Row: SubscriptionArchive };
     };
   };
 }
