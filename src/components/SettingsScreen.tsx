@@ -10,6 +10,7 @@ import { useAuthState } from '@/lib/planLimits';
 import { openStripePortal } from '@/lib/stripe';
 import { setReadingMode, emitReadingModeChange } from '@/hooks/useReadingMode';
 import { GuestStorage } from '@/lib/guestStorage';
+import { exportAllUserData } from '@/lib/exportData';
 import { PlanBadge } from './PlanBadge';
 import { LoginSheet } from './LoginSheet';
 import { UpgradeSheet } from './UpgradeSheet';
@@ -42,6 +43,7 @@ export function SettingsScreen() {
   const [p5Fab, setP5Fab] = useState(false);
   const [showLoginNudge, setShowLoginNudge] = useState(false);
   const [openLegalDoc, setOpenLegalDoc] = useState<LegalDocumentType | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [acceptances, setAcceptances] = useState<
     Partial<Record<LegalDocumentType, LegalAcceptance>>
   >({});
@@ -68,6 +70,40 @@ export function SettingsScreen() {
   async function handleSignOut() {
     await supabase.auth.signOut();
     window.location.href = '/';
+  }
+
+  // A exportação lê 14 tabelas e assina as URLs das imagens: leva alguns
+  // segundos, então o botão precisa comunicar que está trabalhando.
+  async function handleExport() {
+    if (exporting) return;
+    setExporting(true);
+    const result = await exportAllUserData();
+    setExporting(false);
+
+    if (!result.success) {
+      toast.error(
+        result.error === 'no_session'
+          ? 'Crie uma conta para exportar seus dados.'
+          : 'Não foi possível exportar seus dados. Tente novamente.',
+        { duration: 4000 },
+      );
+      return;
+    }
+
+    // Lacuna na exportação precisa ser dita: o usuário pode estar prestes a
+    // excluir a conta achando que levou tudo.
+    if (result.errors?.length) {
+      toast.warning('Exportação parcial.', {
+        description: `Não foi possível ler: ${result.errors.join(', ')}. Tente novamente antes de excluir a conta.`,
+        duration: 8000,
+      });
+      return;
+    }
+
+    toast.success('Dados exportados.', {
+      description: `${result.tables_exported} tabelas e ${result.images_included} imagens. As URLs das imagens expiram em 7 dias.`,
+      duration: 6000,
+    });
   }
 
   async function handleManageSubscription() {
@@ -228,10 +264,11 @@ export function SettingsScreen() {
           <div className="rounded-xl border border-op-gray/30 bg-op-navy divide-y divide-op-gray/20">
             <button
               type="button"
-              className="w-full text-left px-4 py-3 text-body text-op-white hover:opacity-80 transition-opacity"
-              onClick={exportData}
+              disabled={exporting}
+              className="w-full text-left px-4 py-3 text-body text-op-white hover:opacity-80 transition-opacity disabled:opacity-50"
+              onClick={() => void handleExport()}
             >
-              Exportar dados completos
+              {exporting ? 'Exportando…' : 'Exportar dados completos'}
             </button>
             <button
               type="button"
@@ -316,33 +353,6 @@ function LinkRow({ to, label }: { to: string; label: string }) {
       <ChevronRight className="size-4 text-op-gray" />
     </Link>
   );
-}
-
-async function exportData() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
-  const [entries, principles, projects, sheets] = await Promise.all([
-    supabase.from('entries').select('*').eq('user_id', session.user.id),
-    supabase.from('principles').select('*').eq('user_id', session.user.id),
-    supabase.from('projects').select('*').eq('user_id', session.user.id),
-    supabase.from('operator_sheets').select('*').eq('user_id', session.user.id),
-  ]);
-  const blob = new Blob(
-    [JSON.stringify({
-      exported_at: new Date().toISOString(),
-      entries: entries.data ?? [],
-      principles: principles.data ?? [],
-      projects: projects.data ?? [],
-      operator_sheets: sheets.data ?? [],
-    }, null, 2)],
-    { type: 'application/json' },
-  );
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `operador-precisao-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 function requestAccountDeletion() {
