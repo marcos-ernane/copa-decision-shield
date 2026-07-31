@@ -282,19 +282,19 @@ falha nos passos 7 ou 8 não duplica a prova de consentimento.
 
 | CT | Descrição | Resultado | Observação |
 |---|---|---|---|
-| 01 | RLS aceites | | |
-| 02 | RLS assinaturas | | |
-| 03 | Sem JWT | | |
-| 04 | Chave anônima como Bearer | | |
-| 05 | Método não-POST | | |
-| 06 | Senha incorreta | | |
-| 07 | Senha vazia | | |
-| 08 | Passo 1 enumera | | |
-| 09 | Cancelar é inócuo | | |
-| 10 | Exportação | | |
-| 11 | Conteúdo do JSON | | |
-| 12 | Visitante: rótulo | | |
-| 13 | Visitante: limpeza | | |
+| 01 | RLS aceites | **PASSOU** | `42501 permission denied` + 401 — negado no nível de privilégio, antes da RLS |
+| 02 | RLS assinaturas | **PASSOU** | idem CT-01 |
+| 03 | Sem JWT | **PASSOU** | `UNAUTHORIZED_NO_AUTH_HEADER` — barrado pelo gateway |
+| 04 | Chave anônima como Bearer | **PASSOU** | `{"error":"unauthorized"}` — formato da função: passou o `verify_jwt`, barrado pelo `getUser` do Passo 1 |
+| 05 | Método não-POST | pendente | exige JWT válido |
+| 06 | Senha incorreta | pendente | exige conta real |
+| 07 | Senha vazia | pendente | exige sessão real |
+| 08 | Passo 1 enumera | pendente | exige sessão real |
+| 09 | Cancelar é inócuo | **PASSOU (visitante)** | nenhuma chave semeada removida; falta a variante autenticada |
+| 10 | Exportação | pendente | exige conta real |
+| 11 | Conteúdo do JSON | pendente | exige conta real |
+| 12 | Visitante: rótulo | **PASSOU** | 7 asserts: rótulo correto, passo único, sem senha, sem "Continuar" |
+| 13 | Visitante: limpeza | **PASSOU** | zero sentinelas sobreviveram; chave de terceiro preservada |
 | 14 | Massa de dados | | |
 | 15 | Exclusão executa | | |
 | 16 | Dados sumiram | | |
@@ -306,6 +306,33 @@ falha nos passos 7 ou 8 não duplica a prova de consentimento.
 | 22 | Idempotência | | |
 
 ---
+
+## Método de verificação de CT-12 e CT-13
+
+Executados com Chromium a 375px contra o dev server local. O ponto delicado do
+CT-13 é distinguir chave que **sobreviveu** à limpeza de chave **recriada** pelo
+app ao reiniciar como visitante novo — a simples presença da chave não decide.
+
+A verificação usa valores-sentinela impossíveis de o app gerar
+(`aop.guest_started_at = '2020-01-01'`, `aop.passive_buffer =
+[{"sentinela":true}]`). Depois da limpeza ambas as chaves existem, mas com
+valores novos — portanto foram recriadas, não preservadas. Zero sentinelas
+sobreviveram.
+
+Semeado também `aop.feedback_2026-07`, de nome variável por mês: é o caso que
+uma lista estática de chaves não alcançaria, e que a varredura por prefixo
+resolve. [REQ-DEL-16]
+
+Uma chave fora do prefixo (`naoDeveSerApagado`) foi preservada, confirmando que
+a limpeza não é indiscriminada.
+
+## Por que CT-07, CT-08 e CT-09 (autenticado) não foram automatizados
+
+Tentou-se forjar uma sessão em `localStorage` para exercitar a interface do
+fluxo autenticado sem rede. O supabase-js rejeita a sessão sintética e o app
+permanece em `GUEST`. Como uma sessão real exige alcançar o Supabase, estes três
+ficam para execução manual — e são observados de graça durante o CT-06, que
+percorre os mesmos dois passos do diálogo.
 
 ## Não coberto aqui
 
