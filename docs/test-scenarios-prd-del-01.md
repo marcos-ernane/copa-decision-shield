@@ -299,10 +299,10 @@ falha nos passos 7 ou 8 não duplica a prova de consentimento.
 | 15 | Exclusão executa | **PASSOU** | dispositivo limpo leva a `/onboarding`, não a `/login` — prova que `clearWasAuthenticated()` rodou [REQ-DEL-18] |
 | 16 | Dados sumiram | **PASSOU** | zero nas 8 contagens: usuário, profile, projetos, registros, princípios, imagens, aceites, assinaturas |
 | 17 | Aceites sobreviveram | **PASSOU** | `legal_acceptances` = 0 e `legal_acceptances_archive` = 2 (privacy_policy 1.1, terms_of_use 1.1). O contraste é o [REQ-DEL-01] |
-| 18 | Login falha | pendente | |
+| 18 | Login falha | **PASSOU** | credenciais recusadas após a exclusão |
 | 19 | **Bloqueio de 2º trial** | pendente | |
-| 20 | Storage limpo | pendente | |
-| 21 | Stripe | **PASSOU (banco)** | `cancelled_at_deletion = true`, `trial_ends_at` preservado, IDs do Stripe mantidos. Falta confirmar no painel do Stripe |
+| 20 | Storage limpo | **PASSOU** | bucket `entry-images` sem a pasta do `user_id` |
+| 21 | Stripe | **PASSOU** | assinatura `Cancelada`, encerrada 31/07 18:36; log `DELETE /v1/subscriptions` 200 OK às 18:36:10; customer preservado; fatura R$ 0,00 |
 | 22 | Idempotência | pendente | |
 
 **Conta usada no Bloco B:** `amandaoliveiradoor28@gmail.com`,
