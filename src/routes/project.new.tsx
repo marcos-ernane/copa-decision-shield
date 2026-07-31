@@ -2,6 +2,7 @@
 
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { GuestStorage } from '@/lib/guestStorage';
 import { CircleHelp, X } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
@@ -124,6 +125,16 @@ function NewProject() {
         GuestStorage.dismissBottleneck(bottleneckEntryId);
       }
       navigate({ to: '/project/$id/dashboard', params: { id: project.id } });
+    } catch (err) {
+      // Sem este catch o erro virava rejeição não tratada: o botão piscava e a
+      // tela não dizia nada. Foi assim que um 409 (violação de FK, por falta da
+      // linha em profiles) passou despercebido até alguém abrir o DevTools.
+      console.error('[project.new] falha ao criar projeto:', err);
+      const msg = (err as { message?: string })?.message;
+      toast.error('Não foi possível criar o projeto.', {
+        description: msg ? `Detalhe: ${msg}` : 'Tente novamente em instantes.',
+        duration: 8000,
+      });
     } finally {
       setSubmitting(false);
     }

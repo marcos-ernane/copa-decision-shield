@@ -1,7 +1,7 @@
 // planLimits — controle de acesso por plano (Sprint 11).
 // COPA, Modo Pressão e Pulso são SEMPRE ilimitados (REQ-PLAN-01).
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from './supabase';
 import type { AuthState } from '@/types/app';
 import type { Subscription } from '@/types/database';
@@ -169,7 +169,13 @@ export interface AuthStateInfo {
   loading: boolean;
 }
 
-export function useAuthState(): AuthStateInfo {
+/**
+ * `refresh` é devolvido fora de `AuthStateInfo` de propósito: a interface
+ * descreve o formato do estado, e os `setInfo` abaixo a satisfazem por inteiro.
+ * Incluir a função ali obrigaria cada um deles a carregar um campo que não é
+ * estado.
+ */
+export function useAuthState(): AuthStateInfo & { refresh: () => Promise<void> } {
   const [info, setInfo] = useState<AuthStateInfo>({
     authState: 'GUEST',
     subscription: null,
@@ -178,49 +184,58 @@ export function useAuthState(): AuthStateInfo {
     loading: true,
   });
 
-  useEffect(() => {
-    let cancelled = false;
+  // O guard de desmontagem virou ref porque `refresh` passou a viver fora do
+  // efeito: uma variável local do efeito não seria enxergada pelas chamadas
+  // vindas de fora.
+  const cancelledRef = useRef(false);
 
-    async function refresh() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (cancelled) return;
-      if (!session) {
-        setInfo({
-          authState: 'GUEST',
-          subscription: null,
-          userId: null,
-          email: null,
-          loading: false,
-        });
-        return;
-      }
-      const { data } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-      if (cancelled) return;
-      const sub = (data as Subscription | null) ?? null;
+  const refresh = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (cancelledRef.current) return;
+    if (!session) {
       setInfo({
-        authState: deriveAuthState(true, sub),
-        subscription: sub,
-        userId: session.user.id,
-        email: session.user.email ?? null,
+        authState: 'GUEST',
+        subscription: null,
+        userId: null,
+        email: null,
         loading: false,
       });
+      return;
     }
+    const { data } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    if (cancelledRef.current) return;
+    const sub = (data as Subscription | null) ?? null;
+    setInfo({
+      authState: deriveAuthState(true, sub),
+      subscription: sub,
+      userId: session.user.id,
+      email: session.user.email ?? null,
+      loading: false,
+    });
+  }, []);
+
+  useEffect(() => {
+    // Reposto a cada montagem: em StrictMode o efeito roda duas vezes, e a
+    // limpeza da primeira deixaria a ref em true para sempre.
+    cancelledRef.current = false;
 
     void refresh();
+    // Só reage a eventos de autenticação. Criar assinatura não emite nenhum,
+    // por isso quem inicia um trial precisa chamar `refresh` explicitamente.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       void refresh();
     });
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [refresh]);
 
-  return info;
+  return { ...info, refresh };
 }
 
 export function planLabel(authState: AuthState): string {

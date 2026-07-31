@@ -15,7 +15,7 @@ interface Props {
 }
 
 export function UpgradeSheet({ open, onOpenChange, reason }: Props) {
-  const { subscription } = useAuthState();
+  const { subscription, refresh } = useAuthState();
   const [busy, setBusy] = useState<StripePriceKey | 'trial' | null>(null);
   const canTrial = !subscription || (subscription.plan !== 'trial' && !subscription.trial_ends_at);
 
@@ -24,12 +24,25 @@ export function UpgradeSheet({ open, onOpenChange, reason }: Props) {
     try {
       const result = await startCheckout(key, { isTrial });
       if (result.error) {
-        toast.error('Não foi possível processar o pagamento.', {
+        // Título neutro: a recusa mais comum aqui é o bloqueio de segundo
+        // trial, que não é falha de pagamento nenhuma.
+        toast.error(isTrial ? 'Não foi possível iniciar o teste.' : 'Não foi possível processar o pagamento.', {
           description: result.error,
-          duration: 5000,
+          duration: 6000,
         });
+        return;
       }
-      // Se result.sessionUrl existir, window.location.href já redirecionou
+
+      // O trial é o único caminho que termina nesta tela: o pago redireciona
+      // para o Stripe (window.location.href) e a volta recarrega tudo. Sem o
+      // refresh explícito, a assinatura recém-criada não chega ao
+      // useAuthState — que só relê em evento de autenticação — e o plano
+      // continua exibindo "Gratuito" até o usuário recarregar a página.
+      if (result.subscriptionId) {
+        await refresh();
+        toast.success('Teste de 14 dias iniciado.', { duration: 5000 });
+        onOpenChange(false);
+      }
     } catch {
       toast.error('Erro inesperado. Tente novamente em instantes.');
     } finally {
