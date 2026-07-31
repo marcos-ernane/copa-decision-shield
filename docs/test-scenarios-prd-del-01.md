@@ -295,15 +295,21 @@ falha nos passos 7 ou 8 não duplica a prova de consentimento.
 | 11 | Conteúdo do JSON | pendente | exige conta real |
 | 12 | Visitante: rótulo | **PASSOU** | 7 asserts: rótulo correto, passo único, sem senha, sem "Continuar" |
 | 13 | Visitante: limpeza | **PASSOU** | zero sentinelas sobreviveram; chave de terceiro preservada |
-| 14 | Massa de dados | | |
-| 15 | Exclusão executa | | |
-| 16 | Dados sumiram | | |
-| 17 | Aceites sobreviveram | | |
-| 18 | Login falha | | |
-| 19 | **Bloqueio de 2º trial** | | |
-| 20 | Storage limpo | | |
-| 21 | Stripe | | |
-| 22 | Idempotência | | |
+| 14 | Massa de dados | **PASSOU** | 2 projetos, 15 registros, 2 princípios, 2 imagens, 2 aceites, trial até 2026-08-14 |
+| 15 | Exclusão executa | **PASSOU** | dispositivo limpo leva a `/onboarding`, não a `/login` — prova que `clearWasAuthenticated()` rodou [REQ-DEL-18] |
+| 16 | Dados sumiram | **PASSOU** | zero nas 8 contagens: usuário, profile, projetos, registros, princípios, imagens, aceites, assinaturas |
+| 17 | Aceites sobreviveram | **PASSOU** | `legal_acceptances` = 0 e `legal_acceptances_archive` = 2 (privacy_policy 1.1, terms_of_use 1.1). O contraste é o [REQ-DEL-01] |
+| 18 | Login falha | pendente | |
+| 19 | **Bloqueio de 2º trial** | pendente | |
+| 20 | Storage limpo | pendente | |
+| 21 | Stripe | **PASSOU (banco)** | `cancelled_at_deletion = true`, `trial_ends_at` preservado, IDs do Stripe mantidos. Falta confirmar no painel do Stripe |
+| 22 | Idempotência | pendente | |
+
+**Conta usada no Bloco B:** `amandaoliveiradoor28@gmail.com`,
+`user_id = 672698e8-861f-45e2-b491-61d4cc1e741b`,
+`cus_UzMTVPC3TaqvCt` / `sub_1TzNkfFT1yK1Ox4iSsx7fDQG`.
+Linha de base dos dois arquivos antes da exclusão: **0 e 0** — qualquer linha
+presente depois é necessariamente desta exclusão.
 
 ---
 
