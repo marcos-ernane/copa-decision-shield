@@ -16,6 +16,7 @@ import { LoginSheet } from './LoginSheet';
 import { UpgradeSheet } from './UpgradeSheet';
 import { TrialEndingSheet } from './TrialEndingSheet';
 import { LegalDocumentSheet } from '@/components/auth/LegalDocumentSheet';
+import { DeleteAccountDialog } from '@/components/settings/DeleteAccountDialog';
 import { getLatestAcceptances } from '@/lib/legalConsent';
 import { LEGAL_DOCUMENTS } from '@/content/legal';
 import { enablePactGlobally, disablePactGlobally } from '@/lib/pact';
@@ -44,6 +45,7 @@ export function SettingsScreen() {
   const [showLoginNudge, setShowLoginNudge] = useState(false);
   const [openLegalDoc, setOpenLegalDoc] = useState<LegalDocumentType | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
   const [acceptances, setAcceptances] = useState<
     Partial<Record<LegalDocumentType, LegalAcceptance>>
   >({});
@@ -270,12 +272,14 @@ export function SettingsScreen() {
             >
               {exporting ? 'Exportando…' : 'Exportar dados completos'}
             </button>
+            {/* Visitante não tem conta a excluir — só dados neste aparelho.
+                O rótulo precisa dizer a verdade. [REQ-DEL-25] */}
             <button
               type="button"
               className="w-full text-left px-4 py-3 text-body text-destructive hover:opacity-80 transition-opacity"
-              onClick={requestAccountDeletion}
+              onClick={() => setShowDelete(true)}
             >
-              Excluir conta
+              {authState === 'GUEST' ? 'Apagar dados deste dispositivo' : 'Excluir conta'}
             </button>
           </div>
         </Section>
@@ -320,6 +324,11 @@ export function SettingsScreen() {
         documentType={openLegalDoc}
         onClose={() => setOpenLegalDoc(null)}
       />
+      <DeleteAccountDialog
+        open={showDelete}
+        onOpenChange={setShowDelete}
+        isGuest={authState === 'GUEST'}
+      />
     </div>
   );
 }
@@ -355,12 +364,3 @@ function LinkRow({ to, label }: { to: string; label: string }) {
   );
 }
 
-function requestAccountDeletion() {
-  const ok = confirm(
-    'Excluir conta apaga seus dados de forma irreversível. Deseja continuar?',
-  );
-  if (!ok) return;
-  void supabase.auth.signOut().then(() => {
-    window.location.href = '/';
-  });
-}
