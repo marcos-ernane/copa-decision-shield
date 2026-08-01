@@ -461,10 +461,13 @@ export function StructuredRegister() {
             initialData={
               statuses['C'] === 'done'
                 ? lastContent<StructuredCContent>(entries, 'structured_C')
-                : search.inboxText
-                ? { fact_text: search.inboxText, interpretation_text: '', hypothesis_text: '' }
                 : null
             }
+            // O texto do Inbox saiu do initialData e virou prop própria: ali
+            // ele era o segundo ramo de um ternário cujo primeiro ramo é o
+            // conteúdo já salvo da [C]. Em projeto com Captura concluída o
+            // primeiro ramo vencia e a captura era descartada em silêncio.
+            appendFact={search.inboxText}
           />
         )}
         {format === 'O' && (

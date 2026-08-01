@@ -10,12 +10,12 @@ import type { InboxEntry } from '@/lib/universalCapture';
 
 const INBOX_ACTIONS: { label: string; desc: string }[] = [
   {
-    label: 'Abrir no COPA',
-    desc: 'Transforma a captura numa análise estruturada (fase Captura do COPA). Na tela seguinte você escolhe o projeto — ou cria um novo.',
+    label: 'Abrir Registro do Projeto',
+    desc: 'Transforma a captura numa análise estruturada (fase [C] Captura). Na tela seguinte você escolhe o projeto — ou cria um novo. O texto capturado já entra no Quadro 1 como fato, somando aos que existirem.',
   },
   {
     label: 'Salvar como pulso',
-    desc: 'Abre a lista dos seus projetos. Ao tocar em um, a captura é salva como um Pulso rápido dentro dele — sem passar pelo COPA. Para análise estruturada, use "Abrir no COPA".',
+    desc: 'Abre a lista dos seus projetos. Ao tocar em um, a captura é salva como um Pulso rápido dentro dele — sem análise estruturada. Para isso, use "Abrir Registro do Projeto".',
   },
   {
     label: 'Já processado',

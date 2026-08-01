@@ -130,7 +130,7 @@ export function InboxCard({ entry, onProcessed }: Props) {
           className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-small font-semibold text-white hover:opacity-90 transition-opacity"
           style={{ backgroundColor: 'var(--color-brand-blue)' }}
         >
-          Abrir no COPA
+          Abrir Registro do Projeto
           <ArrowRight className="size-3.5" />
         </button>
         <button
@@ -145,7 +145,7 @@ export function InboxCard({ entry, onProcessed }: Props) {
       </div>
 
       {/* Salvar como pulso — escolhe o projeto e salva a captura como pulso nele.
-          (Para análise estruturada, use "Abrir no COPA" acima.) */}
+          (Para análise estruturada, use "Abrir Registro do Projeto" acima.) */}
       <div className="space-y-2">
         <button
           type="button"
