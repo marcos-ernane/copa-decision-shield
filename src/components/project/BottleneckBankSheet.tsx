@@ -21,6 +21,32 @@ export function BottleneckBankSheet({ open, bottlenecks, onDismiss, onClose }: P
     void navigate({ to: '/project/new', search: { bottleneck: b.text, bottleneckEntryId: b.entryId } });
   }
 
+  /**
+   * O gargalo vira IMV no projeto que o gerou, sem abrir projeto novo. É o
+   * caminho mais leve dos dois e o que o método privilegia — a IMV é a
+   * Intervenção de Menor Valor; abrir projeto é a escalada.
+   *
+   * Reusa o mesmo pré-preenchimento do Filtro de Alavanca
+   * (sessionStorage __leverSuggestion, lido uma única vez por FormatP) em vez
+   * de criar um segundo mecanismo para a mesma coisa.
+   */
+  function handleToIMV(b: PendingBottleneck) {
+    onClose();
+    sessionStorage.setItem('__leverSuggestion', b.text);
+    void navigate({
+      to: '/register/structured',
+      search: {
+        format: 'P' as const,
+        projectId: b.projectId,
+        bottleneckEntryId: b.entryId,
+        linkedTo: undefined,
+        inboxEntryId: undefined,
+        inboxText: undefined,
+        step: undefined,
+      },
+    });
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
@@ -75,7 +101,17 @@ export function BottleneckBankSheet({ open, bottlenecks, onDismiss, onClose }: P
                   Registrado na [A] Aferição do projeto{' '}
                   <span className="text-op-white font-medium">{b.projectName}</span>
                 </p>
-                <div className="flex items-center justify-between pt-1 border-t border-op-gray/20">
+                {/* flex-wrap: são três ações agora, e a 375px elas não cabem
+                    numa linha só. Descartar tem ml-auto para ficar à direita
+                    enquanto couber, e desce sozinho quando não couber. */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 border-t border-op-gray/20">
+                  <button
+                    type="button"
+                    onClick={() => handleToIMV(b)}
+                    className="text-small text-op-cyan font-medium hover:underline transition-colors"
+                  >
+                    Virar IMV →
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleSelect(b)}
@@ -86,7 +122,7 @@ export function BottleneckBankSheet({ open, bottlenecks, onDismiss, onClose }: P
                   <button
                     type="button"
                     onClick={() => onDismiss(b.entryId)}
-                    className="flex items-center gap-1 text-label text-op-gray hover:text-red-400 transition-colors"
+                    className="ml-auto flex items-center gap-1 text-label text-op-gray hover:text-red-400 transition-colors"
                     aria-label="Descartar gargalo"
                   >
                     <Trash2 className="size-3" />
@@ -124,10 +160,23 @@ export function BottleneckBankSheet({ open, bottlenecks, onDismiss, onClose }: P
             <div className="space-y-2">
               <p className="text-label text-op-cyan uppercase">Como usar</p>
               <p className="text-body text-op-white">
-                Toque em qualquer gargalo da lista para criar um novo projeto com aquele problema
-                já pré-preenchido. O app leva direto para a tela de criação de projeto.
-                Descarte os gargalos que não forem mais relevantes — eles não serão apagados
-                do histórico da Aferição original.
+                Cada gargalo oferece dois caminhos, e a escolha é sua:
+              </p>
+              <p className="text-body text-op-white">
+                <span className="font-semibold">Virar IMV</span> — abre a fase [P] Prova no
+                mesmo projeto que gerou o gargalo, com ele já preenchido como ação. Use quando
+                o gargalo couber numa intervenção pequena, dentro do que já está em andamento.
+                É o caminho mais leve, e o que o método privilegia.
+              </p>
+              <p className="text-body text-op-white">
+                <span className="font-semibold">Criar projeto</span> — abre a criação de um
+                projeto novo com o gargalo já preenchido. Use quando ele for grande demais para
+                caber numa IMV e merecer um Objetivo próprio.
+              </p>
+              <p className="text-body text-op-white">
+                Nos dois casos o gargalo sai do banco só depois que você salva. Se desistir no
+                meio, ele continua aqui. Descarte os que não forem mais relevantes — eles não
+                serão apagados do histórico da Aferição original.
               </p>
             </div>
 
