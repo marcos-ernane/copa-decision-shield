@@ -83,12 +83,19 @@ export function SettingsScreen() {
     setExporting(false);
 
     if (!result.success) {
-      toast.error(
-        result.error === 'no_session'
-          ? 'Crie uma conta para exportar seus dados.'
-          : 'Não foi possível exportar seus dados. Tente novamente.',
-        { duration: 4000 },
-      );
+      // Visitante tocando em "Exportar" é ação normal — o botão aparece para
+      // ele. Não houve falha: a exportação lê a conta, e ele não tem uma.
+      // Vermelho aqui reportaria erro onde só falta informação.
+      if (result.error === 'no_session') {
+        toast.info('Crie uma conta para exportar seus dados.', {
+          description: 'A exportação lê o que está sincronizado na sua conta.',
+          duration: 5000,
+        });
+        return;
+      }
+      toast.error('Não foi possível exportar seus dados. Tente novamente.', {
+        duration: 4000,
+      });
       return;
     }
 

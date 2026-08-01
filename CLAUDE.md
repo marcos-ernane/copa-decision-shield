@@ -1347,6 +1347,17 @@ export interface CostBenefitData {
 
 **Branch ativa:** `claude/kind-bardeen-rKhPC`
 
+**[REGRA PERMANENTE — NENHUM COMMIT SEM PR]** Todo commit enviado à branch precisa terminar em Pull Request para a `main`. **Ao concluir qualquer commit, oferecer imediatamente a abertura do PR** — não acumular trabalho fora da `main`.
+
+Motivo concreto: já aconteceu de a branch ficar **171 commits à frente** da `main`, com migrations e Edge Functions já aplicadas em produção enquanto o código que dependia delas seguia só na branch. Esse descompasso é perigoso — quem rodar a `main` encontra um banco que já mudou.
+
+Regras práticas:
+- O commit é meu; **o clique em Merge é sempre do usuário.** Nunca mergear sozinho.
+- Um PR por entrega coerente (uma tarefa, um PRD, uma correção) — não um por commit solto, nem um acumulando semanas.
+- Descrever no corpo **o porquê**, não só o quê. O diff já mostra o quê.
+- Ao mergear, conferir que a opção é **"Create a merge commit"** — o squash apaga a explicação individual de cada commit.
+- Não apagar a branch após o merge: o trabalho continua nela.
+
 **[REGRA PERMANENTE — MOBILE OBRIGATÓRIO]** ~95% dos usuários acessam pelo celular. **Toda e qualquer alteração, ajuste ou nova implementação de código DEVE estar configurada para o uso correto no celular** — nunca só no desktop. Antes de considerar qualquer mudança pronta, verificar:
 - **Responsividade a partir de 375px** — sem largura fixa que estoure a tela, sem overflow horizontal; usar `max-w-*`, `flex-wrap`, `min-w-0`, `truncate`/`line-clamp` conforme necessário.
 - **Safe-area (iPhone com notch/home indicator)** — elementos fixos/sticky respeitam `env(safe-area-inset-*)`. Padrões já estabelecidos: BottomNav e FABs com `env(safe-area-inset-bottom)`; headers `sticky top-0` cobertos pela regra global em `src/styles.css`. Novos elementos fixos no rodapé/topo devem seguir o mesmo padrão.

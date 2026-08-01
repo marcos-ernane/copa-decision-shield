@@ -14,6 +14,13 @@ export interface CheckoutResult {
   sessionUrl?: string;
   subscriptionId?: string;
   error?: string;
+  /**
+   * Distingue "não tem conta" de "a cobrança falhou". Sem isto o chamador
+   * teria de comparar strings, e um visitante que abre o paywall e toca num
+   * plano — ação inteiramente normal — recebia um erro vermelho dizendo que o
+   * pagamento não pôde ser processado, quando nenhuma cobrança foi tentada.
+   */
+  code?: 'no_session';
 }
 
 export async function startCheckout(
@@ -22,7 +29,7 @@ export async function startCheckout(
 ): Promise<CheckoutResult> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return { error: 'Faça login para assinar.' };
+    if (!session) return { error: 'Faça login para assinar.', code: 'no_session' };
 
     const { data, error } = await supabase.functions.invoke('stripe-checkout', {
       body: {
