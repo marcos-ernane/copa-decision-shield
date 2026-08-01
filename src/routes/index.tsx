@@ -414,7 +414,7 @@ function Home() {
                 <p className="text-small text-op-cyan font-medium">
                   {inboxCount} {inboxCount === 1 ? 'captura pendente' : 'capturas pendentes'} no Inbox
                 </p>
-                <p className="text-label text-op-gray">Processar e transformar em COPA →</p>
+                <p className="text-label text-op-gray">Abrir Registro do Projeto →</p>
               </div>
             </div>
           </Link>
