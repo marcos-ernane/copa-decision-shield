@@ -2,6 +2,7 @@
 
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { GuestStorage } from '@/lib/guestStorage';
 import { CircleHelp, X } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
@@ -12,7 +13,10 @@ import { createProject } from '@/lib/projects';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
 
 export const Route = createFileRoute('/project/new')({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): {
+    bottleneck?: string;
+    bottleneckEntryId?: string;
+  } => ({
     bottleneck: typeof s.bottleneck === 'string' ? s.bottleneck : undefined,
     bottleneckEntryId: typeof s.bottleneckEntryId === 'string' ? s.bottleneckEntryId : undefined,
   }),
@@ -33,6 +37,30 @@ const LAYERS: { value: OperationalLayer; label: string; description: string }[] 
   { value: 'recorrencia',   label: 'Recorrência',   description: 'Não se repete' },
   { value: 'escala',        label: 'Escala',        description: 'Não cresce' },
 ];
+
+const NAME_HELP = {
+  title: 'Nome do Projeto',
+  paragraphs: [
+    'O nome identifica o projeto em todas as telas do app — no dashboard, no histórico, no Diário e no Manual do Operador. Escolha um nome que descreva claramente o que você está trabalhando, não o problema que está tendo.',
+    'Bons exemplos: "Lançamento do curso", "Equipe de vendas", "Fluxo de clientes na loja".',
+    'Evite nomes vagos como "Minha empresa" ou "Projeto 1" — eles não ajudam a identificar o contexto quando você tiver vários projetos simultâneos.',
+    'O nome pode ser editado depois no painel do projeto, mas quanto mais preciso for desde o início, mais claro será o histórico gerado.',
+  ],
+};
+
+const NORTH_HELP = {
+  title: 'Norte / Objetivo',
+  paragraphs: [
+    'O Norte é a frase que descreve como a situação estará quando o projeto tiver cumprido seu propósito. Ele funciona como bússola para todas as decisões e intervenções que virão.',
+    'Complete mentalmente a frase: "Vai estar melhor quando..." e escreva o que você enxerga.',
+    'Exemplos concretos:',
+    '"...a taxa de conversão de vendas passar de 3% para 6% em 60 dias."',
+    '"...a equipe conseguir operar a rotina semanal sem depender da minha presença."',
+    '"...a caixa d\'água parar de vazar e o reparo for comprovado por 30 dias sem reincidência."',
+    'Evite objetivos genéricos como "melhorar os resultados" — sem referência mensurável, não há como saber quando o Norte foi alcançado.',
+    'O Norte aparece no dashboard, no Manual do Operador e no texto exportado da Clareza Operacional.',
+  ],
+};
 
 const SCENARIO_HELP = {
   title: 'Tipo de Cenário',
@@ -59,7 +87,7 @@ const LAYER_HELP = {
   ],
 };
 
-type HelpKey = 'scenario' | 'layer' | null;
+type HelpKey = 'name' | 'north' | 'scenario' | 'layer' | null;
 
 function NewProject() {
   const navigate = useNavigate();
@@ -76,7 +104,11 @@ function NewProject() {
   const northOk = north.trim().length >= 10 && north.trim().length <= 300;
   const canSubmit = nameOk && northOk && scenario !== null && layer !== null && !submitting;
 
-  const helpContent = helpKey === 'scenario' ? SCENARIO_HELP : helpKey === 'layer' ? LAYER_HELP : null;
+  const helpContent =
+    helpKey === 'name'     ? NAME_HELP :
+    helpKey === 'north'    ? NORTH_HELP :
+    helpKey === 'scenario' ? SCENARIO_HELP :
+    helpKey === 'layer'    ? LAYER_HELP : null;
 
   async function submit() {
     if (!canSubmit) return;
@@ -93,6 +125,16 @@ function NewProject() {
         GuestStorage.dismissBottleneck(bottleneckEntryId);
       }
       navigate({ to: '/project/$id/dashboard', params: { id: project.id } });
+    } catch (err) {
+      // Sem este catch o erro virava rejeição não tratada: o botão piscava e a
+      // tela não dizia nada. Foi assim que um 409 (violação de FK, por falta da
+      // linha em profiles) passou despercebido até alguém abrir o DevTools.
+      console.error('[project.new] falha ao criar projeto:', err);
+      const msg = (err as { message?: string })?.message;
+      toast.error('Não foi possível criar o projeto.', {
+        description: msg ? `Detalhe: ${msg}` : 'Tente novamente em instantes.',
+        duration: 8000,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -137,20 +179,40 @@ function NewProject() {
 
         <main className="flex-1 px-6 py-6 max-w-md mx-auto w-full space-y-6">
           <div className="space-y-2">
-            <label className="text-label text-op-gray uppercase">Nome do projeto</label>
+            <div className="flex items-center justify-between">
+              <label className="text-label text-op-gray uppercase">Nome do projeto</label>
+              <button
+                type="button"
+                onClick={() => setHelpKey('name')}
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+              >
+                <CircleHelp className="size-3.5" />
+                Ajuda
+              </button>
+            </div>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Agenda de clientes"
+              placeholder="Nomeie o que está trabalhando"
               maxLength={80}
               className="w-full rounded-md border border-op-gray/20 bg-op-navy px-3 py-2 text-body text-op-white placeholder:text-op-gray focus:outline-none focus:ring-2 focus:ring-op-amber"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-label text-op-gray uppercase">
-              Vai estar melhor quando…
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-label text-op-gray uppercase">
+                Vai estar melhor quando…
+              </label>
+              <button
+                type="button"
+                onClick={() => setHelpKey('north')}
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors"
+              >
+                <CircleHelp className="size-3.5" />
+                Ajuda
+              </button>
+            </div>
             <VoiceInput value={north} onChange={setNorth} rows={4} />
             <p className="text-label text-op-gray">{north.length}/300</p>
           </div>

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { ArrowRight } from 'lucide-react';
 import { usePanelData } from '@/hooks/usePanelData';
 import type { Entry, Principle } from '@/types/database';
 
@@ -48,11 +50,24 @@ function tokenize(text: string): string[] {
     .filter((t) => t.length > 2);
 }
 
+// Tokenizer para a query do usuário: aceita 2+ chars para live search.
+function tokenizeQuery(text: string): string[] {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length > 1);
+}
+
 function score(text: string, terms: string[]): number {
   if (terms.length === 0) return 0;
   const tokens = tokenize(text);
   let hits = 0;
-  for (const t of tokens) if (terms.includes(t)) hits++;
+  for (const t of tokens) {
+    if (terms.some((term) => t === term || t.startsWith(term))) hits++;
+  }
   return hits;
 }
 
@@ -94,6 +109,12 @@ export function SymptomIndex() {
   const { entries, principles, projects } = usePanelData();
   const [query, setQuery] = useState('');
   const [activeChip, setActiveChip] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  function goToProject(projectId: string) {
+    if (!projectId) return;
+    void navigate({ to: '/project/$id/dashboard', params: { id: projectId } });
+  }
 
   // Termos mais recorrentes extraídos automaticamente do histórico real do usuário.
   const topTerms = useMemo(() => {
@@ -118,7 +139,7 @@ export function SymptomIndex() {
 
   const results = useMemo(() => {
     const chip = FILTER_CHIPS.find((c) => c.key === activeChip) ?? null;
-    const terms = tokenize(query);
+    const terms = tokenizeQuery(query);
     const hasFilter = chip !== null || terms.length > 0;
     type Item = { projectId: string; kind: 'entry' | 'principle'; id: string; text: string; score: number; createdAt: string };
     if (!hasFilter) return { groups: [] as Array<{ projectId: string; items: Item[] }> };
@@ -284,11 +305,21 @@ export function SymptomIndex() {
           <h3 className="text-body font-semibold text-op-white">{pname(g.projectId)}</h3>
           <ul className="space-y-1">
             {g.items.slice(0, 8).map((it) => (
-              <li key={it.id} className="rounded-md border border-op-gray/30 bg-op-navy p-2 text-small text-op-white/70">
-                <span className="text-label text-op-gray mr-2">
-                  {it.kind === 'principle' ? 'princípio' : 'registro'}
-                </span>
-                {it.text || <span className="text-muted-foreground italic">—</span>}
+              <li
+                key={it.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => goToProject(it.projectId)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') goToProject(it.projectId); }}
+                className="rounded-md border border-op-gray/30 bg-op-navy p-2 text-small text-op-white/70 cursor-pointer hover:bg-white/5 hover:border-op-gray/50 transition-colors flex items-start gap-2 group"
+              >
+                <div className="flex-1">
+                  <span className="text-label text-op-gray mr-2">
+                    {it.kind === 'principle' ? 'princípio' : 'registro'}
+                  </span>
+                  {it.text || <span className="text-muted-foreground italic">—</span>}
+                </div>
+                <ArrowRight className="size-3.5 text-op-gray shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </li>
             ))}
           </ul>

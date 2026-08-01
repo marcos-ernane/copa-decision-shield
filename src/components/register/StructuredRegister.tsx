@@ -11,7 +11,7 @@ import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 
 // Total de passos por formato (passo final = índice TOTAL_STEPS - 1)
-const FORMAT_STEPS: Record<'C' | 'O' | 'P' | 'A', number> = { C: 4, O: 3, P: 4, A: 5 };
+const FORMAT_STEPS: Record<'C' | 'O' | 'P' | 'A', number> = { C: 4, O: 4, P: 4, A: 5 };
 import { ProjectPicker } from './ProjectPicker';
 import { FormatC } from './FormatC';
 import { FormatO } from './FormatO';
@@ -39,9 +39,9 @@ const PHASE_LABEL_TOP: Record<Format, string> = {
 
 const PHASE_LABEL_BOTTOM: Record<Format, string> = {
   C: 'Análise da situação',
-  O: 'Mapa 3R',
-  P: 'Definição de IMV para testar',
-  A: 'Análise pós-ação do teste',
+  O: 'Mapa 3R e Inventário 4D',
+  P: 'Definição de IMV + Ações',
+  A: 'Análise pós-ação da IMV',
 };
 
 const PHASE_NAMES: Record<Format, string> = {
@@ -163,6 +163,7 @@ export function StructuredRegister() {
     linkedTo?: string;
     inboxEntryId?: string;
     inboxText?: string;
+    step?: number;
   };
   const [format, setFormat] = useState<Format>('C');
   const [currentStep, setCurrentStep] = useState(0);
@@ -173,6 +174,8 @@ export function StructuredRegister() {
   const [suggestedPrinciple, setSuggestedPrinciple] = useState<SuggestionResult | null>(null);
   // Contexto de quick_review pré-existente para pré-preencher FormatA
   const [linkedQuickReviewFact, setLinkedQuickReviewFact] = useState<string | null>(null);
+  // Recombinação selecionada em O para pré-preencher P (PRD-MOD-04 Etapa 3)
+  const [prefilledAction, setPrefilledAction] = useState<string | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -208,9 +211,9 @@ export function StructuredRegister() {
           setFormat(next);
         }
       }
-      setCurrentStep(0);
+      setCurrentStep(search.step ?? 0);
     })();
-  }, [projectId, search.format, search.linkedTo]);
+  }, [projectId, search.format, search.linkedTo, search.step]);
 
   // Recalcula sugestão de princípio ao mudar de fase — fire-and-forget, não bloqueia UI.
   useEffect(() => {
@@ -290,6 +293,12 @@ export function StructuredRegister() {
     } else {
       navigate({ to: '/project/$id/dashboard', params: { id: projectId } });
     }
+  }
+
+  // Wrapper para capturar selected_recombination de O antes de avançar para P (PRD-MOD-04).
+  async function handleFormatOSaved(content?: StructuredOContent) {
+    setPrefilledAction(content?.selected_recombination ?? null);
+    await onSaved();
   }
 
   const isReviewing = statuses[format] === 'done';
@@ -456,11 +465,12 @@ export function StructuredRegister() {
             projectId={projectId}
             scenarioType={scenarioType}
             currentLayer={currentLayer}
-            onSaved={onSaved}
+            onSaved={handleFormatOSaved}
             onNextStep={handleNextStep}
             step={currentStep}
             isReviewing={isReviewing}
             initialData={statuses['O'] === 'done' ? lastContent<StructuredOContent>(entries, 'structured_O') : null}
+            initialEntryId={lastEntryId(entries, 'structured_O')}
           />
         )}
         {format === 'P' && (
@@ -474,7 +484,14 @@ export function StructuredRegister() {
             onGoToStep={setCurrentStep}
             step={currentStep}
             isReviewing={isReviewing}
-            initialData={statuses['P'] === 'done' ? lastContent<StructuredPContent>(entries, 'structured_P') : null}
+            fromRecombination={statuses['P'] === 'next' && !!prefilledAction}
+            initialData={
+              prefilledAction
+                ? { action: prefilledAction }
+                : statuses['P'] === 'done'
+                ? lastContent<StructuredPContent>(entries, 'structured_P')
+                : null
+            }
           />
         )}
         {format === 'A' && (

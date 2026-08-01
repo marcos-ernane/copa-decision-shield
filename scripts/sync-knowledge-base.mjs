@@ -156,42 +156,17 @@ if (validSections.length === 0) {
 
 console.log(`[sync-knowledge-base] ${validSections.length} valid sections ready for upsert`);
 
-// ── Step 5: Upsert into Supabase ─────────────────────────────────────────────
+// ── Step 5: Delete all existing auto-generated rows ──────────────────────────
+// Removes all rows with version='auto' before re-inserting fresh data.
+// Manually-seeded rows (version != 'auto') are never touched.
 
 const supabaseHeaders = {
   apikey: SUPABASE_SERVICE_ROLE_KEY,
   Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
   'Content-Type': 'application/json',
-  Prefer: 'resolution=merge-duplicates',
 };
 
-const upsertUrl = `${SUPABASE_URL}/rest/v1/app_knowledge_base`;
-
-const upsertResponse = await fetch(upsertUrl, {
-  method: 'POST',
-  headers: supabaseHeaders,
-  body: JSON.stringify(validSections),
-});
-
-if (!upsertResponse.ok) {
-  const body = await upsertResponse.text();
-  console.error(`[sync-knowledge-base] Upsert failed ${upsertResponse.status}: ${body}`);
-  process.exit(1);
-}
-
-console.log(`[sync-knowledge-base] Upsert OK — ${validSections.length} rows written`);
-
-// ── Step 6: Delete stale auto-generated rows ──────────────────────────────────
-// Rows with version='auto' that were NOT touched in this run are stale (their section
-// slug was removed from CLAUDE.md). Safe to delete — manually-seeded rows (version!='auto')
-// are never touched by this cleanup.
-
-const upsertedSlugs = validSections.map((s) => `"${s.section}"`).join(',');
-
-const deleteUrl =
-  `${SUPABASE_URL}/rest/v1/app_knowledge_base` +
-  `?version=eq.${VERSION_TAG}` +
-  `&section=not.in.(${upsertedSlugs})`;
+const deleteUrl = `${SUPABASE_URL}/rest/v1/app_knowledge_base?version=eq.${VERSION_TAG}`;
 
 const deleteResponse = await fetch(deleteUrl, {
   method: 'DELETE',
@@ -200,11 +175,29 @@ const deleteResponse = await fetch(deleteUrl, {
 
 if (!deleteResponse.ok) {
   const body = await deleteResponse.text();
-  // Non-fatal: stale rows left behind are harmless
-  console.warn(`[sync-knowledge-base] Stale cleanup warning ${deleteResponse.status}: ${body}`);
-} else {
-  console.log('[sync-knowledge-base] Stale auto rows cleaned up');
+  console.error(`[sync-knowledge-base] Delete failed ${deleteResponse.status}: ${body}`);
+  process.exit(1);
 }
+
+console.log('[sync-knowledge-base] Existing auto rows deleted');
+
+// ── Step 6: Insert all new rows ──────────────────────────────────────────────
+
+const insertUrl = `${SUPABASE_URL}/rest/v1/app_knowledge_base`;
+
+const insertResponse = await fetch(insertUrl, {
+  method: 'POST',
+  headers: supabaseHeaders,
+  body: JSON.stringify(validSections),
+});
+
+if (!insertResponse.ok) {
+  const body = await insertResponse.text();
+  console.error(`[sync-knowledge-base] Insert failed ${insertResponse.status}: ${body}`);
+  process.exit(1);
+}
+
+console.log(`[sync-knowledge-base] Inserted ${validSections.length} rows`);
 
 // ── Done ──────────────────────────────────────────────────────────────────────
 

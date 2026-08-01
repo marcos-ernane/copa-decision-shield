@@ -215,4 +215,45 @@ html,
 body {
   background-color: #070C12 !important;
   color: #F0F4F8 !important;
+  /* Rede de segurança contra scroll horizontal acidental no celular.
+     'clip' (não 'hidden') não cria contexto de rolagem — preserva os
+     headers position: sticky. */
+  overflow-x: clip;
+}
+
+/* Safe-area do topo (iPhone com notch, em app nativo / PWA standalone).
+   Os headers fixos no topo (sticky top-0) descem abaixo do notch, e o fundo
+   do header preenche a área do recorte. env() = 0 em navegadores comuns —
+   sem qualquer efeito no uso via navegador. A especificidade .sticky.top-0
+   (0,2,0) vence o py-3 (0,1,0), somando a inset ao padding já existente. */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .sticky.top-0 {
+    padding-top: calc(0.75rem + env(safe-area-inset-top));
+  }
+}
+
+/* Altura do cabeçalho do Diário (título + abas). Valor padrão até o DiaryShell
+   medir o header real e sobrescrever em document.documentElement. Usado pelo
+   bloco legenda+seletor da Linha do tempo para ficar sticky logo abaixo dele. */
+:root {
+  --diary-header-h: 96px;
+}
+
+/* ===== Caixas de digitação — padrão claro global =====
+   Toda área onde o usuário digita (input de texto/número/e-mail/etc. e textarea
+   nativos) recebe fundo claro (surface-1) e texto escuro (text-primary), para
+   diferenciar visualmente os campos editáveis do restante da UI escura do app.
+   Fora de @layer + !important para vencer as classes utilitárias do Tailwind em
+   inputs "crus". Exclui checkbox/radio/file/etc. (não são caixas de texto).
+   Opt-out pontual: adicionar a classe .field-dark ao elemento. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="hidden"]):not(.field-dark),
+textarea:not(.field-dark) {
+  background-color: var(--color-surface-1) !important;
+  color: var(--color-text-primary) !important;
+  caret-color: var(--color-text-primary);
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not(.field-dark)::placeholder,
+textarea:not(.field-dark)::placeholder {
+  color: var(--color-surface-3) !important;
+  opacity: 1;
 }

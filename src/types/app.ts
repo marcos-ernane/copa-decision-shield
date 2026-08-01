@@ -41,7 +41,8 @@ export type EntryType =
   | 'passive'
   | 'quick_review'
   | 'inbox'
-  | 'decision_record';
+  | 'decision_record'
+  | 'project_report';
 
 export type CopaPhase = 'C' | 'O' | 'P' | 'A';
 

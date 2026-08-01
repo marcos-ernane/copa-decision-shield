@@ -70,6 +70,17 @@ export function buildOperationalView(
   entries: Entry[],
   projectMap: Record<string, Project>,
 ): OperationalView {
+  // First pass: map non-corrective entryId → copa_phase so that corrective
+  // entries can be assigned to the same phase as the entry they correct.
+  const entryPhaseMap = new Map<string, CopaPhaseName>();
+  for (const entry of entries) {
+    if (entry.entry_type !== 'corrective') {
+      const pid = entry.project_id;
+      if (!pid || !projectMap[pid]) continue;
+      entryPhaseMap.set(entry.id, entry.copa_phase ?? 'outros');
+    }
+  }
+
   // Bucket entries by project, then by phase
   const byProject = new Map<string, Map<CopaPhaseName, Entry[]>>();
 
@@ -82,7 +93,12 @@ export function buildOperationalView(
     }
     const byPhase = byProject.get(pid)!;
 
-    const phase: CopaPhaseName = entry.copa_phase ?? 'outros';
+    // Corrective entries follow the phase of the entry they correct
+    const phase: CopaPhaseName =
+      entry.entry_type === 'corrective' && entry.linked_to
+        ? (entryPhaseMap.get(entry.linked_to) ?? 'outros')
+        : (entry.copa_phase ?? 'outros');
+
     if (!byPhase.has(phase)) {
       byPhase.set(phase, []);
     }

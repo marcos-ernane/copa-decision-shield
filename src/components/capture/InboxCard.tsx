@@ -7,11 +7,10 @@ import { ArrowRight, Check, ChevronDown, Clock, Mic, Trash2 } from 'lucide-react
 import { toast } from 'sonner';
 import { processInboxEntry, discardInboxEntry } from '@/lib/universalCapture';
 import { listProjects } from '@/lib/projects';
+import { registrableProjects } from '@/lib/projectState';
 import { savePulse } from '@/lib/register';
 import type { InboxEntry } from '@/lib/universalCapture';
-import type { Project, ProjectState } from '@/types/database';
-
-const INACTIVE_STATES: ProjectState[] = ['concluded', 'archived', 'paused'];
+import type { Project } from '@/types/database';
 
 interface Props {
   entry: InboxEntry;
@@ -28,7 +27,7 @@ function timeAgo(iso: string): string {
   return `${Math.floor(hours / 24)}d atrás`;
 }
 
-type LinkState = 'idle' | 'picking' | 'picked';
+type LinkState = 'idle' | 'picking';
 
 export function InboxCard({ entry, onProcessed }: Props) {
   const navigate = useNavigate();
@@ -36,8 +35,7 @@ export function InboxCard({ entry, onProcessed }: Props) {
   const [discarding, setDiscarding] = useState(false);
   const [linkState, setLinkState] = useState<LinkState>('idle');
   const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [linking, setLinking] = useState(false);
+  const [savingId, setSavingId] = useState<string | null>(null);
   const content = entry.content;
 
   async function handleMarkProcessed() {
@@ -78,32 +76,19 @@ export function InboxCard({ entry, onProcessed }: Props) {
   async function handleVincularClick() {
     if (linkState === 'idle') {
       const all = await listProjects().catch(() => []);
-      const active = all
-        .filter((p) => !INACTIVE_STATES.includes(p.state))
-        .sort((a, b) => {
-          const ta = a.last_entry_at ? new Date(a.last_entry_at).getTime() : 0;
-          const tb = b.last_entry_at ? new Date(b.last_entry_at).getTime() : 0;
-          return tb - ta;
-        })
-        .slice(0, 4);
-      setProjects(active);
+      // Mesma lista do "Para qual projeto?": registráveis (exclui concluído/arquivado).
+      setProjects(registrableProjects(all));
       setLinkState('picking');
     } else {
       setLinkState('idle');
-      setSelectedProject(null);
     }
   }
 
-  function handlePickProject(p: Project) {
-    setSelectedProject(p);
-    setLinkState('picked');
-  }
-
-  async function handleSaveAsPulse() {
-    if (!selectedProject) return;
-    setLinking(true);
+  // Clique no chip do projeto salva a captura como pulso direto naquele projeto.
+  async function handleSaveAsPulse(project: Project) {
+    setSavingId(project.id);
     try {
-      await savePulse(selectedProject.id, {
+      await savePulse(project.id, {
         text: content.text,
         fact_text: content.text,
         interpretation_text: '',
@@ -113,11 +98,11 @@ export function InboxCard({ entry, onProcessed }: Props) {
       });
       await processInboxEntry(entry.id);
       window.dispatchEvent(new CustomEvent('aop:inbox-updated'));
-      toast.success(`Salvo como pulso em "${selectedProject.name}".`);
+      toast.success(`Salvo como pulso em "${project.name}".`);
       onProcessed?.();
     } catch {
       toast.error('Não foi possível salvar. Tente novamente.');
-      setLinking(false);
+      setSavingId(null);
     }
   }
 
@@ -159,8 +144,51 @@ export function InboxCard({ entry, onProcessed }: Props) {
         </button>
       </div>
 
-      {/* Descartar */}
-      <div className="flex justify-end">
+      {/* Salvar como pulso — escolhe o projeto e salva a captura como pulso nele.
+          (Para análise estruturada, use "Abrir no COPA" acima.) */}
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => void handleVincularClick()}
+          className="w-full flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-small font-semibold text-op-gray border border-op-gray/30 hover:text-op-white hover:border-op-gray/60 transition-colors"
+        >
+          Salvar como pulso
+          <ChevronDown
+            className={[
+              'size-3.5 transition-transform',
+              linkState !== 'idle' ? 'rotate-180' : '',
+            ].join(' ')}
+          />
+        </button>
+
+        {linkState === 'picking' && (
+          <div className="space-y-1.5">
+            <p className="text-label text-op-gray/70">Salvar como pulso em qual projeto?</p>
+            {projects.length === 0 ? (
+              <p className="text-label text-op-gray/60">Nenhum projeto ativo.</p>
+            ) : (
+              // Sem caixa de rolagem interna: a lista flui e a página rola
+              // naturalmente, no mesmo formato do "Para qual projeto?".
+              <div className="space-y-2">
+                {projects.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={savingId !== null}
+                    onClick={() => void handleSaveAsPulse(p)}
+                    className="w-full text-left rounded-md border border-op-gray/30 bg-op-navy px-4 py-3 text-small text-op-white hover:bg-op-navy-elevated transition-colors disabled:opacity-40"
+                  >
+                    {savingId === p.id ? 'Salvando…' : p.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Descartar — ação destrutiva, por último */}
+      <div className="flex justify-end pt-1">
         <button
           type="button"
           disabled={discarding || marking}
@@ -170,79 +198,6 @@ export function InboxCard({ entry, onProcessed }: Props) {
           <Trash2 className="size-3" />
           {discarding ? 'Descartando…' : 'Descartar'}
         </button>
-      </div>
-
-      {/* Inbox linker */}
-      <div className="space-y-2">
-        <button
-          type="button"
-          onClick={() => void handleVincularClick()}
-          className="flex items-center gap-1 text-label text-op-gray/70 hover:text-op-gray transition-colors"
-        >
-          Vincular a projeto
-          <ChevronDown
-            className={[
-              'size-3 transition-transform',
-              linkState !== 'idle' ? 'rotate-180' : '',
-            ].join(' ')}
-          />
-        </button>
-
-        {linkState === 'picking' && (
-          <div className="space-y-2">
-            {projects.length === 0 ? (
-              <p className="text-label text-op-gray/60">Nenhum projeto ativo.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {projects.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => handlePickProject(p)}
-                    className="px-3 py-1 rounded-full text-small font-semibold border border-op-gray/30 text-op-gray hover:border-op-gray/60 hover:text-op-white transition-colors"
-                  >
-                    {p.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {linkState === 'picked' && selectedProject && (
-          <div className="space-y-2">
-            <p className="text-label text-op-cyan/80">
-              Projeto: <span className="font-semibold">{selectedProject.name}</span>
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={linking}
-                onClick={() => handleOpenCopa(selectedProject.id)}
-                className="flex-1 flex items-center justify-center gap-1 rounded-lg py-1.5 text-small font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
-                style={{ backgroundColor: 'var(--color-brand-blue)' }}
-              >
-                Abrir no COPA
-                <ArrowRight className="size-3" />
-              </button>
-              <button
-                type="button"
-                disabled={linking}
-                onClick={() => void handleSaveAsPulse()}
-                className="flex-1 flex items-center justify-center gap-1 rounded-lg py-1.5 text-small font-semibold text-op-gray border border-op-gray/30 hover:text-op-white hover:border-op-gray/60 transition-colors disabled:opacity-50"
-              >
-                {linking ? 'Salvando…' : 'Salvar como pulso'}
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => { setLinkState('picking'); setSelectedProject(null); }}
-              className="text-label text-op-gray/60 hover:text-op-gray transition-colors"
-            >
-              ← Trocar projeto
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

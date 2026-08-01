@@ -1,5 +1,4 @@
-import { Link, useNavigate, useRouter } from '@tanstack/react-router';
-import { MoreVertical } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import { useMemo, useState } from 'react';
@@ -7,34 +6,16 @@ import { usePanelData } from '@/hooks/usePanelData';
 import { GuestStorage } from '@/lib/guestStorage';
 import { calculateIndex } from '@/engines/IndexCalculator';
 import { generatePatterns } from '@/engines/PatternEngine';
-import { updateProject } from '@/lib/projects';
-import { STATE_ORDER, deriveProjectStatus } from '@/lib/projectState';
 import { IndexRings } from './IndexRings';
-import { BaselineEvolution } from './BaselineEvolution';
+import { OperatorRubricCard } from './OperatorRubricCard';
 import { PatternCards } from './PatternCards';
 import { QualitativeEvolution } from './QualitativeEvolution';
 import { BottleneckMapSection } from './BottleneckMapSection';
 import { buildBottleneckMap } from '@/lib/bottleneckMap';
-import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
-import { LayerChip } from '@/components/project/LayerChip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import type { OperationalLayer, ScenarioType } from '@/types/app';
+import type { Entry } from '@/types/database';
+import { computeLayerDomain } from '@/lib/layerDomain';
+import { computeBottleneckPersistence } from '@/lib/bottleneckPersistence';
 
 const PULSO_WEIGHT = 1;
 const ANALISE_WEIGHT = 3;
@@ -99,11 +80,7 @@ function maturityMeta(rate: number | null): { label: string; color: string; barC
 }
 
 export function OperatorPanel() {
-  const navigate = useNavigate();
-  const { projects, entries, principles, baselines, loading, refresh } = usePanelData();
-  const [archivingId, setArchivingId] = useState<string | null>(null);
-  const [pausingId, setPausingId] = useState<string | null>(null);
-  const [pauseReason, setPauseReason] = useState('');
+  const { projects, entries, principles, baselines, loading } = usePanelData();
   const [showMaturitySheet, setShowMaturitySheet] = useState(false);
   const [showDifficultySheet, setShowDifficultySheet] = useState(false);
   const [showDifficultyLearnMore, setShowDifficultyLearnMore] = useState(false);
@@ -113,44 +90,6 @@ export function OperatorPanel() {
   const [showGrowthSheet, setShowGrowthSheet] = useState(false);
   const [showPressureSheet, setShowPressureSheet] = useState(false);
   const [showRubricCorrelationSheet, setShowRubricCorrelationSheet] = useState(false);
-
-  async function handleArchive() {
-    if (!archivingId) return;
-    await updateProject(archivingId, { archived_at: new Date().toISOString(), state: 'archived' });
-    setArchivingId(null);
-    void refresh();
-  }
-
-  async function handlePause() {
-    if (!pausingId) return;
-    const reason = pauseReason.trim() || 'Pausado';
-    await updateProject(pausingId, { state: 'paused', pause_reason: reason });
-    setPausingId(null);
-    setPauseReason('');
-    void refresh();
-  }
-
-  async function handleResume(id: string) {
-    await updateProject(id, { state: 'new', pause_reason: '' });
-    void refresh();
-  }
-
-  // Apenas projetos ativos, ordenados por prioridade de estado — PRD Seção 12.1
-  const activeProjects = useMemo(
-    () =>
-      projects
-        .filter((p) => p.state !== 'archived' && p.state !== 'concluded')
-        .sort((a, b) => {
-          const ia = STATE_ORDER.indexOf(a.state);
-          const ib = STATE_ORDER.indexOf(b.state);
-          if (ia !== ib) return ia - ib;
-          return (
-            new Date(b.last_entry_at ?? b.created_at).getTime() -
-            new Date(a.last_entry_at ?? a.created_at).getTime()
-          );
-        }),
-    [projects],
-  );
 
   const profile = GuestStorage.getProfile();
   const baselineCompleted = !!profile?.baseline_completed || baselines.length > 0;
@@ -165,97 +104,89 @@ export function OperatorPanel() {
   );
   const bottleneckMap = useMemo(() => buildBottleneckMap(entries), [entries]);
 
-  const scenarioCount = useMemo(() => {
-    const m = new Map<ScenarioType, number>();
-    for (const p of projects) if (p.scenario_type) m.set(p.scenario_type, (m.get(p.scenario_type) ?? 0) + 1);
-    return Array.from(m.entries());
-  }, [projects]);
-
-  const layerMode = useMemo(() => {
-    const m = new Map<OperationalLayer, number>();
-    for (const p of projects) if (p.current_layer) m.set(p.current_layer, (m.get(p.current_layer) ?? 0) + 1);
-    let best: [OperationalLayer, number] | null = null;
-    for (const e of m) if (!best || e[1] > best[1]) best = e;
-    return best;
-  }, [projects]);
-
   const scenarioMaturity = useMemo(() => {
     const types: ScenarioType[] = ['fluxo', 'processo', 'oferta', 'relacionamento', 'pressao'];
+
+    // Maturidade = profundidade média de progressão no COPA, por tipo de cenário.
+    // Cada projeto é pontuado pela fase mais avançada que alcançou (não pelo botão
+    // manual "Concluir"), e projetos vazios (sem C/O/P/A) são excluídos para não
+    // diluir a média com projetos-fantasma que nunca foram trabalhados.
+    const PHASE_DEPTH: Record<string, number> = {
+      structured_C: 0.25, // Captura
+      structured_O: 0.5,  // Organização
+      structured_P: 0.75, // Prova (IMV)
+      structured_A: 1,    // Aferição
+    };
+
+    // Profundidade (0-1) de um projeto; null = vazio (nenhuma fase estruturada).
+    const projectDepth = (projectId: string, concluded: boolean): number | null => {
+      if (concluded) return 1;
+      let depth = 0;
+      for (const e of entries) {
+        if (e.project_id !== projectId) continue;
+        const d = PHASE_DEPTH[e.entry_type];
+        if (d && d > depth) depth = d;
+      }
+      return depth > 0 ? depth : null;
+    };
+
     return types
       .map((tipo) => {
-        const started = projects.filter((p) => p.scenario_type === tipo && p.state !== 'archived');
-        const closed = started.filter((p) => p.state === 'concluded');
-        const rate = started.length > 0 ? closed.length / started.length : null;
-        return { tipo, started: started.length, closed: closed.length, rate };
+        const ofType = projects.filter((p) => p.scenario_type === tipo && p.state !== 'archived');
+        const depths = ofType
+          .map((p) => projectDepth(p.id, p.state === 'concluded'))
+          .filter((d): d is number => d !== null);
+        const worked = depths.length;
+        const sumPct = Math.round(depths.reduce((s, d) => s + d, 0) * 100); // soma dos níveis (pts)
+        const rate = worked > 0 ? depths.reduce((s, d) => s + d, 0) / worked : null;
+        return { tipo, worked, total: ofType.length, rate, sumPct };
       })
-      .filter((r) => r.started > 0);
-  }, [projects]);
+      .filter((r) => r.worked > 0);
+  }, [projects, entries]);
 
-  const layerDifficulty = useMemo(() => {
-    const layers: OperationalLayer[] = ['operabilidade', 'conversao', 'recorrencia', 'escala'];
-    return layers
-      .map((layer) => {
-        const imvEntries = entries.filter(
-          (e) => e.entry_type === 'structured_P' && e.layer_at_entry === layer,
-        );
-        if (imvEntries.length === 0) return null;
-
-        // 1. Qualidade média das IMVs (0-1)
-        const avgIQI =
-          imvEntries.reduce((sum, e) => {
-            const c = e.content as { reversible?: boolean; cheap?: boolean; specific?: boolean; measurable?: boolean };
-            return sum + ((c.reversible ? 1 : 0) + (c.cheap ? 1 : 0) + (c.specific ? 1 : 0) + (c.measurable ? 1 : 0)) / 4;
-          }, 0) / imvEntries.length;
-
-        // 2. Taxa de aferição: P com A posterior no mesmo projeto
-        const followCount = imvEntries.filter((pEntry) =>
-          entries.some(
-            (e) =>
-              e.entry_type === 'structured_A' &&
-              e.project_id === pEntry.project_id &&
-              new Date(e.created_at) > new Date(pEntry.created_at),
-          ),
-        ).length;
-        const followRate = followCount / imvEntries.length;
-
-        // 3. Pressão de bloqueio: projetos ativos nessa camada que estão travados
-        const layerProjects = projects.filter(
-          (p) => p.current_layer === layer && p.state !== 'archived' && p.state !== 'concluded',
-        );
-        const blockRate =
-          layerProjects.length > 0
-            ? layerProjects.filter((p) => p.state === 'blocked').length / layerProjects.length
-            : 0;
-
-        // Domínio = soma ponderada (0-100); quanto maior, melhor
-        const difficulty = Math.min(
-          100,
-          Math.round(avgIQI * 40 + followRate * 40 + (1 - blockRate) * 20),
-        );
-
-        return {
-          layer,
-          difficulty,
-          imvCount: imvEntries.length,
-          avgIQI: Math.round(avgIQI * 100),
-          followRate: Math.round(followRate * 100),
-          blockRate: Math.round(blockRate * 100),
-        };
-      })
-      .filter((r): r is NonNullable<typeof r> => r !== null);
-  }, [entries, projects]);
+  const layerDifficulty = useMemo(() => computeLayerDomain(entries), [entries]);
 
   const registrationDepth = useMemo(() => {
-    if (entries.length === 0) return null;
+    // Exclui entradas `passive`: são telemetria comportamental (route_visit,
+    // register_abandoned, etc.) e sessões de Clareza (kind='clarity_session'),
+    // não registros do usuário. Contá-las poluía "Pulsos" e o denominador.
+    const real = entries.filter((e) => e.entry_type !== 'passive');
+    if (real.length === 0) return null;
 
-    const pulsoEntries = entries.filter((e) =>
-      ['pulse', 'passive', 'protocol_5min'].includes(e.entry_type),
+    // Deduplica re-salvamentos: mesma entrada (tipo + projeto + texto principal)
+    // conta 1×, igual ao Diário. Evita inflar "Análises" com IMVs repetidos.
+    const previewKey = (e: Entry): string => {
+      const c = e.content as Record<string, unknown>;
+      const pick = (k: string) => (typeof c[k] === 'string' ? (c[k] as string) : '');
+      let text = '';
+      switch (e.entry_type) {
+        case 'pulse':        text = pick('text'); break;
+        case 'structured_C': text = pick('fact_text'); break;
+        case 'structured_O': text = pick('main_bottleneck') || pick('frictions'); break;
+        case 'structured_P': text = pick('action'); break;
+        case 'structured_A': text = pick('principle_text') || pick('what_happened'); break;
+        case 'protocol_5min': text = pick('fact_text'); break;
+        default: text = ''; // tipos sem texto natural → não deduplica
+      }
+      const norm = text.trim().toLowerCase();
+      return norm ? `${e.entry_type}|${e.project_id}|${norm}` : `id|${e.id}`;
+    };
+    const seen = new Set<string>();
+    const deduped = real.filter((e) => {
+      const k = previewKey(e);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+
+    const pulsoEntries = deduped.filter((e) =>
+      ['pulse', 'protocol_5min'].includes(e.entry_type),
     );
-    const analiseEntries = entries.filter((e) =>
+    const analiseEntries = deduped.filter((e) =>
       ['structured_C', 'structured_O', 'structured_P', 'copa_session', 'pressure_session',
         'creative_session', 'simulation_session'].includes(e.entry_type),
     );
-    const reflexaoEntries = entries.filter((e) =>
+    const reflexaoEntries = deduped.filter((e) =>
       ['structured_A', 'corrective'].includes(e.entry_type),
     );
 
@@ -264,11 +195,12 @@ export function OperatorPanel() {
     const reflexoesWeight = reflexaoEntries.length * REFLEXAO_WEIGHT;
     const totalWeight = pulsosWeight + analisesWeight + reflexoesWeight;
 
-    const score = Math.round((totalWeight / (entries.length * 5)) * 100);
+    const denom = deduped.length;
+    const score = denom > 0 ? Math.round((totalWeight / (denom * 5)) * 100) : 0;
 
     return {
       score,
-      total: entries.length,
+      total: denom,
       pulsos: pulsoEntries.length,
       analises: analiseEntries.length,
       reflexoes: reflexaoEntries.length,
@@ -279,56 +211,7 @@ export function OperatorPanel() {
     };
   }, [entries]);
 
-  const bottleneckPersistence = useMemo(() => {
-    const oEntries = entries.filter((e) => e.entry_type === 'structured_O');
-    if (oEntries.length === 0) return null;
-
-    const resolvedDays: number[] = [];
-    let unresolved = 0;
-
-    for (const oEntry of oEntries) {
-      const nextA = entries
-        .filter(
-          (e) =>
-            e.entry_type === 'structured_A' &&
-            e.project_id === oEntry.project_id &&
-            new Date(e.created_at) > new Date(oEntry.created_at),
-        )
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
-
-      if (nextA) {
-        const days = Math.max(
-          0,
-          Math.round(
-            (new Date(nextA.created_at).getTime() - new Date(oEntry.created_at).getTime()) /
-              (1000 * 60 * 60 * 24),
-          ),
-        );
-        resolvedDays.push(days);
-      } else {
-        unresolved++;
-      }
-    }
-
-    const avgDays =
-      resolvedDays.length > 0
-        ? Math.round(resolvedDays.reduce((s, d) => s + d, 0) / resolvedDays.length)
-        : null;
-
-    const unresolvedPct = Math.round((unresolved / oEntries.length) * 100);
-    const daysPct = Math.round((Math.min(avgDays ?? 60, 60) / 60) * 100);
-    const persistenceIndex = Math.round(unresolvedPct * 0.6 + daysPct * 0.4);
-
-    return {
-      total: oEntries.length,
-      resolved: resolvedDays.length,
-      unresolved,
-      avgDays,
-      unresolvedPct,
-      daysPct,
-      persistenceIndex,
-    };
-  }, [entries]);
+  const bottleneckPersistence = useMemo(() => computeBottleneckPersistence(entries), [entries]);
 
   const principleReusability = useMemo(() => {
     const active = principles.filter((p) => !p.is_archived);
@@ -555,126 +438,18 @@ export function OperatorPanel() {
       <div className="px-4 py-4 space-y-6">
         {loading && <p className="text-small text-muted-foreground">Carregando…</p>}
 
-        {/* Seção 1 — Índice */}
+        {/* Seção 1 — Índice do Operador (3 anéis + nível composto) */}
         <section>
           <IndexRings {...idx} />
-          {baselineCompleted ? (
-            <Link to="/panel/rubric" className="mt-4 block rounded-md border border-op-gray/30 bg-op-navy p-3">
-              <div className="flex justify-between text-small">
-                <span className="text-op-white">Treinamento do operador</span>
-                <span className="text-op-gray">{idx.rubricTotal}/35 pontos →</span>
-              </div>
-              <div className="h-2 mt-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
-                <div className="h-full" style={{ width: `${(idx.rubricTotal / 35) * 100}%`, backgroundColor: '#22C5DA' }} />
-              </div>
-            </Link>
-          ) : (
-            <Link to="/baseline/new" className="mt-4 inline-flex text-small text-op-cyan hover:underline">
-              Fazer diagnóstico de 12 minutos →
-            </Link>
-          )}
         </section>
 
-        {/* Seção 2 — Linha de base */}
+        {/* Seção 2 — Rubrica do Operador (KPI consolidado: medido vs autoavaliação) */}
         <section>
-          <BaselineEvolution baselines={baselines} baselineCompleted={baselineCompleted} />
-        </section>
-
-        {/* Seção 3 — Visão geral de projetos */}
-        <section className="space-y-2">
-          <h2 className="text-heading text-foreground">Visão geral de projetos</h2>
-          {activeProjects.length === 0 ? (
-            <p className="text-small text-muted-foreground">Nenhum projeto ativo.</p>
-          ) : (
-            <ul className="space-y-2">
-              {activeProjects.map((p) => {
-                const projectEntries = entries.filter((e) => e.project_id === p.id);
-                const status = deriveProjectStatus(p, projectEntries);
-                return (
-                  <li key={p.id} className="flex items-stretch rounded-md border border-op-gray/30 bg-op-navy overflow-hidden">
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        to="/project/$id/dashboard"
-                        params={{ id: p.id }}
-                        className="block p-3 hover:bg-accent space-y-1"
-                      >
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`text-base leading-none ${status.color}`} aria-hidden>{status.icon}</span>
-                          <span className={`text-small font-medium ${status.color}`}>{status.label}</span>
-                          <span className="text-small text-foreground font-medium">{p.name}</span>
-                        </div>
-                        {(p.scenario_type || p.current_layer) && (
-                          <div className="flex gap-1 flex-wrap pl-5">
-                            {p.scenario_type && <ScenarioTypeChip type={p.scenario_type} />}
-                            {p.current_layer && <LayerChip layer={p.current_layer} />}
-                          </div>
-                        )}
-                      </Link>
-                      {status.label === 'Ciclo completo' && (
-                        <div className="px-3 pb-2.5 border-t border-op-gray/20 pt-2">
-                          <Link
-                            to="/project/$id/conclude"
-                            params={{ id: p.id }}
-                            className="text-small text-red-500 hover:text-red-400 transition-colors"
-                          >
-                            Encerrar o Projeto →
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          className="p-2 mr-1 rounded-md hover:bg-accent shrink-0"
-                          aria-label="Mais opções"
-                        >
-                          <MoreVertical className="size-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem
-                          onClick={() => navigate({ to: '/project/$id/dashboard', params: { id: p.id } })}
-                        >
-                          Ver Dashboard
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {p.state === 'paused' ? (
-                          <DropdownMenuItem onClick={() => void handleResume(p.id)}>
-                            Retomar projeto
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => setPausingId(p.id)}>
-                            Pausar projeto
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          onClick={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
-                        >
-                          Concluir projeto
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => setArchivingId(p.id)}
-                        >
-                          Arquivar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          {(scenarioCount.length > 0 || layerMode) && (
-            <div className="text-label text-muted-foreground space-y-0.5 pt-1">
-              {scenarioCount.length > 0 && (
-                <div>Seus projetos por tipo: {scenarioCount.map(([k, n]) => `${k} (${n})`).join(' · ')}</div>
-              )}
-              {layerMode && (
-                <div>Camada mais frequente: {layerMode[0]} ({layerMode[1]} projeto{layerMode[1] > 1 ? 's' : ''})</div>
-              )}
-            </div>
-          )}
+          <OperatorRubricCard
+            rubricTotal={idx.rubricTotal}
+            baselines={baselines}
+            baselineCompleted={baselineCompleted}
+          />
         </section>
 
         {/* Seção 3B — Maturidade por Tipo de Cenário */}
@@ -694,7 +469,7 @@ export function OperatorPanel() {
               </button>
             </div>
             <ul className="space-y-3">
-              {scenarioMaturity.map(({ tipo, started, closed, rate }) => {
+              {scenarioMaturity.map(({ tipo, worked, total, rate }) => {
                 const meta = maturityMeta(rate);
                 const pct = rate !== null ? Math.round(rate * 100) : 0;
                 return (
@@ -710,7 +485,10 @@ export function OperatorPanel() {
                       />
                     </div>
                     <div className="flex justify-between text-label text-op-gray">
-                      <span>{closed} concluído{closed !== 1 ? 's' : ''} de {started} projeto{started !== 1 ? 's' : ''}</span>
+                      <span>
+                        {worked} projeto{worked !== 1 ? 's' : ''} trabalhado{worked !== 1 ? 's' : ''}
+                        {total > worked && ` (de ${total})`} · profundidade média
+                      </span>
                       <span className={meta.color}>{pct}%</span>
                     </div>
                   </li>
@@ -1436,9 +1214,10 @@ export function OperatorPanel() {
             <div className="space-y-2">
               <p className="text-label text-op-cyan uppercase">O que significa</p>
               <p className="text-body text-op-white">
-                Mede quanto tempo seus gargalos levam para ser resolvidos. Para cada fase de Organização
-                (mapeamento do gargalo), verifica se houve uma Aferição (APA) posterior e quantos dias levou.
-                Índice alto significa gargalos que resistem por muito tempo.
+                Mede quanto tempo seus gargalos levam para ser resolvidos. Cada gargalo é contado
+                uma vez (pela fase de Organização onde foi nomeado, sem repetições) e considerado
+                resolvido quando uma Aferição (APA) o fecha — cada APA resolve um único gargalo, o
+                mais antigo ainda em aberto. Índice alto significa gargalos que resistem por muito tempo.
               </p>
               <ul className="mt-2 space-y-1 text-small text-op-gray">
                 <li><span className="text-green-400 font-semibold">Gargalo ágil</span> — índice abaixo de 25</li>
@@ -1452,20 +1231,20 @@ export function OperatorPanel() {
               <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
               <div className="space-y-1 text-small">
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Total de gargalos mapeados (fase O)</span>
+                  <span className="text-op-gray">Gargalos distintos (fase O, sem repetição)</span>
                   <span className="text-op-white">{bottleneckPersistence.total}</span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Resolvidos (seguidos de APA)</span>
+                  <span className="text-op-gray">Resolvidos (fechados 1:1 por APA)</span>
                   <span className="text-op-white">{bottleneckPersistence.resolved}</span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Sem resolução</span>
+                  <span className="text-op-gray">Sem resolução <span className="text-op-gray/60">(peso 60%)</span></span>
                   <span className="text-op-white">{bottleneckPersistence.unresolved} = {bottleneckPersistence.unresolvedPct}%</span>
                 </div>
                 {bottleneckPersistence.avgDays !== null && (
                   <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                    <span className="text-op-gray">Média de dias para resolver</span>
+                    <span className="text-op-gray">Média de dias para resolver <span className="text-op-gray/60">(peso 40%)</span></span>
                     <span className="text-op-white">{bottleneckPersistence.avgDays} dias = {bottleneckPersistence.daysPct}% de 60 dias</span>
                   </div>
                 )}
@@ -1475,6 +1254,12 @@ export function OperatorPanel() {
                     {bottleneckPersistence.unresolvedPct}% × 60% + {bottleneckPersistence.daysPct}% × 40% = {bottleneckPersistence.persistenceIndex}
                   </span>
                 </div>
+                <p className="text-label text-op-gray/80 pt-1 leading-relaxed">
+                  Os pesos são fixos: a fração <span className="text-op-white">sem resolução pesa 60%</span>
+                  {' '}(é o sinal mais forte de persistência) e o <span className="text-op-white">tempo médio
+                  de resolução pesa 40%</span>. Assim, gargalos que ficam abertos contam mais para o índice
+                  do que gargalos que demoram mas acabam resolvidos.
+                </p>
               </div>
             </div>
 
@@ -1507,7 +1292,8 @@ export function OperatorPanel() {
               <p className="text-body text-op-white">
                 Mede o quanto seus registros vão além da superfície. Cada categoria tem um peso fixo:
                 Pulso = 1 · Análise = 3 · Reflexão = 5. Quem registra mais APAs e corretivos
-                tem profundidade mais alta.
+                tem profundidade mais alta. Eventos automáticos do sistema e registros repetidos
+                não entram na conta.
               </p>
               <ul className="mt-2 space-y-1 text-small text-op-gray">
                 <li><span className="text-green-400 font-semibold">Registro profundo</span> — 75 ou mais</li>
@@ -1539,7 +1325,7 @@ export function OperatorPanel() {
                   </span>
                 </div>
                 <div className="flex justify-between border-b border-op-gray/20 pb-1">
-                  <span className="text-op-gray">Máximo possível ({registrationDepth.total} × 5)</span>
+                  <span className="text-op-gray">Máximo possível ({registrationDepth.total} registros × 5)</span>
                   <span className="text-op-white">{registrationDepth.total * 5} pts</span>
                 </div>
                 <div className="flex justify-between pt-1">
@@ -1578,7 +1364,8 @@ export function OperatorPanel() {
             <div className="space-y-2">
               <p className="text-label text-op-cyan uppercase">O que significa</p>
               <p className="text-body text-op-white">
-                Mede o nível de domínio operacional em cada camada com base em três fatores reais do seu histórico.
+                Mede o nível de domínio operacional em cada camada combinando dois fatores reais:
+                a qualidade dos seus IMVs e quantos deles você de fato fechou com uma APA.
                 Quanto maior o índice, mais essa camada está respondendo ao método.
               </p>
               <ul className="mt-2 space-y-1 text-small text-op-gray">
@@ -1601,7 +1388,7 @@ export function OperatorPanel() {
                 </button>
               </div>
               <div className="space-y-3 text-small">
-                {layerDifficulty.map(({ layer, difficulty, avgIQI, followRate, blockRate, imvCount }) => {
+                {layerDifficulty.map(({ layer, difficulty, avgIQI, followRate, imvCount }) => {
                   const meta = difficultyMeta(difficulty);
                   return (
                     <div key={layer} className="border-b border-op-gray/20 pb-3 space-y-1">
@@ -1610,22 +1397,26 @@ export function OperatorPanel() {
                         <span className={`font-semibold ${meta.color}`}>Score: {difficulty}/100</span>
                       </div>
                       <div className="flex justify-between text-op-gray">
-                        <span>Qualidade das IMVs ({imvCount} registros)</span>
-                        <span>{avgIQI}% → peso 40%</span>
+                        <span>Qualidade das IMVs ({imvCount} ciclo{imvCount !== 1 ? 's' : ''}) <span className="text-op-gray/60">(peso 50%)</span></span>
+                        <span>{avgIQI}%</span>
                       </div>
                       <div className="flex justify-between text-op-gray">
-                        <span>Taxa de aferição (P→A concluídos)</span>
-                        <span>{followRate}% → peso 40%</span>
+                        <span>Fechamento real (IMV com APA vinculada) <span className="text-op-gray/60">(peso 50%)</span></span>
+                        <span>{followRate}%</span>
                       </div>
-                      <div className="flex justify-between text-op-gray">
-                        <span>Pressão de bloqueio (projetos travados)</span>
-                        <span>{blockRate}% → peso 20%</span>
+                      <div className="flex justify-between pt-0.5">
+                        <span className="text-op-gray font-semibold">Índice de domínio</span>
+                        <span className="font-semibold" style={{ color: meta.barColor }}>
+                          {avgIQI}% × 50% + {followRate}% × 50% = {difficulty}
+                        </span>
                       </div>
                     </div>
                   );
                 })}
-                <p className="text-label text-op-gray">
-                  Domínio = qualidade × 40 + aferição × 40 + (100% − bloqueio) × 20
+                <p className="text-label text-op-gray/80 leading-relaxed">
+                  Os dois fatores têm <span className="text-op-white">peso igual (50% cada)</span>:
+                  domínio é operar IMVs de qualidade <span className="text-op-white">e</span> fechá-los
+                  com APA. IMVs deduplicados por ação; cada APA fecha um único IMV, sem crédito cruzado.
                 </p>
               </div>
             </div>
@@ -1663,18 +1454,13 @@ export function OperatorPanel() {
               <tbody className="text-op-white">
                 <tr className="border-b border-op-gray/20">
                   <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Qualidade das IMVs</td>
-                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">40%</td>
-                  <td className="py-2.5 text-op-gray">Quanto mais critérios cumpridos (reversível / barato / específico / mensurável), maior o domínio</td>
-                </tr>
-                <tr className="border-b border-op-gray/20">
-                  <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Taxa de aferição</td>
-                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">40%</td>
-                  <td className="py-2.5 text-op-gray">% de IMVs que geraram APA posterior — quanto mais aferições, maior o domínio</td>
+                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">50%</td>
+                  <td className="py-2.5 text-op-gray">Quanto mais critérios cumpridos (reversível / barato / específico / mensurável), maior o domínio. IMVs repetidos contam uma vez.</td>
                 </tr>
                 <tr>
-                  <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Ausência de bloqueio</td>
-                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">20%</td>
-                  <td className="py-2.5 text-op-gray">Quanto menos projetos travados nessa camada, maior o domínio</td>
+                  <td className="py-2.5 pr-3 font-medium whitespace-nowrap">Fechamento real</td>
+                  <td className="py-2.5 pr-3 text-center text-op-cyan font-semibold">50%</td>
+                  <td className="py-2.5 text-op-gray">% de IMVs efetivamente fechados com uma APA — cada APA fecha um único IMV, sem crédito cruzado</td>
                 </tr>
               </tbody>
             </table>
@@ -1707,36 +1493,41 @@ export function OperatorPanel() {
             <div className="space-y-2">
               <p className="text-label text-op-cyan uppercase">O que significa</p>
               <p className="text-body text-op-white">
-                Mostra a taxa de fechamento dos seus projetos agrupados pelo tipo de cenário.
-                Um tipo com alta taxa indica domínio operacional naquele contexto.
-                Um tipo com baixa taxa revela onde você ainda está desenvolvendo o método.
+                Mostra quão fundo você costuma operar o método COPA em cada tipo de cenário.
+                Cada projeto é pontuado pela fase mais avançada que alcançou — Captura (25%),
+                Organização (50%), Prova (75%), Aferição ou Concluído (100%) — e a barra é a
+                média dessas profundidades. Um tipo com média alta indica domínio operacional
+                naquele contexto; média baixa revela onde você ainda para cedo no método.
               </p>
               <ul className="mt-2 space-y-1 text-small text-op-gray">
-                <li><span className="text-green-400 font-semibold">Mestre</span> — 75% ou mais dos projetos concluídos</li>
-                <li><span className="text-op-cyan font-semibold">Operando</span> — 50% a 74%</li>
-                <li><span className="text-amber-400 font-semibold">Aprendendo</span> — 25% a 49%</li>
-                <li><span className="text-op-gray font-semibold">Iniciando</span> — menos de 25%</li>
+                <li><span className="text-green-400 font-semibold">Mestre</span> — 75% ou mais (fecha ciclos com Aferição)</li>
+                <li><span className="text-op-cyan font-semibold">Operando</span> — 50% a 74% (chega à Prova)</li>
+                <li><span className="text-amber-400 font-semibold">Aprendendo</span> — 25% a 49% (organiza)</li>
+                <li><span className="text-op-gray font-semibold">Iniciando</span> — menos de 25% (só captura)</li>
               </ul>
             </div>
 
             <div className="space-y-3">
               <p className="text-label text-op-cyan uppercase">Como foi calculado</p>
               <div className="space-y-2 text-small">
-                {scenarioMaturity.map(({ tipo, started, closed, rate }) => {
+                {scenarioMaturity.map(({ tipo, worked, rate, sumPct }) => {
                   const pct = rate !== null ? Math.round(rate * 100) : 0;
                   const meta = maturityMeta(rate);
                   return (
                     <div key={tipo} className="flex justify-between border-b border-op-gray/20 pb-1 gap-2">
                       <span className="text-op-gray shrink-0">{SCENARIO_LABELS[tipo]}</span>
                       <span className="text-op-white text-right">
-                        {closed} concluído{closed !== 1 ? 's' : ''} ÷ {started} projeto{started !== 1 ? 's' : ''} ={' '}
+                        {sumPct} pts ÷ {worked * 100} ({worked} × 100) × 100 ={' '}
                         <strong className={meta.color}>{pct}%</strong>
                       </span>
                     </div>
                   );
                 })}
-                <p className="text-label text-op-gray pt-1">
-                  Projetos arquivados são excluídos do cálculo.
+                <p className="text-label text-op-gray pt-1 leading-relaxed">
+                  Cada projeto vale sua fase mais avançada em pontos (Captura 25, Organização 50,
+                  Prova 75, Aferição/Concluído 100). Somamos os pontos e dividimos pelo máximo
+                  possível (número de projetos × 100). Projetos arquivados e vazios (sem C/O/P/A)
+                  ficam de fora.
                 </p>
               </div>
             </div>
@@ -1752,52 +1543,6 @@ export function OperatorPanel() {
         </div>
       )}
 
-      {/* Dialog: Pausar */}
-      <AlertDialog open={!!pausingId} onOpenChange={(v) => { if (!v) { setPausingId(null); setPauseReason(''); } }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Pausar projeto</AlertDialogTitle>
-            <AlertDialogDescription>
-              Informe o motivo da pausa. Ele ficará visível no projeto enquanto estiver pausado.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <input
-            value={pauseReason}
-            onChange={(e) => setPauseReason(e.target.value)}
-            placeholder="Ex: aguardando resultado externo"
-            className="mt-2 w-full rounded-xl border border-op-gray/30 bg-op-navy text-op-white placeholder:text-op-gray px-3 py-2 text-sm"
-          />
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => { setPausingId(null); setPauseReason(''); }}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => void handlePause()}
-              disabled={!pauseReason.trim()}
-              className="disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Confirmar pausa
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Dialog: Arquivar */}
-      <AlertDialog open={!!archivingId} onOpenChange={(v) => !v && setArchivingId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Arquivar projeto?</AlertDialogTitle>
-            <AlertDialogDescription>
-              O projeto será removido da lista ativa. Nenhum dado é apagado. Use "Concluir" se o
-              Norte foi alcançado.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void handleArchive()}>Arquivar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

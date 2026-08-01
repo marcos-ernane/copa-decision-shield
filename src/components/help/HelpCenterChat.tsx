@@ -148,6 +148,10 @@ const STATIC_KB: Array<{ keywords: string[]; answer: string }> = [
     keywords: ['registro', 'formato', 'pulso', 'estruturado', 'corretivo'],
     answer: 'Tipos de registro: Pulso (<30s, fato/decisão/resultado/dúvida), Formato C (análise da situação), Formato O (Mapa 3R: R1 Recursos / R2 Ruídos / R3 Restrições), Formato P (IMV com métrica e prazo), Formato A (APA — resultado da IMV com princípio), Registro Corretivo (corrige sem apagar o original).',
   },
+  {
+    keywords: ['onde registro', 'onde crio', 'criar pulso', 'registrar pulso', 'capturar', 'captura', 'botão pulso'],
+    answer: 'Você cria um Pulso pelo botão CAPTURAR (ícone ⚡, canto inferior esquerdo, presente em quase todas as telas). Escreva ou dite e escolha um projeto: sua nota é salva imediatamente como um Pulso naquele projeto. Se não escolher projeto, ela vai para o Inbox, onde depois você pode transformá-la em Pulso, abrir no COPA completo ou descartar. Resumo: "Capturar" é a ação; "Pulso" é o registro que ela cria quando há um projeto. (Não confunda com a "Captura [C]", que é a 1ª fase do método COPA — registro estruturado e mais profundo.)',
+  },
 ];
 
 function staticFallback(question: string): string {
@@ -337,7 +341,7 @@ export function HelpCenterChat() {
           </button>
         </div>
         <p className="text-label text-op-gray text-center mt-2">
-          ✦ IA · ○ base local — indicado por mensagem
+          Fonte indicada abaixo de cada resposta: ✦ IA ou ○ base local
         </p>
         <button
           onClick={() => setShowFeedback(true)}

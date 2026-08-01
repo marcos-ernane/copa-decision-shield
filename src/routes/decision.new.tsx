@@ -154,6 +154,63 @@ function DecisionRecordScreen() {
 
       <main className="flex-1 px-4 py-5 max-w-md mx-auto w-full space-y-5 pb-24">
 
+        {/* Campo 0 — Vincular a projeto (opcional) */}
+        {projects.length > 0 && (
+          <div className="space-y-1.5">
+            <label className="text-label text-op-gray uppercase tracking-wide">
+              Vincular a projeto
+              <span className="text-label text-op-gray/50 normal-case ml-1">(opcional)</span>
+            </label>
+            <div ref={dropdownRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setDropdownOpen((v) => !v)}
+                className="w-full flex items-center justify-between gap-2 rounded-lg border border-op-gray/30 bg-op-navy px-3 py-2 text-small text-left transition-colors hover:border-op-gray/60"
+              >
+                <span className={selectedProject ? 'text-op-white font-semibold' : 'text-op-gray'}>
+                  {selectedProject ? selectedProject.name : 'Nenhum projeto'}
+                </span>
+                <ChevronDown
+                  className={[
+                    'size-4 text-op-gray shrink-0 transition-transform',
+                    dropdownOpen ? 'rotate-180' : '',
+                  ].join(' ')}
+                />
+              </button>
+
+              {dropdownOpen && (
+                <ul className="absolute z-50 top-full mt-1 w-full rounded-lg border border-op-gray/30 bg-op-navy shadow-lg overflow-y-auto max-h-48">
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedProjectId(null); setDropdownOpen(false); }}
+                      className="w-full flex items-center justify-between px-3 py-2.5 text-small text-op-gray hover:bg-white/5 transition-colors"
+                    >
+                      <span>Sem projeto</span>
+                      {!selectedProjectId && <Check className="size-3.5 text-op-amber" />}
+                    </button>
+                  </li>
+                  <li className="border-t border-op-gray/20" />
+                  {projects.map((p) => (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedProjectId(p.id); setDropdownOpen(false); }}
+                        className="w-full flex items-center justify-between px-3 py-2.5 text-small text-op-white hover:bg-white/5 transition-colors"
+                      >
+                        <span className="truncate pr-2">{p.name}</span>
+                        {selectedProjectId === p.id && (
+                          <Check className="size-3.5 text-op-amber shrink-0" />
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Campo 1 — A decisão */}
         <div className="space-y-1.5">
           <label className="text-label text-op-gray uppercase tracking-wide">
@@ -233,63 +290,6 @@ function DecisionRecordScreen() {
             className="w-full rounded-md border border-op-gray/20 bg-op-navy px-3 py-2 text-body text-op-white placeholder:text-op-gray focus:outline-none focus:ring-2 focus:ring-op-amber [color-scheme:dark]"
           />
         </div>
-
-        {/* Projeto (opcional) */}
-        {projects.length > 0 && (
-          <div className="space-y-1.5">
-            <label className="text-label text-op-gray uppercase tracking-wide">
-              Vincular a projeto
-              <span className="text-label text-op-gray/50 normal-case ml-1">(opcional)</span>
-            </label>
-            <div ref={dropdownRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setDropdownOpen((v) => !v)}
-                className="w-full flex items-center justify-between gap-2 rounded-lg border border-op-gray/30 bg-op-navy px-3 py-2 text-small text-left transition-colors hover:border-op-gray/60"
-              >
-                <span className={selectedProject ? 'text-op-white font-semibold' : 'text-op-gray'}>
-                  {selectedProject ? selectedProject.name : 'Nenhum projeto'}
-                </span>
-                <ChevronDown
-                  className={[
-                    'size-4 text-op-gray shrink-0 transition-transform',
-                    dropdownOpen ? 'rotate-180' : '',
-                  ].join(' ')}
-                />
-              </button>
-
-              {dropdownOpen && (
-                <ul className="absolute z-50 bottom-full mb-1 w-full rounded-lg border border-op-gray/30 bg-op-navy shadow-lg overflow-y-auto max-h-48">
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => { setSelectedProjectId(null); setDropdownOpen(false); }}
-                      className="w-full flex items-center justify-between px-3 py-2.5 text-small text-op-gray hover:bg-white/5 transition-colors"
-                    >
-                      <span>Sem projeto</span>
-                      {!selectedProjectId && <Check className="size-3.5 text-op-amber" />}
-                    </button>
-                  </li>
-                  <li className="border-t border-op-gray/20" />
-                  {projects.map((p) => (
-                    <li key={p.id}>
-                      <button
-                        type="button"
-                        onClick={() => { setSelectedProjectId(p.id); setDropdownOpen(false); }}
-                        className="w-full flex items-center justify-between px-3 py-2.5 text-small text-op-white hover:bg-white/5 transition-colors"
-                      >
-                        <span className="truncate pr-2">{p.name}</span>
-                        {selectedProjectId === p.id && (
-                          <Check className="size-3.5 text-op-amber shrink-0" />
-                        )}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        )}
 
         <Button
           size="lg"

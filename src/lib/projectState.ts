@@ -161,3 +161,20 @@ export function sortProjects(projects: Project[]): {
   const concluded = projects.filter((p) => p.state === 'concluded');
   return { active, concluded };
 }
+
+/**
+ * Projetos em que se pode registrar agora (COPA / Pulso). Exclui apenas os
+ * estados terminais — concluídos e arquivados. Pausados continuam disponíveis
+ * (podem receber um registro sem exigir "retomar" antes). Ordenados por
+ * atividade mais recente. Fonte única usada pelos seletores "Para qual projeto?"
+ * e "Salvar como pulso", garantindo a mesma lista nos dois.
+ */
+export function registrableProjects(projects: Project[]): Project[] {
+  return projects
+    .filter((p) => p.state !== 'concluded' && p.state !== 'archived')
+    .sort((a, b) => {
+      const ta = a.last_entry_at ? new Date(a.last_entry_at).getTime() : 0;
+      const tb = b.last_entry_at ? new Date(b.last_entry_at).getTime() : 0;
+      return tb - ta;
+    });
+}

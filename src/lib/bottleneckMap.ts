@@ -4,6 +4,7 @@
 
 import type { ScenarioType, OperationalLayer } from '../types/app';
 import type { Entry } from '../types/database';
+import { distinctIMVKey } from './imv';
 
 export type CellIntensity = 'none' | 'low' | 'medium' | 'high';
 
@@ -17,7 +18,7 @@ export interface BottleneckCell {
 
 export interface BottleneckMap {
   cells: BottleneckCell[][];  // [5 linhas][4 colunas]
-  total_entries: number;      // entries com ambos os campos preenchidos
+  total_entries: number;      // total de ciclos COPA distintos mapeados
   has_data: boolean;          // true quando total_entries >= 5 [REQ-BM-04]
   max_count: number;          // maior count individual
 }
@@ -38,20 +39,24 @@ export const BOTTLENECK_LAYERS: OperationalLayer[] = [
   'escala',
 ];
 
-const STRUCTURED_ENTRY_TYPES = new Set([
-  'structured_C',
-  'structured_O',
-  'structured_P',
-  'structured_A',
-]);
-
-// [REQ-BM-01] Filtra apenas entries estruturadas com ambos os campos preenchidos.
+// [REQ-BM-01] Cada célula = número de CICLOS COPA distintos naquela combinação
+// tipo × camada — não a soma bruta de entradas estruturadas.
+//
+// Motivação (auditoria): um único gargalo trabalhado num ciclo COPA gera até 4
+// entradas (C, O, P, A) que compartilham o mesmo tipo+camada e caíam todas na
+// mesma célula, inflando a contagem em ~4×. Somado a re-salvamentos do mesmo IMV,
+// o total ficava irreal ("265 registros" para poucos gargalos reais).
+//
+// Solução: ancoramos no IMV (structured_P) — cada gargalo trabalhado produz
+// exatamente uma Prova — e deduplicamos por (projeto + texto da ação), a mesma
+// chave usada por detectOpenCycles e pelo Diário. Assim o número da célula reflete
+// intervenções reais, cruzáveis com a contagem de IMVs do Diário.
 // [REQ-BM-02] Pura computação em memória — zero queries adicionais.
 // [REQ-BM-03] Thresholds fixos: none=0, low=1-2, medium=3-5, high=6+.
 export function buildBottleneckMap(entries: Entry[]): BottleneckMap {
-  const relevant = entries.filter(
+  const imvs = entries.filter(
     (e) =>
-      STRUCTURED_ENTRY_TYPES.has(e.entry_type) &&
+      e.entry_type === 'structured_P' &&
       e.scenario_type_at_entry != null &&
       e.layer_at_entry != null,
   );
@@ -64,11 +69,21 @@ export function buildBottleneckMap(entries: Entry[]): BottleneckMap {
     Array.from({ length: 4 }, () => new Set<string>()),
   );
 
-  for (const entry of relevant) {
+  // Deduplicação global de re-salvamentos: mesma IMV (projeto + ação) conta 1×.
+  const seenCycles = new Set<string>();
+  let totalCycles = 0;
+
+  for (const entry of imvs) {
     const si = BOTTLENECK_SCENARIO_TYPES.indexOf(entry.scenario_type_at_entry!);
     const li = BOTTLENECK_LAYERS.indexOf(entry.layer_at_entry!);
     if (si === -1 || li === -1) continue;  // [REQ-BM-01] valor desconhecido ignorado
+
+    const cycleKey = distinctIMVKey(entry); // mesma chave canônica de src/lib/imv.ts
+    if (seenCycles.has(cycleKey)) continue; // re-salvamento da mesma IMV → ignora
+    seenCycles.add(cycleKey);
+
     countMatrix[si][li]++;
+    totalCycles++;
     if (entry.project_id) projectMatrix[si][li].add(entry.project_id); // [REQ-BM-05]
   }
 
@@ -94,8 +109,8 @@ export function buildBottleneckMap(entries: Entry[]): BottleneckMap {
 
   return {
     cells,
-    total_entries: relevant.length,
-    has_data: relevant.length >= 5,
+    total_entries: totalCycles,
+    has_data: totalCycles >= 5,
     max_count: maxCount,
   };
 }

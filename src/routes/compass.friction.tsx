@@ -7,7 +7,7 @@ import type { ScenarioType } from '@/types/app';
 const VALID: ScenarioType[] = ['fluxo', 'processo', 'oferta', 'relacionamento', 'pressao'];
 
 export const Route = createFileRoute('/compass/friction')({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { type?: ScenarioType } => ({
     type:
       typeof s.type === 'string' && (VALID as string[]).includes(s.type)
         ? (s.type as ScenarioType)

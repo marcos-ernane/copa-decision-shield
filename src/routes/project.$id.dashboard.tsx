@@ -2,7 +2,7 @@
 
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ChevronRight, MoreVertical, Info, Gavel } from 'lucide-react';
+import { ChevronRight, MoreVertical, Info, Gavel, BarChart2, Brain, Pencil, ClipboardList } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import { Button } from '@/components/ui/button';
@@ -27,10 +27,14 @@ import { Input } from '@/components/ui/input';
 import { getProject, listEntries, listPrinciples, updateProject } from '@/lib/projects';
 import { listDecisionRecords } from '@/lib/decisionRecord';
 import type { DecisionRecord } from '@/lib/decisionRecord';
-import { updateEntryExecutionPlan } from '@/lib/register';
+import { updateEntryExecutionPlan, type ActionPlan, type CostBenefitData } from '@/lib/register';
+import { formatCurrency, corRelacao } from '@/lib/costBenefit';
 import { ActionPlanSheet } from '@/components/project/ActionPlanSheet';
-import type { ActionPlan } from '@/lib/register';
+import { CostBenefitSheet } from '@/components/register/CostBenefitSheet';
 import { detectOpenCycles } from '@/lib/openCycle';
+import { countDistinctIMVs, distinctIMVs } from '@/lib/imv';
+import { canCompose } from '@/lib/clarityComposer';
+import { reportCooldown } from '@/lib/reportComposer';
 import { OpenCycleCard } from '@/components/project/OpenCycleCard';
 import { computeProjectState, deriveProjectStatus, daysSince } from '@/lib/projectState';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
@@ -204,7 +208,8 @@ interface IQIResult {
 }
 
 function computeIQI(entries: Entry[]): IQIResult | null {
-  const imvs = entries.filter((e) => e.entry_type === 'structured_P');
+  // IMVs distintos: re-salvamentos do mesmo IMV não devem pesar mais na média.
+  const imvs = distinctIMVs(entries);
   if (imvs.length === 0) return null;
 
   let totalScore = 0;
@@ -265,8 +270,12 @@ function ProjectDashboard() {
   const [isArchiving, setIsArchiving] = useState(false);
   const [showVelocitySheet, setShowVelocitySheet] = useState(false);
   const [showAllCycles, setShowAllCycles] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [newNameValue, setNewNameValue] = useState('');
+  const [showNameConfirm, setShowNameConfirm] = useState(false);
   const [showIQISheet, setShowIQISheet] = useState(false);
   const [showActionPlanSheet, setShowActionPlanSheet] = useState(false);
+  const [showCostBenefitSheet, setShowCostBenefitSheet] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -293,6 +302,16 @@ function ProjectDashboard() {
       }
     })();
   }, [id, navigate]);
+
+  async function handleSaveName() {
+    if (!project) return;
+    const trimmed = newNameValue.trim();
+    if (trimmed.length < 2 || trimmed === project.name) { setEditingName(false); return; }
+    await updateProject(id, { name: trimmed });
+    setProject((p) => (p ? { ...p, name: trimmed } : p));
+    setEditingName(false);
+    setShowNameConfirm(false);
+  }
 
   async function handleToggleTreino() {
     if (!project) return;
@@ -350,13 +369,28 @@ function ProjectDashboard() {
     return velocityColumns.reduce((sum, col) => sum + (col.days ?? 0), 0);
   })();
 
+  // "IMVs testadas" — helper único (dedup por ação), igual ao card de Capacidade
+  // e ao Mapa de Gargalos. "análises" exclui telemetria (passive) e colapsa IMVs
+  // re-salvados, para bater com o que o Diário efetivamente mostra.
+  const imvCount = countDistinctIMVs(entries);
+  const analiseCount =
+    entries.filter(
+      (e) =>
+        e.entry_type !== 'pulse' &&
+        e.entry_type !== 'decision_record' &&
+        e.entry_type !== 'passive' &&
+        e.entry_type !== 'structured_P',
+    ).length + imvCount;
+
   const counts = {
     pulse: entries.filter((e) => e.entry_type === 'pulse').length,
-    structured: entries.filter((e) => e.entry_type !== 'pulse' && e.entry_type !== 'decision_record').length,
-    imvs: entries.filter((e) => e.entry_type === 'structured_P').length,
-    apas: entries.filter((e) => e.entry_type === 'structured_A').length,
+    structured: analiseCount,
+    imvs: imvCount,
+    apas: entries.filter((e) => e.entry_type === 'structured_A' && e.copa_phase === 'A').length,
     principles: principles.length,
   };
+
+  const composable = canCompose(entries);
 
   const provingEntry = entries.find(
     (e) =>
@@ -421,6 +455,18 @@ function ProjectDashboard() {
     : null;
   const activeActionPlanImv = activeEntryWithActionPlan
     ? (activeEntryWithActionPlan.content as { action?: string }).action ?? ''
+    : '';
+
+  // IMV mais recente com cost_benefit preenchido
+  const activeEntryWithCostBenefit = [...entries]
+    .filter((e) => e.entry_type === 'structured_P')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .find((e) => (e.content as { cost_benefit?: unknown }).cost_benefit);
+  const activeCostBenefitData = activeEntryWithCostBenefit
+    ? (activeEntryWithCostBenefit.content as { cost_benefit: CostBenefitData }).cost_benefit
+    : null;
+  const activeCostBenefitImv = activeEntryWithCostBenefit
+    ? (activeEntryWithCostBenefit.content as { action?: string }).action ?? ''
     : '';
 
   const motorAlert: { message: string; cta?: { label: string; onClick: () => void } } | null = (() => {
@@ -526,14 +572,78 @@ function ProjectDashboard() {
       </header>
 
       <main className="px-6 py-6 space-y-6 max-w-md mx-auto">
+        {/* AlertDialog confirmação de edição de nome */}
+        <AlertDialog open={showNameConfirm} onOpenChange={setShowNameConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Alterar nome do projeto?</AlertDialogTitle>
+              <AlertDialogDescription>
+                O nome será atualizado em todo o app — histórico, Diário e Manual do Operador.
+                Esta ação não pode ser desfeita automaticamente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setShowNameConfirm(false)}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => void handleSaveName()}>
+                Confirmar alteração
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Cabeçalho */}
         <section className="space-y-2">
           <div>
             <p className="text-label text-op-gray uppercase tracking-wide">Nome</p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <ProjectStateIcon state={currentState} />
-              <h1 className="text-title text-op-white">{project.name}</h1>
-            </div>
+            {editingName ? (
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  autoFocus
+                  value={newNameValue}
+                  onChange={(e) => setNewNameValue(e.target.value)}
+                  maxLength={80}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const trimmed = newNameValue.trim();
+                      if (trimmed.length >= 2 && trimmed !== project.name) setShowNameConfirm(true);
+                    }
+                    if (e.key === 'Escape') setEditingName(false);
+                  }}
+                  className="flex-1 rounded-md border border-op-amber bg-op-navy px-3 py-1.5 text-title text-op-white focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const trimmed = newNameValue.trim();
+                    if (trimmed.length >= 2 && trimmed !== project.name) setShowNameConfirm(true);
+                    else setEditingName(false);
+                  }}
+                  className="text-label text-op-amber font-semibold px-2"
+                >
+                  OK
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingName(false)}
+                  className="text-label text-op-gray px-1"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mt-0.5">
+                <ProjectStateIcon state={currentState} />
+                <h1 className="text-title text-op-white">{project.name}</h1>
+                <button
+                  type="button"
+                  onClick={() => { setNewNameValue(project.name); setEditingName(true); }}
+                  className="p-1 rounded-md text-op-gray hover:text-op-white hover:bg-op-navy-elevated transition-colors"
+                  aria-label="Editar nome do projeto"
+                >
+                  <Pencil className="size-3.5" />
+                </button>
+              </div>
+            )}
           </div>
           <button
             onClick={() => setNorthExpanded((v) => !v)}
@@ -579,37 +689,18 @@ function ProjectDashboard() {
           };
 
           return showInteractive ? (
-            <button
-              type="button"
-              onClick={handleStateClick}
-              className="w-full text-left rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-1 hover:bg-op-navy-elevated transition-colors"
-            >
+            <div className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
               <h2 className="text-label text-op-gray uppercase">Onde estou agora</h2>
-              <div className="flex items-center justify-between">
-                <p className={`text-heading ${stateDisplay.color}`}>
-                  {stateDisplay.icon} {stateDisplay.label}
-                </p>
-                <ChevronRight className="size-4 text-op-gray shrink-0" />
-              </div>
+              <p className={`text-heading ${stateDisplay.color}`}>
+                {stateDisplay.icon} {stateDisplay.label}
+              </p>
               {isBlocked ? (
                 <p className="text-small text-op-gray">Execute um diagnóstico para destravar</p>
               ) : (
                 <CopaStepsRow done={done} next={nextPhase} allDone={allDone} />
               )}
               {!isBlocked && allDone && (
-                <div className="mt-1 space-y-1.5">
-                  <p className="text-small text-op-gray">Ciclo completo — ver linha do tempo</p>
-                  <button
-                    type="button"
-                    className="text-small text-red-500 hover:text-red-400 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void navigate({ to: '/project/$id/conclude', params: { id } });
-                    }}
-                  >
-                    Encerrar o Projeto →
-                  </button>
-                </div>
+                <p className="text-small text-op-gray">Ciclo completo — ver linha do tempo</p>
               )}
               {currentState === 'proving' && totalDays > 0 && (
                 <div className="pt-1">
@@ -617,16 +708,38 @@ function ProjectDashboard() {
                 </div>
               )}
               {!isBlocked && imvDeadlineStatus === 'expired' && pDeadline && (
-                <p className="text-small mt-1" style={{ color: '#dc2626' }}>
+                <p className="text-small" style={{ color: '#dc2626' }}>
                   IMV vencida em {fmtDeadlineDDMM(pDeadline)} — Verifique.
                 </p>
               )}
               {!isBlocked && imvDeadlineStatus === 'today' && pDeadline && (
-                <p className="text-small mt-1" style={{ color: '#b45309' }}>
+                <p className="text-small" style={{ color: '#b45309' }}>
                   Atenção: IMV vence hoje {fmtDeadlineDDMM(pDeadline)}.
                 </p>
               )}
-            </button>
+              {/* Botão de entrada principal */}
+              <button
+                type="button"
+                onClick={handleStateClick}
+                className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-small font-semibold transition-colors"
+                style={{ backgroundColor: '#2563EB', color: '#ffffff' }}
+              >
+                {isBlocked
+                  ? 'Iniciar diagnóstico →'
+                  : allDone
+                  ? 'Ver histórico →'
+                  : 'Entrar no projeto →'}
+              </button>
+              {!isBlocked && allDone && (
+                <button
+                  type="button"
+                  className="w-full text-center text-small text-red-500 hover:text-red-400 transition-colors pt-0.5"
+                  onClick={() => void navigate({ to: '/project/$id/conclude', params: { id } })}
+                >
+                  Encerrar o Projeto →
+                </button>
+              )}
+            </div>
           ) : (
             <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
               <h2 className="text-label text-op-gray uppercase">Onde estou agora</h2>
@@ -732,6 +845,35 @@ function ProjectDashboard() {
             plan={activeActionPlan}
             imvTitle={activeActionPlanImv}
             onClose={() => setShowActionPlanSheet(false)}
+          />
+        )}
+
+        {/* Análise de Custo/Benefício — IMV ativa */}
+        {activeCostBenefitData && (
+          <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-2">
+            <h2 className="text-label text-op-gray uppercase">Custo / Benefício</h2>
+            <p className="text-small text-op-white/70 line-clamp-1">{activeCostBenefitImv}</p>
+            <button
+              type="button"
+              onClick={() => setShowCostBenefitSheet(true)}
+              className="flex items-center gap-1 text-label text-brand-blue hover:underline"
+            >
+              <BarChart2 className="size-3.5" />
+              Ver análise de custo/benefício
+            </button>
+            <p className={`text-[11px] ${corRelacao(activeCostBenefitData.relacao)}`}>
+              {activeCostBenefitData.relacao} · {formatCurrency(activeCostBenefitData.total_custo)}
+            </p>
+          </section>
+        )}
+        {showCostBenefitSheet && activeCostBenefitData && (
+          <CostBenefitSheet
+            isOpen={showCostBenefitSheet}
+            onClose={() => setShowCostBenefitSheet(false)}
+            onSave={() => {}}
+            initialData={activeCostBenefitData}
+            imvTitle={activeCostBenefitImv}
+            readOnly
           />
         )}
 
@@ -1080,6 +1222,71 @@ function ProjectDashboard() {
           discarded_patterns={0}
           evolved_bottleneck={project.current_bottleneck}
         />
+
+        {/* Clareza Operacional — Módulo 9 */}
+        <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Brain className="size-4 text-foreground shrink-0" />
+            <h2 className="text-label font-medium text-foreground">Clareza Operacional</h2>
+          </div>
+          {composable ? (
+            <>
+              <p className="text-small text-muted-foreground">
+                Organize seu diagnóstico em 4 movimentos estruturados.
+              </p>
+              <Button
+                size="sm"
+                className="w-full gap-2"
+                onClick={() => navigate({ to: '/clarity', search: { projectId: id } as never })}
+              >
+                <Brain className="size-4" /> Gerar Clareza
+              </Button>
+            </>
+          ) : (
+            <p className="text-small text-muted-foreground">
+              Complete uma Captura, uma Organização e inicie uma Prova (IMV em andamento) para gerar clareza operacional.
+            </p>
+          )}
+        </section>
+
+        {/* Relatório Consultivo de Projeto (PRD-plano-execucao-imv) */}
+        {entries.some((e) => e.entry_type === 'structured_P') && (() => {
+          const cooldownInfo = reportCooldown(entries, authState);
+          return (
+            <section className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="size-4 text-foreground shrink-0" />
+                <h2 className="text-label font-medium text-foreground">Relatório Consultivo</h2>
+              </div>
+              {cooldownInfo.blocked ? (
+                <div>
+                  <p className="text-[11px] text-op-gray">
+                    Próximo relatório em{' '}
+                    {cooldownInfo.nextAvailableAt?.toLocaleDateString('pt-BR')}
+                  </p>
+                  {!cooldownInfo.isPaidPlan && (
+                    <p className="text-[11px] text-brand-blue mt-1">
+                      Plano pago: relatório a cada 7 dias.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <p className="text-small text-muted-foreground">
+                    A IA lê todo o histórico do projeto e entrega uma análise consultiva.
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full gap-2"
+                    onClick={() => navigate({ to: '/report', search: { projectId: id } as never })}
+                  >
+                    <ClipboardList className="size-4" /> Gerar Relatório Consultivo
+                  </Button>
+                </>
+              )}
+            </section>
+          );
+        })()}
 
         {/* Alerta do motor */}
         {motorAlert && (

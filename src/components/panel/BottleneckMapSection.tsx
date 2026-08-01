@@ -70,8 +70,8 @@ export function BottleneckMapSection({ map }: Props) {
             Poucos dados para gerar o mapa.
           </p>
           <p className="text-label text-op-gray/70">
-            Registre ao menos 5 entradas estruturadas (C, O, P ou A) com tipo de cenário e camada
-            definidos para ativar o Mapa de Gargalos.
+            Registre ao menos 5 ciclos COPA (com IMV definida, tipo de cenário e camada)
+            para ativar o Mapa de Gargalos.
             {map.total_entries > 0 && ` (${map.total_entries} de 5 necessários)`}
           </p>
         </div>
@@ -119,7 +119,7 @@ export function BottleneckMapSection({ map }: Props) {
                       ? { backgroundColor: cellBgColor(cell.intensity) }
                       : undefined
                   }
-                  aria-label={`${SCENARIO_ABBREV[cell.scenario_type]} × ${LAYER_ABBREV[cell.layer]}: ${cell.count} entrada${cell.count !== 1 ? 's' : ''}`}
+                  aria-label={`${SCENARIO_ABBREV[cell.scenario_type]} × ${LAYER_ABBREV[cell.layer]}: ${cell.count} ciclo${cell.count !== 1 ? 's' : ''}`}
                 >
                   {cell.count > 0 && (
                     <span className="text-label font-bold text-white leading-none drop-shadow-sm">
@@ -149,7 +149,7 @@ export function BottleneckMapSection({ map }: Props) {
               </div>
             ))}
             <span className="text-label text-op-gray/70 ml-auto">
-              {map.total_entries} registro{map.total_entries !== 1 ? 's' : ''}
+              {map.total_entries} ciclo{map.total_entries !== 1 ? 's' : ''}
             </span>
           </div>
         </div>
@@ -172,8 +172,9 @@ export function BottleneckMapSection({ map }: Props) {
               <p className="text-label text-op-cyan uppercase">O que significa</p>
               <p className="text-body text-op-white">
                 Mostra onde seus gargalos se concentram cruzando tipo de cenário (linhas) com
-                camada operacional (colunas). Células mais intensas indicam maior acúmulo de
-                registros estruturados naquela combinação.
+                camada operacional (colunas). Cada número é a quantidade de ciclos COPA
+                distintos (IMVs trabalhadas) naquela combinação — não a soma de passos do
+                método. Células mais intensas indicam maior concentração de gargalos ali.
               </p>
               <p className="text-small text-op-gray mt-1">
                 Toque em uma célula colorida para ver os registros correspondentes no Diário.
@@ -185,9 +186,9 @@ export function BottleneckMapSection({ map }: Props) {
               <div className="space-y-2.5">
                 {(
                   [
-                    { intensity: 'low' as CellIntensity, label: 'Baixo', range: '1 a 2 registros' },
-                    { intensity: 'medium' as CellIntensity, label: 'Médio', range: '3 a 5 registros' },
-                    { intensity: 'high' as CellIntensity, label: 'Alto', range: '6 ou mais registros' },
+                    { intensity: 'low' as CellIntensity, label: 'Baixo', range: '1 a 2 ciclos' },
+                    { intensity: 'medium' as CellIntensity, label: 'Médio', range: '3 a 5 ciclos' },
+                    { intensity: 'high' as CellIntensity, label: 'Alto', range: '6 ou mais ciclos' },
                   ]
                 ).map(({ intensity, label, range }) => (
                   <div key={intensity} className="flex items-center gap-3">
@@ -201,8 +202,8 @@ export function BottleneckMapSection({ map }: Props) {
                 ))}
               </div>
               <p className="text-label text-op-gray">
-                Contabiliza apenas entradas do tipo C, O, P ou A com tipo de cenário e camada
-                definidos. Mínimo de 5 registros para ativar o mapa.
+                Cada ciclo é contado uma única vez pela sua IMV (Prova), com re-salvamentos
+                da mesma ação já deduplicados. Mínimo de 5 ciclos para ativar o mapa.
               </p>
             </div>
 

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
 import { BookAnchorHint } from '@/components/copa/BookAnchorHint';
 import { saveStructuredA, type StructuredAContent } from '@/lib/register';
+import { readFormDraft, useFormDraftPersist, clearFormDraft } from '@/hooks/useFormDraft';
 import { askFacilitator } from '@/engines/AssistantFacilitatorEngine';
 import { uploadEntryImage } from '@/lib/entryImages';
 import { PrincipleHighlight } from './PrincipleHighlight';
@@ -141,17 +142,37 @@ Somente depois ele investiga as possíveis causas.
 É exatamente essa disciplina que transforma experiência em inteligência operacional.`;
 
 export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing, linkedTo, userId }: Props) {
-  const [factItems, setFactItems] = useState<string[]>(() => toItems(initialData?.fact_text));
-  const [interpItems, setInterpItems] = useState<string[]>(() => toItems(initialData?.interpretation_text));
+  // Rascunho local — restaura texto digitado que não chegou a ser salvo
+  // (Voltar entre fases, saída da rota, refresh). Limpo no save com sucesso.
+  // Fotos pendentes (objetos File) não são rascunháveis — ficam de fora.
+  const [draft] = useState(() => readFormDraft<{
+    factItems: string[];
+    interpItems: string[];
+    principle: string;
+    decision: string;
+    hiddenCost: string;
+    worked: string;
+    repeatRule: string;
+    cutNext: string;
+    nextBottleneck: string;
+  }>(projectId, 'A'));
+  const [factItems, setFactItems] = useState<string[]>(() => draft?.factItems ?? toItems(initialData?.fact_text));
+  const [interpItems, setInterpItems] = useState<string[]>(() => draft?.interpItems ?? toItems(initialData?.interpretation_text));
   const fact = fromItems(factItems);
   const interp = fromItems(interpItems);
-  const [principle, setPrinciple] = useState(initialData?.principle_text ?? '');
-  const [decision, setDecision] = useState(initialData?.decision ?? '');
-  const [hiddenCost, setHiddenCost] = useState(initialData?.hidden_cost ?? '');
-  const [worked, setWorked] = useState(initialData?.what_worked ?? '');
-  const [repeatRule, setRepeatRule] = useState(initialData?.repeat_rule ?? '');
-  const [cutNext, setCutNext] = useState(initialData?.cut_rule_next ?? '');
-  const [nextBottleneck, setNextBottleneck] = useState(initialData?.next_bottleneck ?? '');
+  const [principle, setPrinciple] = useState(draft?.principle ?? initialData?.principle_text ?? '');
+  const [decision, setDecision] = useState(draft?.decision ?? initialData?.decision ?? '');
+  const [hiddenCost, setHiddenCost] = useState(draft?.hiddenCost ?? initialData?.hidden_cost ?? '');
+  const [worked, setWorked] = useState(draft?.worked ?? initialData?.what_worked ?? '');
+  const [repeatRule, setRepeatRule] = useState(draft?.repeatRule ?? initialData?.repeat_rule ?? '');
+  const [cutNext, setCutNext] = useState(draft?.cutNext ?? initialData?.cut_rule_next ?? '');
+  const [nextBottleneck, setNextBottleneck] = useState(draft?.nextBottleneck ?? initialData?.next_bottleneck ?? '');
+
+  // Espelha o que foi digitado no rascunho local (grava só após mudança real)
+  useFormDraftPersist(projectId, 'A', {
+    factItems, interpItems, principle, decision, hiddenCost,
+    worked, repeatRule, cutNext, nextBottleneck,
+  });
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [loadingAiSuggestion, setLoadingAiSuggestion] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -224,6 +245,7 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
       cut_rule_next: cutNext.trim(),
       next_bottleneck: nextBottleneck.trim(),
     }, scenarioType, currentLayer, linkedTo ?? null);
+    clearFormDraft(projectId, 'A'); // entry salva — rascunho não é mais necessário
     // Upload das fotos do Cenário Depois (silencioso — falha não bloqueia)
     if (pendingPhotos.length > 0 && userId) {
       await Promise.allSettled(

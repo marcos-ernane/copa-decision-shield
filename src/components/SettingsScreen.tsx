@@ -10,13 +10,18 @@ import { useAuthState } from '@/lib/planLimits';
 import { openStripePortal } from '@/lib/stripe';
 import { setReadingMode, emitReadingModeChange } from '@/hooks/useReadingMode';
 import { GuestStorage } from '@/lib/guestStorage';
+import { exportAllUserData } from '@/lib/exportData';
 import { PlanBadge } from './PlanBadge';
 import { LoginSheet } from './LoginSheet';
 import { UpgradeSheet } from './UpgradeSheet';
 import { TrialEndingSheet } from './TrialEndingSheet';
+import { LegalDocumentSheet } from '@/components/auth/LegalDocumentSheet';
+import { DeleteAccountDialog } from '@/components/settings/DeleteAccountDialog';
+import { getLatestAcceptances } from '@/lib/legalConsent';
+import { LEGAL_DOCUMENTS } from '@/content/legal';
 import { enablePactGlobally, disablePactGlobally } from '@/lib/pact';
 import { isProtocol5FabEnabled, setProtocol5FabEnabled } from '@/components/app/Fabs';
-import type { Profile } from '@/types/database';
+import type { LegalAcceptance, LegalDocumentType, Profile } from '@/types/database';
 import { ChevronRight } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { useNavigate, useRouter } from '@tanstack/react-router';
@@ -38,6 +43,12 @@ export function SettingsScreen() {
   const [upgrade, setUpgrade] = useState(false);
   const [p5Fab, setP5Fab] = useState(false);
   const [showLoginNudge, setShowLoginNudge] = useState(false);
+  const [openLegalDoc, setOpenLegalDoc] = useState<LegalDocumentType | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [acceptances, setAcceptances] = useState<
+    Partial<Record<LegalDocumentType, LegalAcceptance>>
+  >({});
 
   function handleBack() {
     if (router.history.length > 1) {
@@ -55,11 +66,46 @@ export function SettingsScreen() {
     if (!userId) return;
     void supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
       .then(({ data }) => setProfile((data as Profile | null) ?? null));
+    void getLatestAcceptances(userId).then(setAcceptances);
   }, [userId]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
     window.location.href = '/';
+  }
+
+  // A exportação lê 14 tabelas e assina as URLs das imagens: leva alguns
+  // segundos, então o botão precisa comunicar que está trabalhando.
+  async function handleExport() {
+    if (exporting) return;
+    setExporting(true);
+    const result = await exportAllUserData();
+    setExporting(false);
+
+    if (!result.success) {
+      toast.error(
+        result.error === 'no_session'
+          ? 'Crie uma conta para exportar seus dados.'
+          : 'Não foi possível exportar seus dados. Tente novamente.',
+        { duration: 4000 },
+      );
+      return;
+    }
+
+    // Lacuna na exportação precisa ser dita: o usuário pode estar prestes a
+    // excluir a conta achando que levou tudo.
+    if (result.errors?.length) {
+      toast.warning('Exportação parcial.', {
+        description: `Não foi possível ler: ${result.errors.join(', ')}. Tente novamente antes de excluir a conta.`,
+        duration: 8000,
+      });
+      return;
+    }
+
+    toast.success('Dados exportados.', {
+      description: `${result.tables_exported} tabelas e ${result.images_included} imagens. As URLs das imagens expiram em 7 dias.`,
+      duration: 6000,
+    });
   }
 
   async function handleManageSubscription() {
@@ -220,18 +266,50 @@ export function SettingsScreen() {
           <div className="rounded-xl border border-op-gray/30 bg-op-navy divide-y divide-op-gray/20">
             <button
               type="button"
-              className="w-full text-left px-4 py-3 text-body text-op-white hover:opacity-80 transition-opacity"
-              onClick={exportData}
+              disabled={exporting}
+              className="w-full text-left px-4 py-3 text-body text-op-white hover:opacity-80 transition-opacity disabled:opacity-50"
+              onClick={() => void handleExport()}
             >
-              Exportar dados completos
+              {exporting ? 'Exportando…' : 'Exportar dados completos'}
             </button>
+            {/* Visitante não tem conta a excluir — só dados neste aparelho.
+                O rótulo precisa dizer a verdade. [REQ-DEL-25] */}
             <button
               type="button"
               className="w-full text-left px-4 py-3 text-body text-destructive hover:opacity-80 transition-opacity"
-              onClick={requestAccountDeletion}
+              onClick={() => setShowDelete(true)}
             >
-              Excluir conta
+              {authState === 'GUEST' ? 'Apagar dados deste dispositivo' : 'Excluir conta'}
             </button>
+          </div>
+        </Section>
+
+        <Section title="Legal">
+          <div className="rounded-xl border border-op-gray/30 bg-op-navy divide-y divide-op-gray/20">
+            {(Object.keys(LEGAL_DOCUMENTS) as LegalDocumentType[]).map((type) => {
+              const accepted = acceptances[type];
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setOpenLegalDoc(type)}
+                  className="w-full px-4 py-3 flex items-center justify-between gap-3 hover:opacity-80 transition-opacity text-left"
+                >
+                  <div className="min-w-0">
+                    <p className="text-body text-op-white truncate">
+                      {LEGAL_DOCUMENTS[type].title}
+                    </p>
+                    {accepted && (
+                      <p className="text-small text-op-gray">
+                        Aceito em {formatAcceptedDate(accepted.accepted_at)} · v
+                        {accepted.version}
+                      </p>
+                    )}
+                  </div>
+                  <ChevronRight className="size-4 text-op-gray shrink-0" />
+                </button>
+              );
+            })}
           </div>
         </Section>
 
@@ -242,8 +320,27 @@ export function SettingsScreen() {
 
       <UpgradeSheet open={upgrade} onOpenChange={setUpgrade} />
       <LoginSheet open={showLoginNudge} onDismiss={() => setShowLoginNudge(false)} />
+      <LegalDocumentSheet
+        documentType={openLegalDoc}
+        onClose={() => setOpenLegalDoc(null)}
+      />
+      <DeleteAccountDialog
+        open={showDelete}
+        onOpenChange={setShowDelete}
+        isGuest={authState === 'GUEST'}
+      />
     </div>
   );
+}
+
+function formatAcceptedDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -267,39 +364,3 @@ function LinkRow({ to, label }: { to: string; label: string }) {
   );
 }
 
-async function exportData() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
-  const [entries, principles, projects, sheets] = await Promise.all([
-    supabase.from('entries').select('*').eq('user_id', session.user.id),
-    supabase.from('principles').select('*').eq('user_id', session.user.id),
-    supabase.from('projects').select('*').eq('user_id', session.user.id),
-    supabase.from('operator_sheets').select('*').eq('user_id', session.user.id),
-  ]);
-  const blob = new Blob(
-    [JSON.stringify({
-      exported_at: new Date().toISOString(),
-      entries: entries.data ?? [],
-      principles: principles.data ?? [],
-      projects: projects.data ?? [],
-      operator_sheets: sheets.data ?? [],
-    }, null, 2)],
-    { type: 'application/json' },
-  );
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `operador-precisao-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function requestAccountDeletion() {
-  const ok = confirm(
-    'Excluir conta apaga seus dados de forma irreversível. Deseja continuar?',
-  );
-  if (!ok) return;
-  void supabase.auth.signOut().then(() => {
-    window.location.href = '/';
-  });
-}

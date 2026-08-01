@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import type { IndexBreakdown } from '@/engines/IndexCalculator';
 import {
   Sheet,
   SheetContent,
@@ -27,9 +28,9 @@ const RING_INFO: Record<RingKey, RingInfo> = {
   },
   execution: {
     title: 'Execução',
-    what: 'Mede quantas IMVs testadas geraram uma Análise Pós-Ação (APA) em até 7 dias.',
-    improve: 'Após testar uma IMV, registre o Formato A com o resultado — mesmo que seja negativo. IMVs sem APA depois de 7 dias reduzem o índice em -5 pontos cada.',
-    ceiling: '100. Penalidades por IMVs abandonadas podem manter o valor baixo mesmo com muitos registros.',
+    what: 'Mede quantas IMVs testadas geraram uma Análise Pós-Ação (APA) em até 10 dias.',
+    improve: 'Após testar uma IMV, registre o Formato A com o resultado — mesmo que seja negativo. Cada IMV deixada mais de 10 dias sem APA tira -1 ponto (sem limite). Não deixe IMVs paradas: se acumularem, a penalidade pode zerar a Execução. Registre a APA ou arquive o projeto para parar a contagem negativa.',
+    ceiling: '100. A penalidade por IMVs paradas não tem teto — muitas IMVs sem APA podem manter o valor em 0 mesmo com muitos registros.',
   },
   learning: {
     title: 'Aprendizado',
@@ -83,7 +84,42 @@ interface Props {
   learning: number;
   composite: number;
   level: 'starting' | 'developing' | 'operating' | 'solid' | 'precise';
+  breakdown?: IndexBreakdown;
   className?: string;
+}
+
+// Formata a APA efetiva (pode ser fracionária por causa dos quick_reviews × 0,7).
+function fmtNum(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ',');
+}
+
+// Conta por extenso de cada anel, com os números reais do usuário.
+// Retorna uma ou mais linhas (execução pode precisar detalhar as aferições).
+function ringFormula(key: RingKey, b: IndexBreakdown): { lines: string[]; raw: number } {
+  switch (key) {
+    case 'clarity':
+      if (b.totalPulses < 3) return { lines: [`${b.totalPulses} pulso(s) — mínimo 3 para calcular = 0`], raw: 0 };
+      return { lines: [`${b.cleanPulses} fatos limpos ÷ ${b.totalPulses} pulsos × 100 = ${b.rawClarity}`], raw: b.rawClarity };
+    case 'execution': {
+      if (b.distinctIMVs === 0) return { lines: ['Nenhum IMV testado ainda = 0'], raw: 0 };
+      const lines: string[] = [];
+      // "Aferições" = APAs completas + revisões rápidas ponderadas (0,7 cada).
+      // Só detalha quando há revisões rápidas, que é o que gera a fração.
+      const numerador = b.quickReviews > 0
+        ? `${fmtNum(b.effectiveA)} aferições (${b.apas} APAs + ${b.quickReviews} revisões rápidas × 0,7)`
+        : `${b.apas} APA${b.apas !== 1 ? 's' : ''}`;
+      const pen = b.stalePenalty > 0
+        ? ` − ${b.stalePenalty} pts (${b.staleIMVs} IMV${b.staleIMVs !== 1 ? 's' : ''} parada${b.staleIMVs !== 1 ? 's' : ''} há +10 dias × 1)`
+        : '';
+      lines.push(`${numerador} ÷ ${b.distinctIMVs} IMVs × 100${pen} = ${b.rawExecution}`);
+      return { lines, raw: b.rawExecution };
+    }
+    case 'learning': {
+      const sum = b.principles * 5 + b.uniqueProjects * 10;
+      const cap = sum > 100 ? ' → limitado a 100' : '';
+      return { lines: [`${b.principles} princípios × 5 + ${b.uniqueProjects} projetos × 10 = ${sum}${cap}`], raw: b.rawLearning };
+    }
+  }
 }
 
 const LEVEL_LABEL: Record<Props['level'], string> = {
@@ -94,11 +130,12 @@ const LEVEL_LABEL: Record<Props['level'], string> = {
   precise: 'Preciso',
 };
 
-export function IndexRings({ clarity, execution, learning, composite, level, className }: Props) {
+export function IndexRings({ clarity, execution, learning, composite, level, breakdown, className }: Props) {
   const [openRing, setOpenRing] = useState<RingKey | null>(null);
   const info = openRing ? RING_INFO[openRing] : null;
 
   const values: Record<RingKey, number> = { clarity, execution, learning };
+  const calc = openRing && breakdown ? ringFormula(openRing, breakdown) : null;
 
   return (
     <>
@@ -111,6 +148,9 @@ export function IndexRings({ clarity, execution, learning, composite, level, cla
         <div className="text-center">
           <div className="text-label text-muted-foreground uppercase tracking-wide">Nível composto</div>
           <div className="text-title text-foreground">{LEVEL_LABEL[level]} · {composite}</div>
+          <div className="text-label text-muted-foreground mt-0.5">
+            (Clareza {clarity} + Execução {execution} + Aprendizado {learning}) ÷ 3 = {composite}
+          </div>
         </div>
       </div>
 
@@ -149,6 +189,32 @@ export function IndexRings({ clarity, execution, learning, composite, level, cla
                   <div className="text-label text-muted-foreground uppercase tracking-wide mb-1">Teto</div>
                   <p className="text-foreground">{info.ceiling}</p>
                 </div>
+                {calc && (
+                  <div>
+                    <div className="text-label text-muted-foreground uppercase tracking-wide mb-1">Como foi calculado</div>
+                    {calc.lines.map((line, i) => (
+                      <p key={i} className="text-foreground font-medium">{line}</p>
+                    ))}
+                    {calc.raw !== values[openRing] && (
+                      <p className="text-muted-foreground mt-1">
+                        Valor exibido: {values[openRing]}. A suavização evita quedas bruscas no
+                        mesmo dia, então o exibido sobe gradualmente até o valor calculado.
+                      </p>
+                    )}
+                  </div>
+                )}
+                {openRing === 'execution' && breakdown && breakdown.staleIMVs > 0 && (
+                  <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3">
+                    <p className="text-red-400 font-semibold text-small">
+                      ⚠ {breakdown.staleIMVs} IMV{breakdown.staleIMVs !== 1 ? 's' : ''} parada{breakdown.staleIMVs !== 1 ? 's' : ''} há mais de 10 dias
+                    </p>
+                    <p className="text-foreground mt-1">
+                      Cada uma tira 1 ponto da Execução, sem limite — por isso o índice pode chegar a 0.
+                      Registre a APA (Formato A) de cada IMV testada, ou arquive os projetos que não vai
+                      retomar, para parar a contagem negativa.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <SheetClose asChild>

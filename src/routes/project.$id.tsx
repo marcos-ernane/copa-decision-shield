@@ -37,7 +37,7 @@ function ProjectEntryRouter() {
 
       // Projetos concluídos vão direto ao Manual do Diário
       if (p.state === 'concluded') {
-        void navigate({ to: '/diary/manual', replace: true });
+        void navigate({ to: '/diary/$', params: { _splat: 'manual' }, replace: true });
         return;
       }
 

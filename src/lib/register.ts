@@ -51,6 +51,10 @@ export interface RootCauseChain {
   root_cause: string;
   completed: boolean;
   steps_taken: number; // 1-5
+  // Referência ao fato investigado (Quadro 1). Ausente em cadeias legadas —
+  // nesse caso a cadeia pertence ao primeiro fato (comportamento antigo).
+  fact_index?: number;
+  fact_text?: string;
 }
 
 export interface StructuredCContent {
@@ -58,13 +62,53 @@ export interface StructuredCContent {
   interpretation_text: string;
   hypothesis_text: string;
   imv_possible?: string;
+  /** Legado — primeira investigação (mantido para leitores antigos). */
   root_cause_chain?: RootCauseChain;
+  /** Todas as investigações — no máximo 1 por fato do Quadro 1. */
+  root_cause_chains?: RootCauseChain[];
+}
+
+export interface LeverItem {
+  id: string;                        // UUID gerado no cliente
+  idea: string;                      // a ideia avaliada — obrigatório, máx 150 chars
+  impact: boolean | null;            // Q1: muda o resultado de verdade?
+  control: boolean | null;           // Q2: consigo executar com recursos que tenho?
+  effort: boolean | null;            // Q3: esforço proporcional ao ganho?
+  repeatability: boolean | null;     // Q4: pode virar padrão?
+  measurement: boolean | null;       // Q5: consigo medir sem autoengano?
+  result: 'lever' | 'noise' | 'incomplete'; // calculado
+  no_count: number;                  // quantidade de NÃOs — calculado
+  used_as_imv?: boolean;             // marcada quando a ideia já virou IMV (Passo B) — retrocompat
+}
+
+// Inventário 4D — 3 itens por dimensão (limite rígido do livro)
+export interface Inventory4DItems {
+  item1: string;
+  item2: string;
+  item3: string;
+}
+
+export interface Inventory4D {
+  density:   Inventory4DItems;   // D — Densidade: o que tem muito?
+  direction: Inventory4DItems;   // D — Direção: para onde se move?
+  delay:     Inventory4DItems;   // D — Demora: onde existe espera?
+  desire:    Inventory4DItems;   // D — Desejo: o que as pessoas querem?
+}
+
+export interface RecombinationItem {
+  id: string;       // UUID gerado no cliente
+  idea: string;     // recombinação em uma frase — máx 200 chars
+  selected: boolean;
 }
 
 export interface StructuredOContent {
   resources: string;
   frictions: string;
   bottleneck: string;
+  lever_filter?: LeverItem[];           // Filtro de Alavanca — PRD-MOD-02
+  inventory_4d?: Inventory4D;           // Inventário 4D — PRD-MOD-03
+  recombinations?: RecombinationItem[]; // Recombinação — PRD-MOD-04
+  selected_recombination?: string;      // Ideia selecionada para pré-preencher no P
 }
 
 export interface ActionPlan {
@@ -75,6 +119,32 @@ export interface ActionPlan {
   who_is_affected: string;  // Quem é afetado — do ethical_check (ou 'Não especificado')
   how_much: string;         // Quanto custa — do cut_rule (ou 'Não especificado')
   generated_at: string;     // ISO timestamp da geração
+}
+
+export interface CostItem {
+  id: string;
+  nome: string;
+  valor: number;
+  grau: 1 | 2 | 3 | 4 | 5;
+}
+
+export interface BenefitItem {
+  id: string;
+  descricao: string;
+  grau: 1 | 2 | 3 | 4 | 5;
+}
+
+export type CostBenefitRelacao = 'FAVORÁVEL' | 'EQUILIBRADO' | 'DESFAVORÁVEL';
+
+export interface CostBenefitData {
+  custos: CostItem[];
+  beneficios: BenefitItem[];
+  total_custo: number;
+  grau_medio_custo: number;
+  grau_medio_beneficio: number;
+  relacao: CostBenefitRelacao;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface StructuredPContent {
@@ -90,6 +160,7 @@ export interface StructuredPContent {
   ethical_check?: string | null;
   execution_plan?: ExecutionPlan;
   action_plan?: ActionPlan;
+  cost_benefit?: CostBenefitData;
 }
 
 export interface StructuredAContent {
@@ -127,6 +198,23 @@ export interface DecisionRecordContent {
   review_date?: string;       // Quando revisar — opcional, ISO date
 }
 
+// ---------- Relatório Consultivo de Projeto (PRD-plano-execucao-imv) ----------
+
+export type ProjectReportType = 'diagnostic' | 'full_cycle' | 'evolution';
+
+export interface ProjectReportContent {
+  report_type: ProjectReportType;
+  complete_cycles: number;
+  summary: string;           // preview para Timeline — primeiros ~100 chars
+  section_panorama: string;
+  section_quality: string;
+  section_result: string;
+  section_critique: string;
+  section_next: string;
+  is_fallback: boolean;      // true quando gerado localmente sem IA
+  generated_at: string;      // ISO — momento da geração
+}
+
 async function insertEntry(args: {
   projectId: string;
   entry_type: EntryType | 'passive' | 'protocol_5min' | 'creative_session' | 'simulation_session' | 'copa_session' | 'pressure_session';
@@ -139,6 +227,10 @@ async function insertEntry(args: {
   layer_at_entry?: OperationalLayer | null;
   classification?: string | null;
   copa_phase?: 'C' | 'O' | 'P' | 'A' | null;
+  // Default true. false para entries de meta-atividade (ex.: project_report) que
+  // não devem contar como "atividade operacional" — não reseta o relógio de
+  // inatividade nem o cálculo de estado (blocked > 7 dias).
+  updateLastEntryAt?: boolean;
 }): Promise<Entry> {
   const { data: { session } } = await supabase.auth.getSession();
   const now = new Date().toISOString();
@@ -178,7 +270,9 @@ async function insertEntry(args: {
 
   if (!session) {
     GuestStorage.addEntry(entry);
-    GuestStorage.updateProject(args.projectId, { last_entry_at: now });
+    if (args.updateLastEntryAt !== false) {
+      GuestStorage.updateProject(args.projectId, { last_entry_at: now });
+    }
     triggerIndexUpdate();
     dispatchEntrySaved(entry);
     return entry;
@@ -203,7 +297,9 @@ async function insertEntry(args: {
     .select()
     .single();
   if (error) throw error;
-  await supabase.from('projects').update({ last_entry_at: now }).eq('id', args.projectId);
+  if (args.updateLastEntryAt !== false) {
+    await supabase.from('projects').update({ last_entry_at: now }).eq('id', args.projectId);
+  }
   triggerIndexUpdate();
   const saved = data as Entry;
   dispatchEntrySaved(saved);
@@ -364,6 +460,38 @@ export async function saveStructuredA(
   return { entry, principle, isFirstPrinciple };
 }
 
+// ---------- Cost Benefit ----------
+
+export async function updateEntryCostBenefit(
+  entryId: string,
+  costBenefit: CostBenefitData,
+): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    const entries = GuestStorage.getEntries();
+    const entry = entries.find((e) => e.id === entryId);
+    if (!entry) return;
+    GuestStorage.updateEntry(entryId, {
+      content: { ...entry.content, cost_benefit: costBenefit },
+    });
+    return;
+  }
+
+  const { data: current, error: fetchError } = await supabase
+    .from('entries')
+    .select('content')
+    .eq('id', entryId)
+    .single();
+  if (fetchError || !current) return;
+
+  const { error } = await supabase
+    .from('entries')
+    .update({ content: { ...(current.content as Record<string, unknown>), cost_benefit: costBenefit } })
+    .eq('id', entryId);
+  if (error) throw error;
+}
+
 // ---------- Execution Plan ----------
 
 export async function updateEntryExecutionPlan(
@@ -392,6 +520,130 @@ export async function updateEntryExecutionPlan(
   const { error } = await supabase
     .from('entries')
     .update({ content: { ...(current.content as Record<string, unknown>), execution_plan: plan } })
+    .eq('id', entryId);
+  if (error) throw error;
+}
+
+// ---------- Lever Filter ----------
+
+export async function updateEntryLeverFilter(
+  entryId: string,
+  leverFilter: LeverItem[],
+): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    const entries = GuestStorage.getEntries();
+    const entry = entries.find((e) => e.id === entryId);
+    if (!entry) return;
+    GuestStorage.updateEntry(entryId, {
+      content: { ...entry.content, lever_filter: leverFilter },
+    });
+    return;
+  }
+
+  const { data: current, error: fetchError } = await supabase
+    .from('entries')
+    .select('content')
+    .eq('id', entryId)
+    .single();
+  if (fetchError || !current) return;
+
+  const { error } = await supabase
+    .from('entries')
+    .update({ content: { ...(current.content as Record<string, unknown>), lever_filter: leverFilter } })
+    .eq('id', entryId);
+  if (error) throw error;
+}
+
+// ---------- Selected Recombination ----------
+
+// Upsert: se a ideia já existe em recombinations, marca como selecionada.
+// Se não existe (foi digitada diretamente no Filtro de Alavanca), insere como nova entrada selecionada.
+function applySelectedRecombination(
+  existing: RecombinationItem[],
+  selectedIdea: string,
+): RecombinationItem[] {
+  const trimmed = selectedIdea.trim();
+  const alreadyExists = existing.some((r) => r.idea.trim() === trimmed);
+  const base = alreadyExists
+    ? existing
+    : [...existing, { id: crypto.randomUUID(), idea: trimmed, selected: false }];
+  return base.map((r) => ({ ...r, selected: r.idea.trim() === trimmed }));
+}
+
+export async function updateEntrySelectedRecombination(
+  entryId: string,
+  selectedIdea: string,
+): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    const entries = GuestStorage.getEntries();
+    const entry = entries.find((e) => e.id === entryId);
+    if (!entry) return;
+    const content = entry.content as Record<string, unknown>;
+    const recs = (content.recombinations as RecombinationItem[] | undefined) ?? [];
+    GuestStorage.updateEntry(entryId, {
+      content: {
+        ...content,
+        selected_recombination: selectedIdea,
+        recombinations: applySelectedRecombination(recs, selectedIdea),
+      },
+    });
+    return;
+  }
+
+  const { data: current, error: fetchError } = await supabase
+    .from('entries')
+    .select('content')
+    .eq('id', entryId)
+    .single();
+  if (fetchError || !current) return;
+
+  const content = current.content as Record<string, unknown>;
+  const recs = (content.recombinations as RecombinationItem[] | undefined) ?? [];
+  const { error } = await supabase
+    .from('entries')
+    .update({
+      content: {
+        ...content,
+        selected_recombination: selectedIdea,
+        recombinations: applySelectedRecombination(recs, selectedIdea),
+      },
+    })
+    .eq('id', entryId);
+  if (error) throw error;
+}
+
+// ---------- Inventory 4D ----------
+
+export async function updateEntryInventory4d(
+  entryId: string,
+  inventory4d: Inventory4D,
+): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    const entries = GuestStorage.getEntries();
+    const entry = entries.find((e) => e.id === entryId);
+    if (!entry) return;
+    GuestStorage.updateEntry(entryId, {
+      content: { ...entry.content, inventory_4d: inventory4d },
+    });
+    return;
+  }
+
+  const { data: current, error: fetchError } = await supabase
+    .from('entries')
+    .select('content')
+    .eq('id', entryId)
+    .single();
+  if (fetchError || !current) return;
+
+  const { error } = await supabase
+    .from('entries')
+    .update({ content: { ...(current.content as Record<string, unknown>), inventory_4d: inventory4d } })
     .eq('id', entryId);
   if (error) throw error;
 }
@@ -430,6 +682,26 @@ export async function saveQuickReview(
     copa_phase: 'A',
     scenario_type_at_entry: scenarioType ?? null,
     layer_at_entry: layerAtEntry ?? null,
+  });
+}
+
+// ---------- Relatório Consultivo de Projeto (PRD-plano-execucao-imv) ----------
+
+export async function saveProjectReport(
+  projectId: string,
+  content: ProjectReportContent,
+  scenarioType?: ScenarioType | null,
+): Promise<Entry> {
+  return insertEntry({
+    projectId,
+    entry_type: 'project_report',
+    content: content as unknown as Record<string, unknown>,
+    is_clean_fact: false,
+    copa_phase: null,
+    scenario_type_at_entry: scenarioType ?? null,
+    // Meta-atividade: gerar/salvar relatório não conta como atividade operacional
+    // — não reseta o relógio de inatividade nem o estado "Travado > 7 dias".
+    updateLastEntryAt: false,
   });
 }
 
@@ -472,6 +744,20 @@ export async function savePassive(
       is_clean_fact: false,
     });
   } catch { /* noop — registro passivo nunca quebra UI */ }
+}
+
+// ---------- Clareza Operacional — Módulo 9 (PRD-MOD-09 v2.0) ----------
+
+export async function saveClaritySession(
+  projectId: string,
+  blocks: { m1: string; m2: string; m3: string; m4: string },
+): Promise<void> {
+  await insertEntry({
+    projectId,
+    entry_type: 'passive',
+    content: { kind: 'clarity_session', ...blocks },
+    is_clean_fact: false,
+  });
 }
 
 // ---------- Protocol 5 Minutos (Sprint 16) ----------

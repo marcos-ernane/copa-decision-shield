@@ -67,7 +67,7 @@ export function WeeklyReport() {
 
           <button
             type="button"
-            onClick={() => void navigate({ to: '/diary/principles' })}
+            onClick={() => void navigate({ to: '/diary/$', params: { _splat: 'principles' } })}
             className="block text-left text-op-cyan hover:underline transition-colors"
           >
             {data.principles} princípios extraídos esta semana → ver banco

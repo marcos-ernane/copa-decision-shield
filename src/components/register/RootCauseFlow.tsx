@@ -121,6 +121,12 @@ export function RootCauseFlow({ factText, onComplete, onSkip }: RootCauseFlowPro
           </button>
         </div>
 
+        {/* Fato sob investigação — contexto fixo */}
+        <div className="rounded-md border border-op-gray/20 bg-op-navy px-3 py-2">
+          <p className="text-label text-op-gray uppercase">Fato investigado</p>
+          <p className="text-small text-op-white/80 leading-snug">{factText}</p>
+        </div>
+
         {/* Progress indicator */}
         <p className="text-small text-op-gray">
           Passo {stepNumber} de até {ROOT_CAUSE_MAX_STEPS}
@@ -160,24 +166,25 @@ export function RootCauseFlow({ factText, onComplete, onSkip }: RootCauseFlowPro
           )}
         </div>
 
-        {/* "Esta é a causa raiz" — ghost, full width */}
-        <Button
-          variant="outline"
-          className="w-full"
-          disabled={!canAdvance}
-          onClick={handleDeclareRoot}
-        >
-          Esta é a causa raiz
-        </Button>
-
-        {/* "Próximo porquê" / "Concluir análise" — brand-blue, full width */}
-        <Button
-          className="w-full"
-          disabled={!canAdvance}
-          onClick={handleNext}
-        >
-          {isFinalStep ? 'Concluir análise' : 'Próximo porquê →'}
-        </Button>
+        {/* Ações lado a lado — continuar (primário, âmbar) à esquerda; declarar
+            causa raiz (outline) à direita. */}
+        <div className="flex gap-2">
+          <Button
+            className="flex-1"
+            disabled={!canAdvance}
+            onClick={handleNext}
+          >
+            {isFinalStep ? 'Concluir análise' : 'Investigar mais'}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1"
+            disabled={!canAdvance}
+            onClick={handleDeclareRoot}
+          >
+            Esta é a causa raiz
+          </Button>
+        </div>
 
         {/* Skip — ghost small, footer */}
         <button

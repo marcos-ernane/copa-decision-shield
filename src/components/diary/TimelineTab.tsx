@@ -1,14 +1,19 @@
-import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
-import { Inbox as InboxIcon, X, LayoutList, List } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { Inbox as InboxIcon, X, BarChart2, Filter, ChevronDown, ChevronRight, FilePlus2, ClipboardList } from 'lucide-react';
 import { Link, useSearch } from '@tanstack/react-router';
 import { buildOperationalView } from '@/lib/operationalView';
 import { ProjectSection } from './ProjectSection';
 import type { Entry } from '@/types/database';
 import { usePanelData } from '@/hooks/usePanelData';
+import { useReadingMode } from '@/hooks/useReadingMode';
 import type { ScenarioType, OperationalLayer, ExecutionPlan } from '@/types/app';
-import type { RootCauseChain, ActionPlan } from '@/lib/register';
+import type { RootCauseChain, ActionPlan, CostBenefitData, LeverItem, Inventory4D, RecombinationItem } from '@/lib/register';
+import { updateEntryCostBenefit } from '@/lib/register';
+import { formatCurrency, corRelacao } from '@/lib/costBenefit';
 import { getPhaseTimeState } from '@/lib/executionPlan';
 import { ActionPlanSheet } from '@/components/project/ActionPlanSheet';
+import { CostBenefitSheet } from '@/components/register/CostBenefitSheet';
+import { Button } from '@/components/ui/button';
 import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import { EditZoneGuard } from '@/components/EditZoneGuard';
@@ -35,6 +40,7 @@ const ENTRY_TYPES = [
   { v: 'quick_review',       label: 'Revisão'      },
   { v: 'corrective',         label: 'Corretiva'    },
   { v: 'decision_record',    label: 'Decisão'      },
+  { v: 'project_report',     label: 'Relatório'    },
   { v: 'copa_session',       label: 'COPA'         },
   { v: 'protocol_5min',      label: '5 Min'        },
   { v: 'creative_session',   label: 'Criativo'     },
@@ -48,9 +54,6 @@ const PERIODS = [
 ] as const;
 
 const ACTIVE_STATES = new Set(['new', 'capturing', 'organizing', 'proving', 'blocked']);
-
-const DIARY_VIEW_KEY = 'aop.diary.timeline_view';
-type DiaryView = 'operational' | 'flat';
 
 // Tipos cuja letra (C/O/P/A) já aparece no cabeçalho da PhaseSection — redundante repetir no card
 const PHASE_NATIVE_TYPES = new Set(['structured_C', 'structured_O', 'structured_P', 'structured_A']);
@@ -70,6 +73,10 @@ function entryPreview(e: Entry): string {
 
   if (e.entry_type === 'decision_record') {
     return (c.decision as string) || '—';
+  }
+
+  if (e.entry_type === 'project_report') {
+    return (c.summary as string) || 'Relatório consultivo gerado pela IA';
   }
 
   return (
@@ -100,6 +107,7 @@ const TYPE_ICON: Record<string, string> = {
   passive: '·',
   quick_review: 'R',
   decision_record: '◈',
+  project_report: '▤',
   inbox: '⊡', // rendered via Lucide Inbox component in JSX
 };
 
@@ -118,6 +126,7 @@ const TYPE_LABEL: Record<string, string> = {
   simulation_session: 'Simulação',
   quick_review: 'Revisão Rápida',
   decision_record: 'Decisão',
+  project_report: 'Relatório Consultivo',
   inbox: 'Captura Universal',
 };
 
@@ -134,6 +143,7 @@ export function TimelineTab() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const search = useSearch({ strict: false }) as { projectId?: string; type?: string; scenario_type?: string; layer?: string };
   const { entries, projects, refresh } = usePanelData();
+  const readingMode = useReadingMode();
   // 'none' = nenhuma seleção ainda → timeline vazia até o usuário escolher
   const [project, setProject] = useState<string>(search.projectId ?? 'none');
   // [REQ-BM-06] Inicializa com filtros vindos do Mapa de Gargalos (scenario_type e layer via URL)
@@ -145,12 +155,9 @@ export function TimelineTab() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [expandedChain, setExpandedChain] = useState<string | null>(null);
   const [activeActionPlan, setActiveActionPlan] = useState<{ plan: ActionPlan; imv: string } | null>(null);
+  const [activeCostBenefit, setActiveCostBenefit] = useState<{ entryId: string; data: CostBenefitData; imv: string } | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<DiaryView>(() => {
-    const saved = localStorage.getItem(DIARY_VIEW_KEY);
-    return saved === 'operational' || saved === 'flat' ? saved : 'operational';
-  });
 
   const { userId } = useAuthState();
 
@@ -341,27 +348,12 @@ export function TimelineTab() {
     };
   }, [filtered]);
 
+  // A Timeline é sempre Visão Operacional (a antiga visão "Lista" plana foi aposentada).
   const operationalView = useMemo(() => {
-    if (view !== 'operational') return null;
     return buildOperationalView(deduped.map((d) => d.entry), projectMap);
-  }, [view, deduped, projectMap]);
+  }, [deduped, projectMap]);
 
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? '—';
-
-  // firstOccurrenceByProject: entryId da primeira entrada de cada projeto na lista deduped.
-  // Usado para renderizar a seção de fotos uma única vez por projeto no flat view.
-  const firstOccurrenceByProject = useMemo(() => {
-    const map = new Map<string, string>(); // projectId → first entryId
-    for (const { entry } of deduped) {
-      if (!map.has(entry.project_id)) map.set(entry.project_id, entry.id);
-    }
-    return map;
-  }, [deduped]);
-
-  function handleViewChange(newView: DiaryView) {
-    setView(newView);
-    localStorage.setItem(DIARY_VIEW_KEY, newView);
-  }
 
   function renderEntryCard(e: Entry, count = 1, inOperationalView = false): React.ReactNode {
     const isPhaseNative = inOperationalView && PHASE_NATIVE_TYPES.has(e.entry_type);
@@ -380,6 +372,13 @@ export function TimelineTab() {
             {count > 1 && (
               <span className="ml-1 rounded-full bg-op-navy-elevated border border-op-gray/30 text-op-gray px-1.5 py-0.5" style={{ fontSize: 10 }}>
                 ×{count}
+              </span>
+            )}
+            {e.entry_type === 'structured_O' && (
+              <span className="ml-auto">
+                {expanded === e.id
+                  ? <ChevronDown className="size-3.5 text-op-gray" />
+                  : <ChevronRight className="size-3.5 text-op-gray" />}
               </span>
             )}
           </div>
@@ -412,35 +411,153 @@ export function TimelineTab() {
               );
             }
 
-            // structured_O — exibe R1 Recursos / R2 Ruídos / R3 Restrições
+            // structured_O — Inventário 4D (se existir) ou Mapa 3R + Filtro de Alavanca
             if (e.entry_type === 'structured_O') {
-              const rFields = [
-                { label: 'R1 — Recursos',    value: (c.resources as string) || '' },
-                { label: 'R2 — Ruídos',      value: (c.frictions as string) || '' },
-                { label: 'R3 — Restrições',  value: (c.bottleneck as string) || '' },
-              ].filter((f) => f.value.trim());
-              if (rFields.length > 0) {
+              const inv4d = (c as { inventory_4d?: Inventory4D }).inventory_4d;
+              const leverFilter = (c as { lever_filter?: LeverItem[] }).lever_filter;
+              const recombinations = (c as { recombinations?: RecombinationItem[] }).recombinations?.filter((r) => r.idea.trim()) ?? null;
+
+              if (inv4d) {
+                // ── Modo 4D ──
+                const INV_LABELS: Array<{ key: keyof Inventory4D; label: string }> = [
+                  { key: 'density',   label: 'D — Densidade'  },
+                  { key: 'direction', label: 'D — Direção'    },
+                  { key: 'delay',     label: 'D — Demora'     },
+                  { key: 'desire',    label: 'D — Desejo'     },
+                ];
+                const inv4dFields = INV_LABELS.map(({ key, label }) => ({
+                  label,
+                  items: [inv4d[key].item1, inv4d[key].item2, inv4d[key].item3].filter(Boolean),
+                })).filter((f) => f.items.length > 0);
+
+                // collapsed: apenas o primeiro campo; expanded: todos
+                const visibleFields = isExp ? inv4dFields : inv4dFields.slice(0, 1);
+                const hiddenFields  = isExp ? 0 : inv4dFields.length - 1;
+
                 return (
                   <div className="mt-1 space-y-1.5">
-                    {rFields.map((f, i) => {
-                      const items = f.value.split('\n').filter(Boolean);
-                      const visible = isExp ? items : items.slice(0, 2);
-                      const extra = isExp ? 0 : items.length - 2;
+                    {visibleFields.map((f, i) => {
+                      const visibleItems = isExp ? f.items : f.items.slice(0, 2);
+                      const extraItems   = isExp ? 0 : f.items.length - 2;
                       return (
                         <div key={i} className={i > 0 ? 'pt-1 border-t border-op-gray/10' : ''}>
                           <p className="text-label text-op-gray mb-0.5">{f.label}</p>
-                          {visible.map((item, j) => (
+                          {visibleItems.map((item, j) => (
                             <p key={j} className="text-small text-op-white/70 leading-snug pl-2">· {item}</p>
                           ))}
-                          {extra > 0 && (
-                            <p className="text-label text-op-gray pl-2">+{extra} item{extra > 1 ? 'ns' : ''}</p>
+                          {extraItems > 0 && (
+                            <p className="text-label text-op-gray pl-2">+{extraItems} item{extraItems > 1 ? 'ns' : ''}</p>
                           )}
                         </div>
                       );
                     })}
+                    {hiddenFields > 0 && (
+                      <p className="text-label text-op-gray">
+                        +{hiddenFields} dimensão{hiddenFields > 1 ? 'ões' : ''}
+                      </p>
+                    )}
+                    {isExp && recombinations && recombinations.length > 0 && (
+                      <div className="pt-1 border-t border-op-gray/10">
+                        <p className="text-[10px] text-op-gray uppercase tracking-wide mb-1">Recombinação</p>
+                        {recombinations.map((rec, i) => (
+                          <div key={rec.id} className="flex items-start gap-2 pl-2 mb-0.5">
+                            <span className="text-label text-op-gray shrink-0 mt-0.5">{i + 1}.</span>
+                            <span
+                              className={`text-small flex-1 leading-snug ${rec.selected ? 'font-medium' : 'text-op-white/70'}`}
+                              style={rec.selected ? { color: '#16A34A' } : undefined}
+                            >
+                              {rec.idea}
+                            </span>
+                            {rec.selected && (
+                              <span className="text-label font-semibold shrink-0" style={{ color: '#16A34A' }}>✓</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               }
+
+              // ── Modo 3R ──
+              const rFields = [
+                { label: 'R1 — Recursos',   items: ((c.resources  as string) || '').split('\n').filter(Boolean) },
+                { label: 'R2 — Ruídos',     items: ((c.frictions  as string) || '').split('\n').filter(Boolean) },
+                { label: 'R3 — Restrições', items: ((c.bottleneck as string) || '').split('\n').filter(Boolean) },
+              ].filter((f) => f.items.length > 0);
+
+              // collapsed: apenas o primeiro campo; expanded: todos
+              const visibleRFields = isExp ? rFields : rFields.slice(0, 1);
+              const hiddenRFields  = isExp ? 0 : rFields.length - 1;
+
+              return (
+                <div className="mt-1 space-y-1.5">
+                  {visibleRFields.map((f, i) => {
+                    const visibleItems = isExp ? f.items : f.items.slice(0, 2);
+                    const extraItems   = isExp ? 0 : f.items.length - 2;
+                    return (
+                      <div key={i} className={i > 0 ? 'pt-1 border-t border-op-gray/10' : ''}>
+                        <p className="text-label text-op-gray mb-0.5">{f.label}</p>
+                        {visibleItems.map((item, j) => (
+                          <p key={j} className="text-small text-op-white/70 leading-snug pl-2">· {item}</p>
+                        ))}
+                        {extraItems > 0 && (
+                          <p className="text-label text-op-gray pl-2">+{extraItems} item{extraItems > 1 ? 'ns' : ''}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {hiddenRFields > 0 && (
+                    <p className="text-label text-op-gray">
+                      +{hiddenRFields} campo{hiddenRFields > 1 ? 's' : ''}
+                    </p>
+                  )}
+                  {isExp && recombinations && recombinations.length > 0 && (
+                    <div className="pt-1 border-t border-op-gray/10">
+                      <p className="text-[10px] text-op-gray uppercase tracking-wide mb-1">Recombinação</p>
+                      {recombinations.map((rec, i) => (
+                        <div key={rec.id} className="flex items-start gap-2 pl-2 mb-0.5">
+                          <span className="text-label text-op-gray shrink-0 mt-0.5">{i + 1}.</span>
+                          <span
+                            className={`text-small flex-1 leading-snug ${rec.selected ? 'font-medium' : 'text-op-white/70'}`}
+                            style={rec.selected ? { color: '#16A34A' } : undefined}
+                          >
+                            {rec.idea}
+                          </span>
+                          {rec.selected && (
+                            <span className="text-label font-semibold shrink-0" style={{ color: '#16A34A' }}>✓</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {isExp && leverFilter && leverFilter.length > 0 && (
+                    <div className="pt-1 border-t border-op-gray/10">
+                      <p className="text-[10px] text-op-gray uppercase tracking-wide mb-1">FILTRO DE ALAVANCA</p>
+                      {leverFilter.map((lf) => (
+                        <div key={lf.id} className="flex items-center gap-2 pl-2 mb-0.5">
+                          <span className="text-small text-op-white/70 flex-1 leading-snug truncate">{lf.idea}</span>
+                          <span className={`text-label font-semibold flex-shrink-0 ${
+                            lf.result === 'lever' ? 'text-brand-green'
+                            : lf.result === 'noise' ? 'text-brand-red'
+                            : 'text-op-gray'
+                          }`}>
+                            {lf.result === 'lever' ? 'ALAVANCA' : lf.result === 'noise' ? 'RUÍDO' : '—'}
+                          </span>
+                        </div>
+                      ))}
+                      <Link
+                        to="/lever-filter"
+                        search={{ entryId: e.id }}
+                        className="flex items-center gap-1 mt-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
+                      >
+                        <Filter className="size-3.5" />
+                        Ver filtro completo
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
             }
 
             // structured_C — exibe Quadro 1 Fatos / Quadro 2 Interpretações / Quadro 3 Hipóteses
@@ -485,6 +602,32 @@ export function TimelineTab() {
               <span className="inline-flex items-center rounded-full border border-op-gray/30 bg-op-navy text-op-gray text-label px-2 py-0.5">
                 {TYPE_LABEL[e.entry_type]}
               </span>
+            )}
+            {/* Badges de modo para structured_O — Mapa 3R ou Inventário 4D [REQ-4D-14] */}
+            {e.entry_type === 'structured_O' && (
+              (e.content as { inventory_4d?: Inventory4D }).inventory_4d ? (
+                <span
+                  className="inline-flex items-center rounded-full text-label px-2 py-0.5"
+                  style={{
+                    backgroundColor: 'rgba(14,165,233,0.10)',
+                    color: 'var(--color-brand-cyan, #0EA5E9)',
+                    border: '1px solid rgba(14,165,233,0.30)',
+                  }}
+                >
+                  Inventário 4D
+                </span>
+              ) : (
+                <span
+                  className="inline-flex items-center rounded-full text-label px-2 py-0.5"
+                  style={{
+                    backgroundColor: 'rgba(22,163,74,0.10)',
+                    color: 'var(--color-brand-green, #16A34A)',
+                    border: '1px solid rgba(22,163,74,0.30)',
+                  }}
+                >
+                  Mapa 3R
+                </span>
+              )
             )}
             {e.entry_type === 'inbox' && (
               <span className="inline-flex items-center rounded-full border border-op-cyan/40 bg-op-navy text-op-cyan text-label px-2 py-0.5">
@@ -549,7 +692,10 @@ export function TimelineTab() {
             );
           })()}
         </div>
-        {expanded === e.id && (
+        {/* Área expandida (ações + detalhes). Não renderiza para o Relatório
+            Consultivo (project_report): não há ações aplicáveis nem detalhes extras.
+            O resumo completo já aparece ao expandir (fora desta área). */}
+        {expanded === e.id && e.entry_type !== 'project_report' && (
           <div className="mt-3 pt-3 border-t border-border space-y-3">
             {/* Ações — sempre no topo para fácil acesso */}
             <div className="flex gap-3">
@@ -580,10 +726,13 @@ export function TimelineTab() {
                 )}
               </EditZoneGuard>
             </div>
-            {/* Cadeia de causa raiz — accordion (REQ-RC-18) */}
+            {/* Cadeias de causa raiz — accordion (REQ-RC-18). Plural com fallback
+                ao campo singular legado; cada cadeia é rotulada pelo fato investigado. */}
             {e.entry_type === 'structured_C' && (() => {
-              const chain = (e.content as { root_cause_chain?: RootCauseChain }).root_cause_chain;
-              if (!chain?.completed) return null;
+              const c = e.content as { root_cause_chains?: RootCauseChain[]; root_cause_chain?: RootCauseChain };
+              const chains = (c.root_cause_chains ?? (c.root_cause_chain ? [c.root_cause_chain] : []))
+                .filter((ch) => ch?.completed);
+              if (!chains.length) return null;
               const open = expandedChain === e.id;
               return (
                 <div className="space-y-2">
@@ -592,20 +741,29 @@ export function TimelineTab() {
                     onClick={() => setExpandedChain(open ? null : e.id)}
                     className="flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
                   >
-                    {open ? '▾' : '▸'} Ver cadeia de causa raiz
+                    {open ? '▾' : '▸'} Ver investigação de causa raiz{chains.length > 1 ? ` (${chains.length} fatos)` : ''}
                   </button>
                   {open && (
-                    <div className="space-y-1.5 pl-3 border-l-2 border-op-gray/20">
-                      {chain.steps.map((s) => (
-                        <p key={s.step_number} className="text-small leading-snug">
-                          <span className="text-op-white/60">{s.question}</span>
-                          {' → '}
-                          <span className="text-op-white/80">{s.answer}</span>
-                        </p>
+                    <div className="space-y-3">
+                      {chains.map((chain, ci) => (
+                        <div key={ci} className="space-y-1.5 pl-3 border-l-2 border-op-gray/20">
+                          {chain.fact_text && (
+                            <p className="text-label text-op-gray uppercase leading-snug">
+                              Fato: <span className="normal-case">{chain.fact_text}</span>
+                            </p>
+                          )}
+                          {chain.steps.map((s) => (
+                            <p key={s.step_number} className="text-small leading-snug">
+                              <span className="text-op-white/60">{s.question}</span>
+                              {' → '}
+                              <span className="text-op-white/80">{s.answer}</span>
+                            </p>
+                          ))}
+                          <p className="text-small font-medium text-op-white/90 pt-1">
+                            Causa raiz: {chain.root_cause}
+                          </p>
+                        </div>
                       ))}
-                      <p className="text-small font-medium text-op-white/90 pt-1">
-                        Causa raiz: {chain.root_cause}
-                      </p>
                     </div>
                   )}
                 </div>
@@ -624,6 +782,27 @@ export function TimelineTab() {
                 >
                   Ver Plano de Ação 5W2H
                 </button>
+              );
+            })()}
+            {/* Análise de Custo/Benefício */}
+            {e.entry_type === 'structured_P' && (() => {
+              const cb = (e.content as { cost_benefit?: CostBenefitData }).cost_benefit;
+              if (!cb) return null;
+              const imv = (e.content as { action?: string }).action ?? '';
+              return (
+                <div className="mt-1 space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setActiveCostBenefit({ entryId: e.id, data: cb, imv })}
+                    className="flex items-center gap-1 text-label text-[color:var(--color-brand-blue)] hover:underline"
+                  >
+                    <BarChart2 className="size-3.5" />
+                    Ver análise de custo/benefício
+                  </button>
+                  <span className={`text-[11px] ${corRelacao(cb.relacao)}`}>
+                    {cb.relacao} · {formatCurrency(cb.total_custo)}
+                  </span>
+                </div>
               );
             })()}
             {/* Decisão Importante — campos detalhados */}
@@ -668,7 +847,14 @@ export function TimelineTab() {
 
   return (
     <div className="space-y-3">
-      <div className="space-y-2">
+      {/* Legenda + seletor de projeto ficam fixos logo abaixo do cabeçalho do
+          Diário (top = altura real medida em DiaryShell, respeita safe-area).
+          Assim o operador troca de projeto a qualquer momento, sem rolar de volta.
+          -mx-4/px-4 compensam o padding do container para o fundo cobrir a largura. */}
+      <div
+        className="sticky z-[45] -mx-4 -mt-4 px-4 pt-1.5 pb-2 space-y-2 border-b border-border"
+        style={{ top: 'var(--diary-header-h, 0px)', backgroundColor: '#070C12' }}
+      >
         {/* Legenda de cores do seletor */}
         <div className="flex items-center gap-4 text-label text-op-gray">
           <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-success shrink-0" />Ativo</span>
@@ -697,7 +883,7 @@ export function TimelineTab() {
           </button>
 
           {dropdownOpen && (
-            <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl border border-op-gray/30 bg-op-navy shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+            <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl border border-op-gray/30 bg-op-navy shadow-lg overflow-hidden max-h-[65vh] overflow-y-auto">
               <button
                 type="button"
                 onClick={() => { setProject('none'); setDropdownOpen(false); }}
@@ -730,35 +916,10 @@ export function TimelineTab() {
             </div>
           )}
         </div>
+      </div>
 
-        {/* Toggle Visão Operacional / Lista [REQ-VO-16..18] */}
-        <div className="flex rounded-lg overflow-hidden border border-op-gray/30">
-          <button
-            type="button"
-            onClick={() => handleViewChange('operational')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-label transition-colors ${
-              view === 'operational'
-                ? 'bg-[color:var(--color-brand-blue)] text-white font-semibold'
-                : 'bg-transparent text-op-gray hover:text-op-white'
-            }`}
-          >
-            <LayoutList className="size-3.5 shrink-0" />
-            Visão Operacional
-          </button>
-          <button
-            type="button"
-            onClick={() => handleViewChange('flat')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-label transition-colors border-l border-op-gray/30 ${
-              view === 'flat'
-                ? 'bg-[color:var(--color-brand-blue)] text-white font-semibold'
-                : 'bg-transparent text-op-gray hover:text-op-white'
-            }`}
-          >
-            <List className="size-3.5 shrink-0" />
-            Lista
-          </button>
-        </div>
-
+      {/* Filtros e ações — rolam normalmente, passando por baixo da área fixa */}
+      <div className="space-y-2">
         <div className="space-y-0.5">
           <p className="text-label text-op-gray uppercase tracking-wide">Período</p>
           <div className="flex gap-1">
@@ -882,10 +1043,39 @@ export function TimelineTab() {
             </div>
           )}
         </div>
+
+        {/* Ações do projeto selecionado — lado a lado, estilo primário (âmbar,
+            mesmo padrão do "Gerar Clareza"). Posicionadas ABAIXO dos filtros e logo
+            ACIMA da barra do projeto/lançamentos (ordem lógica). Só com projeto
+            específico escolhido e fora do Modo Leitura.
+            Ordem: "Ver Relatório" (esquerda) → "Editar Projeto".
+            Editar Projeto abre o Registro Estruturado (fase aberta ou seletor C/O/P/A). */}
+        {selectedProject && !readingMode && (
+          <div className="flex gap-2">
+            <Button asChild className="flex-1 gap-2">
+              <Link
+                to="/report"
+                search={{ projectId: selectedProject.id, entryId: undefined }}
+              >
+                <ClipboardList className="size-4 shrink-0" />
+                Ver Relatório
+              </Link>
+            </Button>
+            <Button asChild className="flex-1 gap-2">
+              <Link
+                to="/register/structured"
+                search={{ projectId: selectedProject.id, format: undefined, linkedTo: undefined, inboxEntryId: undefined, inboxText: undefined, step: undefined }}
+              >
+                <FilePlus2 className="size-4 shrink-0" />
+                Editar Projeto
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* ── Entry display — Visão Operacional ou Lista Plana [REQ-VO-16..22] ── */}
-      {view === 'operational' && operationalView ? (
+      {/* ── Entry display — Visão Operacional [REQ-VO-16..22] ── */}
+      {operationalView && (
         project === 'none' ? (
           <p className="text-small text-op-gray text-center py-6">
             Escolha um projeto para ver os registros.
@@ -910,27 +1100,6 @@ export function TimelineTab() {
             ))}
           </div>
         )
-      ) : (
-        <ul className="space-y-2">
-          {deduped.length === 0 && (
-            <li className="text-small text-op-gray text-center py-6">
-              {project === 'none' ? 'Escolha um projeto para ver os registros.' : 'Nenhum registro.'}
-            </li>
-          )}
-          {deduped.map(({ entry: e, count }) => (
-            <Fragment key={e.id}>
-              {/* Seção de fotos Antes/Depois — uma vez por projeto, antes da primeira entry */}
-              {firstOccurrenceByProject.get(e.project_id) === e.id && userId && (
-                <li>
-                  <ProjectScenarioPhotos projectId={e.project_id} userId={userId} />
-                </li>
-              )}
-              <li>
-                {renderEntryCard(e, count)}
-              </li>
-            </Fragment>
-          ))}
-        </ul>
       )}
 
       {activeActionPlan && (
@@ -938,6 +1107,19 @@ export function TimelineTab() {
           plan={activeActionPlan.plan}
           imvTitle={activeActionPlan.imv}
           onClose={() => setActiveActionPlan(null)}
+        />
+      )}
+
+      {activeCostBenefit && (
+        <CostBenefitSheet
+          isOpen
+          onClose={() => setActiveCostBenefit(null)}
+          onSave={async (updated) => {
+            await updateEntryCostBenefit(activeCostBenefit.entryId, updated);
+            setActiveCostBenefit(null);
+          }}
+          initialData={activeCostBenefit.data}
+          imvTitle={activeCostBenefit.imv}
         />
       )}
 

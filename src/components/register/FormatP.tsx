@@ -2,14 +2,17 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { X, CircleHelp, Plus, ChevronDown, ListChecks } from 'lucide-react';
+import { X, CircleHelp, Plus, ChevronDown, ListChecks, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceInput } from '@/components/copa/VoiceInput';
-import { saveStructuredP, savePassive, updateEntryExecutionPlan, type StructuredPContent } from '@/lib/register';
+import { saveStructuredP, savePassive, updateEntryExecutionPlan, type StructuredPContent, type CostBenefitData } from '@/lib/register';
+import { readFormDraft, useFormDraftPersist, clearFormDraft } from '@/hooks/useFormDraft';
 import { createPlan } from '@/lib/executionPlan';
 import { updateProject } from '@/lib/projects';
+import { formatCurrency } from '@/lib/costBenefit';
 import { ExecutionPlanInvite } from '@/components/copa/ExecutionPlanInvite';
+import { CostBenefitSheet } from '@/components/register/CostBenefitSheet';
 import { StepDots } from './StepDots';
 import type { Entry } from '@/types/database';
 import {
@@ -41,6 +44,29 @@ const METRIC_HELP_TEXT = [
 const CUT_RULE_HELP_TEXT = [
   'A Regra de Corte é o critério definido antes da execução que estabelece quando uma IMV deve ser interrompida, ajustada ou reavaliada. Ela existe para evitar decisões impulsivas, apego à hipótese e insistência sem evidências. Uma boa regra de corte deve ser baseada em sinais claros e observáveis, como resultados abaixo do esperado, aumento de custos, perda de qualidade, redução da operabilidade ou qualquer efeito que indique que a intervenção precisa ser revista. Definir essa condição antecipadamente ajuda a preservar recursos importantes, proteger o sistema e manter a objetividade durante a execução.',
   'Pergunte-se: Qual sinal ou condição específica mostrará, de forma clara e objetiva, que esta IMV deve ser interrompida, ajustada ou reavaliada?',
+];
+
+const LAYER_HELP_ITEMS: Array<{ label: string; description: string; detail: string }> = [
+  {
+    label: 'Operabilidade',
+    description: 'O básico não funciona',
+    detail: 'Use quando o cenário não consegue sequer operar de forma mínima. O problema está na fundação — processos quebrados, recursos ausentes, fluxos travados. Antes de pensar em crescimento, é preciso que o básico funcione de forma confiável.',
+  },
+  {
+    label: 'Conversão',
+    description: 'Não vira resultado',
+    detail: 'Use quando há movimento e operação, mas o esforço não se converte em resultado concreto. Existe demanda ou atividade, mas algo impede que ela se transforme em saída real — venda, adesão, entrega, decisão.',
+  },
+  {
+    label: 'Recorrência',
+    description: 'Não se repete',
+    detail: 'Use quando o resultado acontece, mas de forma esporádica ou instável. A conversão ocorre, mas não há consistência. O desafio é transformar um resultado pontual em algo que se repete com previsibilidade.',
+  },
+  {
+    label: 'Escala',
+    description: 'Não cresce',
+    detail: 'Use quando o sistema funciona e se repete, mas não acompanha o crescimento da demanda. O gargalo está na capacidade de ampliar o que já funciona sem perder qualidade ou consistência.',
+  },
 ];
 
 const DEADLINE_HELP_TEXT = [
@@ -86,9 +112,10 @@ interface Props {
   onSaved: () => void;
   onNextStep: () => void;
   onGoToStep?: (step: number) => void;
-  initialData?: StructuredPContent | null;
+  initialData?: Partial<StructuredPContent> | null;
   step: number;
   isReviewing?: boolean;
+  fromRecombination?: boolean;
 }
 
 const TOTAL_STEPS = 4;
@@ -259,17 +286,51 @@ function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boole
   );
 }
 
-export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onGoToStep, initialData, step, isReviewing }: Props) {
-  const [actionItems, setActionItems] = useState<string[]>(() => toItems(initialData?.action));
+export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved, onNextStep, onGoToStep, initialData, step, isReviewing, fromRecombination }: Props) {
+  // Lê sugestão do Filtro de Alavanca (uso único — remove do sessionStorage imediatamente).
+  // Sem guard por initialData: o FormatP pode estar em revisão (dados existentes) e ainda
+  // precisar mostrar a sugestão como nova IMV a adicionar.
+  const [leverSuggestion] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null; // SSR: sem sessionStorage no servidor
+    const s = sessionStorage.getItem('__leverSuggestion');
+    if (s) sessionStorage.removeItem('__leverSuggestion');
+    return s ?? null;
+  });
+  const [isLeverSuggestion, setIsLeverSuggestion] = useState(false);
+  // Rascunho local — restaura texto digitado que não chegou a ser salvo
+  // (Voltar entre fases, saída da rota, refresh). Limpo no save com sucesso.
+  const [draft] = useState(() => readFormDraft<{
+    actionItems: string[];
+    reversible: boolean | null;
+    cheap: boolean | null;
+    specific: boolean | null;
+    measurable: boolean | null;
+    metric: string;
+    deadline: string;
+    cutRule: string;
+    layer: OperationalLayer | null;
+    costBenefitData?: CostBenefitData;
+  }>(projectId, 'P'));
+  const [actionItems, setActionItems] = useState<string[]>(() => {
+    // Lever suggestion tem prioridade — substitui IMV anterior quando presente
+    if (leverSuggestion) return [leverSuggestion];
+    return draft?.actionItems ?? toItems(initialData?.action);
+  });
+  const [showRecombinationChip, setShowRecombinationChip] = useState(!!fromRecombination);
+
+  function handleActionItemsChange(items: string[]) {
+    setActionItems(items);
+    if (showRecombinationChip) setShowRecombinationChip(false);
+  }
   const action = fromItems(actionItems);
-  const [reversible, setReversible] = useState<boolean | null>(initialData?.reversible ?? null);
-  const [cheap, setCheap] = useState<boolean | null>(initialData?.cheap ?? null);
-  const [specific, setSpecific] = useState<boolean | null>(initialData?.specific ?? null);
-  const [measurable, setMeasurable] = useState<boolean | null>(initialData?.measurable ?? null);
-  const [metric, setMetric] = useState(initialData?.metric ?? '');
-  const [deadline, setDeadline] = useState(initialData?.deadline ?? '');
-  const [cutRule, setCutRule] = useState(initialData?.cut_rule ?? '');
-  const [layer, setLayer] = useState<OperationalLayer | null>(initialData?.layer ?? currentProjectLayer ?? null);
+  const [reversible, setReversible] = useState<boolean | null>(draft?.reversible ?? initialData?.reversible ?? null);
+  const [cheap, setCheap] = useState<boolean | null>(draft?.cheap ?? initialData?.cheap ?? null);
+  const [specific, setSpecific] = useState<boolean | null>(draft?.specific ?? initialData?.specific ?? null);
+  const [measurable, setMeasurable] = useState<boolean | null>(draft?.measurable ?? initialData?.measurable ?? null);
+  const [metric, setMetric] = useState(draft?.metric ?? initialData?.metric ?? '');
+  const [deadline, setDeadline] = useState(draft?.deadline ?? initialData?.deadline ?? '');
+  const [cutRule, setCutRule] = useState(draft?.cutRule ?? initialData?.cut_rule ?? '');
+  const [layer, setLayer] = useState<OperationalLayer | null>(draft?.layer ?? initialData?.layer ?? currentProjectLayer ?? null);
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [imvEditActive, setImvEditActive] = useState(false);
@@ -285,6 +346,18 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
   const [metricHelp, setMetricHelp] = useState(false);
   const [cutRuleHelp, setCutRuleHelp] = useState(false);
   const [deadlineHelp, setDeadlineHelp] = useState(false);
+  const [layerHelp, setLayerHelp] = useState(false);
+  const [showCostBenefit, setShowCostBenefit] = useState(false);
+  const [costBenefitData, setCostBenefitData] = useState<CostBenefitData | undefined>(
+    draft?.costBenefitData ?? initialData?.cost_benefit,
+  );
+  const [confirmCheapChange, setConfirmCheapChange] = useState(false);
+
+  // Espelha o que foi digitado no rascunho local (grava só após mudança real)
+  useFormDraftPersist(projectId, 'P', {
+    actionItems, reversible, cheap, specific, measurable,
+    metric, deadline, cutRule, layer, costBenefitData,
+  });
 
   const hasChanges =
     action.trim() !== (initialData?.action ?? '') ||
@@ -309,7 +382,9 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
       deadline: deadline || null,
       cut_rule: cutRule.trim(),
       layer,
+      ...(costBenefitData ? { cost_benefit: costBenefitData } : {}),
     }, scenarioType);
+    clearFormDraft(projectId, 'P'); // entry salva — rascunho não é mais necessário
     if (updateLayer && layer) {
       await updateProject(projectId, { current_layer: layer });
     }
@@ -511,6 +586,45 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
         </div>
       )}
 
+      {/* Bottom sheet de ajuda da camada operacional */}
+      {layerHelp && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50"
+          onClick={() => setLayerHelp(false)}
+        >
+          <div
+            className="w-full bg-op-navy rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-heading font-semibold text-op-white">Camada Operacional</h3>
+              <button
+                type="button"
+                onClick={() => setLayerHelp(false)}
+                className="p-1 rounded-md hover:bg-op-navy-elevated"
+                aria-label="Fechar ajuda"
+              >
+                <X className="size-5 text-op-gray" />
+              </button>
+            </div>
+            <p className="text-body text-op-white leading-relaxed">
+              A camada identifica em qual nível do sistema o problema está ocorrendo. Escolha a camada que melhor descreve onde a IMV vai atuar.
+            </p>
+            <div className="space-y-3">
+              {LAYER_HELP_ITEMS.map((item) => (
+                <div key={item.label} className="rounded-lg border border-op-gray/20 p-3 space-y-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-small font-semibold text-op-white">{item.label}</span>
+                    <span className="text-label text-op-gray">— {item.description}</span>
+                  </div>
+                  <p className="text-small text-op-white/80 leading-relaxed">{item.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom sheet de ajuda do prazo */}
       {deadlineHelp && (
         <div
@@ -555,9 +669,60 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               Ajuda
             </button>
           </div>
+          {isLeverSuggestion && (
+            <div
+              className="flex items-start gap-2 rounded-md px-3 py-2 mb-2"
+              style={{ backgroundColor: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.25)' }}
+            >
+              <div className="flex-1 min-w-0">
+                {initialData?.action ? (
+                  // Revisão: já existe IMV — mostra sugestão como opção a adicionar
+                  <>
+                    <p className="text-[11px] leading-snug mb-1.5" style={{ color: '#16A34A' }}>
+                      Filtro de Alavanca: &ldquo;{leverSuggestion}&rdquo;
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActionItems((prev) => [...prev, leverSuggestion ?? '']);
+                        setIsLeverSuggestion(false);
+                      }}
+                      className="text-[11px] underline hover:opacity-80 transition-opacity"
+                      style={{ color: '#16A34A' }}
+                    >
+                      + Adicionar como nova IMV
+                    </button>
+                  </>
+                ) : (
+                  // Fluxo novo: sugestão já está pré-preenchida no campo abaixo
+                  <p className="text-[11px] leading-snug" style={{ color: '#16A34A' }}>
+                    Sugestão do Filtro de Alavanca — edite abaixo para transformar em IMV completa.
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLeverSuggestion(false)}
+                className="shrink-0 text-[11px] font-medium hover:opacity-70 transition-opacity"
+                style={{ color: '#DC2626' }}
+              >
+                Descartar
+              </button>
+            </div>
+          )}
+          {showRecombinationChip && (
+            <div
+              className="flex items-center gap-2 rounded-md px-3 py-2 mb-2"
+              style={{ backgroundColor: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.25)' }}
+            >
+              <p className="text-[11px] leading-snug" style={{ color: '#16A34A' }}>
+                Ideia da Recombinação — edite se precisar
+              </p>
+            </div>
+          )}
           <TopicList
             items={actionItems}
-            onChange={setActionItems}
+            onChange={handleActionItemsChange}
             placeholder="Descreva a IMV para confirmar se sua leitura do cenário está certa."
             addLabel="Ajustar a IMV anterior"
             lockedCount={imvLockedCount}
@@ -637,9 +802,33 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
               </button>
             </div>
             <p className="text-[11px] text-op-gray mb-1">Exige pouco investimento, tempo e esforço.</p>
-            <YesNo value={cheap} onChange={setCheap} />
+            <YesNo
+              value={cheap}
+              onChange={(val) => {
+                if (cheap === false && val === true && costBenefitData) {
+                  setConfirmCheapChange(true);
+                } else {
+                  setCheap(val);
+                }
+              }}
+            />
             {cheap === false && (
-              <p className="text-small mt-1" style={{ color: '#f97316' }}>Tem custo relevante sendo assumido aqui.</p>
+              <>
+                <p className="text-small mt-1" style={{ color: '#f97316' }}>Tem custo relevante sendo assumido aqui.</p>
+                <button
+                  type="button"
+                  onClick={() => setShowCostBenefit(true)}
+                  className="flex items-center gap-1 mt-2 text-label text-brand-blue hover:underline"
+                >
+                  <BarChart2 className="size-3.5" />
+                  {costBenefitData ? 'Ver análise de custo/benefício →' : 'Analisar custo/benefício →'}
+                </button>
+                {costBenefitData && (
+                  <p className="text-[11px] text-op-gray mt-1">
+                    {costBenefitData.relacao} · {formatCurrency(costBenefitData.total_custo)}
+                  </p>
+                )}
+              </>
             )}
           </div>
           <div>
@@ -810,9 +999,19 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
             <VoiceInput value={cutRule} onChange={setCutRule} placeholder="Condição que se deve parar ou ajustar uma IMV ativa" rows={2} />
           </div>
           <div>
-            <p className="text-small font-medium text-op-white mb-1">
-              Camada atual do projeto - Toque para manter ou alterar
-            </p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-small font-medium text-op-white">
+                Camada atual do projeto - Toque para manter ou alterar
+              </p>
+              <button
+                type="button"
+                onClick={() => setLayerHelp(true)}
+                className="flex items-center gap-1 text-label text-op-gray hover:text-op-white transition-colors shrink-0 ml-2"
+              >
+                <CircleHelp className="size-3.5" />
+                Ajuda
+              </button>
+            </div>
             <div className="flex flex-wrap gap-2">
               {LAYERS.map((l) => (
                 <Button
@@ -935,6 +1134,45 @@ export function FormatP({ projectId, scenarioType, currentProjectLayer, onSaved,
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    {/* Diálogo de confirmação — Apagar análise de custo/benefício ao marcar Barato = SIM */}
+    <AlertDialog open={confirmCheapChange} onOpenChange={(v) => { if (!v) setConfirmCheapChange(false); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Apagar análise de custo/benefício?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Marcar "Barato" como SIM vai apagar a análise de custo/benefício salva. Essa ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setConfirmCheapChange(false)}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive hover:bg-destructive/90"
+            onClick={() => {
+              setCheap(true);
+              setCostBenefitData(undefined);
+              setConfirmCheapChange(false);
+            }}
+          >
+            Apagar e marcar SIM
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* CostBenefitSheet */}
+    {showCostBenefit && (
+      <CostBenefitSheet
+        isOpen={showCostBenefit}
+        onClose={() => setShowCostBenefit(false)}
+        onSave={(data) => {
+          setCostBenefitData(data);
+          setShowCostBenefit(false);
+        }}
+        initialData={costBenefitData}
+        imvTitle={action}
+      />
+    )}
 
 </>
   );

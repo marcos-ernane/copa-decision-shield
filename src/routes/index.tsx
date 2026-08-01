@@ -1,4 +1,4 @@
-// HomeScreen — lista de projetos ordenada e Principle Recall passivo (REQ-NAV-05).
+// HomeScreen — lista de projetos ordenada (REQ-NAV-05).
 
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
@@ -7,8 +7,9 @@ import { GuestStorage } from '@/lib/guestStorage';
 import { wasAuthenticated } from '@/lib/authFlags';
 import { getInboxCount } from '@/lib/universalCapture';
 import { supabase } from '@/lib/supabase';
-import { listProjects, listPrinciples, updateProject, listAllEntries, deleteProject } from '@/lib/projects';
-import { sortProjects } from '@/lib/projectState';
+import { listProjects, updateProject, listAllEntries, deleteProject } from '@/lib/projects';
+import { sortProjects, deriveProjectStatus } from '@/lib/projectState';
+import { detectOpenCycles } from '@/lib/openCycle';
 import { ProjectCard } from '@/components/project/ProjectCard';
 import { PactContextBanner } from '@/components/pact/PactContextBanner';
 import { CommunityLink } from '@/components/project/CommunityLink';
@@ -25,7 +26,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { Project, Principle, Entry } from '@/types/database';
+import type { Project, Entry } from '@/types/database';
+
+// Status de fase COPA por projeto (Aferindo/Em Prova/Ciclo completo…), mesma
+// lógica do Dashboard. Função pura (sem hook) para poder ser chamada após o
+// early return do componente.
+function copaStatusById(
+  projects: Project[],
+  entries: Entry[],
+): Record<string, { icon: string; label: string; color: string }> {
+  const map: Record<string, { icon: string; label: string; color: string }> = {};
+  for (const p of projects) {
+    const pe = entries.filter((e) => e.project_id === p.id);
+    map[p.id] = deriveProjectStatus(p, pe, detectOpenCycles(pe).length > 0);
+  }
+  return map;
+}
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -36,7 +52,6 @@ function Home() {
   const [ready, setReady] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [principles, setPrinciples] = useState<Record<string, Principle | null>>({});
   const [name, setName] = useState('');
   const [communityLink, setCommunityLink] = useState<string | null>(null);
   const [inboxCount, setInboxCount] = useState(0);
@@ -69,15 +84,36 @@ function Home() {
 
   useEffect(() => {
     void (async () => {
-      // Usuário autenticado: sessão Supabase tem precedência — nunca vai para onboarding.
+      // Usuário autenticado. O comentário anterior aqui dizia que sessão do
+      // Supabase tem precedência e que autenticado "nunca vai para
+      // onboarding" — premissa do desenho guest-first, em que quem chegava
+      // logado já tinha onboardado antes de criar conta. As rotas /signup e
+      // /login abriram um caminho que a premissa não cobre: dá para ter conta
+      // sem nunca ter visto as 4 fases, incluindo o primeiro COPA guiado que o
+      // [REQ-ONB-01] define como condição de conclusão.
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
-          .select('display_name, community_link')
+          .select('display_name, community_link, onboarding_completed')
           .eq('id', session.user.id)
           .maybeSingle();
-        const p = data as { display_name?: string; community_link?: string } | null;
+        const p = data as {
+          display_name?: string;
+          community_link?: string;
+          onboarding_completed?: boolean;
+        } | null;
+
+        // Só redireciona quando a leitura deu certo E o campo é falso. Numa
+        // falha de rede, `data` vem nulo e tratar isso como "não onboardou"
+        // jogaria um usuário estabelecido nas 4 fases por causa de um
+        // timeout. Na dúvida, segue para a Home: o custo de não mostrar o
+        // onboarding a quem já o fez é zero.
+        if (!error && p && !p.onboarding_completed) {
+          navigate({ to: '/onboarding' });
+          return;
+        }
+
         setName(p?.display_name ?? session.user.email ?? 'Operador');
         setCommunityLink(p?.community_link ?? null);
         void load();
@@ -112,17 +148,6 @@ function Home() {
     const [list, allEntries] = await Promise.all([listProjects(), listAllEntries()]);
     setProjects(list);
     setEntries(allEntries);
-    // Principle recall: para cada projeto blocked/new, busca 1 princípio
-    const recall: Record<string, Principle | null> = {};
-    await Promise.all(
-      list.map(async (p) => {
-        if (p.state === 'blocked' || p.state === 'new') {
-          const principles = await listPrinciples(p.id);
-          recall[p.id] = principles[0] ?? null;
-        }
-      }),
-    );
-    setPrinciples(recall);
     setReady(true);
   }
 
@@ -162,6 +187,10 @@ function Home() {
   const { active, concluded } = sortProjects(projects);
   const trueActive = active.filter((p) => p.state !== 'paused');
   const pausedProjects = active.filter((p) => p.state === 'paused');
+
+  // Status de fase COPA por projeto (Aferindo/Em Prova/Ciclo completo…) — migrado
+  // do antigo "Visão geral de projetos" do Painel. Mesma lógica do Dashboard.
+  const copaStatusMap = copaStatusById(projects, entries);
 
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
@@ -236,7 +265,7 @@ function Home() {
                   <ProjectCard
                     key={p.id}
                     project={p}
-                    recallPrinciple={principles[p.id]}
+                    copaStatus={copaStatusMap[p.id]}
                     onEdit={() => navigate({ to: '/project/$id/edit', params: { id: p.id } })}
                     onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
                     onArchive={() => setArchivingId(p.id)}
@@ -324,7 +353,7 @@ function Home() {
                   <ProjectCard
                     key={p.id}
                     project={p}
-                    recallPrinciple={principles[p.id]}
+                    copaStatus={copaStatusMap[p.id]}
                     onEdit={() => navigate({ to: '/project/$id/edit', params: { id: p.id } })}
                     onConclude={() => navigate({ to: '/project/$id/conclude', params: { id: p.id } })}
                     onArchive={() => setArchivingId(p.id)}
@@ -367,7 +396,7 @@ function Home() {
             {showConcluded && (
               <div className="space-y-3">
                 {concluded.map((p) => (
-                  <ProjectCard key={p.id} project={p} />
+                  <ProjectCard key={p.id} project={p} copaStatus={copaStatusMap[p.id]} />
                 ))}
               </div>
             )}

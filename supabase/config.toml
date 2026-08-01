@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.stripe-portal]
 verify_jwt = true
+
+# Entrada explícita e obrigatória: send-feedback-digest e validate-community-url
+# hoje dependem do default implícito do Supabase. Numa função destrutiva, a
+# segurança não pode depender de default. [REQ-DEL-04]
+[functions.delete-account]
+verify_jwt = true

@@ -6,6 +6,7 @@
 //   - congela quando todos os projetos ativos estão pausados/arquivados
 
 import type { Entry, Principle, Project } from '@/types/database';
+import { distinctIMVs } from '@/lib/imv';
 
 export interface RubricScores {
   observation: number;
@@ -17,6 +18,25 @@ export interface RubricScores {
   ethics: number;
 }
 
+// Números crus que produzem cada índice — para a "memória de cálculo" (conta por
+// extenso) exibida no Painel. rawX é o valor antes da suavização; o exibido pode
+// diferir quando a suavização evita quedas abruptas no mesmo dia.
+export interface IndexBreakdown {
+  cleanPulses: number;
+  totalPulses: number;
+  apas: number;           // APAs completas (structured_A)
+  quickReviews: number;   // revisões rápidas (contam 0,7 cada)
+  effectiveA: number;     // APAs + quick_reviews × 0,7
+  distinctIMVs: number;   // structured_P deduplicados
+  staleIMVs: number;      // IMVs paradas (>10 dias sem APA)
+  stalePenalty: number;   // penalidade em pontos = staleIMVs × 1
+  principles: number;
+  uniqueProjects: number;
+  rawClarity: number;
+  rawExecution: number;
+  rawLearning: number;
+}
+
 export interface IndexResult {
   clarity: number;
   execution: number;
@@ -26,6 +46,7 @@ export interface IndexResult {
   rubric: RubricScores;
   rubricTotal: number;
   frozen: boolean;
+  breakdown?: IndexBreakdown;
 }
 
 const SMOOTH_KEY = 'aop.index_smooth';
@@ -91,9 +112,12 @@ export function calculateIndex(
   const prev = readSmooth();
   const sameDay = prev?.date === today;
 
-  // Inbox e decision_record não contribuem para nenhum score — excluídos inclusive do guarda mínimo
+  // Inbox, decision_record e project_report não contribuem para nenhum score — excluídos inclusive do guarda mínimo
   const entries = allEntries.filter(
-    (e) => e.entry_type !== 'inbox' && e.entry_type !== 'decision_record',
+    (e) =>
+      e.entry_type !== 'inbox' &&
+      e.entry_type !== 'decision_record' &&
+      e.entry_type !== 'project_report',
   );
 
   // Congelamento total: nenhum projeto ativo
@@ -131,36 +155,53 @@ export function calculateIndex(
   let clarity = pulses.length < 3 ? 0 : pct(pulses.filter((e) => e.is_clean_fact).length, pulses.length);
 
   // ---------- Execução ----------
-  const pEntries = entries.filter((e) => e.entry_type === 'structured_P');
+  // IMVs distintos (dedup por ação): re-salvamentos do mesmo IMV inflavam o
+  // denominador e a penalidade. Ex.: 6 duplicatas ÷ 1 APA marcava 17% de
+  // execução quando o real é ~100%. Alimenta também Diagnóstico, Proporcionalidade
+  // e Ética na rubrica — todos passam a razão sobre IMVs distintos.
+  const pEntries = distinctIMVs(entries);
   const aEntries = entries.filter((e) => e.entry_type === 'structured_A');
   // quick_review conta como 0.7 de uma APA completa (PRD-ITEM-01)
   const qrEntries = entries.filter((e) => e.entry_type === 'quick_review');
   const effectiveACount = aEntries.length + qrEntries.length * 0.7;
   let execution = pEntries.length === 0 ? 0 : pct(effectiveACount, pEntries.length);
 
+  // IMV "parada": testada há mais de 10 dias sem nenhuma APA/revisão nesse período.
+  // Cada uma tira 1 ponto da Execução (sem teto — pode zerar). Janela e limite
+  // alinhados em 10 dias para não penalizar IMV aferida dentro do prazo.
   const now = Date.now();
+  const STALE_MS = 10 * 86400000;
   let stalePenalty = 0;
+  let staleIMVs = 0;
   for (const p of pEntries) {
     const pTime = new Date(p.created_at).getTime();
     const hasApa = aEntries.some(
       (a) =>
         a.project_id === p.project_id &&
         new Date(a.created_at).getTime() > pTime &&
-        new Date(a.created_at).getTime() - pTime <= 7 * 86400000,
+        new Date(a.created_at).getTime() - pTime <= STALE_MS,
     );
     const hasQuickReview = qrEntries.some(
       (qr) =>
         qr.linked_to === p.id &&
         new Date(qr.created_at).getTime() > pTime &&
-        new Date(qr.created_at).getTime() - pTime <= 7 * 86400000,
+        new Date(qr.created_at).getTime() - pTime <= STALE_MS,
     );
-    if (!hasApa && !hasQuickReview && now - pTime > 7 * 86400000) stalePenalty += 5;
+    if (!hasApa && !hasQuickReview && now - pTime > STALE_MS) {
+      stalePenalty += 1;
+      staleIMVs += 1;
+    }
   }
   execution = clamp(execution - stalePenalty);
 
   // ---------- Aprendizado ----------
   const uniqueProjects = new Set(principles.map((p) => p.project_id)).size;
   let learning = clamp(principles.length * 5 + uniqueProjects * 10);
+
+  // Guarda os valores crus (antes da suavização) para a memória de cálculo.
+  const rawClarity = clarity;
+  const rawExecution = execution;
+  const rawLearning = learning;
 
   // Smoothing (sem quedas abruptas no mesmo dia)
   clarity = applySmoothing(clarity, prev?.clarity, sameDay);
@@ -236,5 +277,20 @@ export function calculateIndex(
     rubric,
     rubricTotal,
     frozen,
+    breakdown: {
+      cleanPulses: pulses.filter((e) => e.is_clean_fact).length,
+      totalPulses: pulses.length,
+      apas: aEntries.length,
+      quickReviews: qrEntries.length,
+      effectiveA: effectiveACount,
+      distinctIMVs: pEntries.length,
+      staleIMVs,
+      stalePenalty,
+      principles: principles.length,
+      uniqueProjects,
+      rawClarity,
+      rawExecution,
+      rawLearning,
+    },
   };
 }

@@ -17,7 +17,9 @@ export type FacilitatorTrigger =
   | 'PRESSURE_ABUSE_PATTERN'
   | 'CREATIVE_DIVERGE_SUPPORT'
   | 'TRANSFER_CONSISTENCY_REPORT'
-  | 'HELP_CENTER_QUERY';
+  | 'HELP_CENTER_QUERY'
+  | 'CLARITY_COMPOSER'
+  | 'PROJECT_REPORT_CONSULTANT';
 
 const PAID_TRIGGERS: FacilitatorTrigger[] = [
   'SUGGESTION_BUTTON_COPA_PROVE',
@@ -96,7 +98,9 @@ export async function askFacilitator(
       if (!paid) return null;
     }
 
-    const isHelp = trigger === 'HELP_CENTER_QUERY';
+    const isHelp    = trigger === 'HELP_CENTER_QUERY';
+    const isClarity = trigger === 'CLARITY_COMPOSER';
+    const isReportConsultant = trigger === 'PROJECT_REPORT_CONSULTANT';
     const key = trigger + ':' + JSON.stringify(context);
 
     if (!isHelp) {
@@ -104,10 +108,14 @@ export async function askFacilitator(
       if (hit && hit.expiresAt > Date.now()) return hit.value;
     }
 
-    const timeoutMs = isHelp ? 12000 : 3000;
+    // Report consultant: 28s de cliente < 30s do servidor (Edge Function) —
+    // margem para o cliente não abortar antes de o servidor responder.
+    const timeoutMs = isReportConsultant ? 28000 : isHelp ? 22000 : isClarity ? 10000 : 3000;
     const suggestion = await invokeFunction(trigger, context, timeoutMs);
 
-    if (!isHelp) {
+    // Só cacheia resposta bem-sucedida. Cachear null prendia a falha por 15 min —
+    // "Tentar novamente" devolvia o mesmo null sem nem chamar a Edge Function.
+    if (!isHelp && suggestion) {
       cache.set(key, { value: suggestion, expiresAt: Date.now() + FIFTEEN_MIN });
     }
     return suggestion;
