@@ -23,6 +23,17 @@ export function UpgradeSheet({ open, onOpenChange, reason }: Props) {
     setBusy(isTrial ? 'trial' : key);
     try {
       const result = await startCheckout(key, { isTrial });
+      // Visitante tocando num plano é ação normal — o paywall aparece para ele
+      // por desenho. Não é falha: nenhuma cobrança foi tentada. Vermelho aqui
+      // acusaria o usuário de um erro que não existiu.
+      if (result.code === 'no_session') {
+        toast.info('Crie uma conta para assinar.', {
+          description: 'Seus dados deste aparelho migram automaticamente ao criar a conta.',
+          duration: 6000,
+        });
+        return;
+      }
+
       if (result.error) {
         // Título neutro: a recusa mais comum aqui é o bloqueio de segundo
         // trial, que não é falha de pagamento nenhuma.
