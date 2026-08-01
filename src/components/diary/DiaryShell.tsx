@@ -6,10 +6,11 @@ import { TimelineTab } from './TimelineTab';
 import { PrinciplesTab } from './PrinciplesTab';
 import { SymptomIndex } from './SymptomIndex';
 import { GargalosTab } from './GargalosTab';
+import { DecisoesTab } from './DecisoesTab';
 import { WeeklyReport } from './WeeklyReport';
 import { OperatorManual } from '@/components/manual/OperatorManual';
 
-export type DiaryTab = 'timeline' | 'principles' | 'symptoms' | 'gargalos' | 'weekly' | 'manual';
+export type DiaryTab = 'timeline' | 'principles' | 'symptoms' | 'gargalos' | 'decisoes' | 'weekly' | 'manual';
 
 interface Props {
   active: DiaryTab;
@@ -22,6 +23,7 @@ const TABS: Array<{ id: DiaryTab; label: string }> = [
   { id: 'principles', label: 'Princípios' },
   { id: 'symptoms', label: 'Sintomas' },
   { id: 'gargalos', label: 'Gargalos' },
+  { id: 'decisoes', label: 'Decisões' },
   { id: 'weekly', label: 'Semana' },
   { id: 'manual', label: 'Manual' },
 ];
@@ -37,6 +39,7 @@ export function DiaryShell({ active: _active, children }: Props) {
     pathname.includes('/principles') ? 'principles' :
     pathname.includes('/symptoms') ? 'symptoms' :
     pathname.includes('/gargalos') ? 'gargalos' :
+    pathname.includes('/decisoes') ? 'decisoes' :
     pathname.includes('/weekly') ? 'weekly' :
     pathname.includes('/manual') ? 'manual' :
     // [REQ-PM-11] Quando principleId está presente, abre direto na aba de princípios
@@ -119,6 +122,7 @@ export function DiaryShell({ active: _active, children }: Props) {
             {tab === 'principles' && <PrinciplesTab />}
             {tab === 'symptoms' && <SymptomIndex />}
             {tab === 'gargalos' && <GargalosTab />}
+            {tab === 'decisoes' && <DecisoesTab />}
             {tab === 'weekly' && <WeeklyReport />}
             {tab === 'manual' && <OperatorManual />}
           </>

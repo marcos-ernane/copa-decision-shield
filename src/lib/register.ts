@@ -190,12 +190,36 @@ export interface QuickReviewContent {
   linked_structured_p_id: string;   // UUID do structured_P de origem
 }
 
+export type DecisionReviewOutcome = 'yes' | 'partial' | 'no';
+
+/** Adiamento do prazo de revisão. Mesmo formato do reopen_history das fases do
+ *  Plano de Execução [REQ-PLANEXEC-14] — histórico interno, para o PatternEngine
+ *  um dia poder dizer "esta decisão foi adiada 4 vezes". */
+export interface DecisionReschedule {
+  previous_date: string;
+  new_date: string;
+  changed_at: string;
+  /** true quando o adiamento veio de uma revisão ('em parte'/'não'), false
+   *  quando foi adiado sem olhar. A distinção importa: um diz "olhei e ainda
+   *  não deu", o outro diz "não olhei". */
+  after_review: boolean;
+}
+
 export interface DecisionRecordContent {
   decision: string;           // A decisão em uma frase — obrigatório, máx 200 chars
   context: string;            // Por que agora — obrigatório, máx 400 chars
   main_risk: string;          // Maior risco — obrigatório, máx 300 chars
   validation_signal: string;  // Sinal de que foi certa — obrigatório, máx 300 chars
   review_date?: string;       // Quando revisar — opcional, ISO date
+
+  // ---- Revisão (PRD-DEC-01) ----
+  // Os quatro campos acima são Zona Vermelha depois de salvos: reescrever o
+  // critério de sucesso depois de conhecer o desfecho transformaria o registro
+  // em máquina de justificar. Correção pelo Registro Corretivo (Seção 13).
+  reviewed_at?: string;                     // ISO — quando foi revisada
+  review_outcome?: DecisionReviewOutcome;   // o sinal apareceu?
+  review_note?: string;                     // o que aprendi — opcional
+  reschedule_history?: DecisionReschedule[];
 }
 
 // ---------- Relatório Consultivo de Projeto (PRD-plano-execucao-imv) ----------
