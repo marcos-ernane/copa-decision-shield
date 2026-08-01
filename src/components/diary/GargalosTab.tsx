@@ -14,6 +14,28 @@ export function GargalosTab() {
     void navigate({ to: '/project/new', search: { bottleneck: text, bottleneckEntryId: entryId } });
   }
 
+  /**
+   * Gargalo vira IMV no projeto que o gerou — caminho mais leve que abrir
+   * projeto novo, e o que o método privilegia. Mesmo pré-preenchimento do
+   * Filtro de Alavanca (sessionStorage __leverSuggestion), para não existirem
+   * dois mecanismos para a mesma coisa. Espelha BottleneckBankSheet.
+   */
+  function handleToIMV(text: string, entryId: string, projectId: string) {
+    sessionStorage.setItem('__leverSuggestion', text);
+    void navigate({
+      to: '/register/structured',
+      search: {
+        format: 'P' as const,
+        projectId,
+        bottleneckEntryId: entryId,
+        linkedTo: undefined,
+        inboxEntryId: undefined,
+        inboxText: undefined,
+        step: undefined,
+      },
+    });
+  }
+
   return (
     <>
       {/* Header com título e botão de ajuda */}
@@ -45,7 +67,15 @@ export function GargalosTab() {
               <p className="text-body font-semibold text-op-white truncate">{b.projectName}</p>
               <p className="text-small text-op-white/70 leading-snug">{b.text}</p>
               <p className="text-label text-op-gray">Registrado na [A] Aferição</p>
-              <div className="flex items-center justify-between pt-1 border-t border-op-gray/20">
+              {/* flex-wrap: três ações não cabem numa linha a 375px. */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 border-t border-op-gray/20">
+                <button
+                  type="button"
+                  onClick={() => handleToIMV(b.text, b.entryId, b.projectId)}
+                  className="text-small text-op-cyan font-medium hover:underline transition-colors"
+                >
+                  Virar IMV →
+                </button>
                 <button
                   type="button"
                   onClick={() => handleCreate(b.text, b.entryId)}
@@ -56,7 +86,7 @@ export function GargalosTab() {
                 <button
                   type="button"
                   onClick={() => dismiss(b.entryId)}
-                  className="flex items-center gap-1 text-label text-op-gray hover:text-red-400 transition-colors"
+                  className="ml-auto flex items-center gap-1 text-label text-op-gray hover:text-red-400 transition-colors"
                   aria-label="Descartar gargalo"
                 >
                   <Trash2 className="size-3" />

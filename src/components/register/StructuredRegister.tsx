@@ -18,6 +18,7 @@ import { FormatO } from './FormatO';
 import { FormatP } from './FormatP';
 import { FormatA } from './FormatA';
 import { PrincipleHint } from './PrincipleHint';
+import { GuestStorage } from '@/lib/guestStorage';
 import { useProjectPicker } from '@/hooks/useProjectPicker';
 import { getProject, listEntries, listPrinciples, updatePrincipleRecall } from '@/lib/projects';
 import { useAuthState } from '@/lib/planLimits';
@@ -164,6 +165,7 @@ export function StructuredRegister() {
     inboxEntryId?: string;
     inboxText?: string;
     step?: number;
+    bottleneckEntryId?: string;
   };
   const [format, setFormat] = useState<Format>('C');
   const [currentStep, setCurrentStep] = useState(0);
@@ -282,6 +284,12 @@ export function StructuredRegister() {
     if (format === 'C' && search.inboxEntryId) {
       void processInboxEntry(search.inboxEntryId);
       window.dispatchEvent(new CustomEvent('aop:inbox-updated'));
+    }
+    // Gargalo que virou IMV sai do banco — mesmo momento em que o caminho
+    // "Criar projeto" o descarta (project.new.tsx, após criar). Só depois do
+    // save: abandonar o formulário no meio não pode consumir o gargalo.
+    if (format === 'P' && search.bottleneckEntryId) {
+      GuestStorage.dismissBottleneck(search.bottleneckEntryId);
     }
     const newEntries = await listEntries(projectId);
     setEntries(newEntries);

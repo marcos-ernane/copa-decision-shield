@@ -21,6 +21,32 @@ export function BottleneckBankSheet({ open, bottlenecks, onDismiss, onClose }: P
     void navigate({ to: '/project/new', search: { bottleneck: b.text, bottleneckEntryId: b.entryId } });
   }
 
+  /**
+   * O gargalo vira IMV no projeto que o gerou, sem abrir projeto novo. É o
+   * caminho mais leve dos dois e o que o método privilegia — a IMV é a
+   * Intervenção de Menor Valor; abrir projeto é a escalada.
+   *
+   * Reusa o mesmo pré-preenchimento do Filtro de Alavanca
+   * (sessionStorage __leverSuggestion, lido uma única vez por FormatP) em vez
+   * de criar um segundo mecanismo para a mesma coisa.
+   */
+  function handleToIMV(b: PendingBottleneck) {
+    onClose();
+    sessionStorage.setItem('__leverSuggestion', b.text);
+    void navigate({
+      to: '/register/structured',
+      search: {
+        format: 'P' as const,
+        projectId: b.projectId,
+        bottleneckEntryId: b.entryId,
+        linkedTo: undefined,
+        inboxEntryId: undefined,
+        inboxText: undefined,
+        step: undefined,
+      },
+    });
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
@@ -75,7 +101,17 @@ export function BottleneckBankSheet({ open, bottlenecks, onDismiss, onClose }: P
                   Registrado na [A] Aferição do projeto{' '}
                   <span className="text-op-white font-medium">{b.projectName}</span>
                 </p>
-                <div className="flex items-center justify-between pt-1 border-t border-op-gray/20">
+                {/* flex-wrap: são três ações agora, e a 375px elas não cabem
+                    numa linha só. Descartar tem ml-auto para ficar à direita
+                    enquanto couber, e desce sozinho quando não couber. */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 border-t border-op-gray/20">
+                  <button
+                    type="button"
+                    onClick={() => handleToIMV(b)}
+                    className="text-small text-op-cyan font-medium hover:underline transition-colors"
+                  >
+                    Virar IMV →
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleSelect(b)}
@@ -86,7 +122,7 @@ export function BottleneckBankSheet({ open, bottlenecks, onDismiss, onClose }: P
                   <button
                     type="button"
                     onClick={() => onDismiss(b.entryId)}
-                    className="flex items-center gap-1 text-label text-op-gray hover:text-red-400 transition-colors"
+                    className="ml-auto flex items-center gap-1 text-label text-op-gray hover:text-red-400 transition-colors"
                     aria-label="Descartar gargalo"
                   >
                     <Trash2 className="size-3" />
