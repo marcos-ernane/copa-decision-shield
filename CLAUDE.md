@@ -209,18 +209,20 @@ export type AuthState =
 3. 7 dias corridos como guest → "Você está usando o app há 7 dias..."
 
 ### Onboarding — 4 Fases
-**[REQ-ONB-01]** Só termina quando usuário executa o primeiro COPA de Bolso.
+**[REQ-ONB-01]** Só termina quando usuário executa o primeiro registro. *(Era "o primeiro COPA de Bolso"; com o fluxo removido, o onboarding conclui levando ao Registro Estruturado.)*
 
 - **Fase 1 (Reconhecimento):** Tela abertura → Texto "O Espelho" (texto exato obrigatório) → Diagnóstico rápido (4 opções: sobrecarga/travado/cetico/crise) → Nome
 - **Fase 2 (Contrato):** O que o app NÃO vai fazer (texto exato obrigatório) · variante para `came_from='course'`
 - **Fase 3 (Primeiro Projeto):** Nome + Norte ("Vai estar melhor quando...") + oferta opcional de Linha de Base ([REQ-ONB-02])
-- **Fase 4 (Primeira Ação):** COPA de Bolso guiado com linha contextual por tela + configuração de notificações
+- **Fase 4 (Primeira Ação):** ao concluir a Fase 3, navega para `/register/structured` — o operador faz o primeiro registro pelos formatos do método. *(Era um COPA de Bolso guiado, removido junto com o fluxo em rota.)*
+
+**Implementação real:** `OnboardingFlow.tsx` é um componente de fases em estado local (`p1_logo` → `p1_mirror` → `p1_diagnostic` → `p1_name` → `p2_contract`/`p2_course_variant` → `p3_project` → `p3_baseline_offer`), não um conjunto de rotas. Persistência dual: escreve em `profiles` quando há sessão, e sempre em `GuestStorage`.
 
 ---
 
 ## Navegação Global (Seção 04)
 
-**[REQ-NAV-01]** FABs de COPA e Modo Pressão visíveis em todas as telas (exceto onboarding, fluxos modais fullscreen, Modo Leitura ativo). Máximo 2 toques para ativação.
+**[REQ-NAV-01]** FABs de **Capturar** e Modo Pressão visíveis em todas as telas (exceto onboarding, fluxos modais fullscreen, Modo Leitura ativo). Máximo 2 toques para ativação. *(Era "FAB de COPA" até a remoção do fluxo em rota — Seção 07.)*
 **[REQ-NAV-02]** Bottom Nav nunca esconde ao fazer scroll.
 **[REQ-NAV-03]** Ao voltar de qualquer fluxo, retornar ao ponto exato — nunca à Home.
 **[REQ-NAV-05]** Bottom Nav: **Início · Painel · Bússola · Diário** (4 abas).
@@ -229,7 +231,7 @@ export type AuthState =
 ```
 /onboarding (OnboardingShell)
   index → OnboardingMirror
-  /diagnosis · /name · /contract · /project · /baseline · /copa · /notifications · /done
+  (fases em estado local, não rotas — ver Onboarding acima)
 
 / (AppShell)
   index → HomeScreen
@@ -244,9 +246,8 @@ export type AuthState =
   /project/:id/capacity       -- v3.0
   /project/:id/plan-detail    -- Plano de Execução (REQ-PLANEXEC-26)
 
-  /copa (COPAShell)
-    index → COPAEntryAlignment
-    /capture · /organize · /prove · /assess · /suggestion · /done
+  (o grupo /copa foi REMOVIDO — ver Seção 07. A captura rápida é um
+   bottom-sheet acionado pelo FAB CAPTURAR, sem rota própria)
 
   /pressure (PressureShell)
     index → PressureRealityCheck
@@ -367,52 +368,47 @@ Verificações: 1=consistência declaração vs. registros · 2=profundidade fat
 
 ---
 
-## COPA de Bolso (Seção 07)
+## Captura Universal (Seção 07)
 
-Objetivo: método COPA completo em 90 segundos. 3 acessos: FAB fixo · atalho de notificação · widget.
+> **MUDANÇA DE ARQUITETURA — o COPA de Bolso foi REMOVIDO.**
+>
+> O fluxo de 4 telas em rota própria (`/copa`, `COPAShell`, `COPAEntryAlignment`,
+> `COPACapture`, `COPAOrganize`, `COPAProve`, `COPAAssess`, `COPADone` e
+> `src/lib/copa.ts`) não existe mais no código. Decisão de produto: o botão
+> CAPTURAR sozinho já resolvia a entrada rápida, e o COPA em rota duplicava o
+> que o Registro Estruturado já fazia melhor.
+>
+> Os arquivos permanecem recuperáveis na branch `fix/imvs-count-dashboard`,
+> que guarda o histórico anterior à migração do Lovable.
+>
+> **Onde o método COPA vive hoje:** nos 4 formatos do Registro Estruturado
+> (Seção 09) — Formato C (Captura), O (Organização), P (Prova/IMV) e
+> A (Aferição/APA). Nada do método foi perdido; mudou o ponto de entrada.
 
-**[REQ-COPA-00]** Entry Alignment (pré-alinhamento) — opcional, nunca obrigatório, não registrado.
-- "Reativo, mas vou registrar" / "Quero respirar 10 segundos" (contador silencioso 10s) / "Pular"
-- Desativável via `entry_alignment_enabled = false` [REQ-COPA-00A]
-- Estado salvo no `content` da `copa_session` para PatternEngine [REQ-COPA-00B]
+### O botão CAPTURAR
 
-**Tela 0.5 — Tipagem Rápida (v3.0):** chip de tipo se projeto sem tipo ou > 14 dias sem revisão.
+FAB fixo → abre o `UniversalCaptureSheet` (bottom-sheet), não uma rota.
 
-**Tela 1 — Captura:** "O que está acontecendo?" · campo texto/voz (15s) · badge amarelo se interpretação detectada · AssistantFacilitatorEngine oferece reformulação (opcional, nunca bloqueia) · [REQ-COPA-01]
+Registra um pensamento antes que ele se perca, mesmo sem saber ainda a qual
+projeto pertence:
+- **Com projeto** → cria um Pulso (`entry_type = 'pulse'`).
+- **Sem projeto** → vai para o Inbox e fica em espera. Depois o operador decide:
+  virar Pulso, abrir no Registro Estruturado (Formato C) ou descartar.
 
-**Tela 2 — Organização:** 4 cards de bloqueio:
-- Falta de recurso → foco em recombinação
-- Excesso de opções → filtro + acesso opcional a Criatividade Funcional
-- Travamento na execução → IMV mínimo
-- Não sei por onde começar → diagnóstico primeiro
+O Inbox nunca bloqueia o fluxo — captura agora, organiza quando fizer sentido.
 
-**[REQ-COPA-02]** Bloqueio calibra Tela 3 dinamicamente.
+### O que restou do fluxo antigo
 
-**Tela 3 — Prova (IMV):** ação + checklist reversível/barato/específico/mensurável + **Métrica (OBRIGATÓRIA)** + prazo + seleção de camada (v3.0, obrigatória) + campo ético opcional + validação situacional.
+| Item | Situação |
+|---|---|
+| `entry_type = 'copa_session'` | **legado, somente leitura.** Nada grava mais. Timeline e Painel ainda contam essas entradas para não perder histórico de quem usou o fluxo antigo |
+| Entry Alignment [REQ-COPA-00] | a tela não existe mais; sobrou apenas o toggle `entry_alignment_enabled` em Configurações |
+| `<SuggestionSheet />` (3 estados) | migrou para o **Modo Pressão** (`PressureNextStep`), única tela que ainda o usa |
+| Métrica obrigatória, badges de reversível/específico, camada, campo ético | vivos no **Formato P** (Seção 09) |
+| Convite ao Plano de Execução (Tela 3.5) | vive no **Formato P**, após salvar a IMV (Seção 37) |
 
-**[REQ-COPA-03]** Métrica obrigatória.
-**[REQ-COPA-04]** Reversível=NÃO → badge laranja. Específico=NÃO → badge amarelo.
-
-**Tela 3B — Sugestão (3 estados):**
-```typescript
-type SuggestionState = 'no_history' | 'partial_history' | 'rich_history';
-// no_history (<2 COPAs): protocolo universal fixo (3 ações)
-// partial_history (2-4): 1 do histórico (>=40%) + protocolo
-// rich_history (>=5): 2 personalizadas + ação fixa #3; v3.0 usa tipo+camada+fase
-```
-
-**Tela 3.5 — Convite ao Plano de Execução (opcional, Seção 37):** imediatamente após salvar a IMV na Tela 3, exibe convite no mesmo padrão do Entry Alignment:
-> "Quer planejar como vai executar isso?"
-> [PLANEJAR EXECUÇÃO] · [PULAR]
-- Exibido uma única vez por IMV. Pular não altera o fluxo para a Tela 4.
-- Exclusivo do COPA completo — Modo Pressão, Protocolo 5min e COPA de Bolso NÃO recebem esta sub-etapa.
-- Ver Seção 37 para especificação completa. [REQ-PLANEXEC-01 a 03]
-
-**Tela 4 — Aferição:** sinal de sucesso + prazo do resultado + **regra de corte** ("Se até [data] não acontecer [X]...")
-
-Ao concluir: agendar notificação para prazo + salvar `copa_session` + vincular projeto + atualizar `last_entry_at`.
-
-**COPA de Bolso salva como `entry_type = 'copa_session'` com structured_C/O/P entries desde PR #46.**
+**[REQ-COPA-03]** Métrica obrigatória na IMV — permanece válido, agora no Formato P.
+**[REQ-COPA-04]** Reversível=NÃO → badge laranja. Específico=NÃO → badge amarelo — idem.
 
 ---
 
@@ -420,7 +416,7 @@ Ao concluir: agendar notificação para prazo + salvar `copa_session` + vincular
 
 Objetivo: próximo passo em 15 minutos. 3 acessos: FAB vermelho · widget · comando de voz.
 
-**[REQ-PRESS-00]** Pressure Reality Check (opcional, nunca bloqueia): "Se nada fosse feito agora, o que de pior aconteceria?" → IA analisa — se vaga: sugere COPA · se urgência real: avança direto.
+**[REQ-PRESS-00]** Pressure Reality Check (opcional, nunca bloqueia): "Se nada fosse feito agora, o que de pior aconteceria?" → IA analisa — se vaga: sugere o Registro Estruturado · se urgência real: avança direto.
 **[REQ-PRESS-00B]** "Entrar no Modo Pressão mesmo assim" sempre presente e igualmente acessível.
 **[REQ-PRESS-00C]** Resposta salva em `reality_check_response`.
 
@@ -432,7 +428,7 @@ Objetivo: próximo passo em 15 minutos. 3 acessos: FAB vermelho · widget · com
 
 **Tela 3 (Próximo Passo):** "Menor ação possível nos próximos 15 minutos" + campo ético opcional (se urgência real, v3.0) + [NÃO SEI → Tela 3B]
 
-**Tela Done:** [REGISTRAR RESULTADO] → PulseRegister · [ABRIR COPA COMPLETO] · [FECHAR]
+**Tela Done:** [Registrar resultado] → PulseRegister · [FECHAR]. *(O botão [ABRIR COPA COMPLETO] saiu junto com o fluxo em rota — Seção 07.)*
 
 **[REQ-PRESS-01]** Após 5 ativações em 7 dias no mesmo projeto: `AbuseWarningScreen` (NUNCA bloqueia).
 **[REQ-PRESS-02]** Frase da IA no Anti-Abuso: apenas dados reais do histórico, linguagem operacional.
@@ -522,7 +518,7 @@ Botão "Concluir projeto" APENAS no menu `[•••]` — [REQ-DASH-01].
 Nome do projeto · Norte (antes da 1ª APA) · texto de pulsos · princípios extraídos · nota final do capítulo · prazo de IMV não-iniciada · configurações de notificação · repeat_rule · cut_rule_next · tipo de cenário · camada operacional
 
 ### Zona Amarela (modal com impacto antes de confirmar)
-Norte após APA concluída · tipo de bloqueio em COPA concluído · resultado de IMV com princípio · critérios de IMV em andamento · camada de IMV já executada
+Norte após APA concluída · tipo de bloqueio em Formato O concluído · resultado de IMV com princípio · critérios de IMV em andamento · camada de IMV já executada
 
 ### Zona Vermelha (bloqueada — sempre oferece Registro Corretivo)
 Data/hora de qualquer registro · fase COPA em registro concluído · conteúdo de Capítulo salvo · classificação de urgência no Modo Pressão · score da Linha de Base após geração do relatório
@@ -586,9 +582,9 @@ const PLAN_LIMITS = {
 };
 ```
 
-**[REQ-PLAN-01]** COPA de Bolso e Modo Pressão são SEMPRE ilimitados em todos os planos.
+**[REQ-PLAN-01]** Captura (Pulso/Inbox) e Modo Pressão são SEMPRE ilimitados em todos os planos.
 **[REQ-PLAN-02]** Paywall como bottom-sheet contextual — NUNCA full-screen blocker.
-**[REQ-PLAN-03]** Paywall NUNCA durante COPA ou Modo Pressão.
+**[REQ-PLAN-03]** Paywall NUNCA durante Captura, Registro Estruturado ou Modo Pressão.
 
 ### Preços Stripe
 - `price_annual_197` → R$ 197/ano
@@ -633,6 +629,8 @@ Atualizado a cada 14 dias. Máximo 4 padrões. v3.0: identifica tipos/camadas co
 **NUNCA** funciona como chat livre. Apenas em gatilhos listados:
 `COPA_CAPTURE_INTERPRETATION` · `COPA_IMV_METRIC_VAGUE` · `COPA_APA_PRINCIPLE_GENERIC` · `COPA_IMV_SITUATIONAL_FIT` · `PRESSURE_ABUSE_PATTERN` · `PRESSURE_REALITY_CHECK` · `SUGGESTION_BUTTON_COPA_PROVE` · `SUGGESTION_BUTTON_COPA_ASSESS` · `SUGGESTION_BUTTON_PRESSURE` · `COPA_RECURRENT_DEVIATION` · `ETHICAL_CHECK_SUPPORT` · `CREATIVE_DIVERGE_SUPPORT`
 
+*Os prefixos `COPA_` são identificadores reais em `AssistantFacilitatorEngine.ts` e na Edge Function — nomeiam a fase do método, não o fluxo em rota removido. **Não renomear**: mudar a string quebra o `switch` do system prompt no servidor.*
+
 Implementação: Edge Function · cache 15min · timeout 3s → null · fallback offline → null. Anonimiza antes de enviar à LLM. System prompt: "Você é um facilitador operacional... Nunca toma decisões. Nunca diz ao usuário o que fazer. Linguagem direta, factual, operacional. Máximo 2 frases."
 
 **[REQ-ETHIC-03]** Nunca ignora custo humano ou sistêmico nas sugestões.
@@ -669,7 +667,9 @@ fontFamily: { sans: ['Inter','SF Pro Display','system-ui','sans-serif'], mono: [
 | label | 11px | 600 | Badges, tags, chips de tipo, BookAnchorHints |
 
 ### Componentes Globais Críticos (v3.0)
-`<VoiceInput />` · `<FABButton />` · `<ProjectStateIcon />` · `<IMVProgressBar />` · `<PrincipleCard />` · `<PaywallGate />` · `<RegistrationNudge />` · `<EditZoneGuard zone='green'|'yellow'|'red' />` · `<SuggestionSheet />` · `<BookAnchorHint />` · `<AIReformulation />` · `<PrincipleRecallPrompt />` · `<QualitativeEvolution />` · `<EntryAlignmentScreen />` · `<PressureRealityCheckScreen />` · `<ScenarioTypeChip />` · `<LayerChip />` · `<BaselineProgressBar />` · `<PactWeekView />` · `<AccumulatedCapacityCard />` · `<FrictionMatrixCell />` · `<OperatorSheetField />` · `<CompassSection />` · `<TransferProofStep />`
+`<VoiceInput />` · `<FABButton />` · `<ProjectStateIcon />` · `<IMVProgressBar />` · `<PrincipleCard />` · `<PaywallGate />` · `<RegistrationNudge />` · `<EditZoneGuard zone='green'|'yellow'|'red' />` · `<SuggestionSheet />` · `<BookAnchorHint />` · `<AIReformulation />` · `<PrincipleRecallPrompt />` · `<QualitativeEvolution />` · `<PressureRealityCheckScreen />` · `<UniversalCaptureSheet />` · `<ScenarioTypeChip />` · `<LayerChip />` · `<BaselineProgressBar />` · `<PactWeekView />` · `<AccumulatedCapacityCard />` · `<FrictionMatrixCell />` · `<OperatorSheetField />` · `<CompassSection />` · `<TransferProofStep />`
+
+*`<EntryAlignmentScreen />` saiu com o COPA em rota (Seção 07); restou só o toggle `entry_alignment_enabled`. `<SuggestionSheet />` hoje é usado apenas pelo Modo Pressão.*
 
 **Componentes do Plano de Execução da IMV (Seção 37):**
 `<ExecutionPlanInvite />` · `<ExecutionPlanView />` · `<ExecutionPhaseCard />` · `<ExecutionPhaseForm />` · `<ExecutionProgressBar />`
@@ -692,14 +692,14 @@ fontFamily: { sans: ['Inter','SF Pro Display','system-ui','sans-serif'], mono: [
 
 ### Performance
 - Time to Interactive: < 2s em 4G
-- COPA start: < 500ms (pré-carregado no App Shell)
+- Captura start: < 500ms (bottom-sheet montado no App Shell)
 - Modo Pressão start: < 300ms (montado em background)
 - Pulse save: < 200ms (optimistic UI — local first)
 - AssistantFacilitatorEngine: < 3s (timeout → null silencioso) [REQ-PERF-01]
 - Bússola load: < 300ms (conteúdo estático)
 
 ### Offline First
-Funciona offline: COPA · Modo Pressão · Pulso · Leitura do Diário · Entry Alignment · Bússola (100%) · Tabela de Fricções · Guia Diagnóstico · Protocolo 5 Minutos · Folha do Operador · Simulações · Linha de Base.
+Funciona offline: Captura · Registro Estruturado · Modo Pressão · Pulso · Leitura do Diário · Entry Alignment · Bússola (100%) · Tabela de Fricções · Guia Diagnóstico · Protocolo 5 Minutos · Folha do Operador · Simulações · Linha de Base.
 Requer online: Stripe · Magic Link auth · AssistantFacilitatorEngine · Prova de Transferência (relatório IA).
 
 ### Segurança
@@ -711,7 +711,7 @@ RLS em todas as tabelas · Capacitor SecureStorage para dados sensíveis · Stri
 
 O app oferece apenas um link externo configurável (`profiles.community_link`). Sem tabelas próprias.
 
-**[REQ-COMM-01]** Não hospeda chat/fórum. **[REQ-COMM-02]** Não rastreia comportamento na comunidade. **[REQ-COMM-03]** Sem notificações sobre atividade externa. **[REQ-COMM-04]** Link nunca aparece em COPA, Modo Pressão, Onboarding, Conclusão. **[REQ-COMM-05]** Texto obrigatório: "Espaço opcional para troca entre operadores. O uso é voluntário e externo ao app."
+**[REQ-COMM-01]** Não hospeda chat/fórum. **[REQ-COMM-02]** Não rastreia comportamento na comunidade. **[REQ-COMM-03]** Sem notificações sobre atividade externa. **[REQ-COMM-04]** Link nunca aparece em Captura, Registro Estruturado, Modo Pressão, Onboarding, Conclusão. **[REQ-COMM-05]** Texto obrigatório: "Espaço opcional para troca entre operadores. O uso é voluntário e externo ao app."
 
 Localizações: rodapé da HomeScreen (label 11px, surface-3) + Configurações.
 
@@ -723,7 +723,7 @@ Ativação via toggle em Configurações. Banner discreto no Bottom Nav quando a
 
 **[REQ-READ-01]** Desativados: botão [+ REGISTRAR] · FABs (substituídos por ícones bloqueados com tooltip) · notificações · métricas · Motor de Diagnóstico.
 
-**[REQ-READ-02]** Permanece acessível: Timeline (somente leitura) · Banco de Princípios (leitura) · Manual do Operador (leitura) · Dashboard (leitura) · conteúdo estático COPA · **Bússola completa** · Configurações.
+**[REQ-READ-02]** Permanece acessível: Timeline (somente leitura) · Banco de Princípios (leitura) · Manual do Operador (leitura) · Dashboard (leitura) · conteúdo estático do método · **Bússola completa** · Configurações.
 
 **[REQ-READ-03]** Ao sair: todas as funcionalidades restauradas imediatamente, nenhum dado perdido.
 
@@ -760,7 +760,7 @@ Princípios-base v3.0 adicionados: "Tipo antes de agir" · "Camada antes de plan
 ## Ordem de Desenvolvimento (Seção 22)
 
 23 sprints definidos. Resumo:
-- S1=Schema · S2=Auth+Onboarding · S3=Nav+Home+Projetos · S4=COPA · S5=Pressão · S6=Registro
+- S1=Schema · S2=Auth+Onboarding · S3=Nav+Home+Projetos · S4=COPA *(fluxo em rota, depois removido — Seção 07)* · S5=Pressão · S6=Registro
 - S7=DiagnosisEngine · S8=Painel+Diário+Manual · S9=Conclusão · S10=Notificações · S11=Paywall+Stripe
 - S12=Comunidade+ModoLeitura · S13=LinhaDeBase · S14=Pacto · S15=Folha+Bússola
 - S16=Fricções+Protocolo5min · S17=Manutenção · S18=Criatividade · S19=Simulações
@@ -783,7 +783,7 @@ const SCENARIO_TYPE_LABELS: Record<ScenarioType, { label: string; description: s
 };
 ```
 
-Pontos de captura: DiagnosisFlow Q2 (obrigatório quando ativado) · NewProjectScreen (opcional) · COPA Tela 0.5 (opcional) · Dashboard menu `[•••]` (opcional).
+Pontos de captura: DiagnosisFlow Q2 (obrigatório quando ativado) · NewProjectScreen (obrigatório) · Formato C do Registro Estruturado (opcional) · Dashboard menu `[•••]` (opcional).
 
 **[REQ-TYPE-01]** Todo projeto deve permitir classificação. **[REQ-TYPE-02]** Alteração preserva histórico em `edit_history`. **[REQ-TYPE-03]** Engines usam tipo como variável primária. **[REQ-TYPE-04]** Tipo pré-selecionado como `pressao` no Modo Pressão, mas ajustável.
 
@@ -882,9 +882,9 @@ interface OperatorSheet {
 Matriz 5×4 (tipo × camada). Conteúdo estático pré-carregado. Cada célula contém 2-4 fricções típicas.
 Células completas definidas para: Fluxo/Processo/Oferta/Relacionamento/Pressão × Operabilidade/Conversão/Recorrência/Escala.
 
-Botão ao final: "[Identificou uma fricção? Abrir COPA]" → redireciona com tipo e camada pré-selecionados.
+Botão ao final: "[Identificou uma fricção? Registrar]" → abre o Registro Estruturado com tipo e camada pré-selecionados.
 
-**[REQ-FRICTION-01]** Navegável em < 5 segundos. **[REQ-FRICTION-02]** Máximo 2 toques da Home (via Bússola). **[REQ-FRICTION-03]** 100% offline. **[REQ-FRICTION-04]** Salto direto para COPA com tipo+camada pré-configurados.
+**[REQ-FRICTION-01]** Navegável em < 5 segundos. **[REQ-FRICTION-02]** Máximo 2 toques da Home (via Bússola). **[REQ-FRICTION-03]** 100% offline. **[REQ-FRICTION-04]** Salto direto para o Registro Estruturado com tipo+camada pré-configurados.
 
 ---
 
@@ -899,7 +899,7 @@ Para dias de baixa energia. 5 etapas:
 
 Salvo como `entry_type = 'protocol_5min'`. Ícone diferenciado na Timeline.
 
-**[REQ-LOWENERGY-01]** Executável em < 60 segundos. **[REQ-LOWENERGY-02]** Sempre oferece transição para COPA completo. **[REQ-LOWENERGY-03]** 100% offline. **[REQ-LOWENERGY-04]** Campo de fricção com acesso opcional à Tabela sem interromper o fluxo.
+**[REQ-LOWENERGY-01]** Executável em < 60 segundos. **[REQ-LOWENERGY-02]** Sempre oferece transição para o Registro Estruturado completo. **[REQ-LOWENERGY-03]** 100% offline. **[REQ-LOWENERGY-04]** Campo de fricção com acesso opcional à Tabela sem interromper o fluxo.
 
 ---
 
@@ -940,9 +940,9 @@ Fluxo para excesso de opções. Não é brainstorming livre — é divergência 
 2. **Função antes da Forma:** cada alternativa cumpre a função? (Sim/Parcialmente/Não)
 3. **Convergir com Critério:** pontuar cada alternativa: Operabilidade (1-3) + Impacto (1-3) + Testabilidade (1-3) = X/9 → [TRANSFORMAR EM IMV]
 
-**Ativação:** COPA quando bloqueio = "Excesso de opções" · Bússola · `/creative`
+**Ativação:** Formato O quando bloqueio = "Excesso de opções" · Bússola · `/creative`
 
-**[REQ-CREATIVE-01]** Fluxo opcional para excesso de opções. **[REQ-CREATIVE-02]** Acessível do COPA e da Bússola. **[REQ-CREATIVE-03]** Conversão direta para IMV ao final. **[REQ-CREATIVE-04]** Requer plano pago. **[REQ-CREATIVE-05]** AssistantFacilitatorEngine no gatilho `CREATIVE_DIVERGE_SUPPORT`.
+**[REQ-CREATIVE-01]** Fluxo opcional para excesso de opções. **[REQ-CREATIVE-02]** Acessível do Formato O e da Bússola. **[REQ-CREATIVE-03]** Conversão direta para IMV ao final. **[REQ-CREATIVE-04]** Requer plano pago. **[REQ-CREATIVE-05]** AssistantFacilitatorEngine no gatilho `CREATIVE_DIVERGE_SUPPORT`.
 
 ---
 
@@ -958,7 +958,7 @@ Mínimo 5 simulações pré-construídas (conteúdo estático):
 | O serviço de entrega rápida | Oferta | Conversão | Proposta clara, clientes não aderem |
 | A semana que não fecha | Pressão | Operabilidade | Urgências sem critério |
 
-**Estrutura por simulação (4 telas):** contexto + 5 fatos limpos · Operador de Referência aplica método (tipo+camada+Mapa3R+IMV) · Resultado+Princípio · "Agora é você" → abre COPA pré-configurado.
+**Estrutura por simulação (4 telas):** contexto + 5 fatos limpos · Operador de Referência aplica método (tipo+camada+Mapa3R+IMV) · Resultado+Princípio · "Agora é você" → abre o Registro Estruturado pré-configurado.
 
 **[REQ-SIM-01]** Mínimo 5 simulações cobrindo 5 tipos. **[REQ-SIM-02]** Cada uma inclui contexto, método, resultado+princípio, convite à aplicação. **[REQ-SIM-03]** 100% offline. **[REQ-SIM-04]** 2 gratuitas, demais pagas. **[REQ-SIM-05]** Personagem: "O Operador de Referência" — sem nome/identidade visual marcante.
 
@@ -973,11 +973,11 @@ Percurso interativo de 5 passos. 2 modos: Guiado (interação sequencial) · Ref
 2. Localize a Camada (triagem da Seção 24.3)
 3. Descreva o Fato (verificação automática: "acho que" → badge · número/observável → ✓)
 4. Localize a Fricção (campo livre + acesso à Tabela de Fricções)
-5. Defina a IMV → [Criar IMV formal no COPA] ou [Salvar como nota diagnóstica]
+5. Defina a IMV → [Criar IMV formal no Formato P] ou [Salvar como nota diagnóstica]
 
 Ao final do Modo Guiado: salvar como `structured_C` ou criar Folha do Operador.
 
-**[REQ-DIAGGUIDE-01]** Bússola em ≤ 2 toques. **[REQ-DIAGGUIDE-02]** 100% offline. **[REQ-DIAGGUIDE-03]** Transição para COPA/Folha/registro. **[REQ-DIAGGUIDE-04]** Triagem de camada segue Seção 24.3.
+**[REQ-DIAGGUIDE-01]** Bússola em ≤ 2 toques. **[REQ-DIAGGUIDE-02]** 100% offline. **[REQ-DIAGGUIDE-03]** Transição para Registro Estruturado / Folha / nota diagnóstica. **[REQ-DIAGGUIDE-04]** Triagem de camada segue Seção 24.3.
 
 ---
 
@@ -985,7 +985,7 @@ Ao final do Modo Guiado: salvar como `structured_C` ou criar Folha do Operador.
 
 Pergunta central: "Isso resolve sem destruir? Quem paga o custo oculto?"
 
-**Na Tela 3 do COPA (IMV):** campo opcional visível (não escondido): "Quem pode pagar o custo oculto desta ação?" → salvo em `content.ethical_check`
+**No Formato P (IMV):** campo opcional visível (não escondido): "Quem pode pagar o custo oculto desta ação?" → salvo em `content.ethical_check`
 
 **No Formato A (APA):** "O que funcionou sem criar dano" → salvo em `content.hidden_cost`
 
@@ -1003,7 +1003,7 @@ Pergunta central: "Isso resolve sem destruir? Quem paga o custo oculto?"
 - **Seções 01-04:** Stack, Schema completo, Auth (cadastro tardio), Onboarding 4 fases, Navegação global com TanStack Router v1, GuestStorage + migração
 - **Seção 05:** HomeScreen com ProjectCard, NewProjectScreen, ProjectEntryRouter, ProjectDashboard com Capacidade Acumulada
 - **Seção 06:** DiagnosisFlow (4 perguntas incluindo tipo e camada), DiagnosisEngine com verificações 5 e 6
-- **Seção 07:** COPA de Bolso completo — salva como `structured_C/O/P` entries desde PR #46; Entry Alignment, chip tipagem rápida, Sugestões (3 estados)
+- **Seção 07:** Captura Universal (bottom-sheet do FAB CAPTURAR → Pulso/Inbox). O COPA de Bolso em rota foi **removido**; o método vive nos 4 formatos do Registro Estruturado
 - **Seção 08:** Modo Pressão (PressureSession) com Reality Check, AbuseWarningScreen
 - **Seção 09:** Sistema de Registro — Pulso + 4 formatos estruturados (FormatC/O/P/A) + Registro Corretivo
 - **Seção 10:** Painel do Operador (OperatorPanel) com Índice, Evolução de Linha de Base, Rubrica, Padrões
@@ -1053,19 +1053,19 @@ Pergunta central: "Isso resolve sem destruir? Quem paga o custo oculto?"
 
 ## Plano de Execução da IMV (Seção 37)
 
-Sub-etapa opcional da Fase [P] do COPA completo. Orienta o operador sobre *como* avançar a execução de uma IMV já calibrada, entre sua definição (Tela 3) e o registro do resultado (APA, Tela 4). Não é um gerenciador de tarefas — é vinculada a uma única IMV e não se repete em outros canais.
+Sub-etapa opcional do Formato P (IMV) do Registro Estruturado. Orienta o operador sobre *como* avançar a execução de uma IMV já calibrada, entre sua definição e o registro do resultado (APA). Não é um gerenciador de tarefas — é vinculada a uma única IMV e não se repete em outros canais.
 
 **Princípios de design (extensão dos Princípios Invioláveis):**
 - Opcionalidade explícita — nunca obrigatória, segue padrão do Entry Alignment [REQ-COPA-00]
 - A IMV não se duplica — o campo "Como" de cada fase descreve *como* executar, nunca *o quê* (já definido na IMV, exibido como cabeçalho fixo)
 - Proporcionalidade — campo "Como" limitado a 80-120 caracteres recomendados
-- Escopo único — exclusivo do COPA completo; Modo Pressão, Protocolo 5min e COPA de Bolso não recebem esta sub-etapa
+- Escopo único — exclusivo do Formato P do Registro Estruturado; Modo Pressão e Protocolo 5min não recebem esta sub-etapa
 - Hierarquia de prazos — prazo da IMV é soberano; nenhuma fase pode ter prazo igual ou posterior
 - Sem colaboração — "Quem" é texto livre informativo, sem convite, conta ou notificação a terceiros
 
 ### 37.1 Gatilho de Ativação
 
-**[REQ-PLANEXEC-01]** Imediatamente após salvar a IMV na Tela 3 do COPA completo, exibe convite opcional:
+**[REQ-PLANEXEC-01]** Imediatamente após salvar a IMV no Formato P, exibe convite opcional:
 > "Quer planejar como vai executar isso?"
 > [PLANEJAR EXECUÇÃO] · [PULAR]
 
@@ -1191,7 +1191,7 @@ interface ExecutionPlan {
 ### 37.12 Fora de Escopo (Explicitamente)
 
 - Notificação a terceiros referenciados em "Quem"
-- Expansão para Modo Pressão, Protocolo 5min ou COPA de Bolso
+- Expansão para Modo Pressão ou Protocolo 5min
 - Novo `entry_type` — as fases vivem dentro de `structured_P`
 - Análise automática de padrões de reabertura pelo PatternEngine (dados persistidos para uso futuro)
 - Limite rígido de quantidade de fases
@@ -1200,7 +1200,7 @@ interface ExecutionPlan {
 
 ## Análise de Custo/Benefício (Seção 38)
 
-Sub-etapa opcional do Formato P (IMV) do Registro Estruturado e do COPA de Bolso. Permite ao operador registrar e calcular a relação entre custos e benefícios de uma IMV que marcou o campo "Reversível" como **NÃO** (campo `cheap = false`).
+Sub-etapa opcional do Formato P (IMV) do Registro Estruturado. Permite ao operador registrar e calcular a relação entre custos e benefícios de uma IMV que marcou o campo "Reversível" como **NÃO** (campo `cheap = false`).
 
 **Princípios de design:**
 - Totalmente opcional — nunca obrigatória para salvar a IMV
