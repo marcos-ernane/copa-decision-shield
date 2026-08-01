@@ -84,15 +84,36 @@ function Home() {
 
   useEffect(() => {
     void (async () => {
-      // Usuário autenticado: sessão Supabase tem precedência — nunca vai para onboarding.
+      // Usuário autenticado. O comentário anterior aqui dizia que sessão do
+      // Supabase tem precedência e que autenticado "nunca vai para
+      // onboarding" — premissa do desenho guest-first, em que quem chegava
+      // logado já tinha onboardado antes de criar conta. As rotas /signup e
+      // /login abriram um caminho que a premissa não cobre: dá para ter conta
+      // sem nunca ter visto as 4 fases, incluindo o primeiro COPA guiado que o
+      // [REQ-ONB-01] define como condição de conclusão.
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
-          .select('display_name, community_link')
+          .select('display_name, community_link, onboarding_completed')
           .eq('id', session.user.id)
           .maybeSingle();
-        const p = data as { display_name?: string; community_link?: string } | null;
+        const p = data as {
+          display_name?: string;
+          community_link?: string;
+          onboarding_completed?: boolean;
+        } | null;
+
+        // Só redireciona quando a leitura deu certo E o campo é falso. Numa
+        // falha de rede, `data` vem nulo e tratar isso como "não onboardou"
+        // jogaria um usuário estabelecido nas 4 fases por causa de um
+        // timeout. Na dúvida, segue para a Home: o custo de não mostrar o
+        // onboarding a quem já o fez é zero.
+        if (!error && p && !p.onboarding_completed) {
+          navigate({ to: '/onboarding' });
+          return;
+        }
+
         setName(p?.display_name ?? session.user.email ?? 'Operador');
         setCommunityLink(p?.community_link ?? null);
         void load();

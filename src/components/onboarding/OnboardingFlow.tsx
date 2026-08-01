@@ -6,7 +6,10 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/copa/VoiceInput';
-import { GuestStorage, guestId } from '@/lib/guestStorage';
+import { toast } from 'sonner';
+import { GuestStorage } from '@/lib/guestStorage';
+import { supabase } from '@/lib/supabase';
+import { createProject } from '@/lib/projects';
 import type {
   OnboardingProfile,
   CameFrom,
@@ -38,8 +41,36 @@ export function OnboardingFlow({ cameFrom }: Props) {
   // Garante que a contagem de "guest há N dias" começa agora
   useMemo(() => GuestStorage.ensureGuestStartedAt(), []);
 
+  /**
+   * O fluxo era escrito só em GuestStorage, porque nasceu como percurso
+   * exclusivo de visitante — quem chegava autenticado já tinha onboardado
+   * antes de criar conta. Com /signup, alguém pode entrar aqui já logado, e aí
+   * gravar apenas no localStorage deixaria a conclusão invisível para a conta:
+   * o portão da Home mandaria a pessoa de volta ao onboarding a cada acesso.
+   *
+   * Segue a persistência dual do resto do app (CLAUDE.md): checa sessão e
+   * roteia. O upsert cobre o caso de o perfil já existir — desde o trigger
+   * on_auth_user_created, ele sempre existe.
+   */
+  async function persistProfile(patch: {
+    onboarding_profile?: OnboardingProfile | null;
+    display_name?: string;
+    came_from?: CameFrom | null;
+    onboarding_completed?: boolean;
+  }) {
+    GuestStorage.setProfile(patch);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    await supabase.from('profiles').upsert({
+      id: session.user.id,
+      ...patch,
+    });
+  }
+
   function persistProfileAndAdvance(next: Phase) {
-    GuestStorage.setProfile({
+    void persistProfile({
       onboarding_profile: profile,
       display_name: displayName || GuestStorage.getProfile()?.display_name || '',
       came_from: cameFrom,
@@ -58,7 +89,7 @@ export function OnboardingFlow({ cameFrom }: Props) {
             setProfile(p);
             // 'crise' vai direto para criar projeto
             const next: Phase = p === 'crise' ? 'p1_name' : 'p1_name';
-            GuestStorage.setProfile({
+            void persistProfile({
               onboarding_profile: p,
               display_name: '',
               came_from: cameFrom,
@@ -100,12 +131,15 @@ export function OnboardingFlow({ cameFrom }: Props) {
       )}
       {phase === 'p3_baseline_offer' && (
         <BaselineOfferScreen
-          onTake={() => {
-            GuestStorage.setProfile({ onboarding_completed: true });
+          // await antes de navegar: o portão da Home lê
+          // profiles.onboarding_completed. Navegar antes da escrita concluir
+          // devolveria a pessoa ao onboarding que ela acabou de terminar.
+          onTake={async () => {
+            await persistProfile({ onboarding_completed: true });
             navigate({ to: '/register/structured' });
           }}
-          onSkip={() => {
-            GuestStorage.setProfile({ onboarding_completed: true });
+          onSkip={async () => {
+            await persistProfile({ onboarding_completed: true });
             navigate({ to: '/register/structured' });
           }}
         />
@@ -305,43 +339,40 @@ function ProjectScreen({ onCreated }: { onCreated: (id: string) => void }) {
   const [name, setName] = useState('');
   const [north, setNorth] = useState('');
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const nameValid = name.trim().length >= 2 && name.trim().length <= 80;
   const northValid = north.trim().length >= 10 && north.trim().length <= 300;
-  const canSubmit = nameValid && northValid;
+  const canSubmit = nameValid && northValid && !submitting;
 
-  function submit() {
+  async function submit() {
     if (!canSubmit) return;
-    const id = guestId();
-    const now = new Date().toISOString();
-    GuestStorage.addProject({
-      id,
-      user_id: 'guest',
-      name: name.trim(),
-      north: north.trim(),
-      state: 'capturing' as ProjectState,
-      current_bottleneck: null,
-      field_reading: null,
-      calibrated_action: null,
-      current_copa_phase: null,
-      last_recalled_principle_id: null,
-      scenario_type: scenario,
-      current_layer: null,
-      pact_enabled: false,
-      pact_day_capture: 0,
-      pact_day_organize: 0,
-      pact_day_prove: 0,
-      pact_day_assess: 0,
-      pact_started_at: null,
-      pact_last_cycle_at: null,
-      is_treino_principal: true,
-      created_at: now,
-      last_entry_at: null,
-      concluded_at: null,
-      archived_at: null,
-      pause_reason: null,
-    });
-    onCreated(id);
+    setSubmitting(true);
+    try {
+      // Era GuestStorage.addProject direto, montando o objeto à mão. Para quem
+      // chega aqui já autenticado, isso criaria o primeiro projeto apenas no
+      // localStorage — invisível na conta e perdido ao trocar de aparelho.
+      // createProject já resolve a persistência dual e gera a leitura inicial
+      // do DiagnosisEngine, que a montagem manual pulava.
+      const project = await createProject({
+        name,
+        north,
+        scenario_type: scenario,
+        current_layer: null,
+        state: 'capturing',
+        is_treino_principal: true,
+      });
+      onCreated(project.id);
+    } catch (err) {
+      console.error('[onboarding] falha ao criar primeiro projeto:', err);
+      const msg = (err as { message?: string })?.message;
+      toast.error('Não foi possível criar o projeto.', {
+        description: msg ? `Detalhe: ${msg}` : 'Tente novamente em instantes.',
+        duration: 8000,
+      });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (

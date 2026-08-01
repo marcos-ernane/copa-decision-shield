@@ -99,6 +99,13 @@ export interface NewProjectInput {
   north: string;
   scenario_type: ScenarioType | null;
   current_layer: OperationalLayer | null;
+  /**
+   * Ambos existem para o onboarding, que cria o primeiro projeto já em
+   * 'capturing' e o marca como treino principal. Opcionais para não alterar
+   * nenhuma chamada existente.
+   */
+  state?: ProjectState;
+  is_treino_principal?: boolean;
 }
 
 export async function createProject(input: NewProjectInput): Promise<Project> {
@@ -110,7 +117,7 @@ export async function createProject(input: NewProjectInput): Promise<Project> {
     user_id: session?.user.id ?? 'guest',
     name: input.name.trim(),
     north: input.north.trim(),
-    state: 'new' as ProjectState,
+    state: input.state ?? ('new' as ProjectState),
     current_bottleneck: null,
     field_reading: null,
     calibrated_action: null,
@@ -125,7 +132,7 @@ export async function createProject(input: NewProjectInput): Promise<Project> {
     pact_day_assess: 0,
     pact_started_at: null,
     pact_last_cycle_at: null,
-    is_treino_principal: false,
+    is_treino_principal: input.is_treino_principal ?? false,
     created_at: now,
     last_entry_at: null,
     concluded_at: null,
@@ -157,6 +164,11 @@ export async function createProject(input: NewProjectInput): Promise<Project> {
       scenario_type: base.scenario_type,
       field_reading: base.field_reading,
       calibrated_action: base.calibrated_action,
+      // Estava ausente do insert: o campo existia no objeto base e no schema,
+      // mas nunca chegava ao banco pelo caminho autenticado. Sem ele o
+      // primeiro projeto do onboarding não seria marcado como treino
+      // principal em conta nenhuma.
+      is_treino_principal: base.is_treino_principal,
       user_id: session.user.id,
     })
     .select()
