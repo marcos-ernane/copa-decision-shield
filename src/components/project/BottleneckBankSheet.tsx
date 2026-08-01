@@ -160,10 +160,23 @@ export function BottleneckBankSheet({ open, bottlenecks, onDismiss, onClose }: P
             <div className="space-y-2">
               <p className="text-label text-op-cyan uppercase">Como usar</p>
               <p className="text-body text-op-white">
-                Toque em qualquer gargalo da lista para criar um novo projeto com aquele problema
-                já pré-preenchido. O app leva direto para a tela de criação de projeto.
-                Descarte os gargalos que não forem mais relevantes — eles não serão apagados
-                do histórico da Aferição original.
+                Cada gargalo oferece dois caminhos, e a escolha é sua:
+              </p>
+              <p className="text-body text-op-white">
+                <span className="font-semibold">Virar IMV</span> — abre a fase [P] Prova no
+                mesmo projeto que gerou o gargalo, com ele já preenchido como ação. Use quando
+                o gargalo couber numa intervenção pequena, dentro do que já está em andamento.
+                É o caminho mais leve, e o que o método privilegia.
+              </p>
+              <p className="text-body text-op-white">
+                <span className="font-semibold">Criar projeto</span> — abre a criação de um
+                projeto novo com o gargalo já preenchido. Use quando ele for grande demais para
+                caber numa IMV e merecer um Norte próprio.
+              </p>
+              <p className="text-body text-op-white">
+                Nos dois casos o gargalo sai do banco só depois que você salva. Se desistir no
+                meio, ele continua aqui. Descarte os que não forem mais relevantes — eles não
+                serão apagados do histórico da Aferição original.
               </p>
             </div>
 

@@ -592,8 +592,14 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
             <p className="text-label text-op-cyan uppercase">O que acontece depois</p>
             <p className="text-body text-op-white">
               Cada gargalo registrado fica disponível no Banco de Gargalos. Quando estiver
-              pronto para atacar aquele problema, toque no item e o app abre a tela de criação
-              de projeto com o gargalo já pré-preenchido.
+              pronto para atacá-lo, escolha um dos dois caminhos: <span className="font-semibold">Virar IMV</span>,
+              que abre a fase [P] Prova neste mesmo projeto com o gargalo já preenchido como
+              ação, ou <span className="font-semibold">Criar projeto</span>, que abre um projeto
+              novo com ele pré-preenchido.
+            </p>
+            <p className="text-body text-op-white">
+              A IMV é o caminho mais leve — use quando o gargalo couber numa intervenção
+              pequena. Projeto novo é para quando ele merecer um Norte próprio.
             </p>
           </div>
 
