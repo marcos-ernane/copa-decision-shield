@@ -599,7 +599,7 @@ export function FormatA({ projectId, scenarioType, currentLayer, onSaved, onNext
             </p>
             <p className="text-body text-op-white">
               A IMV é o caminho mais leve — use quando o gargalo couber numa intervenção
-              pequena. Projeto novo é para quando ele merecer um Norte próprio.
+              pequena. Projeto novo é para quando ele merecer um Objetivo próprio.
             </p>
           </div>
 

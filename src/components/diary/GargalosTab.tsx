@@ -134,7 +134,7 @@ export function GargalosTab() {
               <p className="text-body text-op-white">
                 <span className="font-semibold">Criar projeto</span> — abre a criação de um
                 projeto novo com o gargalo já preenchido. Use quando ele for grande demais para
-                caber numa IMV e merecer um Norte próprio.
+                caber numa IMV e merecer um Objetivo próprio.
               </p>
               <p className="text-body text-op-white">
                 Nos dois casos o gargalo sai do banco só depois que você salva. Se desistir no
