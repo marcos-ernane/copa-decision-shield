@@ -25,6 +25,15 @@ interface Props {
   userId?: string | null;
   // ID da entry structured_C mais recente (para exibir fotos em modo revisão/back-navigation)
   initialEntryId?: string | null;
+  /**
+   * Texto vindo do Inbox — entra como fato NOVO no Quadro 1, somando ao que já
+   * existe. Prop própria em vez de initialData porque precisa sobreviver às
+   * duas precedências que initialData perde para: o conteúdo já salvo da [C] e
+   * o rascunho local. Antes, escolher um projeto que já tinha Captura fazia o
+   * texto capturado ser descartado em silêncio, e o operador tinha de
+   * redigitar o que acabara de selecionar.
+   */
+  appendFact?: string | null;
 }
 
 const TOTAL_STEPS = 3;
@@ -209,11 +218,22 @@ interface FormatCDraft {
   rootCauseChains: RootCauseChain[];
 }
 
-export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing, userId, initialEntryId }: Props) {
+export function FormatC({ projectId, scenarioType, currentLayer, onSaved, onNextStep, initialData, step, isReviewing, userId, initialEntryId, appendFact }: Props) {
   // Rascunho local — restaura texto digitado que não chegou a ser salvo
   // (Voltar entre fases, saída da rota, refresh). Limpo no save com sucesso.
   const [draft] = useState<FormatCDraft | null>(() => readFormDraft<FormatCDraft>(projectId, 'C'));
-  const [factItems, setFactItems] = useState<string[]>(() => draft?.factItems ?? toItems(initialData?.fact_text));
+  const [factItems, setFactItems] = useState<string[]>(() => {
+    const base = draft?.factItems ?? toItems(initialData?.fact_text);
+    const extra = appendFact?.trim();
+    if (!extra) return base;
+    // Guard de duplicata: depois de salvar, o texto passa a vir também pelo
+    // initialData, e o parâmetro da URL continua lá. Sem isto ele entraria
+    // duas vezes.
+    if (base.some((f) => f.trim() === extra)) return base;
+    // toItems devolve [''] quando não há nada — esse campo em branco sai para
+    // o fato capturado não nascer abaixo de uma linha vazia.
+    return [...base.filter((f) => f.trim()), extra];
+  });
   const [interpItems, setInterpItems] = useState<string[]>(() => draft?.interpItems ?? toItems(initialData?.interpretation_text));
   const [hypItems, setHypItems] = useState<string[]>(() => draft?.hypItems ?? toItems(initialData?.hypothesis_text));
   const [saving, setSaving] = useState(false);
