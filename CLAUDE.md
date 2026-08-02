@@ -228,74 +228,123 @@ export type AuthState =
 **[REQ-NAV-05]** Bottom Nav: **Início · Painel · Bússola · Diário** (4 abas).
 
 ### Rotas Completas (TanStack Router v1)
+
+> **Fonte da verdade: `src/routeTree.gen.ts`.** Esta tabela foi levantada dele
+> e conferida no browser. Se divergir, o routeTree está certo e esta tabela
+> está velha — atualize aqui, não invente rota lá.
+>
+> **Etapa de fluxo não é rota.** Foi a origem de quase todo o desalinhamento
+> anterior: o PRD listava `/pressure/fact`, `/protocol5/friction`,
+> `/creative/converge` e afins como se fossem endereços. Não são. Cada um
+> desses fluxos vive numa rota única e as etapas são estado local do Shell.
+> Consequência prática: **o Voltar do cabeçalho recua uma etapa, não o
+> histórico do navegador** — `history.back()` sairia do fluxo inteiro.
+
 ```
-/onboarding (OnboardingShell)
-  index → OnboardingMirror
-  (fases em estado local, não rotas — ver Onboarding acima)
+── Autenticação (fora do AppShell) ──────────────────────────────
+/login
+/signup
+/forgot-password
+/reset-password              código de 6 dígitos, sem link de retorno
 
-/ (AppShell)
-  index → HomeScreen
-  /project/new
-  /project/:id (ProjectEntryRouter)
-  /project/:id/dashboard
-  /project/:id/diagnosis
-  /project/:id/edit
-  /project/:id/conclude
-  /project/:id/sheet          -- v3.0
-  /project/:id/pact           -- v3.0
-  /project/:id/capacity       -- v3.0
-  /project/:id/plan-detail    -- Plano de Execução (REQ-PLANEXEC-26)
+── Onboarding ───────────────────────────────────────────────────
+/onboarding                  OnboardingFlow
+  (as 4 fases são estado local, não rotas — ver Onboarding acima)
 
-  (o grupo /copa foi REMOVIDO — ver Seção 07. A captura rápida é um
-   bottom-sheet acionado pelo FAB CAPTURAR, sem rota própria)
+── Raiz (AppShell: Bottom Nav + FABs) ───────────────────────────
+/                            Home
+/inbox                       capturas sem projeto, à espera de destino
+/concluded                   projetos concluídos
+/reading-mode                Modo Leitura passivo (Seção 20)
+/baseline/new                Linha de Base — 7 telas          -- v3.0
 
-  /pressure (PressureShell)
-    index → PressureRealityCheck
-    /activation · /fact · /risk · /step · /suggestion · /done
+── Projeto ──────────────────────────────────────────────────────
+/project/new                 ?bottleneck & ?bottleneckEntryId
+                             (gargalo vindo de uma Aferição)
+/project/:id                 ProjectEntryRouter — decide direct /
+                             calibrated / new_cycle pelo last_entry_at
+/project/:id/dashboard
+/project/:id/diagnosis
+/project/:id/edit
+/project/:id/conclude
+/project/:id/sheet                                            -- v3.0
+/project/:id/pact                                             -- v3.0
+/project/:id/capacity                                         -- v3.0
+/project/:id/plan-detail     Plano de Execução (REQ-PLANEXEC-26)
+/project/:id/review/:entryId revisão de decisão (PRD-DEC-01)
 
-  /protocol5 (Protocol5Shell)  -- v3.0
-    index → Protocol5Type
-    /fact · /friction · /action · /signal · /done
+── Registro ─────────────────────────────────────────────────────
+/register/pulse
+/register/structured         ?projectId &format &linkedTo &step
+                             &inboxEntryId &inboxText &bottleneckEntryId
+/register/corrective/:entryId
+/decision/new                ?projectId &prefill
 
-  /register/pulse
-  /register/structured
-  /register/corrective/:entryId
+── Fluxos de etapa única (etapas = estado local) ────────────────
+/pressure                    PressureShell — reality check → ativação →
+                             fato → risco → calibragem → passo → fim
+  /pressure/*                catch-all: redireciona para /pressure
+/protocol5                   Protocol5Shell — 5 etapas         -- v3.0
+/creative                    CreativeShell — divergir → função →
+                             convergir → fim  (PaywallGate)    -- v3.0
 
-  /panel
-  /panel/index-detail
-  /panel/rubric               -- v3.0
-  /panel/baseline             -- v3.0
-  /panel/transfer             -- v3.0
+── Painel ───────────────────────────────────────────────────────
+/panel                       OperatorPanel
+/panel/rubric                                                 -- v3.0
+/panel/baseline                                               -- v3.0
+/panel/transfer              Prova de Transferência           -- v3.0
 
-  /compass (CompassShell)     -- v3.0
-    index → CompassHome
-    /protocol · /sheet · /guide · /friction
-    /maintenance · /simulation · /simulation/:id
-    (o Índice por Sintoma NÃO fica aqui — é a aba /diary/symptoms.
-     O Protocolo 5 Minutos NÃO fica aqui — é a rota /protocol5 na raiz;
-     a Bússola apenas linka para ela, como o FAB também faz)
+── Bússola ──────────────────────────────────────────────────────
+/compass                     CompassHome
+/compass/pocket              Protocolo de Bolso
+/compass/sheet               Folha do Operador  ?projectId &fact
+                             &friction &imv
+/compass/sheets              histórico de folhas
+/compass/guide               Guia Diagnóstico
+/compass/friction            Tabela de Fricções  ?type
+/compass/maintenance         Rotina de Manutenção
+/compass/simulations         biblioteca; o detalhe da simulação abre
+                             em estado local, sem rota própria
+/compass/inventory4d         ?projectId
+/compass/recombination
 
-  /diary (DiaryShell)
-    index → TimelineTab
-    /principles · /symptoms · /gargalos · /decisoes · /weekly
-    /manual · /manual/:chapterId
-    (era "/symptom" no singular — a aba é "symptoms". É aqui que vive o
-     Índice por Sintoma, não na Bússola)
+── Diário ───────────────────────────────────────────────────────
+/diary                       ?principleId &projectId &type
+                             &scenario_type &layer
+/diary/*                     splat único (DiarySplat) que resolve a aba
+                             pelo primeiro segmento:
+                             principles · symptoms · gargalos · decisoes
+                             · weekly · manual
+                             (o Índice por Sintoma é a aba "symptoms" —
+                              não fica na Bússola)
 
-  /creative (CreativeShell)   -- v3.0
-    index → CreativeDiverge
-    /function · /converge · /done
+── Análise com IA ───────────────────────────────────────────────
+/clarity                     Clareza Operacional  ?projectId
+/report                      Relatório Consultivo ?projectId &entryId
+/lever-filter                Filtro de Alavanca   ?projectId
 
-  /settings
-  /settings/notifications
-  /settings/help
-  (Plano, Conta, Modo Leitura, Assistente de IA e Bússola NÃO são sub-rotas:
-   são seções dentro da própria tela /settings, em SettingsScreen.tsx.
-   Só Notificações e Ajuda têm rota própria)
-
-  /reading-mode
-  /baseline/new               -- v3.0
+── Configurações ────────────────────────────────────────────────
+/settings                    SettingsScreen
+/settings/notifications
+/settings/help               HelpCenterChat
+  (Plano, Conta, Modo Leitura, Assistente de IA e Bússola NÃO são
+   sub-rotas: são seções dentro da própria /settings)
 ```
+
+**Sem rota própria, de propósito:**
+
+| O quê | Onde vive |
+|---|---|
+| Captura Universal | bottom-sheet do FAB CAPTURAR (Seção 07) |
+| COPA de Bolso | **removido** — o método vive nos 4 formatos do Registro Estruturado |
+| Detalhe de simulação | estado local dentro de `/compass/simulations` |
+| Etapas de Pressão, Protocolo 5 e Criatividade | estado local do Shell |
+| Capítulo do Manual | dentro da aba `/diary/manual` |
+
+**Rota do PRD que nunca foi construída:** `/panel/index-detail` — a memória
+de cálculo do Índice do Operador. Importa porque [REQ-PLANEXEC-26] manda
+`/project/:id/plan-detail` seguir "o padrão visual de `/panel/index-detail`":
+o modelo citado não existe. Decidir entre construir ou reescrever o requisito.
 
 ---
 
@@ -1162,7 +1211,7 @@ Vencimento de prazo nunca incrementa este contador.
 
 **[REQ-PLANEXEC-25]** Indicador exibido APENAS quando `execution_plan.enabled = true`. Se o usuário pulou o convite, indicador simplesmente não aparece — nunca vazio ou zerado.
 
-**[REQ-PLANEXEC-26]** Tela de memória de cálculo em `/project/:id/plan-detail`: quantas fases existem, concluídas, vencidas e significado de cada cor. Padrão visual de `/panel/index-detail`.
+**[REQ-PLANEXEC-26]** Tela de memória de cálculo em `/project/:id/plan-detail`: quantas fases existem, concluídas, vencidas e significado de cada cor. *(O requisito original mandava seguir "o padrão visual de `/panel/index-detail`" — essa rota nunca foi construída. Enquanto não existir, a referência de padrão é a própria `/project/:id/plan-detail`, já implementada. Ver Seção 04.)*
 
 ### 37.10 Navegação
 
