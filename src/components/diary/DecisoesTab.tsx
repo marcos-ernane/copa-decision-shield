@@ -17,6 +17,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { usePanelData } from '@/hooks/usePanelData';
 import { decisionReviewInfo, sortByAttention } from '@/lib/decisionReview';
 import { DecisionReviewSheet } from './DecisionReviewSheet';
+import { ProjectFilterSelect, ProjectTitle, PROJ_ALL, PROJ_NONE } from './ProjectFilterSelect';
 import type { DecisionRecord } from '@/lib/decisionRecord';
 import type { DecisionRecordContent } from '@/lib/register';
 
@@ -25,6 +26,7 @@ export function DecisoesTab() {
   const { entries, projects, refresh } = usePanelData();
   const [aberta, setAberta] = useState<DecisionRecord | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [projFiltro, setProjFiltro] = useState<string>(PROJ_ALL);
 
   const decisoes = entries
     .filter((e) => e.entry_type === 'decision_record')
@@ -37,8 +39,18 @@ export function DecisoesTab() {
       created_at: e.created_at,
     }));
 
+  // Contagem sobre o total, não sobre o filtro: é o que informa se vale abrir
+  // a opção "Sem projeto" no seletor.
+  const semProjeto = decisoes.filter((d) => !d.project_id).length;
+
+  const visiveis = decisoes.filter((d) =>
+    projFiltro === PROJ_ALL ? true
+    : projFiltro === PROJ_NONE ? !d.project_id
+    : d.project_id === projFiltro,
+  );
+
   const ordenadas = sortByAttention(
-    decisoes,
+    visiveis,
     (d) => decisionReviewInfo(d.content),
     (d) => d.created_at,
   );
@@ -70,6 +82,16 @@ export function DecisoesTab() {
 
   return (
     <>
+      <div className="mb-3">
+        <ProjectFilterSelect
+          value={projFiltro}
+          onChange={setProjFiltro}
+          projects={projects}
+          includeNoProject
+          noProjectCount={semProjeto}
+        />
+      </div>
+
       <div className="flex items-center gap-2 mb-1">
         {/* flex-1 empurra o ⓘ para a borda direita — padrão da aba Gargalos
             e das demais telas do app. */}
@@ -113,10 +135,14 @@ export function DecisoesTab() {
                 onClick={() => setAberta(d)}
                 className="w-full text-left rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-1 hover:bg-op-navy-elevated transition-colors"
               >
-                <p className="text-small text-op-white leading-snug">{d.content.decision}</p>
+                {/* O título em negrito é o nome do projeto. Sem projeto não
+                    se inventa um: vira rótulo discreto, e a decisão assume o
+                    papel de linha principal. */}
+                {proj ? <ProjectTitle name={proj} /> : <p className="text-label text-op-gray">Sem projeto</p>}
+                <p className={`leading-snug ${proj ? 'text-small text-op-white/80' : 'text-body font-semibold text-op-white'}`}>
+                  {d.content.decision}
+                </p>
                 <p className="text-label text-op-gray">
-                  {proj ? `Projeto ${proj}` : 'Sem projeto'}
-                  {' · '}
                   {new Date(d.created_at).toLocaleDateString('pt-BR')}
                 </p>
                 <p className={`text-label font-medium ${rev.colorClass}`}>{rev.label}</p>

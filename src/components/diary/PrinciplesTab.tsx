@@ -1,6 +1,7 @@
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { useSearch } from '@tanstack/react-router';
 import { usePanelData } from '@/hooks/usePanelData';
+import { ProjectFilterSelect, PROJ_ALL } from './ProjectFilterSelect';
 import { PrincipleCard } from './PrincipleCard';
 import { suggestPrincipleForProject } from '@/engines/SuggestionEngine';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
@@ -14,7 +15,10 @@ export function PrinciplesTab() {
   const highlightId = search.principleId ?? null;
   const highlightRef = useRef<HTMLDivElement>(null);
   const { principles, projects, refresh } = usePanelData();
-  const [projectFilter, setProjectFilter] = useState<string | null>(search.projectId ?? null);
+  // Passa a usar PROJ_ALL em vez de null como "todos", para falar a mesma
+  // língua do seletor compartilhado. O chip de filtro vindo por URL continua
+  // funcionando: search.projectId cai direto no estado.
+  const [projectFilter, setProjectFilter] = useState<string>(search.projectId ?? PROJ_ALL);
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
   const [layer, setLayer] = useState<OperationalLayer | null>(null);
   const [masterOnly, setMasterOnly] = useState(false);
@@ -37,7 +41,7 @@ export function PrinciplesTab() {
     [projects],
   );
 
-  const noActiveFilters = !scenario && !layer && !masterOnly && !projectFilter;
+  const noActiveFilters = !scenario && !layer && !masterOnly && projectFilter === PROJ_ALL;
 
   // [REQ-PM-11] Scroll ao princípio destacado quando principleId está presente
   useEffect(() => {
@@ -61,7 +65,7 @@ export function PrinciplesTab() {
 
     return deduped
       .filter((p) => !p.is_archived)
-      .filter((p) => !projectFilter || p.project_id === projectFilter)
+      .filter((p) => projectFilter === PROJ_ALL || p.project_id === projectFilter)
       .filter((p) => {
         if (!scenario) return true;
         const s = p.scenario_type ?? projectMap[p.project_id]?.scenario_type ?? null;
@@ -86,24 +90,13 @@ export function PrinciplesTab() {
         className="w-full rounded-xl border border-op-gray/30 bg-op-navy text-op-white placeholder:text-op-gray text-small p-2"
       />
 
-      {projectFilter && (
-        <div className="flex items-center gap-2 text-small">
-          <span className="text-muted-foreground">
-            Projeto: <span className="text-foreground">{projectMap[projectFilter]?.name ?? projectFilter}</span>
-          </span>
-          <button
-            onClick={() => setProjectFilter(null)}
-            className="text-label text-muted-foreground hover:text-foreground"
-            aria-label="Limpar filtro de projeto"
-          >
-            ✕
-          </button>
-        </div>
-      )}
+      {/* Substitui o chip que só aparecia quando o filtro vinha por URL: dentro
+          da aba não havia como escolher projeto nenhum. */}
+      <ProjectFilterSelect value={projectFilter} onChange={setProjectFilter} projects={projects} />
 
       <div className="flex flex-wrap gap-1">
         <button
-          onClick={() => { setScenario(null); setLayer(null); setMasterOnly(false); setProjectFilter(null); }}
+          onClick={() => { setScenario(null); setLayer(null); setMasterOnly(false); setProjectFilter(PROJ_ALL); }}
           className={`text-label px-2 py-0.5 rounded-full border ${noActiveFilters ? 'bg-op-amber text-op-black border-op-amber font-semibold' : 'border-op-gray/30 bg-op-navy text-op-gray'}`}
         >Todos</button>
         {SCENARIOS.map((s) => (
@@ -124,7 +117,7 @@ export function PrinciplesTab() {
         </button>
       </div>
 
-      {recall && !projectFilter && (
+      {recall && projectFilter === PROJ_ALL && (
         <div className="rounded-md border border-[color:var(--color-brand-blue)] bg-op-navy p-3">
           <div className="text-label text-op-gray uppercase tracking-wide">
             Princípio relevante para {activeProject?.name}

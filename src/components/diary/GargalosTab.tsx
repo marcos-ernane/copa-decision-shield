@@ -3,12 +3,18 @@ import { useNavigate } from '@tanstack/react-router';
 import { Trash2 } from 'lucide-react';
 import { usePanelData } from '@/hooks/usePanelData';
 import { usePendingBottlenecks } from '@/hooks/usePendingBottlenecks';
+import { ProjectFilterSelect, ProjectTitle, PROJ_ALL } from './ProjectFilterSelect';
 
 export function GargalosTab() {
   const navigate = useNavigate();
   const { entries, projects } = usePanelData();
   const { pending, dismiss } = usePendingBottlenecks(entries, projects);
   const [showHelp, setShowHelp] = useState(false);
+  const [projFiltro, setProjFiltro] = useState<string>(PROJ_ALL);
+
+  // Gargalo sempre nasce de uma APA, que sempre pertence a um projeto — por
+  // isso aqui não há opção "Sem projeto", ao contrário da aba Decisões.
+  const visiveis = pending.filter((b) => projFiltro === PROJ_ALL || b.projectId === projFiltro);
 
   function handleCreate(text: string, entryId: string) {
     void navigate({ to: '/project/new', search: { bottleneck: text, bottleneckEntryId: entryId } });
@@ -38,10 +44,14 @@ export function GargalosTab() {
 
   return (
     <>
+      <div className="mb-3">
+        <ProjectFilterSelect value={projFiltro} onChange={setProjFiltro} projects={projects} />
+      </div>
+
       {/* Header com título e botão de ajuda */}
       <div className="flex items-center gap-2 mb-3">
         <p className="text-label text-op-gray uppercase flex-1">
-          {pending.length} gargalo{pending.length !== 1 ? 's' : ''} pendente{pending.length !== 1 ? 's' : ''}
+          {visiveis.length} gargalo{visiveis.length !== 1 ? 's' : ''} pendente{visiveis.length !== 1 ? 's' : ''}
         </p>
         <button
           type="button"
@@ -53,18 +63,18 @@ export function GargalosTab() {
         </button>
       </div>
 
-      {pending.length === 0 ? (
+      {visiveis.length === 0 ? (
         <p className="text-small text-op-gray py-8 text-center">
           Nenhum gargalo pendente no momento.
         </p>
       ) : (
         <div className="space-y-3">
-          {pending.map((b) => (
+          {visiveis.map((b) => (
             <div
               key={b.entryId}
               className="rounded-md border border-op-gray/30 bg-op-navy p-3 space-y-2"
             >
-              <p className="text-body font-semibold text-op-white truncate">{b.projectName}</p>
+              <ProjectTitle name={b.projectName} />
               <p className="text-small text-op-white/70 leading-snug">{b.text}</p>
               <p className="text-label text-op-gray">Registrado na [A] Aferição</p>
               {/* flex-wrap: três ações não cabem numa linha a 375px. */}
