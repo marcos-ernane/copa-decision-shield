@@ -62,6 +62,7 @@ function Home() {
   const [showHelpActive, setShowHelpActive] = useState(false);
   const [showHelpPaused, setShowHelpPaused] = useState(false);
   const [showHelpGargalos, setShowHelpGargalos] = useState(false);
+  const [showHelpInbox, setShowHelpInbox] = useState(false);
   const [showBottleneckBank, setShowBottleneckBank] = useState(false);
   const [showDay7Nudge, setShowDay7Nudge] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
@@ -403,25 +404,104 @@ function Home() {
           </div>
         )}
 
+        {/* Era o único bloco da Home sem o ⓘ ao lado — e justamente o que mais
+            precisa de explicação, porque "Inbox" não diz o que é nem o que
+            fazer com o que está lá dentro. */}
         {inboxCount > 0 && (
-          <Link
-            to="/inbox"
-            className="w-full flex items-center justify-between gap-3 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 hover:bg-op-navy-elevated transition-colors"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <Inbox className="size-4 text-op-cyan shrink-0" />
-              <div className="min-w-0">
-                <p className="text-small text-op-cyan font-medium">
-                  {inboxCount} {inboxCount === 1 ? 'captura pendente' : 'capturas pendentes'} no Inbox
-                </p>
-                <p className="text-label text-op-gray">Abrir Registro do Projeto →</p>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/inbox"
+              className="flex-1 flex items-center justify-between gap-3 rounded-md border border-op-cyan/30 bg-op-navy px-4 py-3 hover:bg-op-navy-elevated transition-colors min-w-0"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <Inbox className="size-4 text-op-cyan shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-small text-op-cyan font-medium">
+                    {inboxCount} {inboxCount === 1 ? 'captura pendente' : 'capturas pendentes'} no Inbox
+                  </p>
+                  <p className="text-label text-op-gray">Abrir Registro do Projeto →</p>
+                </div>
               </div>
-            </div>
-          </Link>
+            </Link>
+            <button
+              type="button"
+              onClick={() => setShowHelpInbox(true)}
+              className="text-label text-op-cyan border border-op-cyan/40 rounded-full w-5 h-5 flex items-center justify-center leading-none hover:bg-op-cyan/10 transition-colors shrink-0"
+              aria-label="O que é o Inbox?"
+            >
+              ⓘ
+            </button>
+          </div>
         )}
 
         <CommunityLink url={communityLink} />
       </main>
+
+      {/* Help sheet: Capturas pendentes no Inbox */}
+      {showHelpInbox && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          onClick={() => setShowHelpInbox(false)}
+        >
+          <div
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
+            <h3 className="text-heading text-op-white font-semibold">Capturas pendentes no Inbox</h3>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que é</p>
+              <p className="text-body text-op-white">
+                O Inbox guarda o que você capturou pelo botão <span className="font-semibold">CAPTURAR</span> sem indicar a qual projeto pertence. É a saída para registrar um pensamento antes que ele se perca, mesmo quando ainda não está claro onde ele se encaixa. Nada aqui está perdido — está em espera.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">Como chega uma captura aqui</p>
+              <p className="text-body text-op-white">
+                Ao tocar em <span className="font-semibold">CAPTURAR</span>, você escreve ou dita e escolhe se quer vincular a um projeto. Escolhendo um projeto, o registro vira um <span className="font-semibold">Pulso</span> na hora. Deixando sem projeto, ele vem para o Inbox.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O que fazer com o que está aqui</p>
+              <p className="text-body text-op-white">
+                Toque no bloco para abrir o Inbox. Cada captura oferece quatro caminhos:
+              </p>
+              <ul className="space-y-2 pl-1">
+                <li className="text-body text-op-white">
+                  <span className="font-semibold text-op-cyan">Abrir Registro do Projeto</span> — vira análise estruturada na fase [C] Captura. Você escolhe o projeto (ou cria um novo) e o texto já entra no Quadro 1 como fato.
+                </li>
+                <li className="text-body text-op-white">
+                  <span className="font-semibold text-op-cyan">Salvar como pulso</span> — escolhe um projeto e grava como Pulso rápido, sem análise.
+                </li>
+                <li className="text-body text-op-white">
+                  <span className="font-semibold text-op-cyan">Já processado</span> — some do Inbox sem criar registro. Use quando já resolveu aquilo por fora.
+                </li>
+                <li className="text-body text-op-white">
+                  <span className="font-semibold text-op-cyan">Descartar</span> — remove de vez. Use quando não é mais relevante.
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O Inbox não cobra</p>
+              <p className="text-body text-op-white">
+                O contador não é meta nem pendência a zerar. Capturar agora e organizar quando fizer sentido é o uso correto — uma captura pode esperar o tempo que precisar. Este bloco só aparece quando há algo guardado.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowHelpInbox(false)}
+              className="w-full rounded-xl border border-op-gray/30 py-2.5 text-small text-op-gray hover:text-op-white transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Help sheet: Projetos Já Concluídos */}
       {showHelpConcluded && (
@@ -430,7 +510,7 @@ function Home() {
           onClick={() => setShowHelpConcluded(false)}
         >
           <div
-            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
@@ -482,7 +562,7 @@ function Home() {
           onClick={() => setShowHelpGargalos(false)}
         >
           <div
-            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
@@ -534,7 +614,7 @@ function Home() {
           onClick={() => setShowHelpActive(false)}
         >
           <div
-            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
@@ -586,7 +666,7 @@ function Home() {
           onClick={() => setShowHelpPaused(false)}
         >
           <div
-            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
