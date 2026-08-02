@@ -81,12 +81,12 @@ export function DiaryShell({ active: _active, children }: Props) {
     setTab(id);
     if (id === 'timeline') navigate({ to: '/diary' });
     else {
-      const splat = id === 'manual' ? 'manual'
-        : id === 'principles' ? 'principles'
-        : id === 'symptoms' ? 'symptoms'
-        : id === 'gargalos' ? 'gargalos'
-        : 'weekly';
-      navigate({ to: '/diary/$', params: { _splat: splat } });
+      // O id da aba É o segmento da rota — não há mapeamento a fazer. Antes
+      // isto era uma cadeia de ternários id === X ? X, com ': weekly' no fim:
+      // uma aba nova caía silenciosamente na Semana. Foi o que aconteceu com
+      // 'decisoes'. Identidade direta remove a classe de bug: acrescentar aba
+      // não exige lembrar de mais nada aqui.
+      navigate({ to: '/diary/$', params: { _splat: id } });
     }
   }
 

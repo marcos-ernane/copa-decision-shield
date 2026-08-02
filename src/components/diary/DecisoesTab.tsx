@@ -71,7 +71,9 @@ export function DecisoesTab() {
   return (
     <>
       <div className="flex items-center gap-2 mb-1">
-        <h2 className="text-label text-op-cyan uppercase">
+        {/* flex-1 empurra o ⓘ para a borda direita — padrão da aba Gargalos
+            e das demais telas do app. */}
+        <h2 className="text-label text-op-cyan uppercase flex-1">
           {ordenadas.length === 0
             ? 'Nenhuma decisão registrada'
             : `${ordenadas.length} ${ordenadas.length === 1 ? 'decisão registrada' : 'decisões registradas'}`}
