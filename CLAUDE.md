@@ -269,19 +269,29 @@ export type AuthState =
 
   /compass (CompassShell)     -- v3.0
     index → CompassHome
-    /protocol · /sheet · /guide · /symptoms · /friction · /protocol5
+    /protocol · /sheet · /guide · /friction
     /maintenance · /simulation · /simulation/:id
+    (o Índice por Sintoma NÃO fica aqui — é a aba /diary/symptoms.
+     O Protocolo 5 Minutos NÃO fica aqui — é a rota /protocol5 na raiz;
+     a Bússola apenas linka para ela, como o FAB também faz)
 
   /diary (DiaryShell)
     index → TimelineTab
-    /principles · /symptom · /weekly · /manual · /manual/:chapterId
+    /principles · /symptoms · /gargalos · /decisoes · /weekly
+    /manual · /manual/:chapterId
+    (era "/symptom" no singular — a aba é "symptoms". É aqui que vive o
+     Índice por Sintoma, não na Bússola)
 
   /creative (CreativeShell)   -- v3.0
     index → CreativeDiverge
     /function · /converge · /done
 
   /settings
-  /settings/notifications · /plan · /account · /reading-mode · /ai-assist · /compass
+  /settings/notifications
+  /settings/help
+  (Plano, Conta, Modo Leitura, Assistente de IA e Bússola NÃO são sub-rotas:
+   são seções dentro da própria tela /settings, em SettingsScreen.tsx.
+   Só Notificações e Ajuda têm rota própria)
 
   /reading-mode
   /baseline/new               -- v3.0
