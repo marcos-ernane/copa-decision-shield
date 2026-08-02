@@ -231,7 +231,7 @@ export function StructuredRegister() {
   }, [format, projectData, principles]);
 
   if (!projectId) {
-    return <ProjectPicker projects={projects} onPick={setProjectId} />;
+    return <ProjectPicker eyebrow="Registro Estruturado" projects={projects} onPick={setProjectId} />;
   }
 
   const statuses = computeStatuses(entries);

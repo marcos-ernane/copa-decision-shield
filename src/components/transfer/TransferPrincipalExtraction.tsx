@@ -13,7 +13,7 @@ export function TransferPrincipalExtraction({ initial, onConclude }: Props) {
   const valid = isPrincipleValid(text);
 
   return (
-    <div className="min-h-screen bg-op-black px-6 py-8" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
+    <div className="px-6 py-8">
       <div className="max-w-md mx-auto space-y-5">
         <h2 className="text-title text-foreground">
           Olhando para os 3 cenários que você analisou, o que todos têm em comum?

@@ -4,9 +4,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
-import { BackButton } from '@/components/app/BackButton';
-import { CloseButton } from '@/components/app/CloseButton';
-import { PROJ_OPTION_ITEM, PROJ_OPTION_GHOST, statusDotClass } from '@/components/diary/ProjectFilterSelect';
+import { FlowHeader } from '@/components/app/FlowHeader';
+import {
+  PROJ_OPTION_ITEM,
+  PROJ_OPTION_GHOST,
+  ProjectStatusLegend,
+  statusDotClass,
+} from '@/components/diary/ProjectFilterSelect';
 import { PressureRealityCheckScreen } from './PressureRealityCheckScreen';
 import { AbuseWarningScreen } from './AbuseWarningScreen';
 import { PressureActivation } from './PressureActivation';
@@ -54,10 +58,12 @@ export function PressureShell() {
   const [risk, setRisk] = useState<Risk | null>(null);
   const [calibrateFacts, setCalibrateFacts] = useState<string[] | null>(null);
 
+  // Carrega sempre, e não só quando falta escolher: o cabeçalho precisa do
+  // nome do projeto também em quem entra pelo FAB do Dashboard (?projectId=),
+  // que nunca passa pela tela de escolha.
   useEffect(() => {
-    if (projectId) return;
     listProjects().then(setProjects);
-  }, [projectId]);
+  }, []);
 
   useEffect(() => {
     if (!projectId) return;
@@ -113,124 +119,153 @@ export function PressureShell() {
     setStep('done');
   }
 
-  if (step === 'pick_project') {
-    return (
-      <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
-        <header className="flex items-center gap-3 px-4 py-4 border-b border-border">
-          <BackButton />
-          <h1 className="text-heading text-foreground">Modo Pressão</h1>
-          <CloseButton className="ml-auto" />
-        </header>
-        <div className="space-y-4 p-4">
-        <h2 className="text-title">Para qual projeto?</h2>
-        {projects.length === 0 && (
-          <p className="text-small text-muted-foreground">
-            Você ainda não tem projetos. Crie um primeiro.
-          </p>
-        )}
-        <div className="space-y-2">
-          {/* Era Button variant="outline" — contorno ciano, visual só desta
-              tela. Agora usa as classes canônicas do seletor de projeto. */}
-          {projects.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className={PROJ_OPTION_ITEM}
-              onClick={() => startFlow(p.id)}
-            >
-              <span className={`size-2 rounded-full shrink-0 ${statusDotClass(p.state)}`} />
-              <span className="truncate">{p.name}</span>
-            </button>
-          ))}
-          <button
-            type="button"
-            className={PROJ_OPTION_GHOST}
-            onClick={() => navigate({ to: '/project/new' })}
-          >
-            <Plus className="size-4 shrink-0" />
-            Novo projeto
-          </button>
-        </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'reality_check') {
-    return (
-      <PressureRealityCheckScreen
-        onSkip={() => afterReality(null)}
-        onProceed={(r) => afterReality(r)}
-      />
-    );
-  }
-
-  if (step === 'abuse_warning' && projectId) {
-    return (
-      <AbuseWarningScreen
-        projectId={projectId}
-        count={abuseCount}
-        onProceed={() => setStep('activation')}
-      />
-    );
-  }
-
+  // Tela 0 é fullscreen por decisão de produto (PRD Seção 08: fundo brand-navy,
+  // auto-avança em 3s) e não tem ação do operador — cabeçalho ali só piscaria.
   if (step === 'activation') {
     return <PressureActivation onContinue={() => setStep('fact')} />;
   }
 
-  if (step === 'fact') {
-    return (
-      <PressureFact
-        onNext={(f) => {
-          setFact(f);
-          setStep('risk');
-        }}
+  const projectName = projects.find((p) => p.id === projectId)?.name ?? null;
+
+  /**
+   * Voltar percorre as etapas, não o histórico do navegador: o fluxo inteiro
+   * vive numa rota só, então history.back() sairia do Modo Pressão em vez de
+   * recuar um passo. Só a primeira etapa cai no histórico, que ali é o
+   * comportamento certo.
+   *
+   * 'activation' é pulada no caminho de volta de propósito — ela auto-avança
+   * em 3s, e voltar para lá jogaria o operador adiante de novo num laço.
+   */
+  function backTarget(): (() => void) | undefined {
+    switch (step) {
+      case 'pick_project':
+        return undefined; // primeira tela — histórico do navegador
+      case 'reality_check':
+        // Quem entrou pelo FAB do Dashboard já chegou com projeto: não há
+        // tela de escolha para voltar.
+        return initialProjectId ? undefined : () => setStep('pick_project');
+      case 'abuse_warning':
+        return () => setStep('reality_check');
+      case 'fact':
+        return () => setStep(abuseQueued ? 'abuse_warning' : 'reality_check');
+      case 'risk':
+        return () => setStep('fact');
+      case 'calibrate':
+        return () => setStep('risk');
+      case 'next_step':
+        return () => setStep(calibrateFacts ? 'calibrate' : 'risk');
+      default:
+        return undefined;
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-op-black" style={{ backgroundColor: '#070C12', minHeight: '100vh' }}>
+      <FlowHeader
+        eyebrow="Modo Pressão"
+        title={projectName ?? 'Para qual projeto?'}
+        onBack={backTarget()}
+        // A sessão já foi gravada: recuar reabriria um passo cujo resultado
+        // está no banco.
+        hideBack={step === 'done'}
       />
-    );
-  }
 
-  if (step === 'risk') {
-    return (
-      <PressureRisk
-        onSelect={(r) => {
-          setRisk(r);
-          setStep('next_step');
-        }}
-        onPerceptionCalibrate={() => {
-          setRisk('perception');
-          setStep('calibrate');
-        }}
-      />
-    );
-  }
+      {/* Sem <h2> repetindo "Para qual projeto?": o cabeçalho já traz a
+          pergunta como título. */}
+      {step === 'pick_project' && (
+        <div className="space-y-4 p-4">
+          {projects.length === 0 ? (
+            <p className="text-small text-muted-foreground">
+              Você ainda não tem projetos. Crie um primeiro.
+            </p>
+          ) : (
+            <ProjectStatusLegend />
+          )}
+          <div className="space-y-2">
+            {/* Era Button variant="outline" — contorno ciano, visual só desta
+                tela. Agora usa as classes canônicas do seletor de projeto. */}
+            {projects.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className={PROJ_OPTION_ITEM}
+                onClick={() => startFlow(p.id)}
+              >
+                <span className={`size-2 rounded-full shrink-0 ${statusDotClass(p.state)}`} />
+                <span className="truncate">{p.name}</span>
+              </button>
+            ))}
+            <button
+              type="button"
+              className={PROJ_OPTION_GHOST}
+              onClick={() => navigate({ to: '/project/new' })}
+            >
+              <Plus className="size-4 shrink-0" />
+              Novo projeto
+            </button>
+          </div>
+        </div>
+      )}
 
-  if (step === 'calibrate') {
-    return (
-      <PressureCalibrateScreen
-        onContinue={(facts) => {
-          setCalibrateFacts(facts);
-          setStep('next_step');
-        }}
-        onCloseWithoutSaving={() => router.history.back()}
-      />
-    );
-  }
+      {step === 'reality_check' && (
+        <PressureRealityCheckScreen
+          onSkip={() => afterReality(null)}
+          onProceed={(r) => afterReality(r)}
+        />
+      )}
 
-  if (step === 'next_step' && risk) {
-    return (
-      <PressureNextStep
-        risk={risk}
-        fact={fact}
-        historyCount={historyCount}
-        onDefine={({ next_step, ethical_check }) => finish(next_step, ethical_check)}
-      />
-    );
-  }
+      {step === 'abuse_warning' && projectId && (
+        <AbuseWarningScreen
+          projectId={projectId}
+          count={abuseCount}
+          onProceed={() => setStep('activation')}
+        />
+      )}
 
-  if (step === 'done' && projectId) {
-    return <PressureDone projectId={projectId} onClose={() => router.history.back()} />;
-  }
+      {step === 'fact' && (
+        <PressureFact
+          onNext={(f) => {
+            setFact(f);
+            setStep('risk');
+          }}
+        />
+      )}
 
-  return null;
+      {step === 'risk' && (
+        <PressureRisk
+          onSelect={(r) => {
+            setRisk(r);
+            setStep('next_step');
+          }}
+          onPerceptionCalibrate={() => {
+            setRisk('perception');
+            setStep('calibrate');
+          }}
+        />
+      )}
+
+      {step === 'calibrate' && (
+        <PressureCalibrateScreen
+          onContinue={(facts) => {
+            setCalibrateFacts(facts);
+            setStep('next_step');
+          }}
+          onCloseWithoutSaving={() => router.history.back()}
+        />
+      )}
+
+      {step === 'next_step' && risk && (
+        <PressureNextStep
+          risk={risk}
+          fact={fact}
+          historyCount={historyCount}
+          onDefine={({ next_step, ethical_check }) => finish(next_step, ethical_check)}
+        />
+      )}
+
+      {step === 'done' && projectId && (
+        <PressureDone projectId={projectId} onClose={() => router.history.back()} />
+      )}
+    </div>
+  );
 }

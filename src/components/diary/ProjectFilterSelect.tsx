@@ -25,6 +25,24 @@ export function statusDotClass(state: string): string {
 }
 
 /**
+ * Legenda das cores do ponto de status.
+ *
+ * Estava embutida só no Diário. Quando o ponto passou a aparecer no Modo
+ * Pressão, no Registro e no Inbox, a bolinha colorida foi junto mas a legenda
+ * não — cor sem chave de leitura é ruído. Agora acompanha o ponto em toda
+ * tela que o exibe.
+ */
+export function ProjectStatusLegend() {
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-label text-op-gray">
+      <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-success shrink-0" />Ativo</span>
+      <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-danger shrink-0" />Concluído</span>
+      <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-amber shrink-0" />Pausado/Arquivado</span>
+    </div>
+  );
+}
+
+/**
  * Classes canônicas do seletor de projeto — o padrão visual do app.
  *
  * Existiam quatro estilos diferentes para a mesma coisa: este (Diário),
@@ -119,13 +137,7 @@ export function ProjectFilterSelect({
 
   return (
     <div className="space-y-2">
-      {showLegend && (
-        <div className="flex items-center gap-4 text-label text-op-gray">
-          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-success shrink-0" />Ativo</span>
-          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-danger shrink-0" />Concluído</span>
-          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-amber shrink-0" />Pausado/Arquivado</span>
-        </div>
-      )}
+      {showLegend && <ProjectStatusLegend />}
 
       <div ref={ref} className="relative">
         <button

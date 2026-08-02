@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { FlowHeader } from '@/components/app/FlowHeader';
 import { PaywallGate } from '@/components/PaywallGate';
 import { supabase } from '@/lib/supabase';
 import { GuestStorage } from '@/lib/guestStorage';
@@ -201,71 +202,107 @@ function TransferProofInner() {
     );
   }
 
-  if (step === 'entry') {
-    return (
-      <TransferEntry
-        inProgress={hasInProgress}
-        onStart={beginNew}
-        onContinue={resume}
-        onLater={() => navigate({ to: '/panel' })}
-      />
-    );
+  /**
+   * Voltar percorre as etapas e não o histórico: o fluxo inteiro é uma rota só.
+   * Cenário 2 e 3 voltam ao bloco de linhas do cenário anterior — é lá que
+   * estava o trabalho, e refazer o contexto seria o passo errado.
+   *
+   * 'analyzing' não tem Voltar (chamada em curso) e 'report' também não
+   * (a prova já foi gravada).
+   */
+  function backTarget(): (() => void) | undefined {
+    switch (step) {
+      case 'entry':
+        return undefined; // primeira tela — histórico do navegador
+      case 'context':
+        if (currentIdx === 0) return () => setStep('entry');
+        return () => {
+          setCurrentIdx(currentIdx - 1);
+          setPhase('lines');
+          setStep('lines');
+        };
+      case 'lines':
+        return () => { setPhase('context'); setStep('context'); };
+      case 'principle':
+        return () => {
+          setCurrentIdx(2);
+          setPhase('lines');
+          setStep('lines');
+        };
+      default:
+        return undefined;
+    }
   }
 
-  if (step === 'context') {
-    return (
-      <TransferScenarioContext
-        scenarioIndex={currentIdx}
-        initial={scenarios[currentIdx].context}
-        onContinue={onContextContinue}
-      />
-    );
-  }
+  const eyebrow = 'Prova de Transferência';
+  const titulo =
+    step === 'entry' ? 'Início'
+    : step === 'principle' ? 'Princípio final'
+    : step === 'analyzing' ? 'Analisando'
+    : step === 'report' ? 'Relatório'
+    : `Cenário ${currentIdx + 1} de 3`;
 
-  if (step === 'lines') {
-    return (
-      <TransferScenarioLines
-        scenarioIndex={currentIdx}
-        context={scenarios[currentIdx].context}
-        initial={scenarios[currentIdx]}
-        isLast={currentIdx === 2}
-        onContinue={onLinesContinue}
+  return (
+    <div className="min-h-screen bg-op-black" style={{ backgroundColor: '#070C12', minHeight: '100vh' }}>
+      <FlowHeader
+        eyebrow={eyebrow}
+        title={titulo}
+        onBack={backTarget()}
+        hideBack={step === 'analyzing' || step === 'report'}
       />
-    );
-  }
 
-  if (step === 'principle') {
-    return (
-      <TransferPrincipalExtraction
-        initial={finalPrinciple}
-        onConclude={onPrincipleConclude}
-      />
-    );
-  }
+      {step === 'entry' && (
+        <TransferEntry
+          inProgress={hasInProgress}
+          onStart={beginNew}
+          onContinue={resume}
+          onLater={() => navigate({ to: '/panel' })}
+        />
+      )}
 
-  if (step === 'analyzing') {
-    return (
-      <div className="min-h-screen bg-op-black flex flex-col items-center justify-center px-6" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
-        <p className="text-body text-foreground">Analisando os 3 cenários…</p>
-        <div className="mt-4 h-1 w-32 bg-border overflow-hidden rounded-full">
-          <div className="h-full w-1/2 bg-primary animate-pulse" />
+      {step === 'context' && (
+        <TransferScenarioContext
+          initial={scenarios[currentIdx].context}
+          onContinue={onContextContinue}
+        />
+      )}
+
+      {step === 'lines' && (
+        <TransferScenarioLines
+          scenarioIndex={currentIdx}
+          context={scenarios[currentIdx].context}
+          initial={scenarios[currentIdx]}
+          isLast={currentIdx === 2}
+          onContinue={onLinesContinue}
+        />
+      )}
+
+      {step === 'principle' && (
+        <TransferPrincipalExtraction
+          initial={finalPrinciple}
+          onConclude={onPrincipleConclude}
+        />
+      )}
+
+      {step === 'analyzing' && (
+        <div className="flex flex-col items-center justify-center px-6 py-24">
+          <p className="text-body text-foreground">Analisando os 3 cenários…</p>
+          <div className="mt-4 h-1 w-32 bg-border overflow-hidden rounded-full">
+            <div className="h-full w-1/2 bg-primary animate-pulse" />
+          </div>
         </div>
-      </div>
-    );
-  }
+      )}
 
-  if (step === 'report' && report) {
-    return (
-      <TransferReport
-        scenarios={scenarios}
-        finalPrinciple={finalPrinciple}
-        report={report}
-        userName={userName}
-        completedAt={completedAt}
-        onClose={() => navigate({ to: '/panel' })}
-      />
-    );
-  }
-
-  return null;
+      {step === 'report' && report && (
+        <TransferReport
+          scenarios={scenarios}
+          finalPrinciple={finalPrinciple}
+          report={report}
+          userName={userName}
+          completedAt={completedAt}
+          onClose={() => navigate({ to: '/panel' })}
+        />
+      )}
+    </div>
+  );
 }

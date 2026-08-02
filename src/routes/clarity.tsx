@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
-import { BackButton } from '@/components/app/BackButton';
+import { FlowHeader } from '@/components/app/FlowHeader';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { getProject, listEntries, listPrinciples, listProjects } from '@/lib/projects';
@@ -188,35 +188,26 @@ function ClarityScreen() {
   // ── Layout shell ──
   return (
     <div className="min-h-screen pb-48" style={{ backgroundColor: '#070C12' }}>
-      <header
-        className="sticky top-0 z-10 border-b border-border"
-        style={{ backgroundColor: '#070C12' }}
-      >
-        <div className="flex items-center gap-2 px-4 py-3 max-w-md mx-auto">
-          <BackButton />
-          <div className="flex-1 min-w-0">
-            <h1 className="text-heading font-semibold text-foreground">Clareza Operacional</h1>
-            {project && (
-              <p className="text-label text-muted-foreground truncate">{project.name}</p>
-            )}
-          </div>
-          {/* Alterna entre modo leitura e modo edição */}
-          {hasContent && result && (
-            <button
-              type="button"
-              aria-label={editMode ? 'Ver relatório' : 'Editar blocos'}
-              onClick={() => { setEditMode((v) => !v); setOpenHelp(null); }}
-              className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded shrink-0"
-            >
-              {editMode
-                ? <Brain className="size-5" />
-                : <Pencil className="size-4" />
-              }
-            </button>
-          )}
-          {!hasContent && <Brain className="size-5 text-muted-foreground shrink-0" />}
-        </div>
-      </header>
+      {/* Tinha Voltar mas não Fechar, e cabeçalho próprio: com o Fechar somado,
+          "Clareza Operacional" e o nome do projeto não cabiam mais na mesma
+          linha a 375px. O FlowHeader empilha rótulo e contexto. */}
+      <FlowHeader eyebrow="Clareza Operacional" title={project?.name}>
+        {/* Alterna entre modo leitura e modo edição */}
+        {hasContent && result && (
+          <button
+            type="button"
+            aria-label={editMode ? 'Ver relatório' : 'Editar blocos'}
+            onClick={() => { setEditMode((v) => !v); setOpenHelp(null); }}
+            className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded shrink-0"
+          >
+            {editMode
+              ? <Brain className="size-5" />
+              : <Pencil className="size-4" />
+            }
+          </button>
+        )}
+        {!hasContent && <Brain className="size-5 text-muted-foreground shrink-0" />}
+      </FlowHeader>
 
       <main className="px-4 py-4 max-w-md mx-auto space-y-4">
 

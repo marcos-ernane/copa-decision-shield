@@ -11,7 +11,7 @@ import { registrableProjects } from '@/lib/projectState';
 import { savePulse } from '@/lib/register';
 import type { InboxEntry } from '@/lib/universalCapture';
 import type { Project } from '@/types/database';
-import { PROJ_OPTION_ITEM, statusDotClass } from '@/components/diary/ProjectFilterSelect';
+import { PROJ_OPTION_ITEM, ProjectStatusLegend, statusDotClass } from '@/components/diary/ProjectFilterSelect';
 
 interface Props {
   entry: InboxEntry;
@@ -171,6 +171,7 @@ export function InboxCard({ entry, onProcessed }: Props) {
               // Sem caixa de rolagem interna: a lista flui e a página rola
               // naturalmente, no mesmo formato do "Para qual projeto?".
               <div className="space-y-2">
+                <ProjectStatusLegend />
                 {projects.map((p) => (
                   <button
                     key={p.id}
