@@ -3,6 +3,7 @@
 // sem conta até o cadastro voluntário (REQ-AUTH-01).
 
 import type { Profile, Project, Entry, Principle, Chapter, BaselineAssessment, OperatorSheet } from '@/types/database';
+import type { DecisionRecordContent } from './register';
 
 const KEYS = {
   profile: 'aop.profile',
@@ -40,13 +41,9 @@ export interface GuestDecisionRecord {
   user_id: string;
   project_id: string | null;
   entry_type: 'decision_record';
-  content: {
-    decision: string;
-    context: string;
-    main_risk: string;
-    validation_signal: string;
-    review_date?: string;
-  };
+  // Reusa o tipo canônico em vez de duplicar os campos: a cópia inline não
+  // tinha os campos de revisão e travou a implementação da tela de revisão.
+  content: DecisionRecordContent;
   scenario_type_at_entry?: string | null;
   layer_at_entry?: string | null;
   created_at: string;
@@ -242,6 +239,13 @@ export const GuestStorage = {
   addDecisionRecord(record: GuestDecisionRecord): void {
     const all = GuestStorage.getDecisionRecords();
     write(KEYS.decisionRecords, [record, ...all]);
+  },
+  /** Substitui o content inteiro — quem chama já mesclou o patch. */
+  updateDecisionRecord(id: string, content: GuestDecisionRecord['content']): void {
+    const all = GuestStorage.getDecisionRecords().map((r) =>
+      r.id === id ? { ...r, content } : r,
+    );
+    write(KEYS.decisionRecords, all);
   },
 
   // ---------- Clear (após migração) ----------

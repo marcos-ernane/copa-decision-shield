@@ -10,6 +10,7 @@ function DiarySplat() {
   if (key === 'principles') active = 'principles';
   else if (key === 'symptoms') active = 'symptoms';
   else if (key === 'gargalos') active = 'gargalos';
+  else if (key === 'decisoes') active = 'decisoes';
   else if (key === 'weekly') active = 'weekly';
   else if (key === 'manual') active = 'manual';
 

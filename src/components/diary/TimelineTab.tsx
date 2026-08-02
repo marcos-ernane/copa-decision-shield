@@ -18,6 +18,8 @@ import { ScenarioTypeChip } from '@/components/project/ScenarioTypeChip';
 import { LayerChip } from '@/components/project/LayerChip';
 import { EditZoneGuard } from '@/components/EditZoneGuard';
 import { supabase } from '@/lib/supabase';
+import { decisionReviewInfo, OUTCOME_LABELS, OUTCOME_COLORS } from '@/lib/decisionReview';
+import type { DecisionRecordContent } from '@/lib/register';
 import { GuestStorage } from '@/lib/guestStorage';
 import { useAuthState } from '@/lib/planLimits';
 import { ProjectScenarioPhotos } from './ProjectScenarioPhotos';
@@ -145,7 +147,11 @@ export function TimelineTab() {
   const { entries, projects, refresh } = usePanelData();
   const readingMode = useReadingMode();
   // 'none' = nenhuma seleção ainda → timeline vazia até o usuário escolher
-  const [project, setProject] = useState<string>(search.projectId ?? 'none');
+  // Padrão 'all' e não 'none': 'none' renderiza lista vazia com "Escolha o
+  // projeto", então quem abria o Diário via nada e precisava adivinhar o
+  // próximo passo. Pior para registros sem projeto — decisões avulsas só
+  // aparecem em 'all' e não havia sinal de que existiam.
+  const [project, setProject] = useState<string>(search.projectId ?? 'all');
   // [REQ-BM-06] Inicializa com filtros vindos do Mapa de Gargalos (scenario_type e layer via URL)
   const [scenario, setScenario] = useState<ScenarioType | null>((search.scenario_type as ScenarioType | undefined) ?? null);
   const [layer, setLayer] = useState<OperationalLayer | null>((search.layer as OperationalLayer | undefined) ?? null);
@@ -807,7 +813,8 @@ export function TimelineTab() {
             })()}
             {/* Decisão Importante — campos detalhados */}
             {e.entry_type === 'decision_record' && (() => {
-              const c = e.content as { decision?: string; context?: string; main_risk?: string; validation_signal?: string; review_date?: string };
+              const c = e.content as unknown as DecisionRecordContent;
+              const rev = decisionReviewInfo(c);
               return (
                 <div className="space-y-2">
                   {c.context && (
@@ -828,12 +835,28 @@ export function TimelineTab() {
                       <p className="text-small text-op-white/80 leading-snug">{c.validation_signal}</p>
                     </div>
                   )}
-                  {c.review_date && (
+                  {/* Estado, não data inerte. O campo era gravado e desenhado
+                      como '01/09/2026' e nunca acompanhado por nada — o
+                      operador não tinha como saber se venceu. */}
+                  {(c.review_date || c.reviewed_at) && (
                     <div>
-                      <p className="text-label text-op-gray uppercase">Revisar em</p>
-                      <p className="text-small text-op-white/80">
-                        {new Date(c.review_date).toLocaleDateString('pt-BR')}
+                      <p className="text-label text-op-gray uppercase">Revisão</p>
+                      <p className={`text-small font-medium ${rev.colorClass}`}>
+                        {rev.label}
+                        {c.review_date && rev.state !== 'reviewed' && (
+                          <span className="text-op-gray font-normal">
+                            {' · '}{new Date(c.review_date).toLocaleDateString('pt-BR')}
+                          </span>
+                        )}
                       </p>
+                      {c.review_outcome && (
+                        <p className={`text-small ${OUTCOME_COLORS[c.review_outcome]}`}>
+                          {OUTCOME_LABELS[c.review_outcome]}
+                        </p>
+                      )}
+                      {c.review_note && (
+                        <p className="text-small text-op-white/80 leading-snug">{c.review_note}</p>
+                      )}
                     </div>
                   )}
                 </div>

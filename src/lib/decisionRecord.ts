@@ -31,6 +31,14 @@ export async function saveDecisionRecord(args: {
       created_at: now,
     };
     GuestStorage.addDecisionRecord(record);
+    // Registrar decisão é registrar. Sem isto o projeto caminhava para
+    // "Travado — N dias sem registro" enquanto o operador registrava decisões
+    // nele: o app afirmava algo falso. Modo Pressão e Criatividade já faziam.
+    // Não confundir com a exclusão do IndexCalculator, que é outra coisa e
+    // está correta — decisão não é execução, mas é registro.
+    if (args.projectId) {
+      GuestStorage.updateProject(args.projectId, { last_entry_at: now });
+    }
     return record;
   }
 
@@ -48,6 +56,9 @@ export async function saveDecisionRecord(args: {
     .select('id, user_id, project_id, entry_type, content, scenario_type_at_entry, layer_at_entry, created_at')
     .single();
   if (error) throw error;
+  if (args.projectId) {
+    await supabase.from('projects').update({ last_entry_at: now }).eq('id', args.projectId);
+  }
   return data as DecisionRecord;
 }
 
@@ -91,4 +102,38 @@ export async function getDecisionRecord(id: string): Promise<DecisionRecord | nu
     .maybeSingle();
   if (error) throw error;
   return (data ?? null) as DecisionRecord | null;
+}
+
+/**
+ * Atualiza o `content` da decisão preservando o que já existe. Só a revisão e o
+ * reagendamento passam por aqui — os quatro campos do registro original são
+ * Zona Vermelha (Seção 13) e a correção deles é pelo Registro Corretivo.
+ *
+ * Mesma forma do updateEntryCostBenefit: mescla no JSONB em vez de sobrescrever.
+ */
+export async function updateDecisionRecord(
+  id: string,
+  patch: Partial<DecisionRecordContent>,
+): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    const all = GuestStorage.getDecisionRecords();
+    const alvo = all.find((r) => r.id === id);
+    if (!alvo) throw new Error('Decisão não encontrada');
+    GuestStorage.updateDecisionRecord(id, { ...alvo.content, ...patch });
+    return;
+  }
+
+  // Releitura antes da escrita: o content é JSONB e um update direto
+  // substituiria o objeto inteiro, apagando os campos que não vieram no patch.
+  const atual = await getDecisionRecord(id);
+  if (!atual) throw new Error('Decisão não encontrada');
+
+  const { error } = await supabase
+    .from('entries')
+    .update({ content: { ...atual.content, ...patch } as unknown as Record<string, unknown> })
+    .eq('id', id)
+    .eq('entry_type', 'decision_record');
+  if (error) throw error;
 }

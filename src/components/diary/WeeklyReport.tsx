@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { usePanelData } from '@/hooks/usePanelData';
+import { ProjectFilterSelect, ProjectTitle, PROJ_ALL } from './ProjectFilterSelect';
 import { detectOpenCycles } from '@/lib/openCycle';
 
 export function WeeklyReport() {
@@ -17,13 +18,21 @@ export function WeeklyReport() {
     [projects],
   );
 
+  const [projFiltro, setProjFiltro] = useState<string>(PROJ_ALL);
+
   const data = useMemo(() => {
     const now = Date.now();
     const sevenAgo = now - 7 * 86400000;
-    const week = entries.filter((e) => new Date(e.created_at).getTime() >= sevenAgo);
+    // Filtro aplicado na origem: tudo abaixo — contagens, princípios, ciclos
+    // abertos — deriva daqui, então filtrar aqui basta.
+    const doFiltro = <T extends { project_id?: string | null }>(xs: T[]) =>
+      projFiltro === PROJ_ALL ? xs : xs.filter((x) => x.project_id === projFiltro);
+    const entries_ = doFiltro(entries);
+    const principles_ = doFiltro(principles);
+    const week = entries_.filter((e) => new Date(e.created_at).getTime() >= sevenAgo);
     // Princípios únicos criados nesta semana (deduplicados por conteúdo)
     const seenPrinc = new Set<string>();
-    const weekPrinciples = principles
+    const weekPrinciples = principles_
       .filter((p) => !p.is_archived && new Date(p.created_at).getTime() >= sevenAgo)
       .filter((p) => {
         const key = `${p.project_id}|${p.content.trim().toLowerCase()}`;
@@ -41,7 +50,7 @@ export function WeeklyReport() {
     const topName = topId ? (projects.find((p) => p.id === topId)?.name ?? '—') : null;
 
     // Ciclos abertos: IMVs sem resultado, máx. 3, mais críticos primeiro
-    const openCycles = detectOpenCycles(entries).slice(0, 3);
+    const openCycles = detectOpenCycles(entries_).slice(0, 3);
 
     return {
       count: week.length,
@@ -53,10 +62,12 @@ export function WeeklyReport() {
       start: new Date(sevenAgo).toLocaleDateString('pt-BR'),
       end: new Date(now).toLocaleDateString('pt-BR'),
     };
-  }, [entries, principles, projects]);
+  }, [entries, principles, projects, projFiltro]);
 
   return (
     <div className="space-y-3">
+      <ProjectFilterSelect value={projFiltro} onChange={setProjFiltro} projects={projects} />
+
       {/* Resumo semanal com estatísticas clicáveis (Opção B) */}
       <div className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-2">
         <div className="text-label text-op-gray uppercase tracking-wide">
@@ -115,7 +126,7 @@ export function WeeklyReport() {
                 className="rounded-md border border-op-amber/30 bg-op-navy p-3 space-y-2"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-label text-op-gray truncate">{projectName}</p>
+                  <ProjectTitle name={projectName} />
                   {cycle.daysOpen > 0 && (
                     <span className="text-label text-op-amber shrink-0">{cycle.daysOpen}d em aberto</span>
                   )}
