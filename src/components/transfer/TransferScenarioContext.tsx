@@ -4,21 +4,19 @@ import { VoiceInput } from '@/components/copa/VoiceInput';
 import { isContextValid } from '@/lib/transfer';
 
 interface Props {
-  scenarioIndex: number;
   initial: string;
   onContinue: (context: string) => void;
 }
 
-export function TransferScenarioContext({ scenarioIndex, initial, onContinue }: Props) {
+export function TransferScenarioContext({ initial, onContinue }: Props) {
   const [text, setText] = useState(initial);
   const valid = isContextValid(text);
 
   return (
-    <div className="min-h-screen bg-op-black px-6 py-8" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
+    <div className="px-6 py-8">
+      {/* "Cenário X de 3" saiu daqui: virou o título do cabeçalho, que agora
+          acompanha o operador em todas as etapas do fluxo. */}
       <div className="max-w-md mx-auto space-y-5">
-        <p className="text-label text-muted-foreground uppercase tracking-wider">
-          Cenário {scenarioIndex + 1} de 3
-        </p>
         <h2 className="text-title text-foreground">
           Descreva um cenário diferente dos seus projetos atuais
         </h2>

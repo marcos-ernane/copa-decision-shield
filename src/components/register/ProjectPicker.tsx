@@ -5,25 +5,35 @@
 
 import { useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
-import { BackButton } from '@/components/app/BackButton';
-import { CloseButton } from '@/components/app/CloseButton';
+import { FlowHeader } from '@/components/app/FlowHeader';
+import {
+  PROJ_OPTION_ITEM,
+  PROJ_OPTION_GHOST,
+  ProjectStatusLegend,
+  statusDotClass,
+} from '@/components/diary/ProjectFilterSelect';
 import type { Project } from '@/types/database';
 
 interface Props {
   title?: string;
+  /** Qual registro está sendo iniciado — vira o rótulo do cabeçalho. */
+  eyebrow?: string;
   projects: Project[];
   onPick: (id: string) => void;
 }
 
-export function ProjectPicker({ title = 'Para qual projeto?', projects, onPick }: Props) {
+export function ProjectPicker({
+  title = 'Para qual projeto?',
+  eyebrow = 'Registro',
+  projects,
+  onPick,
+}: Props) {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: '#070C12', minHeight: '100vh' }}>
-      <header className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
-        <BackButton />
-        <h1 className="text-heading text-op-white">{title}</h1>
-        <CloseButton className="ml-auto" />
-      </header>
+      {/* Rótulo + pergunta em duas linhas: numa só, entre as pílulas de Voltar
+          e Fechar, a pergunta virava "Para qual pr…" a 375px. */}
+      <FlowHeader eyebrow={eyebrow} title={title} />
 
       <div className="max-w-md mx-auto w-full px-4 py-4 space-y-2 pb-28">
         {projects.length === 0 ? (
@@ -31,22 +41,29 @@ export function ProjectPicker({ title = 'Para qual projeto?', projects, onPick }
             Você ainda não tem projetos. Crie um primeiro.
           </p>
         ) : (
-          projects.map((p) => (
+          <>
+          <div className="pb-1"><ProjectStatusLegend /></div>
+          {projects.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => onPick(p.id)}
-              className="w-full text-left rounded-md border border-op-gray/30 bg-op-navy px-4 py-3 text-small text-op-white hover:bg-op-navy-elevated transition-colors"
+              className={PROJ_OPTION_ITEM}
             >
-              {p.name}
+              {/* Ponto de status: existia só no Diário. Sem ele, o operador
+                  escolhia projeto sem saber se estava ativo, concluído ou
+                  pausado. */}
+              <span className={`size-2 rounded-full shrink-0 ${statusDotClass(p.state)}`} />
+              <span className="truncate">{p.name}</span>
             </button>
-          ))
+          ))}
+          </>
         )}
 
         <button
           type="button"
           onClick={() => navigate({ to: '/project/new' })}
-          className="w-full flex items-center justify-center gap-1.5 rounded-md border border-dashed border-op-gray/40 px-4 py-3 text-small text-op-cyan hover:bg-op-navy transition-colors"
+          className={PROJ_OPTION_GHOST}
         >
           <Plus className="size-4 shrink-0" />
           Novo projeto

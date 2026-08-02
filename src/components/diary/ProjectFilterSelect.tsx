@@ -24,6 +24,47 @@ export function statusDotClass(state: string): string {
   return 'bg-op-amber';
 }
 
+/**
+ * Legenda das cores do ponto de status.
+ *
+ * Estava embutida só no Diário. Quando o ponto passou a aparecer no Modo
+ * Pressão, no Registro e no Inbox, a bolinha colorida foi junto mas a legenda
+ * não — cor sem chave de leitura é ruído. Agora acompanha o ponto em toda
+ * tela que o exibe.
+ */
+export function ProjectStatusLegend() {
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-label text-op-gray">
+      <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-success shrink-0" />Ativo</span>
+      <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-danger shrink-0" />Concluído</span>
+      <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-amber shrink-0" />Pausado/Arquivado</span>
+    </div>
+  );
+}
+
+/**
+ * Classes canônicas do seletor de projeto — o padrão visual do app.
+ *
+ * Existiam quatro estilos diferentes para a mesma coisa: este (Diário),
+ * ProjectPicker com rounded-md/px-4 e sem ponto de status, PressureShell com
+ * Button variant="outline" em contorno ciano, e três <select> nativos em
+ * rounded-lg/text-body. Trocar de tela dava impressão de trocar de app.
+ *
+ * A estrutura pode variar — dropdown, lista de tela cheia, select nativo —
+ * mas a aparência é a mesma. Por isso são classes exportadas e não um
+ * componente único: cada tela mantém a estrutura que faz sentido nela.
+ */
+export const PROJ_SELECT_BASE =
+  'w-full rounded-xl border border-op-gray/30 bg-op-navy text-small text-op-white px-3 py-2';
+
+/** Item de lista clicável (tela cheia ou dropdown). */
+export const PROJ_OPTION_ITEM =
+  'w-full flex items-center gap-2 rounded-xl border border-op-gray/30 bg-op-navy text-small text-op-white px-3 py-2.5 text-left hover:bg-op-navy-elevated transition-colors';
+
+/** Ação secundária ao pé da lista — "Criar projeto", "Continuar sem projeto". */
+export const PROJ_OPTION_GHOST =
+  'w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-op-gray/40 px-3 py-2.5 text-small text-op-cyan hover:bg-op-navy transition-colors';
+
 interface Props {
   value: string;
   onChange: (v: string) => void;
@@ -96,13 +137,7 @@ export function ProjectFilterSelect({
 
   return (
     <div className="space-y-2">
-      {showLegend && (
-        <div className="flex items-center gap-4 text-label text-op-gray">
-          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-success shrink-0" />Ativo</span>
-          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-danger shrink-0" />Concluído</span>
-          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-op-amber shrink-0" />Pausado/Arquivado</span>
-        </div>
-      )}
+      {showLegend && <ProjectStatusLegend />}
 
       <div ref={ref} className="relative">
         <button

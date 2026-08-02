@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
+import { FlowHeader } from '@/components/app/FlowHeader';
 import { supabase } from '@/lib/supabase';
 import { GuestStorage } from '@/lib/guestStorage';
 import { setReadingMode } from '@/hooks/useReadingMode';
@@ -74,14 +75,14 @@ export function ReadingModeScreen() {
 
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
-      <main className="max-w-2xl mx-auto px-6 py-10 space-y-10">
-        <header>
-          <p className="text-label uppercase tracking-wide text-muted-foreground">
-            Modo Leitura
-          </p>
-          <h1 className="text-display mt-2">Método COPA</h1>
-        </header>
+      {/* A única saída era o "Sair do Modo Leitura" no fim de um scroll longo,
+          e aqui os FABs estão desativados por [REQ-READ-01] — sem cabeçalho, o
+          operador ficava sem caminho de volta acima da dobra.
+          Fechar leva à Início mantendo o Modo Leitura ligado (é um modo, não um
+          fluxo); desligá-lo continua sendo o botão explícito no rodapé. */}
+      <FlowHeader eyebrow="Modo Leitura" title="Método COPA" />
 
+      <main className="max-w-2xl mx-auto px-6 py-10 space-y-10">
         <section className="space-y-6">
           {COPA_PHASES.map((p, i) => (
             <div key={p.letter} className="space-y-2">

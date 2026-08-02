@@ -1,8 +1,7 @@
 // SimulationDetail — orquestra as 4 telas de uma simulação.
 
 import { useState } from 'react';
-import { X } from 'lucide-react';
-import { BackButton } from '@/components/app/BackButton';
+import { FlowHeader } from '@/components/app/FlowHeader';
 import { getSimulation } from '@/data/simulations';
 import { SimulationContext } from './SimulationContext';
 import { SimulationMethod } from './SimulationMethod';
@@ -41,19 +40,10 @@ export function SimulationDetail({ id, onClose }: Props) {
 
   return (
     <div className="min-h-screen bg-op-black pb-24" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
-      <header className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border sticky top-0 bg-op-navy z-10">
-        <BackButton onClick={back} />
-        <span className="text-label text-muted-foreground uppercase tracking-wide">
-          {step} / 4
-        </span>
-        <button
-          onClick={onClose}
-          className="p-2 -mr-2 rounded-md hover:bg-accent"
-          aria-label="Fechar"
-        >
-          <X className="size-5" />
-        </button>
-      </header>
+      {/* Fechava por um X solto, sem rótulo, diferente da pílula "Fechar ✕" do
+          resto do app. Aqui fechar volta à lista de simulações e não à Início
+          — daí o onClose próprio. */}
+      <FlowHeader eyebrow="Simulação" title={`Etapa ${step} de 4`} onBack={back} onClose={onClose} />
 
       <main className="px-4 py-6 max-w-md mx-auto">
         {step === 1 && (

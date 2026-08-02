@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { FlowHeader } from '@/components/app/FlowHeader';
 
 interface Props {
   step: number;
@@ -12,7 +12,6 @@ interface Props {
   children: ReactNode;
   onNext: () => void;
   onBack?: () => void;
-  onExit?: () => void;
   canNext: boolean;
   nextLabel?: string;
 }
@@ -25,28 +24,28 @@ export function Protocol5Step({
   children,
   onNext,
   onBack,
-  onExit,
   canNext,
   nextLabel = 'Próximo →',
 }: Props) {
   return (
     <div className="min-h-screen bg-op-black" style={{ backgroundColor: "#070C12", minHeight: "100vh" }}>
-      <header className="px-4 py-3 border-b border-op-gray/30 flex items-center justify-between">
-        <p className="text-label uppercase tracking-wide text-op-gray">
-          Etapa {step} de {total}
-        </p>
-        {onExit && (
-          <button onClick={onExit} className="p-1 rounded-md hover:bg-accent text-op-gray" aria-label="Fechar">
-            <X className="size-4" />
-          </button>
-        )}
-        <div className="mt-2 h-1 w-full bg-op-navy rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[var(--color-brand-navy)] transition-all"
-            style={{ width: `${(step / total) * 100}%` }}
-          />
-        </div>
-      </header>
+      {/* Era um cabeçalho próprio: "Etapa X de Y" e um X de fechar que só
+          aparecia na etapa 1 — nenhum Voltar, e o Voltar do rodapé sumia
+          justamente na primeira tela. Agora é o mesmo cabeçalho dos demais
+          fluxos. A barra de progresso saiu de dentro do <header> porque
+          estava como filha de um flex justify-between: renderizava ao lado
+          do texto em vez de abaixo dele. */}
+      <FlowHeader
+        eyebrow="Protocolo 5 Minutos"
+        title={`Etapa ${step} de ${total}`}
+        onBack={onBack}
+      />
+      <div className="h-1 w-full bg-op-navy overflow-hidden">
+        <div
+          className="h-full bg-op-amber transition-all"
+          style={{ width: `${(step / total) * 100}%` }}
+        />
+      </div>
 
       <main className="px-4 py-6 pb-24 max-w-md mx-auto w-full space-y-4">
         <h2 className="text-title text-foreground">{title}</h2>

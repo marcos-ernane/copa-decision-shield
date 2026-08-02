@@ -64,7 +64,7 @@ export function PulseRegister() {
   }, [inconsistent, text]);
 
   if (!projectId) {
-    return <ProjectPicker projects={projects} onPick={setProjectId} />;
+    return <ProjectPicker eyebrow="Registro de Pulso" projects={projects} onPick={setProjectId} />;
   }
 
   async function onSave() {

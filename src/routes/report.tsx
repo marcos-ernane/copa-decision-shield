@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { BackButton } from '@/components/app/BackButton';
+import { FlowHeader } from '@/components/app/FlowHeader';
 import { Button } from '@/components/ui/button';
 import { getProject, listEntries, listPrinciples } from '@/lib/projects';
 import { useAuthState } from '@/lib/planLimits';
@@ -218,29 +218,20 @@ function ReportScreen() {
 
   return (
     <div className="min-h-screen pb-48" style={{ backgroundColor: '#070C12' }}>
-      <header
-        className="sticky top-0 z-10 border-b border-border"
-        style={{ backgroundColor: '#070C12' }}
-      >
-        <div className="flex items-center gap-2 px-4 py-3 max-w-md mx-auto">
-          <BackButton />
-          <div className="flex-1 min-w-0">
-            <h1 className="text-heading font-semibold text-foreground truncate">{headerTitle}</h1>
-            {project && (
-              <p className="text-label text-muted-foreground truncate">{project.name}</p>
-            )}
-          </div>
-          <button
-            type="button"
-            aria-label="Ajuda: o que é o Relatório Consultivo"
-            onClick={() => setOpenHelp((v) => (v === 'main' ? null : 'main'))}
-            className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded shrink-0 flex items-center gap-1"
-          >
-            {openHelp === 'main' ? <X className="size-3.5" /> : <CircleHelp className="size-3.5" />}
-            <span className="text-label">Ajuda</span>
-          </button>
-        </div>
-      </header>
+      {/* Tinha Voltar mas não Fechar, e cabeçalho próprio: com o Fechar somado,
+          título e nome do projeto viravam "Relat…" / "Lançamen…" a 375px.
+          O FlowHeader empilha rótulo e contexto. */}
+      <FlowHeader eyebrow={headerTitle} title={project?.name}>
+        <button
+          type="button"
+          aria-label="Ajuda: o que é o Relatório Consultivo"
+          onClick={() => setOpenHelp((v) => (v === 'main' ? null : 'main'))}
+          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded shrink-0 flex items-center gap-1"
+        >
+          {openHelp === 'main' ? <X className="size-3.5" /> : <CircleHelp className="size-3.5" />}
+          <span className="text-label">Ajuda</span>
+        </button>
+      </FlowHeader>
 
       <main className="px-4 py-4 max-w-md mx-auto space-y-4">
 
