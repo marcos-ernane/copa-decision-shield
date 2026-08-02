@@ -1112,11 +1112,16 @@ export function TimelineTab() {
           </div>
         ) : (
           <div className="space-y-3">
-            {operationalView.groups.map((group, i) => (
+            {operationalView.groups.map((group) => (
               <ProjectSection
                 key={group.project.id}
                 group={group}
-                defaultExpanded={i === 0}
+                // Recolhido quando há vários projetos: abrir o primeiro
+                // presume que é ele que o operador procura, e obriga a recuar
+                // ou rolar quando não é. Com um só grupo — projeto específico
+                // escolhido no seletor — expandir é o esperado: ele já disse
+                // qual quer, e deixar recolhido seria um clique à toa.
+                defaultExpanded={operationalView.groups.length === 1}
                 renderEntry={(entry) => renderEntryCard(entry, 1, true)}
                 photosSlot={userId ? <ProjectScenarioPhotos projectId={group.project.id} userId={userId} /> : undefined}
               />

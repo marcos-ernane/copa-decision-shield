@@ -49,7 +49,7 @@ export function PrinciplesTab() {
     highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [highlightId, principles]);
 
-  const filtered = useMemo(() => {
+  const { lista: filtered, contagem } = useMemo(() => {
     const q = query.trim().toLowerCase();
 
     // Deduplicar por (project_id + conteúdo): mantém o mais recente
@@ -63,9 +63,12 @@ export function PrinciplesTab() {
     }
     const deduped = [...seen.values()];
 
-    return deduped
+    // Tudo exceto o filtro de projeto. Serve para dois fins: a lista final e a
+    // contagem por projeto no seletor. Contar sobre o conjunto bruto faria o
+    // seletor prometer "3 princípios" e a tela mostrar zero quando houvesse
+    // cenário ou busca ativos.
+    const semFiltroDeProjeto = deduped
       .filter((p) => !p.is_archived)
-      .filter((p) => projectFilter === PROJ_ALL || p.project_id === projectFilter)
       .filter((p) => {
         if (!scenario) return true;
         const s = p.scenario_type ?? projectMap[p.project_id]?.scenario_type ?? null;
@@ -78,6 +81,16 @@ export function PrinciplesTab() {
       })
       .filter((p) => !masterOnly || p.is_master_principle)
       .filter((p) => !q || p.content.toLowerCase().includes(q));
+
+    return {
+      lista: semFiltroDeProjeto.filter(
+        (p) => projectFilter === PROJ_ALL || p.project_id === projectFilter,
+      ),
+      contagem: semFiltroDeProjeto.reduce<Record<string, number>>((acc, p) => {
+        if (p.project_id) acc[p.project_id] = (acc[p.project_id] ?? 0) + 1;
+        return acc;
+      }, {}),
+    };
   }, [principles, projectMap, projectFilter, scenario, layer, masterOnly, query]);
 
   return (
@@ -92,7 +105,7 @@ export function PrinciplesTab() {
 
       {/* Substitui o chip que só aparecia quando o filtro vinha por URL: dentro
           da aba não havia como escolher projeto nenhum. */}
-      <ProjectFilterSelect value={projectFilter} onChange={setProjectFilter} projects={projects} />
+      <ProjectFilterSelect value={projectFilter} onChange={setProjectFilter} projects={projects} counts={contagem} />
 
       <div className="flex flex-wrap gap-1">
         <button

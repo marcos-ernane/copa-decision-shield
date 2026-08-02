@@ -16,6 +16,11 @@ export function GargalosTab() {
   // isso aqui não há opção "Sem projeto", ao contrário da aba Decisões.
   const visiveis = pending.filter((b) => projFiltro === PROJ_ALL || b.projectId === projFiltro);
 
+  const contagem = pending.reduce<Record<string, number>>((acc, b) => {
+    acc[b.projectId] = (acc[b.projectId] ?? 0) + 1;
+    return acc;
+  }, {});
+
   function handleCreate(text: string, entryId: string) {
     void navigate({ to: '/project/new', search: { bottleneck: text, bottleneckEntryId: entryId } });
   }
@@ -45,7 +50,7 @@ export function GargalosTab() {
   return (
     <>
       <div className="mb-3">
-        <ProjectFilterSelect value={projFiltro} onChange={setProjFiltro} projects={projects} />
+        <ProjectFilterSelect value={projFiltro} onChange={setProjFiltro} projects={projects} counts={contagem} />
       </div>
 
       {/* Header com título e botão de ajuda */}
