@@ -43,6 +43,14 @@ export function DecisoesTab() {
   // a opção "Sem projeto" no seletor.
   const semProjeto = decisoes.filter((d) => !d.project_id).length;
 
+  // Quantas decisões cada projeto tem. O seletor oculta os zerados e mostra a
+  // contagem nos demais — antes, descobrir quais tinham conteúdo exigia abrir
+  // um a um.
+  const contagem = decisoes.reduce<Record<string, number>>((acc, d) => {
+    if (d.project_id) acc[d.project_id] = (acc[d.project_id] ?? 0) + 1;
+    return acc;
+  }, {});
+
   const visiveis = decisoes.filter((d) =>
     projFiltro === PROJ_ALL ? true
     : projFiltro === PROJ_NONE ? !d.project_id
@@ -89,6 +97,7 @@ export function DecisoesTab() {
           projects={projects}
           includeNoProject
           noProjectCount={semProjeto}
+          counts={contagem}
         />
       </div>
 

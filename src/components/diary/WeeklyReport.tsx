@@ -30,6 +30,16 @@ export function WeeklyReport() {
     const entries_ = doFiltro(entries);
     const principles_ = doFiltro(principles);
     const week = entries_.filter((e) => new Date(e.created_at).getTime() >= sevenAgo);
+
+    // "Ter conteúdo" nesta aba é ter lançamento nos últimos 7 dias — é disso
+    // que o relatório trata. Calculado sobre a lista completa, não a filtrada,
+    // senão o seletor só mostraria o projeto já selecionado.
+    const contagem = entries
+      .filter((e) => new Date(e.created_at).getTime() >= sevenAgo)
+      .reduce<Record<string, number>>((acc, e) => {
+        if (e.project_id) acc[e.project_id] = (acc[e.project_id] ?? 0) + 1;
+        return acc;
+      }, {});
     // Princípios únicos criados nesta semana (deduplicados por conteúdo)
     const seenPrinc = new Set<string>();
     const weekPrinciples = principles_
@@ -53,6 +63,7 @@ export function WeeklyReport() {
     const openCycles = detectOpenCycles(entries_).slice(0, 3);
 
     return {
+      contagem,
       count: week.length,
       principles: weekPrinciples.length,
       imvs,
@@ -66,7 +77,7 @@ export function WeeklyReport() {
 
   return (
     <div className="space-y-3">
-      <ProjectFilterSelect value={projFiltro} onChange={setProjFiltro} projects={projects} />
+      <ProjectFilterSelect value={projFiltro} onChange={setProjFiltro} projects={projects} counts={data.contagem} />
 
       {/* Resumo semanal com estatísticas clicáveis (Opção B) */}
       <div className="rounded-md border border-op-gray/30 bg-op-navy p-4 space-y-2">

@@ -34,6 +34,16 @@ interface Props {
   noProjectCount?: number;
   /** A legenda das cores só faz sentido uma vez por tela. */
   showLegend?: boolean;
+  /**
+   * Quantos itens cada projeto tem NESTA aba. Quando informado, projetos com
+   * zero somem da lista e os demais exibem a contagem.
+   *
+   * Sem isto o operador precisava abrir projeto por projeto para descobrir
+   * quais tinham conteúdo — com 19 projetos, até 19 cliques para achar os 3
+   * que interessam. A Linha do Tempo não passa counts de propósito: lá o
+   * projeto vazio é resposta legítima ("este projeto não teve lançamentos").
+   */
+  counts?: Record<string, number>;
 }
 
 export function ProjectFilterSelect({
@@ -43,6 +53,7 @@ export function ProjectFilterSelect({
   includeNoProject = false,
   noProjectCount,
   showLegend = true,
+  counts,
 }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -63,12 +74,18 @@ export function ProjectFilterSelect({
       const bt = b.last_entry_at ? new Date(b.last_entry_at).getTime() : new Date(b.created_at).getTime();
       return bt - at;
     };
+    // O projeto selecionado permanece na lista mesmo zerando — sem isso ele
+    // sumiria sob o próprio filtro (ex.: descartar o último gargalo) e o botão
+    // exibiria '—' sem explicação.
+    const visiveis = counts
+      ? projects.filter((p) => (counts[p.id] ?? 0) > 0 || p.id === value)
+      : projects;
     return [
-      ...projects.filter((p) => ACTIVE_STATES.has(p.state)).sort(byTime),
-      ...projects.filter((p) => p.state === 'concluded').sort(byTime),
-      ...projects.filter((p) => p.state === 'paused' || p.state === 'archived').sort(byTime),
+      ...visiveis.filter((p) => ACTIVE_STATES.has(p.state)).sort(byTime),
+      ...visiveis.filter((p) => p.state === 'concluded').sort(byTime),
+      ...visiveis.filter((p) => p.state === 'paused' || p.state === 'archived').sort(byTime),
     ];
-  }, [projects]);
+  }, [projects, counts, value]);
 
   const selected = value === PROJ_ALL || value === PROJ_NONE ? null : projects.find((p) => p.id === value);
 
@@ -115,7 +132,10 @@ export function ProjectFilterSelect({
               Todos os projetos
             </button>
 
-            {includeNoProject && (
+            {/* Mesma regra dos projetos: sem registros, a opção não aparece —
+                só permanece se estiver selecionada, para o operador não ficar
+                num filtro invisível. */}
+            {includeNoProject && ((noProjectCount ?? 0) > 0 || value === PROJ_NONE) && (
               <button
                 type="button"
                 onClick={() => { onChange(PROJ_NONE); setOpen(false); }}
@@ -128,6 +148,11 @@ export function ProjectFilterSelect({
               </button>
             )}
 
+            {counts && sorted.length === 0 && (
+              <p className="px-3 py-2.5 text-label text-op-gray border-t border-op-gray/10">
+                Nenhum projeto com registros nesta aba.
+              </p>
+            )}
             {sorted.length > 0 && (
               <div className="border-t border-op-gray/10">
                 {sorted.map((p) => (
@@ -138,7 +163,10 @@ export function ProjectFilterSelect({
                     className={`w-full flex items-center gap-2 px-3 py-2.5 text-small text-left hover:bg-op-navy-elevated transition-colors border-t border-op-gray/10 first:border-t-0 ${value === p.id ? 'text-op-amber font-semibold' : 'text-op-white'}`}
                   >
                     <span className={`size-2 rounded-full shrink-0 ${statusDotClass(p.state)}`} />
-                    <span className="truncate">{p.name}</span>
+                    <span className="truncate flex-1">{p.name}</span>
+                    {counts && (
+                      <span className="text-label text-op-gray shrink-0">{counts[p.id] ?? 0}</span>
+                    )}
                   </button>
                 ))}
               </div>
