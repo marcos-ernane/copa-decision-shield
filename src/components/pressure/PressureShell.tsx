@@ -3,9 +3,10 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
+import { Plus } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
-import { Button } from '@/components/ui/button';
+import { PROJ_OPTION_ITEM, PROJ_OPTION_GHOST, statusDotClass } from '@/components/diary/ProjectFilterSelect';
 import { PressureRealityCheckScreen } from './PressureRealityCheckScreen';
 import { AbuseWarningScreen } from './AbuseWarningScreen';
 import { PressureActivation } from './PressureActivation';
@@ -128,23 +129,27 @@ export function PressureShell() {
           </p>
         )}
         <div className="space-y-2">
+          {/* Era Button variant="outline" — contorno ciano, visual só desta
+              tela. Agora usa as classes canônicas do seletor de projeto. */}
           {projects.map((p) => (
-            <Button
+            <button
               key={p.id}
-              variant="outline"
-              className="w-full justify-start"
+              type="button"
+              className={PROJ_OPTION_ITEM}
               onClick={() => startFlow(p.id)}
             >
-              {p.name}
-            </Button>
+              <span className={`size-2 rounded-full shrink-0 ${statusDotClass(p.state)}`} />
+              <span className="truncate">{p.name}</span>
+            </button>
           ))}
-          <Button
-            variant="ghost"
-            className="w-full"
+          <button
+            type="button"
+            className={PROJ_OPTION_GHOST}
             onClick={() => navigate({ to: '/project/new' })}
           >
+            <Plus className="size-4 shrink-0" />
             Novo projeto
-          </Button>
+          </button>
         </div>
         </div>
       </div>

@@ -24,6 +24,29 @@ export function statusDotClass(state: string): string {
   return 'bg-op-amber';
 }
 
+/**
+ * Classes canônicas do seletor de projeto — o padrão visual do app.
+ *
+ * Existiam quatro estilos diferentes para a mesma coisa: este (Diário),
+ * ProjectPicker com rounded-md/px-4 e sem ponto de status, PressureShell com
+ * Button variant="outline" em contorno ciano, e três <select> nativos em
+ * rounded-lg/text-body. Trocar de tela dava impressão de trocar de app.
+ *
+ * A estrutura pode variar — dropdown, lista de tela cheia, select nativo —
+ * mas a aparência é a mesma. Por isso são classes exportadas e não um
+ * componente único: cada tela mantém a estrutura que faz sentido nela.
+ */
+export const PROJ_SELECT_BASE =
+  'w-full rounded-xl border border-op-gray/30 bg-op-navy text-small text-op-white px-3 py-2';
+
+/** Item de lista clicável (tela cheia ou dropdown). */
+export const PROJ_OPTION_ITEM =
+  'w-full flex items-center gap-2 rounded-xl border border-op-gray/30 bg-op-navy text-small text-op-white px-3 py-2.5 text-left hover:bg-op-navy-elevated transition-colors';
+
+/** Ação secundária ao pé da lista — "Criar projeto", "Continuar sem projeto". */
+export const PROJ_OPTION_GHOST =
+  'w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-op-gray/40 px-3 py-2.5 text-small text-op-cyan hover:bg-op-navy transition-colors';
+
 interface Props {
   value: string;
   onChange: (v: string) => void;

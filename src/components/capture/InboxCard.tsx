@@ -11,6 +11,7 @@ import { registrableProjects } from '@/lib/projectState';
 import { savePulse } from '@/lib/register';
 import type { InboxEntry } from '@/lib/universalCapture';
 import type { Project } from '@/types/database';
+import { PROJ_OPTION_ITEM, statusDotClass } from '@/components/diary/ProjectFilterSelect';
 
 interface Props {
   entry: InboxEntry;
@@ -176,9 +177,10 @@ export function InboxCard({ entry, onProcessed }: Props) {
                     type="button"
                     disabled={savingId !== null}
                     onClick={() => void handleSaveAsPulse(p)}
-                    className="w-full text-left rounded-md border border-op-gray/30 bg-op-navy px-4 py-3 text-small text-op-white hover:bg-op-navy-elevated transition-colors disabled:opacity-40"
+                    className={`${PROJ_OPTION_ITEM} disabled:opacity-40`}
                   >
-                    {savingId === p.id ? 'Salvando…' : p.name}
+                    <span className={`size-2 rounded-full shrink-0 ${statusDotClass(p.state)}`} />
+                    <span className="truncate">{savingId === p.id ? 'Salvando…' : p.name}</span>
                   </button>
                 ))}
               </div>

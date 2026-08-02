@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { useReadingMode } from '@/hooks/useReadingMode';
 import { listProjects, listEntries } from '@/lib/projects';
 import type { Project } from '@/types/database';
+import { PROJ_SELECT_BASE } from '@/components/diary/ProjectFilterSelect';
 
 // ──────────────────────────────────────
 // Help content — 1 principal + 5 perguntas
@@ -405,8 +406,7 @@ function LeverFilterScreen() {
               </p>
             ) : (
               <select
-                className="w-full rounded-lg px-3 py-2 text-body text-op-white border border-op-gray/30 focus:outline-none focus:border-brand-blue"
-                style={{ backgroundColor: '#1B2A4A' }}
+                className={`${PROJ_SELECT_BASE} focus:outline-none focus:border-brand-blue`}
                 value={selectedProjectId}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
               >

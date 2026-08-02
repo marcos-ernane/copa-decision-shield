@@ -5,6 +5,7 @@ import { BackButton } from '@/components/app/BackButton';
 import { Button } from '@/components/ui/button';
 import { listProjects } from '@/lib/projects';
 import type { Project } from '@/types/database';
+import { PROJ_SELECT_BASE } from '@/components/diary/ProjectFilterSelect';
 
 export const Route = createFileRoute('/compass/recombination')({
   component: RecombinationPage,
@@ -126,8 +127,7 @@ function RecombinationPage() {
             <p className="text-small text-op-gray italic">Nenhum projeto ativo encontrado.</p>
           ) : (
             <select
-              className="w-full rounded-lg px-3 py-2 text-body text-op-white border border-op-gray/30 focus:outline-none focus:border-brand-blue"
-              style={{ backgroundColor: '#1B2A4A' }}
+              className={`${PROJ_SELECT_BASE} focus:outline-none focus:border-brand-blue`}
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
             >

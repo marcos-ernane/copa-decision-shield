@@ -6,6 +6,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { BackButton } from '@/components/app/BackButton';
+import { PROJ_OPTION_ITEM, PROJ_OPTION_GHOST, statusDotClass } from '@/components/diary/ProjectFilterSelect';
 import { CloseButton } from '@/components/app/CloseButton';
 import type { Project } from '@/types/database';
 
@@ -36,9 +37,13 @@ export function ProjectPicker({ title = 'Para qual projeto?', projects, onPick }
               key={p.id}
               type="button"
               onClick={() => onPick(p.id)}
-              className="w-full text-left rounded-md border border-op-gray/30 bg-op-navy px-4 py-3 text-small text-op-white hover:bg-op-navy-elevated transition-colors"
+              className={PROJ_OPTION_ITEM}
             >
-              {p.name}
+              {/* Ponto de status: existia só no Diário. Sem ele, o operador
+                  escolhia projeto sem saber se estava ativo, concluído ou
+                  pausado. */}
+              <span className={`size-2 rounded-full shrink-0 ${statusDotClass(p.state)}`} />
+              <span className="truncate">{p.name}</span>
             </button>
           ))
         )}
@@ -46,7 +51,7 @@ export function ProjectPicker({ title = 'Para qual projeto?', projects, onPick }
         <button
           type="button"
           onClick={() => navigate({ to: '/project/new' })}
-          className="w-full flex items-center justify-center gap-1.5 rounded-md border border-dashed border-op-gray/40 px-4 py-3 text-small text-op-cyan hover:bg-op-navy transition-colors"
+          className={PROJ_OPTION_GHOST}
         >
           <Plus className="size-4 shrink-0" />
           Novo projeto
