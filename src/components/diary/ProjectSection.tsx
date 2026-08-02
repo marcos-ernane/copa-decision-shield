@@ -53,6 +53,12 @@ function healthDotBg(color: HealthColor): string {
 
 export function ProjectSection({ group, defaultExpanded, renderEntry, photosSlot }: ProjectSectionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
+
+  // useState só lê o valor inicial na montagem, e o React reaproveita a seção
+  // entre re-renders porque a key é o id do projeto. Sem este efeito, escolher
+  // um projeto no seletor não abriria a seção já montada: o defaultExpanded
+  // mudava de false para true e o estado ficava para trás.
+  useEffect(() => { setExpanded(defaultExpanded); }, [defaultExpanded]);
   const [health, setHealth] = useState<ProjectHealth | null>(null);
   const { authState } = useAuthState();
   const { project, phases, totalCount } = group;
@@ -101,19 +107,23 @@ export function ProjectSection({ group, defaultExpanded, renderEntry, photosSlot
           : <ChevronRight className="size-[18px] shrink-0" style={{ color: 'var(--color-brand-blue)' }} />
         }
 
-        {/* Project name */}
-        <span className="text-body font-bold text-op-white truncate flex-1">
+        {/* Project name — min-w garante espaço legível. Com tudo recolhido por
+            padrão, o nome é a ÚNICA forma de identificar a seção; antes ele
+            cedia largura ao selo de saúde e virava "Proj..." a 375px. */}
+        <span className="text-body font-bold text-op-white truncate flex-1 min-w-[45%]">
           {project.name}
         </span>
 
         {/* Health badge — compact: dot + headline */}
         {health && (
-          <span className="flex items-center gap-1 shrink-0 max-w-[140px]">
+          <span className="flex items-center gap-1 min-w-0 max-w-[140px]">
             <span
               className="size-2.5 rounded-full shrink-0"
               style={{ backgroundColor: healthDotBg(health.color) }}
             />
-            <span className="text-[11px] text-op-gray truncate leading-tight">
+            {/* A frase some no celular e fica o ponto colorido, que já dá o
+                sinal. Em tela larga o texto cabe sem espremer o nome. */}
+            <span className="hidden sm:inline text-[11px] text-op-gray truncate leading-tight">
               {health.headline}
             </span>
           </span>
