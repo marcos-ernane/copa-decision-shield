@@ -27,9 +27,18 @@ import type { SuggestionResult } from '@/engines/SuggestionEngine';
 import type { StructuredCContent, StructuredOContent, StructuredPContent, StructuredAContent } from '@/lib/register';
 import type { Project, Entry, Principle } from '@/types/database';
 import type { ScenarioType, OperationalLayer } from '@/types/app';
+// A regra de fase mora em copaPhase.ts para que o Pacto de Hoje use a mesma —
+// era privada aqui, e o Pacto acabou reinventando uma pior.
+import {
+  computeStatuses,
+  getALockedUntil,
+  isAInterrupted,
+  PHASE_ORDER,
+  type CopaFormat,
+  type PhaseStatus,
+} from '@/lib/copaPhase';
 
-type Format = 'C' | 'O' | 'P' | 'A';
-type PhaseStatus = 'done' | 'next' | 'locked';
+type Format = CopaFormat;
 
 const PHASE_LABEL_TOP: Record<Format, string> = {
   C: '[C] Captura',
@@ -77,52 +86,6 @@ const PHASE_HELP: Record<Format, { title: string; text: string }> = {
     text: 'A Aferição é o processo de analisar os resultados da IMV para transformar experiência em aprendizado. Nesta etapa, você compara as evidências obtidas com a hipótese inicial, identifica o que funcionou, o que não funcionou e quais ajustes podem melhorar a próxima intervenção. O objetivo não é julgar o sucesso ou o fracasso do teste, mas extrair conhecimento confiável da realidade. Uma boa aferição fortalece o entendimento do cenário, melhora a qualidade das decisões futuras e evita repetir erros ou acertos sem compreender suas causas.\n\nPergunte-se: O que as evidências deste teste realmente revelam sobre o cenário, a hipótese e os próximos passos?\n\nEsta formulação está alinhada à essência do Operador de Precisão porque ensina que o valor do teste não está no resultado em si, mas na capacidade de converter evidências em entendimento operacional.\n\nEla reforça um princípio central da obra:\n\nQuem apenas executa acumula experiências. Quem afere acumula inteligência operacional.\n\nE fecha o ciclo do COPA de forma coerente:\n\nCaptura observa a realidade.\nOrganização revela a estrutura.\nProva gera evidências.\nAferição transforma evidências em aprendizado e evolução da capacidade perceptiva.\n\nOu seja, a Aferição não mede apenas a IMV. Ela desenvolve o próprio operador.\n\nExecute "Aferição" em todos os projetos.',
   },
 };
-
-const PHASE_ORDER: Format[] = ['C', 'O', 'P', 'A'];
-
-function computeStatuses(entries: Entry[]): Record<Format, PhaseStatus> {
-  const aLockedUntil = getALockedUntil(entries);
-  const aInterrupted = isAInterrupted(entries);
-  const statuses: Record<Format, PhaseStatus> = { C: 'locked', O: 'locked', P: 'locked', A: 'locked' };
-  let foundNext = false;
-  for (const phase of PHASE_ORDER) {
-    if (entries.some((e) => e.entry_type === `structured_${phase}`)) {
-      statuses[phase] = 'done';
-    } else if (!foundNext) {
-      if (phase === 'A' && (aLockedUntil || aInterrupted)) {
-        // A bloqueada pelo prazo do IMV ou por interrupção em [P] — mantém 'locked'
-        foundNext = true;
-      } else {
-        statuses[phase] = 'next';
-        foundNext = true;
-      }
-    }
-  }
-  return statuses;
-}
-
-// Detecta se o projeto foi interrompido em [P] com prazo vencido e ainda não retomado.
-function isAInterrupted(entries: Entry[]): boolean {
-  const lastInterruption = [...entries]
-    .filter((e) => e.entry_type === 'passive' && (e.content as { kind?: string })?.kind === 'p_imv_interrupted')
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-  if (!lastInterruption) return false;
-  const lastAction = [...entries]
-    .filter((e) => e.entry_type === 'structured_P' || e.entry_type === 'structured_A')
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-  if (!lastAction) return true;
-  return new Date(lastInterruption.created_at) > new Date(lastAction.created_at);
-}
-
-// Retorna o prazo (YYYY-MM-DD) do último entry structured_P se ainda estiver no futuro; null caso contrário.
-function getALockedUntil(entries: Entry[]): string | null {
-  const pEntry = [...entries]
-    .filter((e) => e.entry_type === 'structured_P')
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-  const deadline = (pEntry?.content as { deadline?: string | null } | undefined)?.deadline ?? null;
-  if (!deadline) return null;
-  return new Date(deadline + 'T00:00:00').getTime() > Date.now() ? deadline : null;
-}
 
 // Formata YYYY-MM-DD → DD/MM/AAAA sem problemas de fuso horário.
 function fmtDeadline(ymd: string): string {
@@ -199,19 +162,21 @@ export function StructuredRegister() {
           qr ? ((qr.content as { what_happened?: string }).what_happened ?? null) : null,
         );
       }
-      // Se um formato foi solicitado via URL (ex: Pacto da semana), usa ele.
-      // Caso contrário, auto-detecta a próxima fase pendente.
-      if (search.format) {
+      const statuses = computeStatuses(es);
+      const interrupted = isAInterrupted(es);
+      const auto = interrupted
+        ? 'P'
+        : (PHASE_ORDER.find((ph) => statuses[ph] === 'next') ?? 'C');
+
+      // Um formato pedido pela URL (Pacto, Tabela de Fricções, Simulações) é
+      // sugestão, não ordem: se aquela fase estiver travada, o link não pode
+      // furar o pré-requisito do método. O chip aparecia com cadeado e o
+      // formulário abria mesmo assim — dava para registrar uma Aferição de uma
+      // IMV que nunca existiu.
+      if (search.format && statuses[search.format] !== 'locked') {
         setFormat(search.format);
       } else {
-        const statuses = computeStatuses(es);
-        const interrupted = isAInterrupted(es);
-        if (interrupted) {
-          setFormat('P');
-        } else {
-          const next = PHASE_ORDER.find((ph) => statuses[ph] === 'next') ?? 'C';
-          setFormat(next);
-        }
+        setFormat(auto);
       }
       setCurrentStep(search.step ?? 0);
     })();
