@@ -15,7 +15,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { AuthForm, type AuthMode } from '@/components/auth/AuthForm';
 import { supabase } from '@/lib/supabase';
-import { useState } from 'react';
+import { GuestStorage } from '@/lib/guestStorage';
+import { useEffect, useRef, useState } from 'react';
 
 export type NudgeMoment = 1 | 2 | 3;
 
@@ -47,6 +48,54 @@ export function RegistrationNudge({ open, moment, onDismiss }: Props) {
   const [mode, setMode] = useState<AuthMode>('signup');
   const [confirmEmail, setConfirmEmail] = useState<string | null>(null);
 
+  /**
+   * Convite ao cadastro só faz sentido para quem não tem conta.
+   *
+   * A checagem estava a cargo de cada chamador, e era exatamente o tipo de
+   * combinado que uma hora falha: ConcludeFlow e a Home lembravam, o Formato A
+   * não — quem já estava logado levava "Primeiro princípio extraído, crie sua
+   * conta" ao salvar uma APA. Aqui dentro, o furo não volta por um quarto
+   * ponto de chamada.
+   *
+   * `undefined` enquanto a sessão não foi lida: assumir 'guest' abriria o
+   * sheet por um instante na cara de quem tem conta.
+   */
+  const [isGuest, setIsGuest] = useState<boolean | undefined>(undefined);
+
+  // Os chamadores passam arrow inline, que muda de identidade a cada render.
+  // Numa dependência do efeito isso refaria getSession sem parar; numa ref,
+  // o efeito depende só de `open` e ainda chama a versão mais recente.
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
+
+  useEffect(() => {
+    if (!open) { setIsGuest(undefined); return; }
+
+    // Já disse "Depois" para este momento: não perguntar de novo.
+    if (GuestStorage.isNudgeDismissed(moment)) {
+      onDismissRef.current();
+      return;
+    }
+
+    let vivo = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!vivo) return;
+      if (data.session) {
+        // Dispensa em vez de só não renderizar: no Formato A é o onDismiss que
+        // chama onSaved() e leva o operador adiante. Sumir calado deixaria
+        // quem tem conta preso na tela da APA depois de salvar.
+        setIsGuest(false);
+        onDismissRef.current();
+        return;
+      }
+      setIsGuest(true);
+    });
+    return () => { vivo = false; };
+  }, [open, moment]);
+
+  // Sessão ainda em leitura, ou usuário autenticado: nada a convidar.
+  if (isGuest !== true) return null;
+
   function reset() {
     setStep('intro');
     setMode('signup');
@@ -54,6 +103,10 @@ export function RegistrationNudge({ open, moment, onDismiss }: Props) {
   }
 
   function handleDismiss() {
+    // Só marca quando o operador de fato recusou. Fechar depois de criar a
+    // conta passa por aqui também, mas aí a marca é inofensiva: com sessão o
+    // convite não abre mais de qualquer forma.
+    GuestStorage.dismissNudge(moment);
     reset();
     onDismiss();
   }

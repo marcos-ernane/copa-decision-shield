@@ -17,6 +17,19 @@ const KEYS = {
   dismissedBottlenecks: 'aop.dismissed_bottlenecks',
   inboxEntries: 'aop.inbox_entries',
   decisionRecords: 'aop.decision_records',
+  /**
+   * Momentos do RegistrationNudge já dispensados ([REQ-AUTH-03]).
+   *
+   * O momento 3 tinha o próprio controle em sessionStorage e o 2 é único por
+   * natureza (concludedCount === 1); o 1 não tinha nada e reaparecia em toda
+   * APA que extraísse o primeiro princípio. Quem clicou "Depois" disse não —
+   * insistir na próxima APA é cobrança, e o app não cobra.
+   *
+   * localStorage e não sessionStorage: a dispensa vale entre sessões. Some com
+   * os demais dados locais na migração para a conta, que é justamente quando
+   * o convite deixa de fazer sentido.
+   */
+  dismissedNudges: 'aop.dismissed_nudges',
 } as const;
 
 /**
@@ -132,6 +145,16 @@ export const GuestStorage = {
     GuestStorage.deletePactCycle(id);
   },
   /** Sem isto a configuração do pacto sobrevive à exclusão do projeto. */
+  // ---------- Nudges de cadastro ----------
+  isNudgeDismissed(moment: number): boolean {
+    return read<number[]>(KEYS.dismissedNudges, []).includes(moment);
+  },
+  dismissNudge(moment: number): void {
+    const all = read<number[]>(KEYS.dismissedNudges, []);
+    if (all.includes(moment)) return;
+    write(KEYS.dismissedNudges, [...all, moment]);
+  },
+
   deletePactCycle(id: string): void {
     if (!isBrowser()) return;
     window.localStorage.removeItem(PACT_CYCLE_KEY(id));
