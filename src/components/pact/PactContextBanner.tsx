@@ -1,10 +1,26 @@
 // PactContextBanner — presença contextual do Pacto na HomeScreen.
-// Exibe somente quando há projetos com pact_enabled e fase agendada para hoje.
-// Fase feita → link para o diário filtrado. Fase pendente → link para registrar.
+//
+// Lista a próxima fase REAL de cada projeto, no dia reservado para ela.
+//
+// Antes o critério era só "hoje é o dia agendado desta fase?" mais "existe
+// registro dela desde segunda?". Nunca perguntava se a fase tinha o que fazer.
+// Com 18 projetos e os dias padrão, todos apareciam nos quatro dias da semana,
+// sempre — inclusive projetos de ciclo fechado (o contador zera na segunda e
+// eles voltam a "fazer") e fases impossíveis (Aferição de uma IMV que ainda
+// não existe). Medido em fixture: 3 projetos geravam 12 itens.
+//
+// Agora a pergunta é "esta fase é a próxima possível?", respondida por
+// copaPhase.ts — a mesma regra que o Registro Estruturado usa para decidir
+// o que habilitar. Mesmo fixture: 12 itens → 2.
+//
+// Consequência de produto aceita: o Pacto deixou de ser "quatro fases por
+// semana". Um projeto em [P] só aparece no dia da Prova, e projeto com o
+// ciclo COPA completo some da lista até alguém abrir o próximo.
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { getCycle, currentWeekStartISO, PHASES } from '@/lib/pact';
+import { computeStatuses } from '@/lib/copaPhase';
 import type { Project, Entry } from '@/types/database';
 import type { PactPhase } from '@/types/app';
 
@@ -53,17 +69,31 @@ export function PactContextBanner({ projects, entries }: Props) {
   for (const project of projects) {
     if (!project.pact_enabled) continue;
     if (INACTIVE_STATES.has(project.state)) continue;
+
+    // Um projeto tem no máximo uma fase possível por vez. Calculada aqui, fora
+    // do laço, porque não depende do dia agendado.
+    const projectEntries = entries.filter((e) => e.project_id === project.id);
+    const statuses = computeStatuses(projectEntries);
+
     const cycle = getCycle(project);
     for (const phase of PHASES) {
       if (cycle[phase].day_of_week !== today) continue;
       const copaPhase = PHASE_TO_FORMAT[phase];
-      const done = entries.some(
-        (e) =>
-          e.project_id === project.id &&
-          e.copa_phase === copaPhase &&
-          e.created_at >= weekStart,
+
+      // Registrada nesta semana → permanece na lista, riscada. Sem isto o item
+      // sumiria no instante do registro: ao salvar, a fase vira 'done' e cairia
+      // no filtro abaixo, tirando da tela a única confirmação de que o
+      // compromisso do dia foi cumprido.
+      const doneThisWeek = projectEntries.some(
+        (e) => e.copa_phase === copaPhase && e.created_at >= weekStart,
       );
-      items.push({ project, phase, done });
+
+      // Fora isso, só entra o que dá para fazer agora. 'next' exclui de uma vez
+      // a fase travada por falta de pré-requisito (Aferição de IMV inexistente)
+      // e a de ciclo fechado em semanas anteriores — as duas fontes do inchaço.
+      if (statuses[copaPhase] !== 'next' && !doneThisWeek) continue;
+
+      items.push({ project, phase, done: doneThisWeek });
     }
   }
 
@@ -173,7 +203,7 @@ export function PactContextBanner({ projects, entries }: Props) {
           onClick={() => setShowHelp(false)}
         >
           <div
-            className="w-full max-w-lg rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-2xl bg-op-navy border border-op-gray/30 p-6 space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-op-gray/40 rounded-full mx-auto" />
@@ -182,28 +212,41 @@ export function PactContextBanner({ projects, entries }: Props) {
             <div className="space-y-2">
               <p className="text-label text-op-cyan uppercase">O que é</p>
               <p className="text-body text-op-white">
-                O Pacto de Hoje mostra as fases do ciclo COPA que você comprometeu a fazer neste dia.
-                Cada projeto pode ter uma rotina semanal própria — um dia fixo para Captura, Organização,
-                Prova e Aferição.
+                A lista do que dá para avançar hoje. Cada projeto pode reservar um dia da semana para
+                cada fase do COPA — Captura, Organização, Prova e Aferição. Quando o dia reservado
+                chega e aquela fase é de fato a próxima do projeto, ela aparece aqui.
               </p>
             </div>
 
             <div className="space-y-2">
-              <p className="text-label text-op-cyan uppercase">Como funciona</p>
+              <p className="text-label text-op-cyan uppercase">O que NÃO aparece</p>
               <p className="text-body text-op-white">
-                Quando você registra a fase correspondente no dia configurado, o app marca
-                automaticamente como concluída — sem botão manual. Itens pendentes aparecem com
-                "fazer →". Itens feitos aparecem riscados. O contador ao lado do título mostra
-                quantos ainda estão pendentes.
+                Fase que ainda não é possível — não dá para aferir uma IMV que não foi definida.
+                Fase já registrada em semanas anteriores. Projeto com o ciclo COPA fechado, até que
+                alguém abra o próximo. E projetos pausados, arquivados ou concluídos.
+              </p>
+              <p className="text-body text-op-white">
+                Um projeto tem no máximo uma fase possível por vez. Se ele não aparece hoje, é porque
+                não há o que fazer nele hoje — não porque foi esquecido.
               </p>
             </div>
 
             <div className="space-y-2">
               <p className="text-label text-op-cyan uppercase">Como usar</p>
               <p className="text-body text-op-white">
-                Toque em qualquer item pendente para abrir direto o formulário de registro daquela fase
-                naquele projeto. Se já fez a fase, toque para ver o registro no Diário.
-                A lista se zera toda segunda-feira e começa a semana em branco.
+                Toque num item pendente para abrir o formulário daquela fase naquele projeto.
+                Ao salvar, ele passa a aparecer riscado como <span className="font-semibold">feito</span> —
+                sem botão manual. O contador ao lado do título conta só os que ainda faltam, e o bloco
+                inteiro some da Home quando não há nada a fazer.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-label text-op-cyan uppercase">O pacto não cobra</p>
+              <p className="text-body text-op-white">
+                A marcação de feito vale pela semana corrente e recomeça na segunda. Não há sequência
+                a manter nem penalidade por semana pulada: a fase que você não fez continua sendo a
+                próxima do projeto e volta a aparecer no dia reservado dela.
               </p>
             </div>
 
