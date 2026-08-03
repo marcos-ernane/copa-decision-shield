@@ -434,10 +434,10 @@ export async function saveStructuredA(
   let principle: Principle;
 
   if (!session) {
-    const existing = GuestStorage.getPrinciples().filter(
-      (p) => p.project_id === projectId,
-    );
-    isFirstPrinciple = existing.length === 0;
+    // Sem filtrar por projeto: [REQ-AUTH-03] fala do "primeiro princípio
+    // extraído", um momento único na vida do operador. Contando por projeto,
+    // quem tem cinco projetos levava o mesmo convite cinco vezes.
+    isFirstPrinciple = GuestStorage.getPrinciples().length === 0;
 
     principle = {
       id: guestId(),
@@ -459,10 +459,13 @@ export async function saveStructuredA(
     };
     GuestStorage.addPrinciple(principle);
   } else {
+    // Idem: conta os princípios do operador, não os do projeto. Na prática
+    // este ramo nunca aciona o convite (quem tem sessão já tem conta), mas
+    // deixar as duas contagens divergentes seria armadilha para o próximo
+    // leitor — a flag também serve de sinal de "primeira vez" em geral.
     const { count } = await supabase
       .from('principles')
-      .select('id', { count: 'exact', head: true })
-      .eq('project_id', projectId);
+      .select('id', { count: 'exact', head: true });
     isFirstPrinciple = (count ?? 0) === 0;
 
     const { data, error } = await supabase
