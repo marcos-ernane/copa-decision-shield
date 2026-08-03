@@ -5,7 +5,7 @@
 import { GuestStorage, guestId } from './guestStorage';
 import { supabase } from './supabase';
 import { updateProject } from './projects';
-import { markAllPhasesComplete } from './pact';
+import { touchPactActivity } from './pact';
 import type {
   Project,
   Entry,
@@ -228,8 +228,10 @@ export async function concludeProject(
     concluded_at: now,
   });
 
-  // Marca todas as fases do pacto como completas ao concluir o projeto (silencioso).
-  void markAllPhasesComplete(project.id).catch(() => {});
+  // Registra atividade de pacto ao concluir (silencioso). Evita que o projeto
+  // recém-concluído dispare o PactReturnSheet de "7 dias sem atividade" na
+  // próxima visita ao Dashboard.
+  void touchPactActivity(project.id).catch(() => {});
 
   // Stats para celebração
   let allProjects: Project[] = [];

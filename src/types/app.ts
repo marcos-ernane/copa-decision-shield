@@ -50,12 +50,19 @@ export type CopaPhase = 'C' | 'O' | 'P' | 'A';
 
 export type PactPhase = 'capture' | 'organize' | 'prove' | 'assess';
 
+/**
+ * O ciclo guarda só a configuração: qual dia e qual hora de cada fase.
+ *
+ * Havia também `completed_this_week` e `last_completed_at` por fase, mais um
+ * `week_start` para zerá-los toda segunda. Nenhum dos três tinha leitor: tanto
+ * o Pacto de Hoje na Home quanto a Semana do Operador no Dashboard derivam o
+ * "feito" das entries `structured_C/O/P/A`, que é a fonte real. Eram três
+ * campos gravados a cada registro e consultados por ninguém.
+ */
 export interface WeeklyCycleDay {
   phase: PactPhase;
   day_of_week: number; // 0=Dom..6=Sáb
   time_hour: number;   // 0..23
-  completed_this_week: boolean;
-  last_completed_at: string | null;
 }
 
 export interface WeeklyCycle {
@@ -63,7 +70,6 @@ export interface WeeklyCycle {
   organize: WeeklyCycleDay;
   prove: WeeklyCycleDay;
   assess: WeeklyCycleDay;
-  week_start: string; // ISO date (segunda-feira) usada para reset semanal
 }
 
 // ---------- Plano de Execução da IMV (Seção 37) ----------

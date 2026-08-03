@@ -191,6 +191,11 @@ export async function updateProject(
 }
 
 export async function deleteProject(id: string): Promise<void> {
+  // A configuração do pacto vive em localStorage e não tem CASCADE nem dono no
+  // banco: sem isto, `aop.pact.cycle.<id>` sobrevive à exclusão do projeto para
+  // sempre. Vale para guest e autenticado.
+  GuestStorage.deletePactCycle(id);
+
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     GuestStorage.deleteProject(id);
