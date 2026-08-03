@@ -19,6 +19,14 @@ const KEYS = {
   decisionRecords: 'aop.decision_records',
 } as const;
 
+/**
+ * Configuração do Pacto, uma chave por projeto. Mora aqui, e não em pact.ts,
+ * porque `deleteProject` precisa apagá-la e `pact.ts` já importa de
+ * `projects.ts` — a volta fecharia um ciclo de import num módulo que registra
+ * listener no topo. Este módulo não importa nenhum dos dois.
+ */
+export const PACT_CYCLE_KEY = (projectId: string) => `aop.pact.cycle.${projectId}`;
+
 const isBrowser = () => typeof window !== 'undefined';
 
 function read<T>(key: string, fallback: T): T {
@@ -121,6 +129,12 @@ export const GuestStorage = {
   deleteProject(id: string): void {
     write(KEYS.projects, GuestStorage.getProjects().filter((p) => p.id !== id));
     write(KEYS.chapters, GuestStorage.getChapters().filter((c) => c.project_id !== id));
+    GuestStorage.deletePactCycle(id);
+  },
+  /** Sem isto a configuração do pacto sobrevive à exclusão do projeto. */
+  deletePactCycle(id: string): void {
+    if (!isBrowser()) return;
+    window.localStorage.removeItem(PACT_CYCLE_KEY(id));
   },
   deleteChapter(id: string): void {
     write(KEYS.chapters, GuestStorage.getChapters().filter((c) => c.id !== id));

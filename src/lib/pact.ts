@@ -1,10 +1,20 @@
 // pact.ts — Pacto de Execução Semanal (Sprint 14).
 // Schema-light: pact_day_* na tabela projects guarda day_of_week.
-// As horas e o estado semanal (completed_this_week, last_completed_at)
-// vivem em localStorage por projeto (`aop.pact.cycle.<projectId>`).
+// As horas vivem em localStorage por projeto (`aop.pact.cycle.<projectId>`).
 // REQ-PACT-02: silencioso. REQ-PACT-03: celebra retorno, nunca pune.
+//
+// O ciclo guardava também o estado semanal por fase (completed_this_week,
+// last_completed_at) e um week_start para zerá-lo toda segunda. Nada disso
+// tinha leitor: quem exibe "feito" — Pacto de Hoje e Semana do Operador —
+// deriva das entries structured_C/O/P/A. Eram escritas a cada registro para
+// ninguém consultar, então saíram. Sobrou o que é de fato configuração.
+//
+// O único estado de conclusão que permanece é projects.pact_last_cycle_at,
+// que TEM leitor: checkPactReturn abre o PactReturnSheet após 7 dias sem
+// atividade.
 
 import { updateProject, getProject, listProjects } from './projects';
+import { PACT_CYCLE_KEY as CYCLE_KEY } from './guestStorage';
 import { supabase } from './supabase';
 import {
   schedulePactReminders,
@@ -23,21 +33,37 @@ const DEFAULT_DAYS: Record<PactPhase, number> = {
 };
 const DEFAULT_HOUR = 8;
 
-const CYCLE_KEY = (projectId: string) => `aop.pact.cycle.${projectId}`;
+
 
 // ---------- Cycle storage (per project) ----------
 
 export function getCycle(project: Project): WeeklyCycle {
-  const stored = readCycle(project.id);
-  if (stored) return ensureWeekFresh(project.id, stored);
-  return ensureWeekFresh(project.id, buildDefaultCycle(project));
+  return readCycle(project.id) ?? buildDefaultCycle(project);
 }
 
+/**
+ * Normaliza para o formato atual ao ler. As chaves gravadas antes desta
+ * limpeza trazem completed_this_week, last_completed_at e week_start; sem
+ * podar aqui, eles sobreviveriam indefinidamente porque cada escrita faz
+ * spread do que foi lido. Assim o lixo some na primeira gravação seguinte.
+ */
 function readCycle(projectId: string): WeeklyCycle | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = window.localStorage.getItem(CYCLE_KEY(projectId));
-    return raw ? (JSON.parse(raw) as WeeklyCycle) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Record<string, Partial<WeeklyCycleDay>>;
+    const pick = (phase: PactPhase): WeeklyCycleDay => ({
+      phase,
+      day_of_week: parsed[phase]?.day_of_week ?? DEFAULT_DAYS[phase],
+      time_hour: parsed[phase]?.time_hour ?? DEFAULT_HOUR,
+    });
+    return {
+      capture: pick('capture'),
+      organize: pick('organize'),
+      prove: pick('prove'),
+      assess: pick('assess'),
+    };
   } catch { return null; }
 }
 
@@ -51,15 +77,12 @@ function buildDefaultCycle(project: Project): WeeklyCycle {
     phase,
     day_of_week: day,
     time_hour: DEFAULT_HOUR,
-    completed_this_week: false,
-    last_completed_at: null,
   });
   return {
     capture: make('capture', project.pact_day_capture ?? DEFAULT_DAYS.capture),
     organize: make('organize', project.pact_day_organize ?? DEFAULT_DAYS.organize),
     prove: make('prove', project.pact_day_prove ?? DEFAULT_DAYS.prove),
     assess: make('assess', project.pact_day_assess ?? DEFAULT_DAYS.assess),
-    week_start: currentWeekStartISO(),
   };
 }
 
@@ -73,34 +96,10 @@ export function currentWeekStartISO(): string {
   return d.toISOString();
 }
 
-// Se semana virou (segunda 00:00), reseta completed_this_week.
-function ensureWeekFresh(projectId: string, cycle: WeeklyCycle): WeeklyCycle {
-  const ws = currentWeekStartISO();
-  if (cycle.week_start === ws) return cycle;
-  const reset: WeeklyCycle = {
-    ...cycle,
-    capture: { ...cycle.capture, completed_this_week: false },
-    organize: { ...cycle.organize, completed_this_week: false },
-    prove: { ...cycle.prove, completed_this_week: false },
-    assess: { ...cycle.assess, completed_this_week: false },
-    week_start: ws,
-  };
-  writeCycle(projectId, reset);
-  return reset;
-}
-
-export function resetWeeklyCycle(projectId: string): void {
-  const c = readCycle(projectId);
-  if (!c) return;
-  writeCycle(projectId, {
-    ...c,
-    capture: { ...c.capture, completed_this_week: false },
-    organize: { ...c.organize, completed_this_week: false },
-    prove: { ...c.prove, completed_this_week: false },
-    assess: { ...c.assess, completed_this_week: false },
-    week_start: currentWeekStartISO(),
-  });
-}
+// ensureWeekFresh e resetWeeklyCycle saíram com os campos que zeravam. O
+// recorte semanal continua existindo, mas calculado na hora por quem exibe:
+// o Pacto de Hoje compara created_at da entry com currentWeekStartISO().
+// Nada precisa ser reescrito na virada da semana.
 
 // ---------- Cycle → schedule config ----------
 
@@ -116,7 +115,7 @@ export function cycleToScheduleConfig(cycle: WeeklyCycle): PactCycleConfig {
 // ---------- Activate / Deactivate / Update ----------
 
 export async function activatePact(projectId: string, cycle: WeeklyCycle): Promise<void> {
-  writeCycle(projectId, { ...cycle, week_start: currentWeekStartISO() });
+  writeCycle(projectId, cycle);
   await updateProject(projectId, {
     pact_enabled: true,
     pact_day_capture: cycle.capture.day_of_week,
@@ -161,28 +160,19 @@ export function pactPhaseFromCopa(letter: CopaPhase): PactPhase {
   return PHASE_BY_COPA[letter];
 }
 
-export async function markPhaseComplete(projectId: string, phase: PactPhase): Promise<void> {
+/**
+ * Marca que houve atividade de pacto agora. Nada de "concluir fase": o que
+ * está feito é lido das entries. O único efeito é adiar o PactReturnSheet,
+ * que só aparece após 7 dias sem atividade.
+ *
+ * Antes chamava-se markPhaseComplete e recebia a fase, mas gravava dois
+ * campos que ninguém lia. Sem eles a fase deixou de importar aqui — manter o
+ * nome antigo seria descrever um efeito que a função não tem mais.
+ */
+export async function touchPactActivity(projectId: string): Promise<void> {
   const project = await getProject(projectId);
   if (!project || !project.pact_enabled) return;
-  const cycle = getCycle(project);
-  const now = new Date().toISOString();
-  const next: WeeklyCycle = {
-    ...cycle,
-    [phase]: { ...cycle[phase], completed_this_week: true, last_completed_at: now },
-  };
-  writeCycle(projectId, next);
-  await updateProject(projectId, { pact_last_cycle_at: now });
-}
-
-export async function markPhaseIncomplete(projectId: string, phase: PactPhase): Promise<void> {
-  const project = await getProject(projectId);
-  if (!project || !project.pact_enabled) return;
-  const cycle = getCycle(project);
-  const next: WeeklyCycle = {
-    ...cycle,
-    [phase]: { ...cycle[phase], completed_this_week: false, last_completed_at: null },
-  };
-  writeCycle(projectId, next);
+  await updateProject(projectId, { pact_last_cycle_at: new Date().toISOString() });
 }
 
 // ---------- Return celebration ----------
@@ -227,26 +217,9 @@ export async function disablePactGlobally(): Promise<void> {
   // Não desativa pactos individuais — o usuário decide projeto a projeto.
 }
 
-// Marca todas as 4 fases como completas (ex.: ao concluir um COPA completo).
-export async function markAllPhasesComplete(projectId: string): Promise<void> {
-  const project = await getProject(projectId);
-  if (!project || !project.pact_enabled) return;
-  const cycle = getCycle(project);
-  const now = new Date().toISOString();
-  const next: WeeklyCycle = {
-    ...cycle,
-    capture: { ...cycle.capture, completed_this_week: true, last_completed_at: now },
-    organize: { ...cycle.organize, completed_this_week: true, last_completed_at: now },
-    prove: { ...cycle.prove, completed_this_week: true, last_completed_at: now },
-    assess: { ...cycle.assess, completed_this_week: true, last_completed_at: now },
-  };
-  writeCycle(projectId, next);
-  await updateProject(projectId, { pact_last_cycle_at: now });
-}
-
-// Listener global — dispara markPhaseComplete quando uma entry estruturada é salva
-// em projeto com Pacto ativo, somente se hoje é o dia configurado para aquela fase.
-// [REQ-PACT-12] Usa fuso horário local do dispositivo (getDay()).
+// Listener global — registra atividade de pacto quando uma entry estruturada é
+// salva em projeto com Pacto ativo, somente se hoje é o dia configurado para
+// aquela fase. [REQ-PACT-12] Usa fuso horário local do dispositivo (getDay()).
 if (typeof window !== 'undefined') {
   window.addEventListener('aop:entry-saved', (e: Event) => {
     const detail = (e as CustomEvent<{
@@ -264,7 +237,7 @@ if (typeof window !== 'undefined') {
         if (!project?.pact_enabled) return;
         const cycle = getCycle(project);
         if (cycle[phase].day_of_week !== today) return;
-        await markPhaseComplete(projectId, phase);
+        await touchPactActivity(projectId);
       } catch { /* silencioso — nunca quebra o fluxo de registro */ }
     })();
   });
