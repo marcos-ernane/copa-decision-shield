@@ -2,7 +2,7 @@
 // Voluntário. Offline-first. Zero gamificação.
 
 import { useMemo, useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { BackButton } from '@/components/app/BackButton';
 import { CloseButton } from '@/components/app/CloseButton';
 import {
@@ -41,6 +41,9 @@ const initial: FormState = {
 
 export function BaselineAssessmentFlow() {
   const navigate = useNavigate();
+  // Quem chegou pela oferta do onboarding ainda não fez o primeiro registro:
+  // ao terminar, segue para o Registro Estruturado em vez da Home.
+  const { from } = useSearch({ strict: false }) as { from?: 'onboarding' };
   const [step, setStep] = useState<Step>(1);
   const [form, setForm] = useState<FormState>(initial);
   const [saving, setSaving] = useState(false);
@@ -99,7 +102,14 @@ export function BaselineAssessmentFlow() {
             saving={saving}
           />
         )}
-        {step === 7 && <Step7 scores={form.scores} savedId={savedId} onRestart={() => { setForm(initial); setStep(1); setSavedId(null); }} />}
+        {step === 7 && (
+          <Step7
+            scores={form.scores}
+            savedId={savedId}
+            fromOnboarding={from === 'onboarding'}
+            onRestart={() => { setForm(initial); setStep(1); setSavedId(null); }}
+          />
+        )}
       </main>
     </div>
   );
@@ -338,7 +348,12 @@ function Step6({ form, setForm, onSubmit, saving }: {
   );
 }
 
-function Step7({ scores, savedId, onRestart }: { scores: BaselineScores; savedId: string | null; onRestart: () => void }) {
+function Step7({ scores, savedId, fromOnboarding, onRestart }: {
+  scores: BaselineScores;
+  savedId: string | null;
+  fromOnboarding: boolean;
+  onRestart: () => void;
+}) {
   const navigate = useNavigate();
   const total = totalScore(scores);
 
@@ -386,10 +401,12 @@ function Step7({ scores, savedId, onRestart }: { scores: BaselineScores; savedId
       <div className="flex flex-col gap-2 pt-2">
         <button
           type="button"
-          onClick={() => navigate({ to: '/' })}
+          onClick={() => navigate(
+            fromOnboarding ? { to: '/register/structured' } : { to: '/' },
+          )}
           className="w-full rounded-xl bg-op-amber text-op-black font-semibold py-3 text-body"
         >
-          Ir para o app
+          {fromOnboarding ? 'Fazer meu primeiro registro' : 'Ir para o app'}
         </button>
         <button
           type="button"

@@ -41,25 +41,12 @@ export function ProjectPicker({
             Você ainda não tem projetos. Crie um primeiro.
           </p>
         ) : (
-          <>
           <div className="pb-1"><ProjectStatusLegend /></div>
-          {projects.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => onPick(p.id)}
-              className={PROJ_OPTION_ITEM}
-            >
-              {/* Ponto de status: existia só no Diário. Sem ele, o operador
-                  escolhia projeto sem saber se estava ativo, concluído ou
-                  pausado. */}
-              <span className={`size-2 rounded-full shrink-0 ${statusDotClass(p.state)}`} />
-              <span className="truncate">{p.name}</span>
-            </button>
-          ))}
-          </>
         )}
 
+        {/* Antes da lista, não depois: no fim, cada projeto novo empurra o
+            botão para mais longe do polegar. Mesma posição do Modo Pressão e
+            da Home. */}
         <button
           type="button"
           onClick={() => navigate({ to: '/project/new' })}
@@ -68,6 +55,21 @@ export function ProjectPicker({
           <Plus className="size-4 shrink-0" />
           Novo projeto
         </button>
+
+        {projects.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => onPick(p.id)}
+            className={PROJ_OPTION_ITEM}
+          >
+            {/* Ponto de status: existia só no Diário. Sem ele, o operador
+                escolhia projeto sem saber se estava ativo, concluído ou
+                pausado. */}
+            <span className={`size-2 rounded-full shrink-0 ${statusDotClass(p.state)}`} />
+            <span className="truncate">{p.name}</span>
+          </button>
+        ))}
       </div>
     </div>
   );

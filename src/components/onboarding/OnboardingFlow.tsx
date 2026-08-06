@@ -134,9 +134,15 @@ export function OnboardingFlow({ cameFrom }: Props) {
           // await antes de navegar: o portão da Home lê
           // profiles.onboarding_completed. Navegar antes da escrita concluir
           // devolveria a pessoa ao onboarding que ela acabou de terminar.
+          // Os dois eram idênticos e mandavam todo mundo para o Registro
+          // Estruturado. O botão "SIM — FAZER O DIAGNÓSTICO" fazia exatamente o
+          // que o "PULAR" promete, e a Linha de Base, que existe e funciona em
+          // /baseline/new, nunca era alcançada por aqui — apagando de tabela a
+          // seção Evolução do Painel, que só tem o que comparar se houver uma
+          // linha de base inicial ([REQ-BASE-01], [REQ-BASE-02]).
           onTake={async () => {
             await persistProfile({ onboarding_completed: true });
-            navigate({ to: '/register/structured' });
+            navigate({ to: '/baseline/new', search: { from: 'onboarding' } as never });
           }}
           onSkip={async () => {
             await persistProfile({ onboarding_completed: true });

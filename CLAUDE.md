@@ -256,7 +256,9 @@ export type AuthState =
 /inbox                       capturas sem projeto, à espera de destino
 /concluded                   projetos concluídos
 /reading-mode                Modo Leitura passivo (Seção 20)
-/baseline/new                Linha de Base — 7 telas          -- v3.0
+/baseline/new                Linha de Base — 7 telas  ?from=onboarding
+                             (vindo da oferta da Fase 3, termina no
+                              Registro Estruturado em vez da Home) -- v3.0
 
 ── Projeto ──────────────────────────────────────────────────────
 /project/new                 ?bottleneck & ?bottleneckEntryId

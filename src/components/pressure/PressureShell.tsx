@@ -182,6 +182,18 @@ export function PressureShell() {
             <ProjectStatusLegend />
           )}
           <div className="space-y-2">
+            {/* Antes da lista, não depois: no fim, cada projeto novo empurra o
+                botão para mais longe do polegar, e quem tem 19 projetos precisa
+                rolar a tela inteira para criar o 20º. Posição fixa, como na
+                Home, onde "+ Novo projeto" abre a tela. */}
+            <button
+              type="button"
+              className={PROJ_OPTION_GHOST}
+              onClick={() => navigate({ to: '/project/new' })}
+            >
+              <Plus className="size-4 shrink-0" />
+              Novo projeto
+            </button>
             {/* Era Button variant="outline" — contorno ciano, visual só desta
                 tela. Agora usa as classes canônicas do seletor de projeto. */}
             {projects.map((p) => (
@@ -195,14 +207,6 @@ export function PressureShell() {
                 <span className="truncate">{p.name}</span>
               </button>
             ))}
-            <button
-              type="button"
-              className={PROJ_OPTION_GHOST}
-              onClick={() => navigate({ to: '/project/new' })}
-            >
-              <Plus className="size-4 shrink-0" />
-              Novo projeto
-            </button>
           </div>
         </div>
       )}

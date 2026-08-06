@@ -127,12 +127,21 @@ console.log(`[sync-knowledge-base] Parsed ${sections.length} sections`);
 
 const runStart = new Date().toISOString();
 const validSections = [];
+// `section` tem UNIQUE no banco. Um slug repetido dentro da MESMA resposta da
+// LLM derrubava o lote inteiro por violação de constraint — e, na ordem antiga,
+// isso acontecia depois do DELETE, deixando a tabela vazia.
+const slugsVistos = new Set();
 
 for (const s of sections) {
   if (!s.section || typeof s.section !== 'string') {
     console.warn('[sync-knowledge-base] Skipping section with invalid slug:', s);
     continue;
   }
+  if (slugsVistos.has(s.section)) {
+    console.warn(`[sync-knowledge-base] Skipping duplicate slug: ${s.section}`);
+    continue;
+  }
+  slugsVistos.add(s.section);
   if (typeof s.content !== 'string' || s.content.trim().length === 0) {
     console.warn('[sync-knowledge-base] Skipping section with empty content:', s.section);
     continue;
@@ -146,6 +155,9 @@ for (const s of sections) {
     display_order: Number(s.display_order) || 500,
     content: s.content.trim(),
     version: VERSION_TAG,
+    // O default now() da coluna só vale no INSERT. Sem enviar, uma linha
+    // atualizada pelo upsert manteria a data da primeira gravação.
+    updated_at: runStart,
   });
 }
 
@@ -156,49 +168,97 @@ if (validSections.length === 0) {
 
 console.log(`[sync-knowledge-base] ${validSections.length} valid sections ready for upsert`);
 
-// ── Step 5: Delete all existing auto-generated rows ──────────────────────────
-// Removes all rows with version='auto' before re-inserting fresh data.
-// Manually-seeded rows (version != 'auto') are never touched.
-
 const supabaseHeaders = {
   apikey: SUPABASE_SERVICE_ROLE_KEY,
   Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
   'Content-Type': 'application/json',
 };
 
-const deleteUrl = `${SUPABASE_URL}/rest/v1/app_knowledge_base?version=eq.${VERSION_TAG}`;
+const TABELA = `${SUPABASE_URL}/rest/v1/app_knowledge_base`;
 
-const deleteResponse = await fetch(deleteUrl, {
-  method: 'DELETE',
-  headers: supabaseHeaders,
-});
+// ── Step 5: Preservar as linhas semeadas à mão ───────────────────────────────
+// `section` é UNIQUE e as linhas do seed (version='1.0') dividem o mesmo espaço
+// de nomes com as geradas. Se a LLM devolvesse um slug já usado por uma linha
+// manual, o upsert a sobrescreveria — quebrando a promessa de que linhas
+// manuais nunca são tocadas. Aqui a promessa deixa de ser comentário e passa a
+// ser verificada.
 
-if (!deleteResponse.ok) {
-  const body = await deleteResponse.text();
-  console.error(`[sync-knowledge-base] Delete failed ${deleteResponse.status}: ${body}`);
+const manuaisResponse = await fetch(
+  `${TABELA}?select=section&version=neq.${VERSION_TAG}`,
+  { headers: supabaseHeaders },
+);
+
+if (!manuaisResponse.ok) {
+  const body = await manuaisResponse.text();
+  console.error(`[sync-knowledge-base] Leitura das linhas manuais falhou ${manuaisResponse.status}: ${body}`);
   process.exit(1);
 }
 
-console.log('[sync-knowledge-base] Existing auto rows deleted');
+const slugsManuais = new Set(((await manuaisResponse.json()) ?? []).map((r) => r.section));
+const paraGravar = validSections.filter((s) => {
+  if (slugsManuais.has(s.section)) {
+    console.warn(`[sync-knowledge-base] Slug "${s.section}" pertence a uma linha manual — preservada, seção ignorada`);
+    return false;
+  }
+  return true;
+});
 
-// ── Step 6: Insert all new rows ──────────────────────────────────────────────
+if (paraGravar.length === 0) {
+  console.error('[sync-knowledge-base] Nada a gravar depois de excluir colisões com linhas manuais');
+  process.exit(1);
+}
 
-const insertUrl = `${SUPABASE_URL}/rest/v1/app_knowledge_base`;
+// ── Step 6: Upsert ───────────────────────────────────────────────────────────
+// GRAVA ANTES DE APAGAR, de propósito.
+//
+// A ordem anterior era DELETE version='auto' e depois INSERT, sem transação.
+// Qualquer falha entre os dois — 5xx do Supabase, queda de rede, uma única
+// linha rejeitada — deixava a tabela SEM NENHUMA seção automática, e a Ajuda IA
+// perdia a base inteira até alguém reexecutar o job à mão. O upsert por
+// `section` atualiza no lugar: em nenhum instante a tabela fica vazia.
 
-const insertResponse = await fetch(insertUrl, {
+const upsertResponse = await fetch(`${TABELA}?on_conflict=section`, {
   method: 'POST',
-  headers: supabaseHeaders,
-  body: JSON.stringify(validSections),
+  headers: { ...supabaseHeaders, Prefer: 'resolution=merge-duplicates' },
+  body: JSON.stringify(paraGravar),
 });
 
-if (!insertResponse.ok) {
-  const body = await insertResponse.text();
-  console.error(`[sync-knowledge-base] Insert failed ${insertResponse.status}: ${body}`);
+if (!upsertResponse.ok) {
+  const body = await upsertResponse.text();
+  console.error(`[sync-knowledge-base] Upsert falhou ${upsertResponse.status}: ${body}`);
+  console.error('[sync-knowledge-base] Nada foi apagado — a base anterior segue intacta.');
   process.exit(1);
 }
 
-console.log(`[sync-knowledge-base] Inserted ${validSections.length} rows`);
+console.log(`[sync-knowledge-base] ${paraGravar.length} seções gravadas (upsert)`);
+
+// ── Step 7: Podar as seções automáticas que sumiram do CLAUDE.md ─────────────
+// Só agora, com o conteúdo novo já no banco. Se esta etapa falhar, o pior caso
+// é sobrar uma seção obsoleta — bem menos grave que a base vazia de antes, e
+// por isso não derruba o job.
+//
+// O filtro é `not.in.(lista dos slugs mantidos)` e não algo como
+// `updated_at=neq.runStart`, que seria uma URL bem mais curta. O motivo é a
+// direção da falha: se o filtro de data não casasse por diferença de precisão
+// entre o ISO do JS (milissegundos) e o timestamptz do Postgres
+// (microssegundos), o DELETE levaria junto as linhas recém-gravadas — de volta
+// à tabela vazia que este commit existe para evitar. Com `not.in`, um filtro
+// malformado vira 400, o bloco abaixo apenas avisa, e nada é apagado.
+
+const manter = paraGravar.map((s) => `"${s.section.replace(/"/g, '""')}"`).join(',');
+const podaResponse = await fetch(
+  `${TABELA}?version=eq.${VERSION_TAG}&section=not.in.(${encodeURIComponent(manter)})`,
+  { method: 'DELETE', headers: supabaseHeaders },
+);
+
+if (!podaResponse.ok) {
+  const body = await podaResponse.text();
+  console.warn(`[sync-knowledge-base] Poda das seções obsoletas falhou ${podaResponse.status}: ${body}`);
+  console.warn('[sync-knowledge-base] O conteúdo novo já está gravado; pode sobrar seção antiga.');
+} else {
+  console.log('[sync-knowledge-base] Seções obsoletas removidas');
+}
 
 // ── Done ──────────────────────────────────────────────────────────────────────
 
-console.log('[sync-knowledge-base] Done. Sections synced:', validSections.map((s) => s.section).join(', '));
+console.log('[sync-knowledge-base] Done. Sections synced:', paraGravar.map((s) => s.section).join(', '));
